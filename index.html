@@ -147,6 +147,126 @@
             color: rgba(245, 242, 228, 0.55);
         }
 
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            max-width: 340px;
+        }
+
+        .search-wrap .nav-search {
+            max-width: none;
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            z-index: 150;
+            opacity: 0;
+            transform: translateY(-6px);
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        .search-results.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 16px;
+            text-decoration: none;
+            color: var(--ink);
+            border-bottom: 1px solid rgba(59, 30, 58, 0.06);
+            transition: background 0.15s ease;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover,
+        .search-result-item.active-result {
+            background: rgba(168, 178, 46, 0.1);
+        }
+
+        .search-result-thumb {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            flex-shrink: 0;
+            background: linear-gradient(160deg, #f0ecdc, #e7e1cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #a89a94;
+            text-align: center;
+        }
+
+        .search-result-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-result-info .name {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--aubergine);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-result-info .cat {
+            font-size: 11.5px;
+            color: #8a7f78;
+        }
+
+        .search-result-price {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--ink);
+            flex-shrink: 0;
+        }
+
+        .search-see-all {
+            display: block;
+            text-align: center;
+            padding: 12px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 12.5px;
+            color: var(--orange);
+            text-decoration: none;
+            background: rgba(217, 122, 58, 0.06);
+        }
+
+        .search-see-all:hover {
+            background: rgba(217, 122, 58, 0.12);
+        }
+
+        .search-empty {
+            padding: 20px 16px;
+            text-align: center;
+            font-size: 13px;
+            color: #9a8f88;
+        }
+
         .nav-links {
             display: flex;
             gap: 22px;
@@ -763,6 +883,156 @@
         }
 
         /* ================= DELIVERY / ORDER (home) ================= */
+        .new-section {
+            background: #EDE6D3;
+            padding: 56px 0 60px;
+            border-top: 1px solid rgba(59, 30, 58, 0.06);
+            border-bottom: 1px solid rgba(59, 30, 58, 0.06);
+        }
+
+        .new-carousel-wrap {
+            position: relative;
+        }
+
+        .new-carousel {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 4px 2px 10px;
+            scrollbar-width: none;
+        }
+
+        .new-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .new-card {
+            flex: 0 0 220px;
+            background: #fff;
+            border: 1px solid rgba(59, 30, 58, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+            text-decoration: none;
+            color: var(--ink);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .new-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 14px 26px rgba(59, 30, 58, 0.12);
+        }
+
+        .new-card .thumb {
+            height: 100px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: linear-gradient(160deg, #f0ecdc, #e7e1cc);
+        }
+
+        .new-card .thumb svg {
+            width: 22px;
+            height: 22px;
+            color: #b3a998;
+        }
+
+        .new-card .thumb span {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 9px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: #a89a94;
+        }
+
+        .new-tag {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: var(--orange);
+            color: #fff;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 9px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+
+        .new-card .body {
+            padding: 12px 14px 14px;
+        }
+
+        .new-card h4 {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--aubergine);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .new-card .cat {
+            font-size: 10.5px;
+            color: #8a7f78;
+            margin-bottom: 6px;
+        }
+
+        .new-card .price {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--ink);
+        }
+
+        .carousel-arrow {
+            position: absolute;
+            top: 40%;
+            transform: translateY(-50%);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(59, 30, 58, 0.14);
+            background: #fff;
+            color: var(--aubergine);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+            z-index: 5;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .carousel-arrow:hover {
+            background: var(--aubergine);
+            color: var(--cream);
+        }
+
+        .carousel-arrow.left {
+            left: -14px;
+        }
+
+        .carousel-arrow.right {
+            right: -14px;
+        }
+
+        @media (max-width: 900px) {
+            .carousel-arrow {
+                display: none;
+            }
+
+            .new-card {
+                flex-basis: 168px;
+            }
+        }
+
         .delivery {
             padding: 96px 0;
         }
@@ -1168,10 +1438,56 @@
         .product-thumb {
             height: 120px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 5px;
             font-size: 44px;
             background: linear-gradient(160deg, #f0ecdc, #e7e1cc);
+            position: relative;
+        }
+
+        .thumb-placeholder-icon {
+            width: 26px;
+            height: 26px;
+            color: #b3a998;
+        }
+
+        .thumb-placeholder-label {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 10px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: #a89a94;
+        }
+
+        .stock-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 10px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            padding: 4px 9px;
+            border-radius: 999px;
+        }
+
+        .stock-badge.in {
+            background: rgba(168, 178, 46, 0.9);
+            color: var(--aubergine-deep);
+        }
+
+        .stock-badge.low {
+            background: rgba(217, 122, 58, 0.92);
+            color: #fff;
+        }
+
+        .stock-badge.out {
+            background: rgba(90, 77, 72, 0.9);
+            color: #fff;
         }
 
         .product-body {
@@ -1223,6 +1539,16 @@
             transform: scale(1.08);
         }
 
+        .add-btn:disabled {
+            background: #e3ddc9;
+            color: #a89a94;
+            cursor: not-allowed;
+        }
+
+        .add-btn:disabled:hover {
+            transform: none;
+        }
+
         .add-btn svg {
             width: 16px;
             height: 16px;
@@ -1241,10 +1567,56 @@
             margin-bottom: 8px;
         }
 
-        .product-card-wrap {
+        .product-card-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card-actions {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            padding: 0 18px 16px;
+        }
+
+        .card-add-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 6px;
+            border-radius: 10px;
+            border: none;
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0;
+            white-space: nowrap;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .card-add-btn svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .card-add-btn:hover {
+            background: var(--chartreuse-soft);
+        }
+
+        .card-add-btn:disabled {
+            background: #e3ddc9;
+            color: #a89a94;
+            cursor: not-allowed;
+        }
+
+        .card-add-btn:disabled:hover {
+            transform: none;
         }
 
         .view-details-btn {
@@ -1252,30 +1624,30 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
+            width: 100%;
             font-family: var(--display);
             font-weight: 700;
-            font-size: 12.5px;
+            font-size: 12px;
             letter-spacing: 0.02em;
             color: var(--aubergine);
-            background: #fff;
-            border: 1.5px solid rgba(59, 30, 58, 0.14);
-            border-radius: 12px;
-            padding: 10px;
+            background: rgba(59, 30, 58, 0.045);
+            border: none;
+            border-radius: 10px;
+            padding: 9px;
             text-decoration: none;
-            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+            white-space: nowrap;
+            transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
         }
 
         .view-details-btn svg {
-            width: 14px;
-            height: 14px;
+            width: 13px;
+            height: 13px;
             transition: transform 0.2s ease;
         }
 
         .view-details-btn:hover {
             background: var(--aubergine);
             color: var(--cream);
-            border-color: var(--aubergine);
-            transform: translateY(-2px);
         }
 
         .view-details-btn:hover svg {
@@ -1302,7 +1674,36 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 120px;
+            position: relative;
+        }
+
+        .pd-image .stock-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            font-size: 11px;
+            padding: 6px 12px;
+        }
+
+        .pd-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: #a89a94;
+        }
+
+        .pd-placeholder svg {
+            width: 46px;
+            height: 46px;
+        }
+
+        .pd-placeholder span:last-child {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
 
         .pd-cat-tag {
@@ -1420,7 +1821,7 @@
 
         .related-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
             gap: 18px;
         }
 
@@ -2086,7 +2487,131 @@
         /* ================= DELIVERY INFO PAGE ================= */
         .dinfo-section {
             background: var(--cream);
-            padding: 52px 0 100px;
+            padding: 52px 0 60px;
+        }
+
+        .postcode-checker {
+            display: grid;
+            grid-template-columns: 1fr 0.8fr;
+            gap: 32px;
+            background: #fff;
+            border-radius: 22px;
+            border: 1px solid rgba(59, 30, 58, 0.08);
+            padding: 34px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .pc-left h2 {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 22px;
+            color: var(--aubergine);
+            margin-bottom: 6px;
+        }
+
+        .pc-left p {
+            font-size: 14px;
+            color: #6a5f58;
+            margin-bottom: 18px;
+        }
+
+        .pc-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .pc-input-row input {
+            flex: 1;
+            padding: 13px 16px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(59, 30, 58, 0.16);
+            font-family: var(--body);
+            font-size: 15px;
+            text-transform: uppercase;
+        }
+
+        .pc-input-row input:focus {
+            outline: none;
+            border-color: var(--chartreuse);
+        }
+
+        .pc-result {
+            margin-top: 14px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .pc-result.yes {
+            color: #5c6b1a;
+        }
+
+        .pc-result.no {
+            color: #8a4a26;
+        }
+
+        .pc-map {
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .pc-map iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .areas-strip {
+            background: var(--aubergine);
+            border-radius: 22px;
+            padding: 30px 32px;
+            color: var(--cream);
+        }
+
+        .areas-title {
+            font-family: var(--display);
+            font-weight: 500;
+            font-size: 12.5px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--chartreuse);
+            margin-bottom: 16px;
+        }
+
+        .areas-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .area-chip {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13px;
+            padding: 8px 15px;
+            border-radius: 999px;
+            background: rgba(245, 242, 228, 0.1);
+            border: 1px solid rgba(245, 242, 228, 0.18);
+        }
+
+        .areas-note {
+            font-size: 12.5px;
+            color: #cbb9cd;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 760px) {
+            .postcode-checker {
+                grid-template-columns: 1fr;
+            }
+
+            .pc-map {
+                order: -1;
+            }
         }
 
         .dinfo-grid {
@@ -2118,6 +2643,17 @@
             color: var(--orange);
             flex-shrink: 0;
             margin-top: 2px;
+        }
+
+        .pound-icon {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 22px;
+            line-height: 1;
+            color: var(--orange);
+            flex-shrink: 0;
+            width: 22px;
+            margin-top: 1px;
         }
 
         .dinfo-card h4 {
@@ -2182,6 +2718,122 @@
 
             .contact-grid,
             .dinfo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ================= GUIDE / FAQ ================= */
+        .guide-section {
+            background: var(--cream);
+            padding: 52px 0 100px;
+        }
+
+        .guide-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+            margin-bottom: 60px;
+        }
+
+        .guide-step {
+            background: #fff;
+            border: 1px solid rgba(59, 30, 58, 0.08);
+            border-radius: 18px;
+            padding: 26px 24px;
+        }
+
+        .guide-step .num {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 14px;
+        }
+
+        .guide-step h3 {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 16.5px;
+            color: var(--aubergine);
+            margin-bottom: 6px;
+        }
+
+        .guide-step p {
+            font-size: 13.5px;
+            color: #5a4d48;
+            line-height: 1.5;
+        }
+
+        .faq-title {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 24px;
+            color: var(--aubergine);
+            margin-bottom: 22px;
+        }
+
+        .faq-item {
+            background: #fff;
+            border: 1px solid rgba(59, 30, 58, 0.08);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .faq-q {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 18px 20px;
+            background: none;
+            border: none;
+            text-align: left;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 14.5px;
+            color: var(--aubergine);
+        }
+
+        .faq-q svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            transition: transform 0.25s ease;
+            color: var(--orange);
+        }
+
+        .faq-item.open .faq-q svg {
+            transform: rotate(45deg);
+        }
+
+        .faq-a {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-item.open .faq-a {
+            max-height: 300px;
+        }
+
+        .faq-a p {
+            padding: 0 20px 18px;
+            font-size: 13.5px;
+            color: #4a3d3a;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .guide-steps {
                 grid-template-columns: 1fr;
             }
         }
@@ -2259,8 +2911,7 @@
         @media (max-width:900px) {
 
             .cat-grid,
-            .product-grid,
-            .related-grid {
+            .product-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
@@ -2339,8 +2990,7 @@
                 grid-template-columns: 1fr;
             }
 
-            .product-grid,
-            .related-grid {
+            .product-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -2395,18 +3045,23 @@
                 </svg>
                 <span class="word">yo<span class="accent">-7</span></span>
             </a>
-            <div class="nav-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m21 21-4.3-4.3" />
-                </svg>
-                <input id="navSearchInput" type="text" placeholder="Search rice, spices, meat...">
+            <div class="search-wrap">
+                <div class="nav-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input id="navSearchInput" type="text" placeholder="Search ofada rice, scent leaf, red palm oil..."
+                        autocomplete="off">
+                </div>
+                <div class="search-results" id="navSearchResults"></div>
             </div>
             <div class="nav-links">
                 <a href="#/">Home</a>
                 <a href="#/category/rice">Shop</a>
                 <a href="#/delivery-info">Delivery</a>
                 <a href="#/contact">Contact</a>
+                <a href="#/guide">New Here?</a>
             </div>
             <div class="nav-right">
                 <a class="icon-btn" href="#/checkout" aria-label="Cart">
@@ -2450,17 +3105,22 @@
             </button>
         </div>
         <div class="mobile-menu" id="mobileMenu">
-            <div class="nav-search mobile-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m21 21-4.3-4.3" />
-                </svg>
-                <input id="mobileSearchInput" type="text" placeholder="Search rice, spices, meat...">
+            <div class="search-wrap">
+                <div class="nav-search mobile-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input id="mobileSearchInput" type="text" placeholder="Search ofada rice, scent leaf..."
+                        autocomplete="off">
+                </div>
+                <div class="search-results" id="mobileSearchResults"></div>
             </div>
             <a href="#/">Home</a>
             <a href="#/category/rice">Shop</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
+            <a href="#/guide">New Here?</a>
         </div>
     </nav>
 
@@ -2523,6 +3183,32 @@
                     <p>Nineteen aisles, one delivery. Tap a category to see what's in.</p>
                 </div>
                 <div class="cat-grid" id="catGrid"></div>
+            </div>
+        </section>
+
+        <section class="new-section">
+            <div class="wrap">
+                <div class="section-head reveal" style="margin-bottom:30px;">
+                    <div class="section-eyebrow" style="color:var(--orange);">Just landed</div>
+                    <h2
+                        style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color:var(--aubergine); letter-spacing:-0.01em;">
+                        New in stock</h2>
+                </div>
+                <div class="new-carousel-wrap">
+                    <button class="carousel-arrow left" id="newCarouselLeft" type="button" aria-label="Scroll left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="new-carousel" id="newCarousel"></div>
+                    <button class="carousel-arrow right" id="newCarouselRight" type="button" aria-label="Scroll right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -2610,7 +3296,18 @@
         <section class="pd-section">
             <div class="wrap">
                 <div class="pd-grid">
-                    <div class="pd-image" id="pdImage"></div>
+                    <div class="pd-image" id="pdImage">
+                        <span class="stock-badge" id="pdStockBadge"></span>
+                        <span class="pd-placeholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="m21 15-5-5L5 21" />
+                            </svg>
+                            <span>Coming soon</span>
+                        </span>
+                    </div>
                     <div>
                         <div class="pd-cat-tag" id="pdCatTag"></div>
                         <h1 id="pdName"></h1>
@@ -2636,7 +3333,7 @@
                             <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     stroke-linecap="round">
                                     <path d="M20 6 9 17l-5-5" />
-                                </svg> In stock</div>
+                                </svg> <span id="pdStockText">In stock</span></div>
                             <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     stroke-linecap="round">
                                     <rect x="3" y="7" width="15" height="13" rx="2" />
@@ -2922,6 +3619,47 @@
             </div>
         </header>
         <section class="dinfo-section">
+            <div class="wrap">
+                <div class="postcode-checker">
+                    <div class="pc-left">
+                        <h2>Check if we deliver to you</h2>
+                        <p>Enter your postcode, we'll tell you straight away.</p>
+                        <div class="pc-input-row">
+                            <input type="text" id="postcodeInput" placeholder="e.g. CO1 1AA" autocomplete="off"
+                                maxlength="8">
+                            <button class="btn btn-primary" id="postcodeCheckBtn" type="button">Check</button>
+                        </div>
+                        <div class="pc-result" id="postcodeResult"></div>
+                    </div>
+                    <div class="pc-map">
+                        <iframe src="https://www.google.com/maps?q=Essex+and+Suffolk+UK&z=8&output=embed" loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+
+                <div class="areas-strip">
+                    <div class="areas-title">Currently delivering across</div>
+                    <div class="areas-chips">
+                        <span class="area-chip">Colchester</span>
+                        <span class="area-chip">Ipswich</span>
+                        <span class="area-chip">Chelmsford</span>
+                        <span class="area-chip">Clacton-on-Sea</span>
+                        <span class="area-chip">Sudbury</span>
+                        <span class="area-chip">Braintree</span>
+                        <span class="area-chip">Witham</span>
+                        <span class="area-chip">Harwich</span>
+                        <span class="area-chip">Felixstowe</span>
+                        <span class="area-chip">Woodbridge</span>
+                        <span class="area-chip">Maldon</span>
+                        <span class="area-chip">Halstead</span>
+                    </div>
+                    <div class="areas-note">Postcode areas: CO, IP, CM, and parts of SS &amp; CB. Not seeing your town?
+                        Message us, we're expanding steadily.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="dinfo-section" style="padding-top:0;">
             <div class="wrap dinfo-grid">
                 <div class="dinfo-cards">
                     <div class="dinfo-card">
@@ -2936,13 +3674,21 @@
                         </div>
                     </div>
                     <div class="dinfo-card">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
+                        <span class="pound-icon">£</span>
                         <div>
                             <h4>Delivery fee</h4>
                             <p>A flat £3.50 per order, shown at checkout before you pay.</p>
+                        </div>
+                    </div>
+                    <div class="dinfo-card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2.5" />
+                            <path d="M2 10h20" />
+                        </svg>
+                        <div>
+                            <h4>Minimum order</h4>
+                            <p>£15 minimum on all delivered orders. No minimum for pickup.</p>
                         </div>
                     </div>
                     <div class="dinfo-card">
@@ -3024,6 +3770,44 @@
         </section>
     </div>
 
+    <!-- ================= NEW HERE / FAQ ================= -->
+    <div id="view-guide" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; New Here?</div>
+                <h1>New Here?</h1>
+                <p>A quick guide to how Yo7 works, and answers to what people usually ask.</p>
+            </div>
+        </header>
+        <section class="guide-section">
+            <div class="wrap">
+                <div class="guide-steps">
+                    <div class="guide-step reveal">
+                        <div class="num">1</div>
+                        <h3>Browse or search</h3>
+                        <p>Tap a category, or search for exactly what you need, ofada rice, scent leaf, red palm oil,
+                            whatever's on your list.</p>
+                    </div>
+                    <div class="guide-step reveal" style="transition-delay:0.08s">
+                        <div class="num">2</div>
+                        <h3>Add to your cart</h3>
+                        <p>Build your basket as you go. Prices and stock status are shown clearly on every item, no
+                            surprises at checkout.</p>
+                    </div>
+                    <div class="guide-step reveal" style="transition-delay:0.16s">
+                        <div class="num">3</div>
+                        <h3>Checkout and receive</h3>
+                        <p>Confirm delivery details, pay, and get a proper invoice. Delivery across Essex &amp; Suffolk,
+                            or pick up yourself.</p>
+                    </div>
+                </div>
+
+                <h2 class="faq-title reveal">Frequently asked questions</h2>
+                <div id="faqList"></div>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= LOGIN ================= -->
     <div id="view-login" class="hidden-view">
         <section class="auth-section">
@@ -3094,6 +3878,7 @@
                         <a href="#/category/rice">Shop</a>
                         <a href="#/checkout">Cart</a>
                         <a href="#/delivery-info">Delivery Info</a>
+                        <a href="#/guide">New Here?</a>
                     </div>
                     <div class="footer-col">
                         <h4>Contact</h4>
@@ -3122,172 +3907,172 @@
             {
                 slug: 'flour', name: 'Flour', emoji: '🌾', tagline: 'Semo, garri, wheat, and the swallow that holds a proper soup together.',
                 products: [
-                    { name: 'Ayoola Semovita', unit: '2kg bag', price: 6.49 },
-                    { name: 'Yellow Garri (Ijebu)', unit: '1.5kg bag', price: 5.99 },
-                    { name: 'White Garri (Ibadan)', unit: '1.5kg bag', price: 5.49 },
-                    { name: 'Elubo (Yam Flour)', unit: '1kg bag', price: 6.99 },
+                    { name: 'Ayoola Semovita', unit: '2kg bag', price: 6.49, stock: 'in' },
+                    { name: 'Yellow Garri (Ijebu)', unit: '1.5kg bag', price: 5.99, stock: 'in' },
+                    { name: 'White Garri (Ibadan)', unit: '1.5kg bag', price: 5.49, stock: 'in' },
+                    { name: 'Elubo (Yam Flour)', unit: '1kg bag', price: 6.99, stock: 'in' },
                 ]
             },
             {
                 slug: 'oils', name: 'Oils', emoji: '🫙', tagline: 'Red oil, groundnut oil, the good stuff your stew can\'t do without.',
                 products: [
-                    { name: 'Palm Oil (Zomi)', unit: '1L bottle', price: 7.99 },
-                    { name: 'Groundnut Oil', unit: '1L bottle', price: 6.49 },
-                    { name: 'Vegetable Oil', unit: '2L bottle', price: 8.99 },
-                    { name: 'Coconut Oil', unit: '500ml jar', price: 5.99 },
+                    { name: 'Palm Oil (Zomi)', unit: '1L bottle', price: 7.99, keywords: 'red palm oil', stock: 'low' },
+                    { name: 'Groundnut Oil', unit: '1L bottle', price: 6.49, stock: 'in' },
+                    { name: 'Vegetable Oil', unit: '2L bottle', price: 8.99, stock: 'in' },
+                    { name: 'Coconut Oil', unit: '500ml jar', price: 5.99, stock: 'in' },
                 ]
             },
             {
                 slug: 'noodles', name: 'Noodles', emoji: '🍜', tagline: 'Indomie and the quick plate that never lets you down.',
                 products: [
-                    { name: 'Indomie Chicken (Carton)', unit: '40 packs', price: 14.99 },
-                    { name: 'Indomie Onion', unit: 'Single pack', price: 0.59 },
-                    { name: 'Chikki Spaghetti', unit: '500g', price: 1.49 },
-                    { name: 'Rice Vermicelli', unit: '400g', price: 2.29 },
+                    { name: 'Indomie Chicken (Carton)', unit: '40 packs', price: 14.99, stock: 'in' },
+                    { name: 'Indomie Onion', unit: 'Single pack', price: 0.59, stock: 'low' },
+                    { name: 'Chikki Spaghetti', unit: '500g', price: 1.49, stock: 'out' },
+                    { name: 'Rice Vermicelli', unit: '400g', price: 2.29, stock: 'in' },
                 ]
             },
             {
                 slug: 'seasoning', name: 'Seasoning', emoji: '🧂', tagline: 'Maggi, curry, thyme, the cubes and blends that build real flavour.',
                 products: [
-                    { name: 'Maggi Star Cubes', unit: '50 cubes', price: 3.49 },
-                    { name: 'Knorr Chicken Cubes', unit: '20 cubes', price: 2.49 },
-                    { name: 'Curry Powder', unit: '200g', price: 2.99 },
-                    { name: 'Suya Spice Blend', unit: '150g', price: 3.99 },
+                    { name: 'Maggi Star Cubes', unit: '50 cubes', price: 3.49, stock: 'in' },
+                    { name: 'Knorr Chicken Cubes', unit: '20 cubes', price: 2.49, stock: 'in' },
+                    { name: 'Curry Powder', unit: '200g', price: 2.99, stock: 'low' },
+                    { name: 'Suya Spice Blend', unit: '150g', price: 3.99, stock: 'in' },
                 ]
             },
             {
                 slug: 'beverages', name: 'Beverages', emoji: '☕', tagline: 'Milo, Bournvita, and the hot drinks that start the morning right.',
                 products: [
-                    { name: 'Milo Tin', unit: '400g', price: 5.49 },
-                    { name: 'Bournvita', unit: '500g', price: 5.99 },
-                    { name: 'Lipton Yellow Label', unit: '100 bags', price: 3.49 },
-                    { name: 'Peak Milk Powder', unit: '400g', price: 4.99 },
+                    { name: 'Milo Tin', unit: '400g', price: 5.49, stock: 'in' },
+                    { name: 'Bournvita', unit: '500g', price: 5.99, stock: 'in' },
+                    { name: 'Lipton Yellow Label', unit: '100 bags', price: 3.49, stock: 'in' },
+                    { name: 'Peak Milk Powder', unit: '400g', price: 4.99, stock: 'low' },
                 ]
             },
             {
                 slug: 'sea-foods', name: 'Sea Foods', emoji: '🐟', tagline: 'Dried fish, prawns, crayfish, the depth every pot of soup needs.',
                 products: [
-                    { name: 'Dried Catfish', unit: 'per piece', price: 6.99 },
-                    { name: 'Crayfish (Ground)', unit: '250g', price: 5.49 },
-                    { name: 'Stockfish (Okporoko)', unit: 'per piece', price: 8.99 },
-                    { name: 'Dried Prawns', unit: '200g', price: 6.49 },
+                    { name: 'Dried Catfish', unit: 'per piece', price: 6.99, stock: 'in' },
+                    { name: 'Crayfish (Ground)', unit: '250g', price: 5.49, stock: 'out' },
+                    { name: 'Stockfish (Okporoko)', unit: 'per piece', price: 8.99, stock: 'in' },
+                    { name: 'Dried Prawns', unit: '200g', price: 6.49, stock: 'in' },
                 ]
             },
             {
                 slug: 'tropical-foods', name: 'Tropical Foods', emoji: '🥭', tagline: 'The staples that taste like home, however far from it you are.',
                 products: [
-                    { name: 'Ripe Plantain', unit: 'per hand', price: 3.99 },
-                    { name: 'Scotch Bonnet Pepper', unit: '250g', price: 2.49 },
-                    { name: 'African Star Apple (Agbalumo)', unit: 'per punnet', price: 4.99 },
-                    { name: 'Bitter Kola', unit: 'per pack', price: 3.49 },
+                    { name: 'Ripe Plantain', unit: 'per hand', price: 3.99, stock: 'low' },
+                    { name: 'Scotch Bonnet Pepper', unit: '250g', price: 2.49, stock: 'in' },
+                    { name: 'African Star Apple (Agbalumo)', unit: 'per punnet', price: 4.99, stock: 'in' },
+                    { name: 'Bitter Kola', unit: 'per pack', price: 3.49, stock: 'in' },
                 ]
             },
             {
                 slug: 'fruits-vegetables', name: 'Fruits &amp; Vegetables', emoji: '🥬', tagline: 'Ugu, spinach, scent leaf, garden eggs, picked fresh not forced.',
                 products: [
-                    { name: 'Ugu Leaves (Fluted Pumpkin)', unit: 'bunch', price: 2.99 },
-                    { name: 'Garden Eggs', unit: 'per punnet', price: 3.49 },
-                    { name: 'Scent Leaf (Nchanwu)', unit: 'bunch', price: 1.99 },
-                    { name: 'Okra', unit: '400g', price: 2.49 },
+                    { name: 'Ugu Leaves (Fluted Pumpkin)', unit: 'bunch', price: 2.99, stock: 'in' },
+                    { name: 'Garden Eggs', unit: 'per punnet', price: 3.49, stock: 'low' },
+                    { name: 'Scent Leaf (Nchanwu)', unit: 'bunch', price: 1.99, stock: 'in' },
+                    { name: 'Okra', unit: '400g', price: 2.49, stock: 'in' },
                 ]
             },
             {
                 slug: 'condiments', name: 'Condiments', emoji: '🍯', tagline: 'Sauces, pastes, and pepper mixes that finish a dish properly.',
                 products: [
-                    { name: 'Tomato Paste (Gino)', unit: '800g tin', price: 2.99 },
-                    { name: 'Ata Rodo Pepper Mix', unit: '300g', price: 3.99 },
-                    { name: 'Shito Pepper Sauce', unit: '250g jar', price: 4.49 },
-                    { name: 'Groundnut Paste', unit: '400g', price: 3.99 },
+                    { name: 'Tomato Paste (Gino)', unit: '800g tin', price: 2.99, stock: 'out' },
+                    { name: 'Ata Rodo Pepper Mix', unit: '300g', price: 3.99, stock: 'in' },
+                    { name: 'Shito Pepper Sauce', unit: '250g jar', price: 4.49, stock: 'low' },
+                    { name: 'Groundnut Paste', unit: '400g', price: 3.99, stock: 'in' },
                 ]
             },
             {
                 slug: 'miscellaneous', name: 'Miscellaneous', emoji: '🧺', tagline: 'The small essentials every proper kitchen quietly depends on.',
                 products: [
-                    { name: 'Aluminium Foil Wrap', unit: '30m roll', price: 3.49 },
-                    { name: 'Ziplock Freezer Bags', unit: 'pack of 50', price: 2.99 },
-                    { name: 'Cellophane Nylon Bags', unit: 'pack', price: 1.99 },
-                    { name: 'Disposable Food Containers', unit: 'pack of 10', price: 4.49 },
+                    { name: 'Aluminium Foil Wrap', unit: '30m roll', price: 3.49, stock: 'in' },
+                    { name: 'Ziplock Freezer Bags', unit: 'pack of 50', price: 2.99, stock: 'in' },
+                    { name: 'Cellophane Nylon Bags', unit: 'pack', price: 1.99, stock: 'in' },
+                    { name: 'Disposable Food Containers', unit: 'pack of 10', price: 4.49, stock: 'low' },
                 ]
             },
             {
                 slug: 'hair-products', name: 'Hair Products', emoji: '💇🏾‍♀️', tagline: 'Braid-ready, scalp-friendly, made for our kind of hair.',
                 products: [
-                    { name: 'Cantu Shea Butter Cream', unit: '340g', price: 6.99 },
-                    { name: 'Black Castor Oil', unit: '250ml', price: 5.49 },
-                    { name: 'Braiding Hair (Kanekalon)', unit: 'per pack', price: 4.99 },
-                    { name: 'Edge Control Gel', unit: '120g', price: 4.49 },
+                    { name: 'Cantu Shea Butter Cream', unit: '340g', price: 6.99, stock: 'in' },
+                    { name: 'Black Castor Oil', unit: '250ml', price: 5.49, stock: 'in' },
+                    { name: 'Braiding Hair (Kanekalon)', unit: 'per pack', price: 4.99, stock: 'in' },
+                    { name: 'Edge Control Gel', unit: '120g', price: 4.49, stock: 'out' },
                 ]
             },
             {
                 slug: 'snacks-confectionary', name: 'Snacks &amp; Confectionary', emoji: '🍬', tagline: 'Chin chin, plantain chips, the small joys between meals.',
                 products: [
-                    { name: 'Chin Chin (Homemade Style)', unit: '400g', price: 3.99 },
-                    { name: 'Plantain Chips', unit: '150g', price: 2.49 },
-                    { name: 'Chin Chin Puff Puff Mix', unit: '500g', price: 3.49 },
-                    { name: 'Groundnut (Roasted)', unit: '300g', price: 2.99 },
+                    { name: 'Chin Chin (Homemade Style)', unit: '400g', price: 3.99, stock: 'low' },
+                    { name: 'Plantain Chips', unit: '150g', price: 2.49, stock: 'in' },
+                    { name: 'Chin Chin Puff Puff Mix', unit: '500g', price: 3.49, stock: 'in' },
+                    { name: 'Groundnut (Roasted)', unit: '300g', price: 2.99, stock: 'in' },
                 ]
             },
             {
                 slug: 'rice', name: 'Rice', emoji: '🍚', tagline: 'Ofada, long grain, basmati, whatever your jollof calls for.',
                 products: [
-                    { name: 'Ofada Rice', unit: '1kg', price: 4.99 },
-                    { name: 'Long Grain Parboiled Rice', unit: '5kg bag', price: 9.99 },
-                    { name: 'Basmati Rice', unit: '5kg bag', price: 11.99 },
-                    { name: 'Golden Sella Rice', unit: '10kg bag', price: 18.99 },
+                    { name: 'Ofada Rice', unit: '1kg', price: 4.99, stock: 'in' },
+                    { name: 'Long Grain Parboiled Rice', unit: '5kg bag', price: 9.99, stock: 'low' },
+                    { name: 'Basmati Rice', unit: '5kg bag', price: 11.99, stock: 'in' },
+                    { name: 'Golden Sella Rice', unit: '10kg bag', price: 18.99, stock: 'in' },
                 ]
             },
             {
                 slug: 'meat', name: 'Meat', emoji: '🥩', tagline: 'Goat, beef, cow leg, cut the way your pot actually needs it.',
                 products: [
-                    { name: 'Goat Meat (Cut)', unit: '1kg', price: 12.99 },
-                    { name: 'Cow Leg (Shaki style)', unit: '1kg', price: 9.99 },
-                    { name: 'Beef Chunks', unit: '1kg', price: 10.49 },
-                    { name: 'Oxtail', unit: '1kg', price: 11.49 },
+                    { name: 'Goat Meat (Cut)', unit: '1kg', price: 12.99, stock: 'in' },
+                    { name: 'Cow Leg (Shaki style)', unit: '1kg', price: 9.99, stock: 'in' },
+                    { name: 'Beef Chunks', unit: '1kg', price: 10.49, stock: 'out' },
+                    { name: 'Oxtail', unit: '1kg', price: 11.49, stock: 'in' },
                 ]
             },
             {
                 slug: 'body-oral-products', name: 'Body &amp; Oral Products', emoji: '🧴', tagline: 'Shea butter, black soap, the basics for proper self care.',
                 products: [
-                    { name: 'Raw Shea Butter', unit: '250g', price: 4.99 },
-                    { name: 'African Black Soap', unit: 'per bar', price: 2.99 },
-                    { name: 'Dudu Osun Soap', unit: 'per bar', price: 1.99 },
-                    { name: 'Chewing Stick (Atim)', unit: 'pack of 5', price: 3.49 },
+                    { name: 'Raw Shea Butter', unit: '250g', price: 4.99, stock: 'in' },
+                    { name: 'African Black Soap', unit: 'per bar', price: 2.99, stock: 'in' },
+                    { name: 'Dudu Osun Soap', unit: 'per bar', price: 1.99, stock: 'in' },
+                    { name: 'Chewing Stick (Atim)', unit: 'pack of 5', price: 3.49, stock: 'low' },
                 ]
             },
             {
                 slug: 'poultry', name: 'Poultry', emoji: '🍗', tagline: 'Chicken and turkey, whole or cut, for stew, grill, or party jollof.',
                 products: [
-                    { name: 'Whole Chicken', unit: 'per bird', price: 8.99 },
-                    { name: 'Chicken Thighs', unit: '1kg', price: 5.49 },
-                    { name: 'Turkey Wings', unit: '1kg', price: 6.99 },
-                    { name: 'Chicken Gizzard', unit: '500g', price: 3.99 },
+                    { name: 'Whole Chicken', unit: 'per bird', price: 8.99, stock: 'in' },
+                    { name: 'Chicken Thighs', unit: '1kg', price: 5.49, stock: 'in' },
+                    { name: 'Turkey Wings', unit: '1kg', price: 6.99, stock: 'in' },
+                    { name: 'Chicken Gizzard', unit: '500g', price: 3.99, stock: 'in' },
                 ]
             },
             {
                 slug: 'root-vegetables', name: 'Root Vegetables', emoji: '🍠', tagline: 'Yam, cassava, cocoyam, dug up and ready for the pot.',
                 products: [
-                    { name: 'White Yam (Tuber)', unit: 'per tuber', price: 7.99 },
-                    { name: 'Cassava (Fresh)', unit: '1kg', price: 2.99 },
-                    { name: 'Cocoyam', unit: '1kg', price: 3.49 },
-                    { name: 'Sweet Potato', unit: '1kg', price: 2.49 },
+                    { name: 'White Yam (Tuber)', unit: 'per tuber', price: 7.99, stock: 'low' },
+                    { name: 'Cassava (Fresh)', unit: '1kg', price: 2.99, stock: 'out' },
+                    { name: 'Cocoyam', unit: '1kg', price: 3.49, stock: 'in' },
+                    { name: 'Sweet Potato', unit: '1kg', price: 2.49, stock: 'in' },
                 ]
             },
             {
                 slug: 'beans', name: 'Beans', emoji: '🫘', tagline: 'Honey beans, black-eyed, the base of a proper moi moi.',
                 products: [
-                    { name: 'Honey Beans (Oloyin)', unit: '2kg', price: 6.99 },
-                    { name: 'Black-Eyed Beans', unit: '2kg', price: 5.99 },
-                    { name: 'Brown Beans', unit: '2kg', price: 5.49 },
-                    { name: 'Ewa Agoyin Beans', unit: '2kg', price: 6.49 },
+                    { name: 'Honey Beans (Oloyin)', unit: '2kg', price: 6.99, stock: 'in' },
+                    { name: 'Black-Eyed Beans', unit: '2kg', price: 5.99, stock: 'low' },
+                    { name: 'Brown Beans', unit: '2kg', price: 5.49, stock: 'in' },
+                    { name: 'Ewa Agoyin Beans', unit: '2kg', price: 6.49, stock: 'in' },
                 ]
             },
             {
                 slug: 'drinks', name: 'Drinks', emoji: '🥤', tagline: 'Zobo, chapman, malt, the cold ones for a hot afternoon.',
                 products: [
-                    { name: 'Zobo Drink (Bottled)', unit: '500ml', price: 2.49 },
-                    { name: 'Chapman (Bottled)', unit: '500ml', price: 2.99 },
-                    { name: 'Malt Drink (Amstel)', unit: '330ml can', price: 1.49 },
-                    { name: 'Supermalt', unit: '330ml can', price: 1.59 },
+                    { name: 'Zobo Drink (Bottled)', unit: '500ml', price: 2.49, stock: 'in' },
+                    { name: 'Chapman (Bottled)', unit: '500ml', price: 2.99, stock: 'in' },
+                    { name: 'Malt Drink (Amstel)', unit: '330ml can', price: 1.49, stock: 'low' },
+                    { name: 'Supermalt', unit: '330ml can', price: 1.59, stock: 'in' },
                 ]
             },
         ];
@@ -3355,32 +4140,111 @@
             document.getElementById('catNavStrip').innerHTML = chipsHTML + chipsHTML;
         }
 
+        const NEW_PRODUCT_SLUGS = ['rice', 'meat', 'poultry', 'drinks', 'snacks-confectionary', 'sea-foods', 'fruits-vegetables', 'condiments', 'beans', 'oils'];
+        function renderNewCarousel() {
+            const items = NEW_PRODUCT_SLUGS.map(slug => {
+                const cat = findCategory(slug);
+                if (!cat) return null;
+                return { ...cat.products[0], catSlug: slug, catName: cat.name, idx: 0 };
+            }).filter(Boolean);
+
+            const cardHTML = items.map(p => `
+    <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
+      <div class="thumb">
+        <span class="new-tag">New</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+        <span>Coming soon</span>
+      </div>
+      <div class="body">
+        <h4>${p.name}</h4>
+        <div class="cat">${p.catName.replace(/&amp;/g, '&')}</div>
+        <div class="price">${money(p.price)}</div>
+      </div>
+    </a>`).join('');
+            // duplicated once so the auto-scroll can loop seamlessly
+            document.getElementById('newCarousel').innerHTML = cardHTML + cardHTML;
+        }
+        const ncLeft = document.getElementById('newCarouselLeft');
+        const ncRight = document.getElementById('newCarouselRight');
+        if (ncLeft && ncRight) {
+            ncLeft.addEventListener('click', () => { pauseNewCarousel(); document.getElementById('newCarousel').scrollBy({ left: -240, behavior: 'smooth' }); });
+            ncRight.addEventListener('click', () => { pauseNewCarousel(); document.getElementById('newCarousel').scrollBy({ left: 240, behavior: 'smooth' }); });
+        }
+
+        /* ================= NEW PRODUCTS CAROUSEL: auto-scroll ================= */
+        let newCarouselPaused = false;
+        let newCarouselResumeTimer = null;
+        function pauseNewCarousel() {
+            newCarouselPaused = true;
+            clearTimeout(newCarouselResumeTimer);
+            newCarouselResumeTimer = setTimeout(() => { newCarouselPaused = false; }, 2500);
+        }
+        (function initNewCarousel() {
+            const strip = document.getElementById('newCarousel');
+            if (!strip) return;
+            const SPEED = 0.6;
+            function tick() {
+                if (!newCarouselPaused && strip.offsetParent !== null) {
+                    strip.scrollLeft += SPEED;
+                    const half = strip.scrollWidth / 2;
+                    if (strip.scrollLeft >= half) { strip.scrollLeft -= half; }
+                }
+                requestAnimationFrame(tick);
+            }
+            ['mouseenter', 'touchstart', 'wheel', 'pointerdown'].forEach(evt => {
+                strip.addEventListener(evt, pauseNewCarousel, { passive: true });
+            });
+            strip.addEventListener('mouseleave', () => { clearTimeout(newCarouselResumeTimer); newCarouselResumeTimer = setTimeout(() => { newCarouselPaused = false; }, 900); });
+            let isDown = false, startX = 0, startScroll = 0;
+            strip.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX; startScroll = strip.scrollLeft; pauseNewCarousel(); });
+            window.addEventListener('mouseup', () => isDown = false);
+            window.addEventListener('mousemove', (e) => { if (!isDown) return; strip.scrollLeft = startScroll - (e.pageX - startX); });
+            requestAnimationFrame(tick);
+        })();
+
+        function stockLabel(s) {
+            if (s === 'low') return 'Low stock';
+            if (s === 'out') return 'Out of stock';
+            return 'In stock';
+        }
+        function comingSoonThumbHTML() {
+            return `<svg class="thumb-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span class="thumb-placeholder-label">Coming soon</span>`;
+        }
         function productCardHTML(p) {
             const pidx = p.idx !== undefined ? p.idx : p.id.split('::')[1];
+            const href = `#/product/${p.catSlug}/${pidx}`;
+            const stock = p.stock || 'in';
+            const outOfStock = stock === 'out';
             return `
-    <div class="product-card-wrap">
-      <a class="product-card" href="#/product/${p.catSlug}/${pidx}">
-        <div class="product-thumb">${p.emoji}</div>
+    <div class="product-card">
+      <a class="product-card-link" href="${href}">
+        <div class="product-thumb">
+          <span class="stock-badge ${stock}">${stockLabel(stock)}</span>
+          ${comingSoonThumbHTML()}
+        </div>
         <div class="product-body">
           <h4>${p.name}</h4>
           <div class="product-unit">${p.unit}</div>
           <div class="product-row">
             <div class="product-price">${money(p.price)}</div>
-            <button class="add-btn" type="button" aria-label="Add ${p.name}" onclick="event.preventDefault(); quickAdd('${p.catSlug}', ${pidx});">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
           </div>
         </div>
       </a>
-      <a class="view-details-btn" href="#/product/${p.catSlug}/${pidx}">
-        View details
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </a>
+      <div class="card-actions">
+        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="quickAdd('${p.catSlug}', ${pidx});">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          ${outOfStock ? 'Out of stock' : 'Add to cart'}
+        </button>
+        <a class="view-details-btn" href="${href}">
+          View details
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
     </div>`;
         }
         function quickAdd(catSlug, idx) {
             const p = getProduct(catSlug, idx);
-            if (p) addToCart(p, 1);
+            if (p && p.stock !== 'out') addToCart(p, 1);
         }
         window.quickAdd = quickAdd;
 
@@ -3408,15 +4272,24 @@
             document.getElementById('resultCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'productGrid', 'emptyState');
         }
+        function matchesQuery(p, q) {
+            return p.name.toLowerCase().includes(q) ||
+                p.catName.toLowerCase().includes(q) ||
+                (p.keywords && p.keywords.toLowerCase().includes(q));
+        }
+        function searchProducts(query) {
+            const q = query.trim().toLowerCase();
+            if (!q) return [];
+            return allProducts().filter(p => matchesQuery(p, q))
+                .map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+        }
         function renderSearchPage(query) {
             document.getElementById('crumbLabel').textContent = 'Search';
             document.getElementById('shopHeaderEmoji').textContent = '🔎';
             document.getElementById('shopHeaderTitle').textContent = `"${query}"`;
             document.getElementById('shopHeaderDesc').textContent = 'Results from every aisle in the store.';
             renderCatStrip(null);
-            const q = query.trim().toLowerCase();
-            const items = allProducts().filter(p => p.name.toLowerCase().includes(q) || p.catName.toLowerCase().includes(q))
-                .map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+            const items = searchProducts(query);
             document.getElementById('resultCount').textContent = `${items.length} result${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'productGrid', 'emptyState');
         }
@@ -3433,17 +4306,30 @@
             if (!p) {
                 document.getElementById('pdName').textContent = 'Product not found';
                 document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; Not found`;
-                ['pdImage', 'pdCatTag', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
+                ['pdCatTag', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
                 document.getElementById('relatedGrid').innerHTML = '';
                 return;
             }
+            const stock = p.stock || 'in';
             document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
-            document.getElementById('pdImage').textContent = p.emoji;
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
             document.getElementById('pdName').textContent = p.name;
             document.getElementById('pdUnit').textContent = p.unit;
             document.getElementById('pdPrice').textContent = money(p.price);
             document.getElementById('pdDesc').textContent = `${p.name}, a Yo7 staple from our ${cat.name.replace(/&amp;/g, '&')} aisle. ${cat.tagline}`;
+
+            const badge = document.getElementById('pdStockBadge');
+            badge.className = 'stock-badge ' + stock;
+            badge.textContent = stockLabel(stock);
+            document.getElementById('pdStockText').textContent = stockLabel(stock);
+
+            const addBtn = document.getElementById('pdAddCart');
+            const buyBtn = document.getElementById('pdBuyNow');
+            const outOfStock = stock === 'out';
+            addBtn.disabled = outOfStock;
+            buyBtn.disabled = outOfStock;
+            buyBtn.textContent = outOfStock ? 'Out of stock' : 'Buy now';
+
             updatePdPrice();
 
             const related = cat.products.map((rp, ri) => ({ ...rp, emoji: cat.emoji, catSlug, idx: ri })).filter(rp => rp.idx !== p.idx).slice(0, 4);
@@ -3458,8 +4344,8 @@
                 ? `${money(total)} <span style="font-size:14px; color:#8a7f78; font-weight:500;">(${money(pdCurrent.price)} each)</span>`
                 : money(total);
         }
-        document.getElementById('pdAddCart').addEventListener('click', () => { if (pdCurrent) { addToCart(pdCurrent, pdQty); alert(`Added ${pdQty} × ${pdCurrent.name} to your cart.`); } });
-        document.getElementById('pdBuyNow').addEventListener('click', () => { if (pdCurrent) { addToCart(pdCurrent, pdQty); window.location.hash = '#/checkout'; } });
+        document.getElementById('pdAddCart').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); alert(`Added ${pdQty} × ${pdCurrent.name} to your cart.`); } });
+        document.getElementById('pdBuyNow').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); window.location.hash = '#/checkout'; } });
 
         /* ================= CHECKOUT ================= */
         function renderCartList() {
@@ -3473,7 +4359,7 @@
                 document.getElementById('toDeliveryBtn').disabled = false;
                 list.innerHTML = cart.map((item, i) => `
       <div class="cart-row">
-        <div class="cart-thumb">${item.emoji}</div>
+        <div class="cart-thumb"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#b3a998;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
         <div class="cart-info"><h4>${item.name}</h4><span>${item.unit}</span></div>
         <div class="cart-qty">
           <button type="button" onclick="changeQty(${i},-1)">&minus;</button>
@@ -3580,7 +4466,7 @@
             const di = lastOrder.delivery_info || {};
             document.getElementById('invAddress').innerHTML = `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}`;
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
-    <tr><td>${i.emoji} ${i.name} <span style="color:#8a7f78;">(${i.unit})</span></td><td>${i.qty}</td><td>${money(i.price * i.qty)}</td></tr>`).join('');
+    <tr><td>${i.name} <span style="color:#8a7f78;">(${i.unit})</span></td><td>${i.qty}</td><td>${money(i.price * i.qty)}</td></tr>`).join('');
             document.getElementById('invSubtotal').textContent = money(lastOrder.subtotal);
             document.getElementById('invDelivery').textContent = money(lastOrder.delivery);
             document.getElementById('invTotal').textContent = money(lastOrder.total);
@@ -3636,18 +4522,57 @@
             window.location.hash = '#/';
         });
 
-        /* ================= SEARCH INPUT (nav) ================= */
-        document.getElementById('navSearchInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target.value.trim()) {
-                window.location.hash = '#/search/' + encodeURIComponent(e.target.value.trim());
+        /* ================= LIVE SEARCH (instant results dropdown) ================= */
+        function renderSearchDropdown(resultsEl, items, query) {
+            if (!query.trim()) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
+            if (items.length === 0) {
+                resultsEl.innerHTML = `<div class="search-empty">No matches for "${query}" yet, try another word.</div>`;
+                resultsEl.classList.add('open');
+                return;
             }
-        });
-        document.getElementById('mobileSearchInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target.value.trim()) {
-                window.location.hash = '#/search/' + encodeURIComponent(e.target.value.trim());
-                document.getElementById('mobileMenu').classList.remove('open');
-            }
-        });
+            const shown = items.slice(0, 6);
+            resultsEl.innerHTML = shown.map(p => `
+                <a class="search-result-item" href="#/product/${p.catSlug}/${p.idx}">
+                    <div class="search-result-thumb"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+                    <div class="search-result-info">
+                        <div class="name">${p.name}</div>
+                        <div class="cat">${p.catName.replace(/&amp;/g, '&')}</div>
+                    </div>
+                    <div class="search-result-price">${money(p.price)}</div>
+                </a>`).join('')
+                + (items.length > shown.length
+                    ? `<a class="search-see-all" href="#/search/${encodeURIComponent(query)}">See all ${items.length} results</a>`
+                    : '');
+            resultsEl.classList.add('open');
+        }
+
+        function wireLiveSearch(inputId, resultsId, onNavigate) {
+            const input = document.getElementById(inputId);
+            const results = document.getElementById(resultsId);
+            input.addEventListener('input', () => {
+                const items = searchProducts(input.value);
+                renderSearchDropdown(results, items, input.value);
+            });
+            input.addEventListener('focus', () => {
+                if (input.value.trim()) renderSearchDropdown(results, searchProducts(input.value), input.value);
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && input.value.trim()) {
+                    results.classList.remove('open');
+                    window.location.hash = '#/search/' + encodeURIComponent(input.value.trim());
+                    if (onNavigate) onNavigate();
+                } else if (e.key === 'Escape') {
+                    results.classList.remove('open');
+                    input.blur();
+                }
+            });
+            results.addEventListener('click', () => { results.classList.remove('open'); if (onNavigate) onNavigate(); });
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !results.contains(e.target)) results.classList.remove('open');
+            });
+        }
+        wireLiveSearch('navSearchInput', 'navSearchResults');
+        wireLiveSearch('mobileSearchInput', 'mobileSearchResults', () => document.getElementById('mobileMenu').classList.remove('open'));
 
         /* ================= MOBILE HAMBURGER MENU ================= */
         const navHamburger = document.getElementById('navHamburger');
@@ -3655,6 +4580,34 @@
         navHamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
         mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.remove('open')));
         window.addEventListener('hashchange', () => mobileMenu.classList.remove('open'));
+
+        /* ================= GUIDE / FAQ ================= */
+        const FAQS = [
+            { q: 'What areas do you deliver to?', a: 'Essex and Suffolk right now, mainly the CO, IP, and CM postcode areas, with parts of SS and CB also covered. Use the postcode checker on the Delivery Information page to check your exact address.' },
+            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is a flat £3.50 per order. There\'s a £15 minimum for delivered orders, no minimum if you choose pickup instead.' },
+            { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 2pm are usually out the same or next day.' },
+            { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
+            { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your cart. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
+            { q: 'Is payment on the site secure?', a: 'The checkout you see now is a preview, it doesn\'t process real payments yet. Once live payment is switched on, it\'ll run through a proper secure processor, not through this site directly.' },
+            { q: 'Do I need an account to order?', a: 'Not necessarily for browsing, but you\'ll need delivery details at checkout either way. Creating an account just makes future orders quicker.' },
+            { q: 'How do I get in touch if I have a problem with my order?', a: 'WhatsApp is the fastest way, there\'s a button on the Contact page and a floating button on every page. We read every message.' },
+        ];
+        function renderFAQ() {
+            const list = document.getElementById('faqList');
+            if (!list) return;
+            list.innerHTML = FAQS.map((f, i) => `
+    <div class="faq-item" id="faq-${i}">
+      <button class="faq-q" type="button" onclick="toggleFaq(${i})">
+        <span>${f.q}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <div class="faq-a"><p>${f.a}</p></div>
+    </div>`).join('');
+        }
+        function toggleFaq(i) {
+            document.getElementById('faq-' + i).classList.toggle('open');
+        }
+        window.toggleFaq = toggleFaq;
 
         /* ================= CONTACT PAGE: hours + open status ================= */
         function timeToMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
@@ -3676,7 +4629,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info'];
+        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide'];
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
         }
@@ -3710,6 +4663,9 @@
                 renderContactPage();
             } else if (hash === '#/delivery-info') {
                 showView('view-delivery-info');
+            } else if (hash === '#/guide') {
+                showView('view-guide');
+                renderFAQ();
             } else {
                 showView('view-home');
             }
@@ -3729,6 +4685,33 @@
                 });
             }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
             document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+        }
+
+        /* ================= POSTCODE CHECKER ================= */
+        const DELIVERY_POSTCODE_AREAS = ['CO', 'IP', 'CM'];
+        const PARTIAL_POSTCODE_AREAS = ['SS', 'CB']; // only parts of these areas are covered
+        function checkPostcode() {
+            const input = document.getElementById('postcodeInput');
+            const resultEl = document.getElementById('postcodeResult');
+            const raw = input.value.trim().toUpperCase().replace(/\s+/g, '');
+            if (!raw) { resultEl.textContent = 'Type a postcode to check.'; resultEl.className = 'pc-result'; return; }
+            const match = raw.match(/^([A-Z]{1,2})\d/);
+            const area = match ? match[1] : null;
+            if (area && DELIVERY_POSTCODE_AREAS.includes(area)) {
+                resultEl.textContent = `Yes, we deliver to ${area} postcodes.`;
+                resultEl.className = 'pc-result yes';
+            } else if (area && PARTIAL_POSTCODE_AREAS.includes(area)) {
+                resultEl.textContent = `Partly, only some ${area} postcodes are covered, message us on WhatsApp to confirm your exact address.`;
+                resultEl.className = 'pc-result no';
+            } else {
+                resultEl.textContent = `Not yet, that's outside Essex & Suffolk for now. Message us and we'll let you know if that changes.`;
+                resultEl.className = 'pc-result no';
+            }
+        }
+        const postcodeBtn = document.getElementById('postcodeCheckBtn');
+        if (postcodeBtn) {
+            postcodeBtn.addEventListener('click', checkPostcode);
+            document.getElementById('postcodeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPostcode(); });
         }
 
         /* ================= CATEGORY STRIP: auto-carousel + manual scroll ================= */
@@ -3768,6 +4751,7 @@
 
         /* ================= INIT ================= */
         renderCatGrid();
+        renderNewCarousel();
         observeReveals();
         updateCartBadge();
         route();
