@@ -69,13 +69,14 @@
 
         /* ================= PERSISTENT NAV ================= */
         #mainNav {
-            position: sticky;
-            top: 0;
+            position: static;
             z-index: 100;
             background: rgba(36, 18, 38, 0.92);
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
             border-bottom: 1px solid rgba(245, 242, 228, 0.08);
+            overflow-x: hidden;
+            max-width: 100vw;
         }
 
         #mainNav .wrap {
@@ -84,6 +85,7 @@
             gap: 18px;
             padding-top: 14px;
             padding-bottom: 14px;
+            max-width: 100%;
         }
 
         .nav-mark {
@@ -437,9 +439,19 @@
 
         @media (max-width:900px) {
 
-            .nav-links,
-            .nav-search {
+            .nav-links {
                 display: none;
+            }
+
+            #mainNav .wrap {
+                flex-wrap: wrap;
+            }
+
+            .search-wrap {
+                order: 3;
+                flex-basis: 100%;
+                max-width: 100%;
+                margin-top: 10px;
             }
         }
 
@@ -461,16 +473,8 @@
             height: 19px;
         }
 
-        .mobile-search-btn {
-            display: none;
-        }
-
         @media (max-width:900px) {
             .nav-hamburger {
-                display: flex;
-            }
-
-            .mobile-search-btn {
                 display: flex;
             }
         }
@@ -516,31 +520,30 @@
 
         @media (max-width:480px) {
             #mainNav .wrap {
-                gap: 10px;
-                padding-left: 16px;
-                padding-right: 16px;
+                gap: 8px;
+                padding-left: 14px;
+                padding-right: 14px;
             }
 
             .nav-mark .word {
-                font-size: 16px;
+                font-size: 15px;
             }
 
             .nav-account {
-                padding: 7px 12px 7px 9px;
-                font-size: 11.5px;
-                gap: 5px;
-                max-width: 112px;
+                width: 34px;
+                height: 34px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 50%;
             }
 
-            .nav-account span#accountLabel {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                max-width: 78px;
-                display: inline-block;
+            .nav-account span#accountLabel,
+            .account-caret {
+                display: none !important;
             }
 
-            .icon-btn {
+            .icon-btn,
+            .nav-hamburger {
                 width: 34px;
                 height: 34px;
             }
@@ -3171,12 +3174,6 @@
                     </div>
                 </div>
             </div>
-            <button class="icon-btn mobile-search-btn" id="mobileSearchBtn" type="button" aria-label="Search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m21 21-4.3-4.3" />
-                </svg>
-            </button>
             <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Menu">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M3 6h18M3 12h18M3 18h18" />
@@ -3184,17 +3181,6 @@
             </button>
         </div>
         <div class="mobile-menu" id="mobileMenu">
-            <div class="search-wrap">
-                <div class="nav-search mobile-search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m21 21-4.3-4.3" />
-                    </svg>
-                    <input id="mobileSearchInput" type="text" placeholder="Search ofada rice, scent leaf..."
-                        autocomplete="off">
-                </div>
-                <div class="search-results" id="mobileSearchResults"></div>
-            </div>
             <a href="#/">Home</a>
             <a href="#/category/rice">Shop</a>
             <a href="#/delivery-info">Delivery</a>
@@ -4273,9 +4259,21 @@
                 }
                 requestAnimationFrame(tick);
             }
-            ['mouseenter', 'touchstart', 'wheel', 'pointerdown'].forEach(evt => {
+            ['mouseenter', 'wheel', 'pointerdown'].forEach(evt => {
                 strip.addEventListener(evt, pauseNewCarousel, { passive: true });
             });
+            // Only pause for touch when the gesture is clearly a horizontal swipe on the
+            // carousel itself, not a vertical page-scroll that happens to pass over it.
+            let touchStartX = 0, touchStartY = 0;
+            strip.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            strip.addEventListener('touchmove', (e) => {
+                const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                if (dx > dy && dx > 6) pauseNewCarousel();
+            }, { passive: true });
             strip.addEventListener('mouseleave', () => { clearTimeout(newCarouselResumeTimer); newCarouselResumeTimer = setTimeout(() => { newCarouselPaused = false; }, 900); });
             let isDown = false, startX = 0, startScroll = 0;
             strip.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX; startScroll = strip.scrollLeft; pauseNewCarousel(); });
@@ -4681,7 +4679,6 @@
             });
         }
         wireLiveSearch('navSearchInput', 'navSearchResults');
-        wireLiveSearch('mobileSearchInput', 'mobileSearchResults', () => document.getElementById('mobileMenu').classList.remove('open'));
 
         /* ================= MOBILE HAMBURGER MENU ================= */
         const navHamburger = document.getElementById('navHamburger');
@@ -4689,12 +4686,6 @@
         navHamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
         mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.remove('open')));
         window.addEventListener('hashchange', () => mobileMenu.classList.remove('open'));
-
-        const mobileSearchBtn = document.getElementById('mobileSearchBtn');
-        mobileSearchBtn.addEventListener('click', () => {
-            mobileMenu.classList.add('open');
-            setTimeout(() => document.getElementById('mobileSearchInput').focus(), 150);
-        });
 
         /* ================= GUIDE / FAQ ================= */
         const FAQS = [
@@ -4750,7 +4741,7 @@
         }
         function route() {
             const hash = window.location.hash;
-            window.scrollTo(0, 0);
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 
             if (hash.startsWith('#/category/')) {
                 showView('view-shop');
@@ -4868,9 +4859,19 @@
                 clearTimeout(resumeTimer);
                 resumeTimer = setTimeout(() => { paused = false; }, 2200);
             }
-            ['mouseenter', 'touchstart', 'wheel', 'pointerdown'].forEach(evt => {
+            ['mouseenter', 'wheel', 'pointerdown'].forEach(evt => {
                 strip.addEventListener(evt, pauseThenResume, { passive: true });
             });
+            let catTouchStartX = 0, catTouchStartY = 0;
+            strip.addEventListener('touchstart', (e) => {
+                catTouchStartX = e.touches[0].clientX;
+                catTouchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            strip.addEventListener('touchmove', (e) => {
+                const dx = Math.abs(e.touches[0].clientX - catTouchStartX);
+                const dy = Math.abs(e.touches[0].clientY - catTouchStartY);
+                if (dx > dy && dx > 6) pauseThenResume();
+            }, { passive: true });
             strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); resumeTimer = setTimeout(() => { paused = false; }, 800); });
 
             // simple drag-to-scroll for desktop mouse users
