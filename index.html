@@ -34,9 +34,7 @@
             scroll-behavior: smooth;
         }
 
-        html {
-            overflow-x: hidden;
-        }
+        html { overflow-x: hidden; }
 
         body {
             font-family: var(--body);
@@ -69,7 +67,10 @@
 
         /* ================= PERSISTENT NAV ================= */
         #mainNav {
-            position: static;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 100;
             background: rgba(36, 18, 38, 0.92);
             backdrop-filter: blur(14px) saturate(140%);
@@ -78,6 +79,62 @@
             overflow-x: hidden;
             max-width: 100vw;
         }
+
+        body { padding-top: 0; }
+
+        /* ================= EDIT MODE ================= */
+        .edit-mode-banner {
+            display: none;
+            background: var(--orange);
+            color: #fff;
+        }
+        .edit-mode-banner.active { display: block; }
+        .emb-inner {
+            display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .emb-dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; flex-shrink: 0; animation: embPulse 1.6s ease-in-out infinite; }
+        @keyframes embPulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+        .emb-inner button {
+            margin-left: auto; flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 12px;
+            background: rgba(255,255,255,0.2); color: #fff; border: none; border-radius: 8px; padding: 7px 12px;
+        }
+        .emb-inner button:hover { background: rgba(255,255,255,0.32); }
+
+        .card-edit-btn {
+            display: none;
+            position: absolute; bottom: 10px; right: 10px; z-index: 4;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: var(--aubergine); color: var(--cream);
+            align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+        }
+        .card-edit-btn svg { width: 14px; height: 14px; }
+        body.edit-mode-on .card-edit-btn { display: flex; }
+        body.edit-mode-on .product-card { position: relative; }
+
+        .edit-panel {
+            padding: 14px 18px 18px; background: rgba(217,122,58,0.06); border-top: 1px dashed rgba(217,122,58,0.35);
+        }
+        .edit-panel .ep-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .edit-panel label {
+            display: block; font-family: var(--display); font-weight: 600; font-size: 9.5px;
+            letter-spacing: 0.03em; text-transform: uppercase; color: var(--orange); margin-bottom: 4px;
+        }
+        .edit-panel input, .edit-panel select {
+            width: 100%; padding: 7px 9px; border-radius: 8px; border: 1.5px solid rgba(217,122,58,0.3);
+            font-family: var(--body); font-size: 12.5px; background: #fff;
+        }
+        .edit-panel .ep-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .edit-panel .ep-save {
+            flex: 1; background: var(--orange); color: #fff; border: none; border-radius: 8px;
+            font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px;
+        }
+        .edit-panel .ep-cancel {
+            background: none; border: 1.5px solid rgba(59,30,58,0.16); color: var(--aubergine);
+            border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
+        }
+
 
         #mainNav .wrap {
             display: flex;
@@ -155,15 +212,8 @@
             color: rgba(245, 242, 228, 0.55);
         }
 
-        .search-wrap {
-            position: relative;
-            flex: 1;
-            max-width: 340px;
-        }
-
-        .search-wrap .nav-search {
-            max-width: none;
-        }
+        .search-wrap { position: relative; flex: 1; max-width: 340px; }
+        .search-wrap .nav-search { max-width: none; }
 
         .search-results {
             position: absolute;
@@ -172,7 +222,7 @@
             right: 0;
             background: #fff;
             border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
             overflow: hidden;
             z-index: 150;
             opacity: 0;
@@ -182,98 +232,31 @@
             max-height: 420px;
             overflow-y: auto;
         }
-
-        .search-results.open {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-
+        .search-results.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .search-result-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 11px 16px;
-            text-decoration: none;
-            color: var(--ink);
-            border-bottom: 1px solid rgba(59, 30, 58, 0.06);
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 16px; text-decoration: none; color: var(--ink);
+            border-bottom: 1px solid rgba(59,30,58,0.06);
             transition: background 0.15s ease;
         }
-
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-
-        .search-result-item:hover,
-        .search-result-item.active-result {
-            background: rgba(168, 178, 46, 0.1);
-        }
-
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover, .search-result-item.active-result { background: rgba(168,178,46,0.1); }
         .search-result-thumb {
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
-            flex-shrink: 0;
-            background: linear-gradient(160deg, #f0ecdc, #e7e1cc);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: #a89a94;
-            text-align: center;
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(160deg,#f0ecdc,#e7e1cc);
+            display:flex; align-items:center; justify-content:center;
+            font-size: 10px; font-weight: 700; color: #a89a94; text-align:center;
         }
-
-        .search-result-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .search-result-info .name {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 13.5px;
-            color: var(--aubergine);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .search-result-info .cat {
-            font-size: 11.5px;
-            color: #8a7f78;
-        }
-
-        .search-result-price {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--ink);
-            flex-shrink: 0;
-        }
-
+        .search-result-info { flex: 1; min-width: 0; }
+        .search-result-info .name { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--aubergine); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .search-result-info .cat { font-size: 11.5px; color: #8a7f78; }
+        .search-result-price { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); flex-shrink: 0; }
         .search-see-all {
-            display: block;
-            text-align: center;
-            padding: 12px;
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 12.5px;
-            color: var(--orange);
-            text-decoration: none;
-            background: rgba(217, 122, 58, 0.06);
+            display: block; text-align: center; padding: 12px; font-family: var(--display); font-weight: 700;
+            font-size: 12.5px; color: var(--orange); text-decoration: none; background: rgba(217,122,58,0.06);
         }
-
-        .search-see-all:hover {
-            background: rgba(217, 122, 58, 0.12);
-        }
-
-        .search-empty {
-            padding: 20px 16px;
-            text-align: center;
-            font-size: 13px;
-            color: #9a8f88;
-        }
+        .search-see-all:hover { background: rgba(217,122,58,0.12); }
+        .search-empty { padding: 20px 16px; text-align: center; font-size: 13px; color: #9a8f88; }
 
         .nav-links {
             display: flex;
@@ -918,140 +901,59 @@
         .new-section {
             background: #EDE6D3;
             padding: 56px 0 60px;
-            border-top: 1px solid rgba(59, 30, 58, 0.06);
-            border-bottom: 1px solid rgba(59, 30, 58, 0.06);
+            border-top: 1px solid rgba(59,30,58,0.06);
+            border-bottom: 1px solid rgba(59,30,58,0.06);
         }
-
-        .new-carousel-wrap {
-            position: relative;
-            width: 100%;
-            max-width: 100%;
-            overflow: hidden;
+        .new-section-head {
+            display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
+            margin-bottom: 30px; flex-wrap: wrap;
         }
-
+        .view-all-btn {
+            display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0;
+            font-family: var(--display); font-weight: 700; font-size: 13.5px;
+            color: var(--aubergine); text-decoration: none;
+            padding: 10px 16px; border-radius: 10px; background: rgba(59,30,58,0.06);
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .view-all-btn svg { width: 15px; height: 15px; transition: transform 0.2s ease; }
+        .view-all-btn:hover { background: var(--aubergine); color: var(--cream); transform: translateX(2px); }
+        .new-carousel-wrap { position: relative; width: 100%; max-width: 100%; overflow: hidden; }
         .new-carousel {
-            display: flex;
-            gap: 18px;
-            padding: 4px 2px 10px;
+            display: flex; gap: 18px; padding: 4px 2px 10px;
             width: max-content;
             animation: newCarouselMarquee 32s linear infinite;
         }
-
-        .new-carousel.paused {
-            animation-play-state: paused;
-        }
-
+        .new-carousel.paused { animation-play-state: paused; }
         @keyframes newCarouselMarquee {
-            from {
-                transform: translateX(0);
-            }
-
-            to {
-                transform: translateX(-50%);
-            }
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
         }
-
         @media (prefers-reduced-motion: reduce) {
-            .new-carousel {
-                animation: none;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
+            .new-carousel { animation: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         }
-
         .new-card {
-            flex: 0 0 220px;
-            max-width: 220px;
-            background: #fff;
-            border: 1px solid rgba(59, 30, 58, 0.08);
-            border-radius: 16px;
-            overflow: hidden;
-            text-decoration: none;
-            color: var(--ink);
+            flex: 0 0 220px; max-width: 220px; background: #fff; border: 1px solid rgba(59,30,58,0.08); border-radius: 16px;
+            overflow: hidden; text-decoration: none; color: var(--ink);
             transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
-
-        .new-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 14px 26px rgba(59, 30, 58, 0.12);
-        }
-
-        .new-card .thumb {
-            aspect-ratio: 1/1;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            background: linear-gradient(160deg, #f0ecdc, #e7e1cc);
-        }
-
-        .new-card .thumb .thumb-placeholder-icon {
-            width: 24px;
-            height: 24px;
-            color: #b3a998;
-        }
-
-        .new-card .thumb .thumb-placeholder-label {
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 9px;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-            color: #a89a94;
-        }
-
+        .new-card:hover { transform: translateY(-5px); box-shadow: 0 14px 26px rgba(59,30,58,0.12); }
+        .new-card .thumb { aspect-ratio: 1/1; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,#f0ecdc,#e7e1cc); }
+        .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
+        .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: #a89a94; }
         .new-tag {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: var(--orange);
-            color: #fff;
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 10px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            padding: 5px 11px;
-            border-radius: 999px;
-            box-shadow: 0 3px 8px rgba(217, 122, 58, 0.45), 0 0 0 2px #fff;
+            position: absolute; top: 10px; left: 10px; background: var(--orange); color: #fff;
+            font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.04em;
+            text-transform: uppercase; padding: 5px 11px; border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(217,122,58,0.45), 0 0 0 2px #fff;
             z-index: 3;
         }
-
-        .new-card .body {
-            padding: 12px 14px 14px;
-        }
-
-        .new-card h4 {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 13.5px;
-            color: var(--aubergine);
-            margin-bottom: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .new-card .cat {
-            font-size: 10.5px;
-            color: #8a7f78;
-            margin-bottom: 6px;
-        }
-
-        .new-card .price {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 13.5px;
-            color: var(--ink);
-        }
+        .new-card .body { padding: 12px 14px 14px; }
+        .new-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--aubergine); margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .new-card .cat { font-size: 10.5px; color: #8a7f78; margin-bottom: 6px; }
+        .new-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--ink); }
 
         @media (max-width: 900px) {
-            .new-card {
-                flex-basis: 168px;
-                max-width: 168px;
-            }
+            .new-card { flex-basis: 168px; max-width: 168px; }
         }
 
         .delivery {
@@ -1476,61 +1378,27 @@
         }
 
         .thumb-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
         }
 
-        .thumb-placeholder-icon {
-            width: 22%;
-            max-width: 32px;
-            min-width: 20px;
-            height: auto;
-            color: #b3a998;
-        }
-
+        .thumb-placeholder-icon { width: 22%; max-width: 32px; min-width: 20px; height: auto; color: #b3a998; }
         .thumb-placeholder-label {
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 10px;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-            color: #a89a94;
+            font-family: var(--display); font-weight: 600; font-size: 10px;
+            letter-spacing: 0.03em; text-transform: uppercase; color: #a89a94;
         }
 
         .stock-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 10px;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-            padding: 5px 10px;
-            border-radius: 999px;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18), 0 0 0 2px #fff;
+            position: absolute; top: 10px; left: 10px;
+            font-family: var(--display); font-weight: 700; font-size: 10px;
+            letter-spacing: 0.03em; text-transform: uppercase;
+            padding: 5px 10px; border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18), 0 0 0 2px #fff;
             z-index: 3;
         }
-
-        .stock-badge.in {
-            background: var(--chartreuse);
-            color: var(--aubergine-deep);
-        }
-
-        .stock-badge.low {
-            background: var(--orange);
-            color: #fff;
-        }
-
-        .stock-badge.out {
-            background: #5a4d48;
-            color: #fff;
-        }
+        .stock-badge.in { background: var(--chartreuse); color: var(--aubergine-deep); }
+        .stock-badge.low { background: var(--orange); color: #fff; }
+        .stock-badge.out { background: #5a4d48; color: #fff; }
 
         .product-body {
             padding: 16px 18px 18px;
@@ -1563,6 +1431,22 @@
             color: var(--ink);
         }
 
+        .price-now { font-family: var(--display); font-weight: 700; }
+        .price-now.sale { color: var(--orange); }
+        .price-was {
+            font-family: var(--display); font-weight: 500; font-size: 0.78em;
+            color: #a89a94; text-decoration: line-through; margin-left: 6px;
+        }
+        .sale-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: var(--orange); color: #fff;
+            font-family: var(--display); font-weight: 700; font-size: 10px;
+            letter-spacing: 0.03em; text-transform: uppercase;
+            padding: 5px 10px; border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(217,122,58,0.4), 0 0 0 2px #fff;
+            z-index: 3;
+        }
+
         .add-btn {
             width: 32px;
             height: 32px;
@@ -1586,10 +1470,7 @@
             color: #a89a94;
             cursor: not-allowed;
         }
-
-        .add-btn:disabled:hover {
-            transform: none;
-        }
+        .add-btn:disabled:hover { transform: none; }
 
         .add-btn svg {
             width: 16px;
@@ -1640,26 +1521,10 @@
             white-space: nowrap;
             transition: background 0.2s ease, transform 0.2s ease;
         }
-
-        .card-add-btn svg {
-            width: 14px;
-            height: 14px;
-            flex-shrink: 0;
-        }
-
-        .card-add-btn:hover {
-            background: var(--chartreuse-soft);
-        }
-
-        .card-add-btn:disabled {
-            background: #e3ddc9;
-            color: #a89a94;
-            cursor: not-allowed;
-        }
-
-        .card-add-btn:disabled:hover {
-            transform: none;
-        }
+        .card-add-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .card-add-btn:hover { background: var(--chartreuse-soft); }
+        .card-add-btn:disabled { background: #e3ddc9; color: #a89a94; cursor: not-allowed; }
+        .card-add-btn:disabled:hover { transform: none; }
 
         .view-details-btn {
             display: flex;
@@ -1672,7 +1537,7 @@
             font-size: 12px;
             letter-spacing: 0.02em;
             color: var(--aubergine);
-            background: rgba(59, 30, 58, 0.045);
+            background: rgba(59,30,58,0.045);
             border: none;
             border-radius: 10px;
             padding: 9px;
@@ -1720,39 +1585,18 @@
             overflow: hidden;
         }
 
-        .pd-image .product-photo-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .pd-image .product-photo-img { width: 100%; height: 100%; object-fit: cover; }
 
-        .pd-image .stock-badge {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            font-size: 11px;
-            padding: 6px 13px;
-        }
+        .pd-image .stock-badge { position: absolute; top: 16px; left: 16px; font-size: 11px; padding: 6px 13px; }
 
         .pd-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
             color: #a89a94;
         }
-
-        .pd-placeholder svg {
-            width: 46px;
-            height: 46px;
-        }
-
+        .pd-placeholder svg { width: 46px; height: 46px; }
         .pd-placeholder span:last-child {
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 13px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+            font-family: var(--display); font-weight: 600; font-size: 13px;
+            letter-spacing: 0.04em; text-transform: uppercase;
         }
 
         .pd-cat-tag {
@@ -2545,122 +2389,42 @@
             gap: 32px;
             background: #fff;
             border-radius: 22px;
-            border: 1px solid rgba(59, 30, 58, 0.08);
+            border: 1px solid rgba(59,30,58,0.08);
             padding: 34px;
             margin-bottom: 30px;
             align-items: center;
         }
-
-        .pc-left h2 {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 22px;
-            color: var(--aubergine);
-            margin-bottom: 6px;
-        }
-
-        .pc-left p {
-            font-size: 14px;
-            color: #6a5f58;
-            margin-bottom: 18px;
-        }
-
-        .pc-input-row {
-            display: flex;
-            gap: 10px;
-        }
-
+        .pc-left h2 { font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--aubergine); margin-bottom: 6px; }
+        .pc-left p { font-size: 14px; color: #6a5f58; margin-bottom: 18px; }
+        .pc-input-row { display: flex; gap: 10px; }
         .pc-input-row input {
-            flex: 1;
-            padding: 13px 16px;
-            border-radius: 12px;
-            border: 1.5px solid rgba(59, 30, 58, 0.16);
-            font-family: var(--body);
-            font-size: 15px;
-            text-transform: uppercase;
+            flex: 1; padding: 13px 16px; border-radius: 12px; border: 1.5px solid rgba(59,30,58,0.16);
+            font-family: var(--body); font-size: 15px; text-transform: uppercase;
         }
-
-        .pc-input-row input:focus {
-            outline: none;
-            border-color: var(--chartreuse);
-        }
-
-        .pc-result {
-            margin-top: 14px;
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 14px;
-            min-height: 20px;
-        }
-
-        .pc-result.yes {
-            color: #5c6b1a;
-        }
-
-        .pc-result.no {
-            color: #8a4a26;
-        }
-
-        .pc-map {
-            border-radius: 16px;
-            overflow: hidden;
-            aspect-ratio: 4/3;
-        }
-
-        .pc-map iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
+        .pc-input-row input:focus { outline: none; border-color: var(--chartreuse); }
+        .pc-result { margin-top: 14px; font-family: var(--display); font-weight: 700; font-size: 14px; min-height: 20px; }
+        .pc-result.yes { color: #5c6b1a; }
+        .pc-result.no { color: #8a4a26; }
+        .pc-map { border-radius: 16px; overflow: hidden; aspect-ratio: 4/3; }
+        .pc-map iframe { width: 100%; height: 100%; border: 0; }
 
         .areas-strip {
-            background: var(--aubergine);
-            border-radius: 22px;
-            padding: 30px 32px;
-            color: var(--cream);
+            background: var(--aubergine); border-radius: 22px; padding: 30px 32px; color: var(--cream);
         }
-
         .areas-title {
-            font-family: var(--display);
-            font-weight: 500;
-            font-size: 12.5px;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--chartreuse);
-            margin-bottom: 16px;
+            font-family: var(--display); font-weight: 500; font-size: 12.5px; letter-spacing: 0.15em;
+            text-transform: uppercase; color: var(--chartreuse); margin-bottom: 16px;
         }
-
-        .areas-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
+        .areas-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .area-chip {
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 13px;
-            padding: 8px 15px;
-            border-radius: 999px;
-            background: rgba(245, 242, 228, 0.1);
-            border: 1px solid rgba(245, 242, 228, 0.18);
+            font-family: var(--display); font-weight: 600; font-size: 13px; padding: 8px 15px;
+            border-radius: 999px; background: rgba(245,242,228,0.1); border: 1px solid rgba(245,242,228,0.18);
         }
-
-        .areas-note {
-            font-size: 12.5px;
-            color: #cbb9cd;
-            line-height: 1.5;
-        }
+        .areas-note { font-size: 12.5px; color: #cbb9cd; line-height: 1.5; }
 
         @media (max-width: 760px) {
-            .postcode-checker {
-                grid-template-columns: 1fr;
-            }
-
-            .pc-map {
-                order: -1;
-            }
+            .postcode-checker { grid-template-columns: 1fr; }
+            .pc-map { order: -1; }
         }
 
         .dinfo-grid {
@@ -2772,119 +2536,34 @@
         }
 
         /* ================= GUIDE / FAQ ================= */
-        .guide-section {
-            background: var(--cream);
-            padding: 52px 0 100px;
-        }
-
-        .guide-steps {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 22px;
-            margin-bottom: 60px;
-        }
-
+        .guide-section { background: var(--cream); padding: 52px 0 100px; }
+        .guide-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 60px; }
         .guide-step {
-            background: #fff;
-            border: 1px solid rgba(59, 30, 58, 0.08);
-            border-radius: 18px;
-            padding: 26px 24px;
+            background: #fff; border: 1px solid rgba(59,30,58,0.08); border-radius: 18px; padding: 26px 24px;
         }
-
         .guide-step .num {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: var(--chartreuse);
-            color: var(--aubergine-deep);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 15px;
-            margin-bottom: 14px;
+            width: 34px; height: 34px; border-radius: 50%; background: var(--chartreuse); color: var(--aubergine-deep);
+            display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 700;
+            font-size: 15px; margin-bottom: 14px;
         }
+        .guide-step h3 { font-family: var(--display); font-weight: 700; font-size: 16.5px; color: var(--aubergine); margin-bottom: 6px; }
+        .guide-step p { font-size: 13.5px; color: #5a4d48; line-height: 1.5; }
 
-        .guide-step h3 {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 16.5px;
-            color: var(--aubergine);
-            margin-bottom: 6px;
-        }
-
-        .guide-step p {
-            font-size: 13.5px;
-            color: #5a4d48;
-            line-height: 1.5;
-        }
-
-        .faq-title {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 24px;
-            color: var(--aubergine);
-            margin-bottom: 22px;
-        }
-
-        .faq-item {
-            background: #fff;
-            border: 1px solid rgba(59, 30, 58, 0.08);
-            border-radius: 14px;
-            margin-bottom: 12px;
-            overflow: hidden;
-        }
-
+        .faq-title { font-family: var(--display); font-weight: 700; font-size: 24px; color: var(--aubergine); margin-bottom: 22px; }
+        .faq-item { background: #fff; border: 1px solid rgba(59,30,58,0.08); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
         .faq-q {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            padding: 18px 20px;
-            background: none;
-            border: none;
-            text-align: left;
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 14.5px;
-            color: var(--aubergine);
+            width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+            padding: 18px 20px; background: none; border: none; text-align: left;
+            font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--aubergine);
         }
-
-        .faq-q svg {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-            transition: transform 0.25s ease;
-            color: var(--orange);
-        }
-
-        .faq-item.open .faq-q svg {
-            transform: rotate(45deg);
-        }
-
-        .faq-a {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .faq-item.open .faq-a {
-            max-height: 300px;
-        }
-
-        .faq-a p {
-            padding: 0 20px 18px;
-            font-size: 13.5px;
-            color: #4a3d3a;
-            line-height: 1.6;
-        }
+        .faq-q svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform 0.25s ease; color: var(--orange); }
+        .faq-item.open .faq-q svg { transform: rotate(45deg); }
+        .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .faq-item.open .faq-a { max-height: 300px; }
+        .faq-a p { padding: 0 20px 18px; font-size: 13.5px; color: #4a3d3a; line-height: 1.6; }
 
         @media (max-width: 900px) {
-            .guide-steps {
-                grid-template-columns: 1fr;
-            }
+            .guide-steps { grid-template-columns: 1fr; }
         }
 
         /* ================= AUTH PAGES ================= */
@@ -3028,17 +2707,9 @@
                 right: -16px;
             }
 
-            .cat-card {
-                min-height: 220px;
-            }
-
-            .cat-card-top {
-                padding: 18px 18px 14px;
-            }
-
-            .cat-card-bottom {
-                padding: 12px 18px 16px;
-            }
+            .cat-card { min-height: 220px; }
+            .cat-card-top { padding: 18px 18px 14px; }
+            .cat-card-bottom { padding: 12px 18px 16px; }
         }
 
         @media (max-width:520px) {
@@ -3107,8 +2778,7 @@
                         <circle cx="11" cy="11" r="7" />
                         <path d="m21 21-4.3-4.3" />
                     </svg>
-                    <input id="navSearchInput" type="text" placeholder="Search: ofada rice, scent leaf, red palm oil..."
-                        autocomplete="off">
+                    <input id="navSearchInput" type="text" placeholder="Search: ofada rice, scent leaf, red palm oil..." autocomplete="off">
                 </div>
                 <div class="search-results" id="navSearchResults"></div>
             </div>
@@ -3142,6 +2812,14 @@
                         </svg>
                     </a>
                     <div class="account-dropdown" id="accountDropdown">
+                        <button type="button" id="editModeToggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                            <span id="editModeLabel">Enter edit mode</span>
+                        </button>
                         <button type="button" id="logoutBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -3168,6 +2846,14 @@
             <a href="#/guide">New Here?</a>
         </div>
     </nav>
+
+    <div class="edit-mode-banner" id="editModeBanner">
+        <div class="wrap emb-inner">
+            <span class="emb-dot"></span>
+            <span><strong>Edit mode is on.</strong> Price, discount, and stock changes apply live in this browser tab only, they are not saved to a server and will reset on refresh.</span>
+            <button type="button" id="editModeBannerClose">Exit edit mode</button>
+        </div>
+    </div>
 
     <!-- ================= HOME ================= -->
     <div id="view-home">
@@ -3233,11 +2919,15 @@
 
         <section class="new-section">
             <div class="wrap">
-                <div class="section-head reveal" style="margin-bottom:30px;">
-                    <div class="section-eyebrow" style="color:var(--orange);">Just landed</div>
-                    <h2
-                        style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color:var(--aubergine); letter-spacing:-0.01em;">
-                        New in stock</h2>
+                <div class="new-section-head reveal">
+                    <div>
+                        <div class="section-eyebrow" style="color:var(--orange);">Just landed</div>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color:var(--aubergine); letter-spacing:-0.01em;">New in stock</h2>
+                    </div>
+                    <a class="view-all-btn" href="#/new-arrivals">
+                        View all
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
                 </div>
                 <div class="new-carousel-wrap">
                     <div class="new-carousel" id="newCarousel"></div>
@@ -3331,13 +3021,9 @@
                 <div class="pd-grid">
                     <div class="pd-image" id="pdImage">
                         <span class="stock-badge" id="pdStockBadge"></span>
+                        <span class="sale-badge" id="pdSaleBadge" style="display:none;">Sale</span>
                         <span class="pd-placeholder" id="pdPlaceholder">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                                <path d="m21 15-5-5L5 21" />
-                            </svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
                             <span>Coming soon</span>
                         </span>
                     </div>
@@ -3658,15 +3344,13 @@
                         <h2>Check if we deliver to you</h2>
                         <p>Enter your postcode, we'll tell you straight away.</p>
                         <div class="pc-input-row">
-                            <input type="text" id="postcodeInput" placeholder="e.g. CO1 1AA" autocomplete="off"
-                                maxlength="8">
+                            <input type="text" id="postcodeInput" placeholder="e.g. CO1 1AA" autocomplete="off" maxlength="8">
                             <button class="btn btn-primary" id="postcodeCheckBtn" type="button">Check</button>
                         </div>
                         <div class="pc-result" id="postcodeResult"></div>
                     </div>
                     <div class="pc-map">
-                        <iframe src="https://www.google.com/maps?q=Essex+and+Suffolk+UK&z=8&output=embed" loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        <iframe src="https://www.google.com/maps?q=Essex+and+Suffolk+UK&z=8&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                 </div>
 
@@ -3686,8 +3370,7 @@
                         <span class="area-chip">Maldon</span>
                         <span class="area-chip">Halstead</span>
                     </div>
-                    <div class="areas-note">Postcode areas: CO, IP, CM, and parts of SS &amp; CB. Not seeing your town?
-                        Message us, we're expanding steadily.</div>
+                    <div class="areas-note">Postcode areas: CO, IP, CM, and parts of SS &amp; CB. Not seeing your town? Message us, we're expanding steadily.</div>
                 </div>
             </div>
         </section>
@@ -3716,8 +3399,7 @@
                     <div class="dinfo-card">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                             stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="5" width="20" height="14" rx="2.5" />
-                            <path d="M2 10h20" />
+                            <rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/>
                         </svg>
                         <div>
                             <h4>Minimum order</h4>
@@ -3803,6 +3485,23 @@
         </section>
     </div>
 
+    <!-- ================= NEW ARRIVALS (View All) ================= -->
+    <div id="view-new-arrivals" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; New In Stock</div>
+                <h1>New In Stock</h1>
+                <p>Everything that's just landed, across every aisle.</p>
+                <div class="result-count" id="newArrivalsCount"></div>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="product-grid" id="newArrivalsGrid"></div>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= NEW HERE / FAQ ================= -->
     <div id="view-guide" class="hidden-view">
         <header class="shop-header">
@@ -3818,20 +3517,17 @@
                     <div class="guide-step reveal">
                         <div class="num">1</div>
                         <h3>Browse or search</h3>
-                        <p>Tap a category, or search for exactly what you need, ofada rice, scent leaf, red palm oil,
-                            whatever's on your list.</p>
+                        <p>Tap a category, or search for exactly what you need, ofada rice, scent leaf, red palm oil, whatever's on your list.</p>
                     </div>
                     <div class="guide-step reveal" style="transition-delay:0.08s">
                         <div class="num">2</div>
                         <h3>Add to your cart</h3>
-                        <p>Build your basket as you go. Prices and stock status are shown clearly on every item, no
-                            surprises at checkout.</p>
+                        <p>Build your basket as you go. Prices and stock status are shown clearly on every item, no surprises at checkout.</p>
                     </div>
                     <div class="guide-step reveal" style="transition-delay:0.16s">
                         <div class="num">3</div>
                         <h3>Checkout and receive</h3>
-                        <p>Confirm delivery details, pay, and get a proper invoice. Delivery across Essex &amp; Suffolk,
-                            or pick up yourself.</p>
+                        <p>Confirm delivery details, pay, and get a proper invoice. Delivery across Essex &amp; Suffolk, or pick up yourself.</p>
                     </div>
                 </div>
 
@@ -3940,172 +3636,172 @@
             {
                 slug: 'flour', name: 'Flour', emoji: '🌾', tagline: 'Semo, garri, wheat, and the swallow that holds a proper soup together.',
                 products: [
-                    { name: 'Ayoola Semovita', unit: '2kg bag', price: 6.49, stock: 'in' },
-                    { name: 'Yellow Garri (Ijebu)', unit: '1.5kg bag', price: 5.99, stock: 'in' },
-                    { name: 'White Garri (Ibadan)', unit: '1.5kg bag', price: 5.49, stock: 'in' },
-                    { name: 'Elubo (Yam Flour)', unit: '1kg bag', price: 6.99, stock: 'in' },
+                    { name: 'Ayoola Semovita', unit: '2kg bag', price: 6.49 , stock: 'in' },
+                    { name: 'Yellow Garri (Ijebu)', unit: '1.5kg bag', price: 5.99 , stock: 'in' },
+                    { name: 'White Garri (Ibadan)', unit: '1.5kg bag', price: 5.49 , stock: 'in' },
+                    { name: 'Elubo (Yam Flour)', unit: '1kg bag', price: 6.99 , stock: 'in' },
                 ]
             },
             {
                 slug: 'oils', name: 'Oils', emoji: '🫙', tagline: 'Red oil, groundnut oil, the good stuff your stew can\'t do without.',
                 products: [
-                    { name: 'Palm Oil (Zomi)', unit: '1L bottle', price: 7.99, keywords: 'red palm oil', stock: 'low' },
-                    { name: 'Groundnut Oil', unit: '1L bottle', price: 6.49, stock: 'in' },
-                    { name: 'Vegetable Oil', unit: '2L bottle', price: 8.99, stock: 'in' },
-                    { name: 'Coconut Oil', unit: '500ml jar', price: 5.99, stock: 'in' },
+                    { name: 'Palm Oil (Zomi)', unit: '1L bottle', price: 7.99, salePrice: 6.49, keywords: 'red palm oil' , stock: 'low' },
+                    { name: 'Groundnut Oil', unit: '1L bottle', price: 6.49 , stock: 'in' },
+                    { name: 'Vegetable Oil', unit: '2L bottle', price: 8.99 , stock: 'in' },
+                    { name: 'Coconut Oil', unit: '500ml jar', price: 5.99 , stock: 'in' },
                 ]
             },
             {
                 slug: 'noodles', name: 'Noodles', emoji: '🍜', tagline: 'Indomie and the quick plate that never lets you down.',
                 products: [
-                    { name: 'Indomie Chicken (Carton)', unit: '40 packs', price: 14.99, stock: 'in' },
-                    { name: 'Indomie Onion', unit: 'Single pack', price: 0.59, stock: 'low' },
-                    { name: 'Chikki Spaghetti', unit: '500g', price: 1.49, stock: 'out' },
-                    { name: 'Rice Vermicelli', unit: '400g', price: 2.29, stock: 'in' },
+                    { name: 'Indomie Chicken (Carton)', unit: '40 packs', price: 14.99 , stock: 'in' },
+                    { name: 'Indomie Onion', unit: 'Single pack', price: 0.59 , stock: 'low' },
+                    { name: 'Chikki Spaghetti', unit: '500g', price: 1.49 , stock: 'out' },
+                    { name: 'Rice Vermicelli', unit: '400g', price: 2.29 , stock: 'in' },
                 ]
             },
             {
                 slug: 'seasoning', name: 'Seasoning', emoji: '🧂', tagline: 'Maggi, curry, thyme, the cubes and blends that build real flavour.',
                 products: [
-                    { name: 'Maggi Star Cubes', unit: '50 cubes', price: 3.49, stock: 'in' },
-                    { name: 'Knorr Chicken Cubes', unit: '20 cubes', price: 2.49, stock: 'in' },
-                    { name: 'Curry Powder', unit: '200g', price: 2.99, stock: 'low' },
-                    { name: 'Suya Spice Blend', unit: '150g', price: 3.99, stock: 'in' },
+                    { name: 'Maggi Star Cubes', unit: '50 cubes', price: 3.49 , stock: 'in' },
+                    { name: 'Knorr Chicken Cubes', unit: '20 cubes', price: 2.49 , stock: 'in' },
+                    { name: 'Curry Powder', unit: '200g', price: 2.99 , stock: 'low' },
+                    { name: 'Suya Spice Blend', unit: '150g', price: 3.99 , stock: 'in' },
                 ]
             },
             {
                 slug: 'beverages', name: 'Beverages', emoji: '☕', tagline: 'Milo, Bournvita, and the hot drinks that start the morning right.',
                 products: [
-                    { name: 'Milo Tin', unit: '400g', price: 5.49, stock: 'in' },
-                    { name: 'Bournvita', unit: '500g', price: 5.99, stock: 'in' },
-                    { name: 'Lipton Yellow Label', unit: '100 bags', price: 3.49, stock: 'in' },
-                    { name: 'Peak Milk Powder', unit: '400g', price: 4.99, stock: 'low' },
+                    { name: 'Milo Tin', unit: '400g', price: 5.49 , stock: 'in' },
+                    { name: 'Bournvita', unit: '500g', price: 5.99 , stock: 'in' },
+                    { name: 'Lipton Yellow Label', unit: '100 bags', price: 3.49 , stock: 'in' },
+                    { name: 'Peak Milk Powder', unit: '400g', price: 4.99 , stock: 'low' },
                 ]
             },
             {
                 slug: 'sea-foods', name: 'Sea Foods', emoji: '🐟', tagline: 'Dried fish, prawns, crayfish, the depth every pot of soup needs.',
                 products: [
-                    { name: 'Dried Catfish', unit: 'per piece', price: 6.99, stock: 'in' },
-                    { name: 'Crayfish (Ground)', unit: '250g', price: 5.49, stock: 'out' },
-                    { name: 'Stockfish (Okporoko)', unit: 'per piece', price: 8.99, stock: 'in' },
-                    { name: 'Dried Prawns', unit: '200g', price: 6.49, stock: 'in' },
+                    { name: 'Dried Catfish', unit: 'per piece', price: 6.99 , stock: 'in' },
+                    { name: 'Crayfish (Ground)', unit: '250g', price: 5.49 , stock: 'out' },
+                    { name: 'Stockfish (Okporoko)', unit: 'per piece', price: 8.99 , stock: 'in' },
+                    { name: 'Dried Prawns', unit: '200g', price: 6.49 , stock: 'in' },
                 ]
             },
             {
                 slug: 'tropical-foods', name: 'Tropical Foods', emoji: '🥭', tagline: 'The staples that taste like home, however far from it you are.',
                 products: [
-                    { name: 'Ripe Plantain', unit: 'per hand', price: 3.99, stock: 'low' },
-                    { name: 'Scotch Bonnet Pepper', unit: '250g', price: 2.49, stock: 'in' },
-                    { name: 'African Star Apple (Agbalumo)', unit: 'per punnet', price: 4.99, stock: 'in' },
-                    { name: 'Bitter Kola', unit: 'per pack', price: 3.49, stock: 'in' },
+                    { name: 'Ripe Plantain', unit: 'per hand', price: 3.99 , stock: 'low' },
+                    { name: 'Scotch Bonnet Pepper', unit: '250g', price: 2.49 , stock: 'in' },
+                    { name: 'African Star Apple (Agbalumo)', unit: 'per punnet', price: 4.99 , stock: 'in' },
+                    { name: 'Bitter Kola', unit: 'per pack', price: 3.49 , stock: 'in' },
                 ]
             },
             {
                 slug: 'fruits-vegetables', name: 'Fruits &amp; Vegetables', emoji: '🥬', tagline: 'Ugu, spinach, scent leaf, garden eggs, picked fresh not forced.',
                 products: [
-                    { name: 'Ugu Leaves (Fluted Pumpkin)', unit: 'bunch', price: 2.99, stock: 'in' },
-                    { name: 'Garden Eggs', unit: 'per punnet', price: 3.49, stock: 'low' },
-                    { name: 'Scent Leaf (Nchanwu)', unit: 'bunch', price: 1.99, stock: 'in' },
-                    { name: 'Okra', unit: '400g', price: 2.49, stock: 'in' },
+                    { name: 'Ugu Leaves (Fluted Pumpkin)', unit: 'bunch', price: 2.99 , stock: 'in' },
+                    { name: 'Garden Eggs', unit: 'per punnet', price: 3.49 , stock: 'low' },
+                    { name: 'Scent Leaf (Nchanwu)', unit: 'bunch', price: 1.99 , stock: 'in' },
+                    { name: 'Okra', unit: '400g', price: 2.49 , stock: 'in' },
                 ]
             },
             {
                 slug: 'condiments', name: 'Condiments', emoji: '🍯', tagline: 'Sauces, pastes, and pepper mixes that finish a dish properly.',
                 products: [
-                    { name: 'Tomato Paste (Gino)', unit: '800g tin', price: 2.99, stock: 'out' },
-                    { name: 'Ata Rodo Pepper Mix', unit: '300g', price: 3.99, stock: 'in' },
-                    { name: 'Shito Pepper Sauce', unit: '250g jar', price: 4.49, stock: 'low' },
-                    { name: 'Groundnut Paste', unit: '400g', price: 3.99, stock: 'in' },
+                    { name: 'Tomato Paste (Gino)', unit: '800g tin', price: 2.99 , stock: 'out' },
+                    { name: 'Ata Rodo Pepper Mix', unit: '300g', price: 3.99 , stock: 'in' },
+                    { name: 'Shito Pepper Sauce', unit: '250g jar', price: 4.49 , stock: 'low' },
+                    { name: 'Groundnut Paste', unit: '400g', price: 3.99 , stock: 'in' },
                 ]
             },
             {
                 slug: 'miscellaneous', name: 'Miscellaneous', emoji: '🧺', tagline: 'The small essentials every proper kitchen quietly depends on.',
                 products: [
-                    { name: 'Aluminium Foil Wrap', unit: '30m roll', price: 3.49, stock: 'in' },
-                    { name: 'Ziplock Freezer Bags', unit: 'pack of 50', price: 2.99, stock: 'in' },
-                    { name: 'Cellophane Nylon Bags', unit: 'pack', price: 1.99, stock: 'in' },
-                    { name: 'Disposable Food Containers', unit: 'pack of 10', price: 4.49, stock: 'low' },
+                    { name: 'Aluminium Foil Wrap', unit: '30m roll', price: 3.49 , stock: 'in' },
+                    { name: 'Ziplock Freezer Bags', unit: 'pack of 50', price: 2.99 , stock: 'in' },
+                    { name: 'Cellophane Nylon Bags', unit: 'pack', price: 1.99 , stock: 'in' },
+                    { name: 'Disposable Food Containers', unit: 'pack of 10', price: 4.49 , stock: 'low' },
                 ]
             },
             {
                 slug: 'hair-products', name: 'Hair Products', emoji: '💇🏾‍♀️', tagline: 'Braid-ready, scalp-friendly, made for our kind of hair.',
                 products: [
-                    { name: 'Cantu Shea Butter Cream', unit: '340g', price: 6.99, stock: 'in' },
-                    { name: 'Black Castor Oil', unit: '250ml', price: 5.49, stock: 'in' },
-                    { name: 'Braiding Hair (Kanekalon)', unit: 'per pack', price: 4.99, stock: 'in' },
-                    { name: 'Edge Control Gel', unit: '120g', price: 4.49, stock: 'out' },
+                    { name: 'Cantu Shea Butter Cream', unit: '340g', price: 6.99 , stock: 'in' },
+                    { name: 'Black Castor Oil', unit: '250ml', price: 5.49 , stock: 'in' },
+                    { name: 'Braiding Hair (Kanekalon)', unit: 'per pack', price: 4.99 , stock: 'in' },
+                    { name: 'Edge Control Gel', unit: '120g', price: 4.49 , stock: 'out' },
                 ]
             },
             {
                 slug: 'snacks-confectionary', name: 'Snacks &amp; Confectionary', emoji: '🍬', tagline: 'Chin chin, plantain chips, the small joys between meals.',
                 products: [
-                    { name: 'Chin Chin (Homemade Style)', unit: '400g', price: 3.99, stock: 'low' },
-                    { name: 'Plantain Chips', unit: '150g', price: 2.49, stock: 'in' },
-                    { name: 'Chin Chin Puff Puff Mix', unit: '500g', price: 3.49, stock: 'in' },
-                    { name: 'Groundnut (Roasted)', unit: '300g', price: 2.99, stock: 'in' },
+                    { name: 'Chin Chin (Homemade Style)', unit: '400g', price: 3.99 , stock: 'low' },
+                    { name: 'Plantain Chips', unit: '150g', price: 2.49 , stock: 'in' },
+                    { name: 'Chin Chin Puff Puff Mix', unit: '500g', price: 3.49 , stock: 'in' },
+                    { name: 'Groundnut (Roasted)', unit: '300g', price: 2.99 , stock: 'in' },
                 ]
             },
             {
                 slug: 'rice', name: 'Rice', emoji: '🍚', tagline: 'Ofada, long grain, basmati, whatever your jollof calls for.',
                 products: [
-                    { name: 'Ofada Rice', unit: '1kg', price: 4.99, stock: 'in' },
-                    { name: 'Long Grain Parboiled Rice', unit: '5kg bag', price: 9.99, stock: 'low' },
-                    { name: 'Basmati Rice', unit: '5kg bag', price: 11.99, stock: 'in' },
-                    { name: 'Golden Sella Rice', unit: '10kg bag', price: 18.99, stock: 'in' },
+                    { name: 'Ofada Rice', unit: '1kg', price: 4.99, salePrice: 3.99 , stock: 'in' },
+                    { name: 'Long Grain Parboiled Rice', unit: '5kg bag', price: 9.99 , stock: 'low' },
+                    { name: 'Basmati Rice', unit: '5kg bag', price: 11.99 , stock: 'in' },
+                    { name: 'Golden Sella Rice', unit: '10kg bag', price: 18.99 , stock: 'in' },
                 ]
             },
             {
                 slug: 'meat', name: 'Meat', emoji: '🥩', tagline: 'Goat, beef, cow leg, cut the way your pot actually needs it.',
                 products: [
-                    { name: 'Goat Meat (Cut)', unit: '1kg', price: 12.99, stock: 'in' },
-                    { name: 'Cow Leg (Shaki style)', unit: '1kg', price: 9.99, stock: 'in' },
-                    { name: 'Beef Chunks', unit: '1kg', price: 10.49, stock: 'out' },
-                    { name: 'Oxtail', unit: '1kg', price: 11.49, stock: 'in' },
+                    { name: 'Goat Meat (Cut)', unit: '1kg', price: 12.99 , stock: 'in' },
+                    { name: 'Cow Leg (Shaki style)', unit: '1kg', price: 9.99 , stock: 'in' },
+                    { name: 'Beef Chunks', unit: '1kg', price: 10.49 , stock: 'out' },
+                    { name: 'Oxtail', unit: '1kg', price: 11.49 , stock: 'in' },
                 ]
             },
             {
                 slug: 'body-oral-products', name: 'Body &amp; Oral Products', emoji: '🧴', tagline: 'Shea butter, black soap, the basics for proper self care.',
                 products: [
-                    { name: 'Raw Shea Butter', unit: '250g', price: 4.99, stock: 'in' },
-                    { name: 'African Black Soap', unit: 'per bar', price: 2.99, stock: 'in' },
-                    { name: 'Dudu Osun Soap', unit: 'per bar', price: 1.99, stock: 'in' },
-                    { name: 'Chewing Stick (Atim)', unit: 'pack of 5', price: 3.49, stock: 'low' },
+                    { name: 'Raw Shea Butter', unit: '250g', price: 4.99 , stock: 'in' },
+                    { name: 'African Black Soap', unit: 'per bar', price: 2.99 , stock: 'in' },
+                    { name: 'Dudu Osun Soap', unit: 'per bar', price: 1.99 , stock: 'in' },
+                    { name: 'Chewing Stick (Atim)', unit: 'pack of 5', price: 3.49 , stock: 'low' },
                 ]
             },
             {
                 slug: 'poultry', name: 'Poultry', emoji: '🍗', tagline: 'Chicken and turkey, whole or cut, for stew, grill, or party jollof.',
                 products: [
-                    { name: 'Whole Chicken', unit: 'per bird', price: 8.99, stock: 'in' },
-                    { name: 'Chicken Thighs', unit: '1kg', price: 5.49, stock: 'in' },
-                    { name: 'Turkey Wings', unit: '1kg', price: 6.99, stock: 'in' },
-                    { name: 'Chicken Gizzard', unit: '500g', price: 3.99, stock: 'in' },
+                    { name: 'Whole Chicken', unit: 'per bird', price: 8.99, salePrice: 7.49 , stock: 'in' },
+                    { name: 'Chicken Thighs', unit: '1kg', price: 5.49 , stock: 'in' },
+                    { name: 'Turkey Wings', unit: '1kg', price: 6.99 , stock: 'in' },
+                    { name: 'Chicken Gizzard', unit: '500g', price: 3.99 , stock: 'in' },
                 ]
             },
             {
                 slug: 'root-vegetables', name: 'Root Vegetables', emoji: '🍠', tagline: 'Yam, cassava, cocoyam, dug up and ready for the pot.',
                 products: [
-                    { name: 'White Yam (Tuber)', unit: 'per tuber', price: 7.99, stock: 'low' },
-                    { name: 'Cassava (Fresh)', unit: '1kg', price: 2.99, stock: 'out' },
-                    { name: 'Cocoyam', unit: '1kg', price: 3.49, stock: 'in' },
-                    { name: 'Sweet Potato', unit: '1kg', price: 2.49, stock: 'in' },
+                    { name: 'White Yam (Tuber)', unit: 'per tuber', price: 7.99 , stock: 'low' },
+                    { name: 'Cassava (Fresh)', unit: '1kg', price: 2.99 , stock: 'out' },
+                    { name: 'Cocoyam', unit: '1kg', price: 3.49 , stock: 'in' },
+                    { name: 'Sweet Potato', unit: '1kg', price: 2.49 , stock: 'in' },
                 ]
             },
             {
                 slug: 'beans', name: 'Beans', emoji: '🫘', tagline: 'Honey beans, black-eyed, the base of a proper moi moi.',
                 products: [
-                    { name: 'Honey Beans (Oloyin)', unit: '2kg', price: 6.99, stock: 'in' },
-                    { name: 'Black-Eyed Beans', unit: '2kg', price: 5.99, stock: 'low' },
-                    { name: 'Brown Beans', unit: '2kg', price: 5.49, stock: 'in' },
-                    { name: 'Ewa Agoyin Beans', unit: '2kg', price: 6.49, stock: 'in' },
+                    { name: 'Honey Beans (Oloyin)', unit: '2kg', price: 6.99, salePrice: 5.99 , stock: 'in' },
+                    { name: 'Black-Eyed Beans', unit: '2kg', price: 5.99 , stock: 'low' },
+                    { name: 'Brown Beans', unit: '2kg', price: 5.49 , stock: 'in' },
+                    { name: 'Ewa Agoyin Beans', unit: '2kg', price: 6.49 , stock: 'in' },
                 ]
             },
             {
                 slug: 'drinks', name: 'Drinks', emoji: '🥤', tagline: 'Zobo, chapman, malt, the cold ones for a hot afternoon.',
                 products: [
-                    { name: 'Zobo Drink (Bottled)', unit: '500ml', price: 2.49, stock: 'in' },
-                    { name: 'Chapman (Bottled)', unit: '500ml', price: 2.99, stock: 'in' },
-                    { name: 'Malt Drink (Amstel)', unit: '330ml can', price: 1.49, stock: 'low' },
-                    { name: 'Supermalt', unit: '330ml can', price: 1.59, stock: 'in' },
+                    { name: 'Zobo Drink (Bottled)', unit: '500ml', price: 2.49 , stock: 'in' },
+                    { name: 'Chapman (Bottled)', unit: '500ml', price: 2.99 , stock: 'in' },
+                    { name: 'Malt Drink (Amstel)', unit: '330ml can', price: 1.49 , stock: 'low' },
+                    { name: 'Supermalt', unit: '330ml can', price: 1.59 , stock: 'in' },
                 ]
             },
         ];
@@ -4128,6 +3824,14 @@
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
+        function effectivePrice(p) {
+            return (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
+        }
+        function priceHTML(p, size) {
+            const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
+            if (!onSale) return `<span class="price-now">${money(p.price)}</span>`;
+            return `<span class="price-now sale">${money(p.salePrice)}</span><span class="price-was">${money(p.price)}</span>`;
+        }
         function findCategory(slug) { return CATEGORIES.find(c => c.slug === slug); }
         function allProducts() {
             return CATEGORIES.flatMap(c => c.products.map((p, i) => ({ ...p, id: c.slug + '::' + i, catSlug: c.slug, catName: c.name, emoji: c.emoji })));
@@ -4148,8 +3852,10 @@
         }
         function addToCart(product, qty) {
             const existing = cart.find(i => i.id === product.id);
+            const price = effectivePrice(product);
+            const wasOnSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
             if (existing) { existing.qty += qty; }
-            else { cart.push({ id: product.id, name: product.name, unit: product.unit, price: product.price, emoji: product.emoji, catSlug: product.catSlug, qty }); }
+            else { cart.push({ id: product.id, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty }); }
             updateCartBadge();
         }
 
@@ -4178,12 +3884,15 @@
         }
 
         const NEW_PRODUCT_SLUGS = ['rice', 'meat', 'poultry', 'drinks', 'snacks-confectionary', 'sea-foods', 'fruits-vegetables', 'condiments', 'beans', 'oils'];
-        function renderNewCarousel() {
-            const items = NEW_PRODUCT_SLUGS.map(slug => {
+        function newArrivalsItems() {
+            return NEW_PRODUCT_SLUGS.map(slug => {
                 const cat = findCategory(slug);
                 if (!cat) return null;
-                return { ...cat.products[0], catSlug: slug, catName: cat.name, idx: 0 };
+                return { ...cat.products[0], catSlug: slug, catName: cat.name, emoji: cat.emoji, idx: 0 };
             }).filter(Boolean);
+        }
+        function renderNewCarousel() {
+            const items = newArrivalsItems();
 
             const cardHTML = items.map(p => `
     <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
@@ -4193,12 +3902,17 @@
       </div>
       <div class="body">
         <h4>${p.name}</h4>
-        <div class="cat">${p.catName.replace(/&amp;/g, '&')}</div>
-        <div class="price">${money(p.price)}</div>
+        <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
+        <div class="price">${priceHTML(p)}</div>
       </div>
     </a>`).join('');
             // duplicated once so the CSS animation loop is seamless (translateX(-50%) = one full set)
             document.getElementById('newCarousel').innerHTML = cardHTML + cardHTML;
+        }
+        function renderNewArrivalsPage() {
+            const items = newArrivalsItems();
+            document.getElementById('newArrivalsCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
+            renderGrid(items, 'newArrivalsGrid');
         }
 
         /* ================= NEW PRODUCTS CAROUSEL: pause on interaction ================= */
@@ -4253,18 +3967,20 @@
             const href = `#/product/${p.catSlug}/${pidx}`;
             const stock = p.stock || 'in';
             const outOfStock = stock === 'out';
+            const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             return `
-    <div class="product-card">
+    <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}">
       <a class="product-card-link" href="${href}">
         <div class="product-thumb">
           <span class="stock-badge ${stock}">${stockLabel(stock)}</span>
+          ${onSale ? '<span class="sale-badge">Sale</span>' : ''}
           ${productPhotoHTML(p, p.name)}
         </div>
         <div class="product-body">
           <h4>${p.name}</h4>
           <div class="product-unit">${p.unit}</div>
           <div class="product-row">
-            <div class="product-price">${money(p.price)}</div>
+            <div class="product-price">${priceHTML(p)}</div>
           </div>
         </div>
       </a>
@@ -4278,6 +3994,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </div>
+      <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
+      <div class="edit-panel-slot"></div>
     </div>`;
         }
         function quickAdd(catSlug, idx) {
@@ -4361,6 +4081,9 @@
             badge.textContent = stockLabel(stock);
             document.getElementById('pdStockText').textContent = stockLabel(stock);
 
+            const onSaleNow = typeof p.salePrice === 'number' && p.salePrice < p.price;
+            document.getElementById('pdSaleBadge').style.display = onSaleNow ? 'block' : 'none';
+
             const pdImageEl = document.getElementById('pdImage');
             const existingImg = pdImageEl.querySelector('.product-photo-img');
             if (existingImg) existingImg.remove();
@@ -4394,10 +4117,12 @@
         document.getElementById('pdQtyPlus').addEventListener('click', () => { pdQty += 1; document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         function updatePdPrice() {
             if (!pdCurrent) return;
-            const total = pdCurrent.price * pdQty;
-            document.getElementById('pdPrice').innerHTML = pdQty > 1
-                ? `${money(total)} <span style="font-size:14px; color:#8a7f78; font-weight:500;">(${money(pdCurrent.price)} each)</span>`
-                : money(total);
+            const unit = effectivePrice(pdCurrent);
+            const total = unit * pdQty;
+            const onSale = typeof pdCurrent.salePrice === 'number' && pdCurrent.salePrice < pdCurrent.price;
+            const eachNote = pdQty > 1 ? ` <span style="font-size:14px; color:#8a7f78; font-weight:500;">(${money(unit)} each)</span>` : '';
+            const wasNote = onSale ? ` <span class="price-was" style="font-size:0.55em;">${money(pdCurrent.price * pdQty)}</span>` : '';
+            document.getElementById('pdPrice').innerHTML = `<span class="${onSale ? 'sale' : ''}">${money(total)}</span>${wasNote}${eachNote}`;
         }
         document.getElementById('pdAddCart').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); alert(`Added ${pdQty} × ${pdCurrent.name} to your cart.`); } });
         document.getElementById('pdBuyNow').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); window.location.hash = '#/checkout'; } });
@@ -4415,7 +4140,7 @@
                 list.innerHTML = cart.map((item, i) => `
       <div class="cart-row">
         <div class="cart-thumb"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#b3a998;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
-        <div class="cart-info"><h4>${item.name}</h4><span>${item.unit}</span></div>
+        <div class="cart-info"><h4>${item.name}</h4><span>${item.unit}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span></div>
         <div class="cart-qty">
           <button type="button" onclick="changeQty(${i},-1)">&minus;</button>
           <span>${item.qty}</span>
@@ -4564,6 +4289,76 @@
             }
         });
 
+        /* ================= EDIT MODE (local preview only, not persisted) ================= */
+        let editModeOn = false;
+        const editModeBanner = document.getElementById('editModeBanner');
+        function setEditMode(on) {
+            editModeOn = on;
+            document.body.classList.toggle('edit-mode-on', on);
+            editModeBanner.classList.toggle('active', on);
+            document.getElementById('editModeLabel').textContent = on ? 'Exit edit mode' : 'Enter edit mode';
+            syncNavSpacer();
+        }
+        document.getElementById('editModeToggle').addEventListener('click', () => {
+            setEditMode(!editModeOn);
+            accountDropdown.classList.remove('open');
+        });
+        document.getElementById('editModeBannerClose').addEventListener('click', () => setEditMode(false));
+
+        function openEditPanel(cardEl, catSlug, idx) {
+            const slot = cardEl.querySelector('.edit-panel-slot');
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            slot.innerHTML = `
+        <div class="edit-panel">
+          <div class="ep-row">
+            <div>
+              <label>Price (£)</label>
+              <input type="number" step="0.01" min="0" id="ep-price-${catSlug}-${idx}" value="${product.price}">
+            </div>
+            <div>
+              <label>Sale price (£, optional)</label>
+              <input type="number" step="0.01" min="0" id="ep-sale-${catSlug}-${idx}" value="${product.salePrice != null ? product.salePrice : ''}">
+            </div>
+          </div>
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div>
+              <label>Stock status</label>
+              <select id="ep-stock-${catSlug}-${idx}">
+                <option value="in" ${product.stock === 'in' || !product.stock ? 'selected' : ''}>In stock</option>
+                <option value="low" ${product.stock === 'low' ? 'selected' : ''}>Low stock</option>
+                <option value="out" ${product.stock === 'out' ? 'selected' : ''}>Out of stock</option>
+              </select>
+            </div>
+          </div>
+          <div class="ep-actions">
+            <button class="ep-save" type="button" onclick="saveEditPanel('${catSlug}', ${idx}, this)">Save (this tab only)</button>
+            <button class="ep-cancel" type="button" onclick="this.closest('.edit-panel-slot').innerHTML='';">Cancel</button>
+          </div>
+        </div>`;
+        }
+        window.openEditPanel = openEditPanel;
+
+        function saveEditPanel(catSlug, idx, btn) {
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            const priceVal = parseFloat(document.getElementById(`ep-price-${catSlug}-${idx}`).value);
+            const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`).value;
+            const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`).value;
+
+            if (!isNaN(priceVal) && priceVal >= 0) product.price = priceVal;
+            if (saleVal === '' ) { delete product.salePrice; }
+            else {
+                const sv = parseFloat(saleVal);
+                if (!isNaN(sv) && sv >= 0) product.salePrice = sv;
+            }
+            product.stock = stockVal;
+
+            btn.closest('.edit-panel-slot').innerHTML = '';
+            route(); // re-render the current view so the change is visible immediately everywhere it appears
+        }
+        window.saveEditPanel = saveEditPanel;
+
         document.getElementById('signupForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('suName').value.trim() || 'Friend';
@@ -4591,7 +4386,7 @@
                     <div class="search-result-thumb"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
                     <div class="search-result-info">
                         <div class="name">${p.name}</div>
-                        <div class="cat">${p.catName.replace(/&amp;/g, '&')}</div>
+                        <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
                     </div>
                     <div class="search-result-price">${money(p.price)}</div>
                 </a>`).join('')
@@ -4683,7 +4478,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide'];
+        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals'];
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
         }
@@ -4720,6 +4515,9 @@
             } else if (hash === '#/guide') {
                 showView('view-guide');
                 renderFAQ();
+            } else if (hash === '#/new-arrivals') {
+                showView('view-new-arrivals');
+                renderNewArrivalsPage();
             } else {
                 showView('view-home');
             }
@@ -4831,12 +4629,27 @@
             rafId = requestAnimationFrame(tick);
         })();
 
+        /* ================= FIXED NAV SPACER ================= */
+        /* #mainNav is position:fixed, so it's out of normal document flow.
+           Its height also changes across breakpoints (search wraps to its own
+           row on narrower screens), so the spacer is measured live rather than
+           hardcoded, and re-measured on resize/orientation change. */
+        function syncNavSpacer() {
+            const nav = document.getElementById('mainNav');
+            if (!nav) return;
+            document.body.style.paddingTop = nav.offsetHeight + 'px';
+        }
+        window.addEventListener('resize', syncNavSpacer);
+        window.addEventListener('orientationchange', syncNavSpacer);
+
         /* ================= INIT ================= */
         renderCatGrid();
         renderNewCarousel();
         observeReveals();
         updateCartBadge();
         route();
+        syncNavSpacer();
+        setTimeout(syncNavSpacer, 300); // re-check once web font has likely loaded
     </script>
 
 </body>
