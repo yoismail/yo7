@@ -534,7 +534,7 @@
                 height: 34px;
                 padding: 0;
                 justify-content: center;
-                border-radius: 50%;
+                border-radius: 11px;
             }
 
             .nav-account span#accountLabel,
@@ -926,22 +926,37 @@
             position: relative;
             width: 100%;
             max-width: 100%;
+            overflow: hidden;
         }
 
         .new-carousel {
             display: flex;
             gap: 18px;
-            overflow-x: auto;
-            scroll-behavior: smooth;
             padding: 4px 2px 10px;
-            scrollbar-width: none;
-            width: 100%;
-            max-width: 100%;
-            -webkit-overflow-scrolling: touch;
+            width: max-content;
+            animation: newCarouselMarquee 32s linear infinite;
         }
 
-        .new-carousel::-webkit-scrollbar {
-            display: none;
+        .new-carousel.paused {
+            animation-play-state: paused;
+        }
+
+        @keyframes newCarouselMarquee {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .new-carousel {
+                animation: none;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
         }
 
         .new-card {
@@ -1032,42 +1047,7 @@
             color: var(--ink);
         }
 
-        .carousel-arrow {
-            position: absolute;
-            top: 40%;
-            transform: translateY(-50%);
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 1px solid rgba(59, 30, 58, 0.14);
-            background: #fff;
-            color: var(--aubergine);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
-            z-index: 5;
-            transition: background 0.2s ease, transform 0.2s ease;
-        }
-
-        .carousel-arrow:hover {
-            background: var(--aubergine);
-            color: var(--cream);
-        }
-
-        .carousel-arrow.left {
-            left: -14px;
-        }
-
-        .carousel-arrow.right {
-            right: -14px;
-        }
-
         @media (max-width: 900px) {
-            .carousel-arrow {
-                display: none;
-            }
-
             .new-card {
                 flex-basis: 168px;
                 max-width: 168px;
@@ -3127,7 +3107,7 @@
                         <circle cx="11" cy="11" r="7" />
                         <path d="m21 21-4.3-4.3" />
                     </svg>
-                    <input id="navSearchInput" type="text" placeholder="Search ofada rice, scent leaf, red palm oil..."
+                    <input id="navSearchInput" type="text" placeholder="Search: ofada rice, scent leaf, red palm oil..."
                         autocomplete="off">
                 </div>
                 <div class="search-results" id="navSearchResults"></div>
@@ -3260,19 +3240,7 @@
                         New in stock</h2>
                 </div>
                 <div class="new-carousel-wrap">
-                    <button class="carousel-arrow left" id="newCarouselLeft" type="button" aria-label="Scroll left">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                    </button>
                     <div class="new-carousel" id="newCarousel"></div>
-                    <button class="carousel-arrow right" id="newCarouselRight" type="button" aria-label="Scroll right">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 18l6-6-6-6" />
-                        </svg>
-                    </button>
                 </div>
             </div>
         </section>
@@ -4229,41 +4197,27 @@
         <div class="price">${money(p.price)}</div>
       </div>
     </a>`).join('');
-            // duplicated once so the auto-scroll can loop seamlessly
+            // duplicated once so the CSS animation loop is seamless (translateX(-50%) = one full set)
             document.getElementById('newCarousel').innerHTML = cardHTML + cardHTML;
         }
-        const ncLeft = document.getElementById('newCarouselLeft');
-        const ncRight = document.getElementById('newCarouselRight');
-        if (ncLeft && ncRight) {
-            ncLeft.addEventListener('click', () => { pauseNewCarousel(); document.getElementById('newCarousel').scrollBy({ left: -240, behavior: 'smooth' }); });
-            ncRight.addEventListener('click', () => { pauseNewCarousel(); document.getElementById('newCarousel').scrollBy({ left: 240, behavior: 'smooth' }); });
-        }
 
-        /* ================= NEW PRODUCTS CAROUSEL: auto-scroll ================= */
-        let newCarouselPaused = false;
-        let newCarouselResumeTimer = null;
-        function pauseNewCarousel() {
-            newCarouselPaused = true;
-            clearTimeout(newCarouselResumeTimer);
-            newCarouselResumeTimer = setTimeout(() => { newCarouselPaused = false; }, 2500);
-        }
-        (function initNewCarousel() {
+        /* ================= NEW PRODUCTS CAROUSEL: pause on interaction ================= */
+        /* The scrolling itself is a pure CSS animation (see @keyframes newCarouselMarquee),
+           which keeps running smoothly on mobile even during active touch scrolling, unlike
+           a JS/requestAnimationFrame-driven version which mobile browsers can throttle. */
+        (function initNewCarouselPause() {
             const strip = document.getElementById('newCarousel');
             if (!strip) return;
-            const SPEED = 0.6;
-            function tick() {
-                if (!newCarouselPaused && strip.offsetParent !== null) {
-                    strip.scrollLeft += SPEED;
-                    const half = strip.scrollWidth / 2;
-                    if (strip.scrollLeft >= half) { strip.scrollLeft -= half; }
-                }
-                requestAnimationFrame(tick);
+            let resumeTimer = null;
+            function pause() {
+                strip.classList.add('paused');
+                clearTimeout(resumeTimer);
+                resumeTimer = setTimeout(() => strip.classList.remove('paused'), 2000);
             }
-            ['mouseenter', 'wheel', 'pointerdown'].forEach(evt => {
-                strip.addEventListener(evt, pauseNewCarousel, { passive: true });
-            });
-            // Only pause for touch when the gesture is clearly a horizontal swipe on the
-            // carousel itself, not a vertical page-scroll that happens to pass over it.
+            strip.addEventListener('mouseenter', () => strip.classList.add('paused'));
+            strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); strip.classList.remove('paused'); });
+            // Only pause for touch when it's a genuine horizontal interaction with the
+            // carousel, not a vertical page-scroll swipe that happens to pass over it.
             let touchStartX = 0, touchStartY = 0;
             strip.addEventListener('touchstart', (e) => {
                 touchStartX = e.touches[0].clientX;
@@ -4272,14 +4226,8 @@
             strip.addEventListener('touchmove', (e) => {
                 const dx = Math.abs(e.touches[0].clientX - touchStartX);
                 const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                if (dx > dy && dx > 6) pauseNewCarousel();
+                if (dx > dy && dx > 6) pause();
             }, { passive: true });
-            strip.addEventListener('mouseleave', () => { clearTimeout(newCarouselResumeTimer); newCarouselResumeTimer = setTimeout(() => { newCarouselPaused = false; }, 900); });
-            let isDown = false, startX = 0, startScroll = 0;
-            strip.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX; startScroll = strip.scrollLeft; pauseNewCarousel(); });
-            window.addEventListener('mouseup', () => isDown = false);
-            window.addEventListener('mousemove', (e) => { if (!isDown) return; strip.scrollLeft = startScroll - (e.pageX - startX); });
-            requestAnimationFrame(tick);
         })();
 
         function stockLabel(s) {
