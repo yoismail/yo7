@@ -12,14 +12,14 @@
         rel="stylesheet">
     <style>
         :root {
-            --aubergine: #3B1E3A;
-            --aubergine-deep: #241226;
-            --aubergine-mid: #4a2b48;
-            --chartreuse: #A8B22E;
-            --chartreuse-soft: #c3cc5e;
-            --cream: #F5F2E4;
-            --orange: #D97A3A;
-            --ink: #241226;
+            --aubergine: #063B00;
+            --aubergine-deep: #042500;
+            --aubergine-mid: #266210;
+            --chartreuse: #90B800;
+            --chartreuse-soft: #A6CC2E;
+            --cream: #FAF9F2;
+            --orange: #E1E100;
+            --ink: #16210D;
             --display: 'Space Grotesk', sans-serif;
             --body: 'Work Sans', sans-serif;
         }
@@ -72,10 +72,10 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(36, 18, 38, 0.92);
+            background: rgba(4, 37, 0, 0.92);
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
-            border-bottom: 1px solid rgba(245, 242, 228, 0.08);
+            border-bottom: 1px solid rgba(250, 249, 242, 0.08);
             overflow-x: hidden;
             max-width: 100vw;
         }
@@ -86,20 +86,20 @@
         .edit-mode-banner {
             display: none;
             background: var(--orange);
-            color: #fff;
+            color: var(--aubergine);
         }
         .edit-mode-banner.active { display: block; }
         .emb-inner {
             display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 13px;
             flex-wrap: wrap;
         }
-        .emb-dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; flex-shrink: 0; animation: embPulse 1.6s ease-in-out infinite; }
+        .emb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--aubergine); flex-shrink: 0; animation: embPulse 1.6s ease-in-out infinite; }
         @keyframes embPulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
         .emb-inner button {
             margin-left: auto; flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 12px;
-            background: rgba(255,255,255,0.2); color: #fff; border: none; border-radius: 8px; padding: 7px 12px;
+            background: rgba(6,59,0,0.14); color: var(--aubergine); border: none; border-radius: 8px; padding: 7px 12px;
         }
-        .emb-inner button:hover { background: rgba(255,255,255,0.32); }
+        .emb-inner button:hover { background: rgba(6,59,0,0.24); }
 
         .card-edit-btn {
             display: none;
@@ -114,24 +114,24 @@
         body.edit-mode-on .product-card { position: relative; }
 
         .edit-panel {
-            padding: 14px 18px 18px; background: rgba(217,122,58,0.06); border-top: 1px dashed rgba(217,122,58,0.35);
+            padding: 14px 18px 18px; background: rgba(225,225,0,0.06); border-top: 1px dashed rgba(225,225,0,0.35);
         }
         .edit-panel .ep-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
         .edit-panel label {
             display: block; font-family: var(--display); font-weight: 600; font-size: 9.5px;
-            letter-spacing: 0.03em; text-transform: uppercase; color: var(--orange); margin-bottom: 4px;
+            letter-spacing: 0.03em; text-transform: uppercase; color: var(--aubergine-mid); margin-bottom: 4px;
         }
         .edit-panel input, .edit-panel select {
-            width: 100%; padding: 7px 9px; border-radius: 8px; border: 1.5px solid rgba(217,122,58,0.3);
+            width: 100%; padding: 7px 9px; border-radius: 8px; border: 1.5px solid rgba(225,225,0,0.3);
             font-family: var(--body); font-size: 12.5px; background: #fff;
         }
         .edit-panel .ep-actions { display: flex; gap: 8px; margin-top: 4px; }
         .edit-panel .ep-save {
-            flex: 1; background: var(--orange); color: #fff; border: none; border-radius: 8px;
+            flex: 1; background: var(--chartreuse); color: var(--aubergine); border: none; border-radius: 8px;
             font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px;
         }
         .edit-panel .ep-cancel {
-            background: none; border: 1.5px solid rgba(59,30,58,0.16); color: var(--aubergine);
+            background: none; border: 1.5px solid rgba(6,59,0,0.16); color: var(--aubergine);
             border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
         }
 
@@ -180,16 +180,16 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(245, 242, 228, 0.08);
-            border: 1px solid rgba(245, 242, 228, 0.18);
+            background: rgba(250, 249, 242, 0.08);
+            border: 1px solid rgba(250, 249, 242, 0.18);
             border-radius: 999px;
             padding: 8px 15px;
             transition: border-color 0.2s ease, background 0.2s ease;
         }
 
         .nav-search:focus-within {
-            border-color: rgba(168, 178, 46, 0.6);
-            background: rgba(245, 242, 228, 0.12);
+            border-color: rgba(144, 184, 0, 0.6);
+            background: rgba(250, 249, 242, 0.12);
         }
 
         .nav-search svg {
@@ -209,7 +209,7 @@
         }
 
         .nav-search input::placeholder {
-            color: rgba(245, 242, 228, 0.55);
+            color: rgba(250, 249, 242, 0.55);
         }
 
         .search-wrap { position: relative; flex: 1; max-width: 340px; }
@@ -236,11 +236,11 @@
         .search-result-item {
             display: flex; align-items: center; gap: 12px;
             padding: 11px 16px; text-decoration: none; color: var(--ink);
-            border-bottom: 1px solid rgba(59,30,58,0.06);
+            border-bottom: 1px solid rgba(6,59,0,0.06);
             transition: background 0.15s ease;
         }
         .search-result-item:last-child { border-bottom: none; }
-        .search-result-item:hover, .search-result-item.active-result { background: rgba(168,178,46,0.1); }
+        .search-result-item:hover, .search-result-item.active-result { background: rgba(144,184,0,0.1); }
         .search-result-thumb {
             width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
             background: linear-gradient(160deg,#f0ecdc,#e7e1cc);
@@ -253,9 +253,9 @@
         .search-result-price { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); flex-shrink: 0; }
         .search-see-all {
             display: block; text-align: center; padding: 12px; font-family: var(--display); font-weight: 700;
-            font-size: 12.5px; color: var(--orange); text-decoration: none; background: rgba(217,122,58,0.06);
+            font-size: 12.5px; color: var(--aubergine-mid); text-decoration: none; background: rgba(225,225,0,0.06);
         }
-        .search-see-all:hover { background: rgba(217,122,58,0.12); }
+        .search-see-all:hover { background: rgba(225,225,0,0.12); }
         .search-empty { padding: 20px 16px; text-align: center; font-size: 13px; color: #9a8f88; }
 
         .nav-links {
@@ -291,8 +291,8 @@
             width: 38px;
             height: 38px;
             border-radius: 11px;
-            border: 1px solid rgba(245, 242, 228, 0.18);
-            background: rgba(245, 242, 228, 0.06);
+            border: 1px solid rgba(250, 249, 242, 0.18);
+            background: rgba(250, 249, 242, 0.06);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -302,8 +302,8 @@
         }
 
         .icon-btn:hover {
-            background: rgba(245, 242, 228, 0.14);
-            border-color: rgba(245, 242, 228, 0.4);
+            background: rgba(250, 249, 242, 0.14);
+            border-color: rgba(250, 249, 242, 0.4);
         }
 
         .icon-btn svg {
@@ -337,8 +337,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(245, 242, 228, 0.08);
-            border: 1px solid rgba(245, 242, 228, 0.2);
+            background: rgba(250, 249, 242, 0.08);
+            border: 1px solid rgba(250, 249, 242, 0.2);
             border-radius: 999px;
             padding: 8px 16px 8px 12px;
             font-family: var(--display);
@@ -350,8 +350,8 @@
         }
 
         .nav-account:hover {
-            border-color: rgba(245, 242, 228, 0.5);
-            background: rgba(245, 242, 228, 0.14);
+            border-color: rgba(250, 249, 242, 0.5);
+            background: rgba(250, 249, 242, 0.14);
         }
 
         .nav-account svg {
@@ -376,7 +376,7 @@
             min-width: 150px;
             background: #fff;
             border-radius: 14px;
-            border: 1px solid rgba(59, 30, 58, 0.1);
+            border: 1px solid rgba(6, 59, 0, 0.1);
             box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
             padding: 6px;
             z-index: 120;
@@ -410,13 +410,13 @@
         }
 
         .account-dropdown button:hover {
-            background: rgba(59, 30, 58, 0.06);
+            background: rgba(6, 59, 0, 0.06);
         }
 
         .account-dropdown svg {
             width: 15px;
             height: 15px;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             flex-shrink: 0;
         }
 
@@ -443,8 +443,8 @@
             width: 38px;
             height: 38px;
             border-radius: 11px;
-            border: 1px solid rgba(245, 242, 228, 0.18);
-            background: rgba(245, 242, 228, 0.06);
+            border: 1px solid rgba(250, 249, 242, 0.18);
+            background: rgba(250, 249, 242, 0.06);
             align-items: center;
             justify-content: center;
             color: var(--cream);
@@ -489,7 +489,7 @@
             font-weight: 600;
             font-size: 15px;
             padding: 12px 4px;
-            border-bottom: 1px solid rgba(245, 242, 228, 0.08);
+            border-bottom: 1px solid rgba(250, 249, 242, 0.08);
         }
 
         .mobile-menu a:last-child {
@@ -566,29 +566,29 @@
         .btn-primary {
             background: var(--chartreuse);
             color: var(--aubergine-deep);
-            box-shadow: 0 6px 20px rgba(168, 178, 46, 0.28);
+            box-shadow: 0 6px 20px rgba(144, 184, 0, 0.28);
         }
 
         .btn-primary:hover {
-            box-shadow: 0 14px 30px rgba(168, 178, 46, 0.4);
+            box-shadow: 0 14px 30px rgba(144, 184, 0, 0.4);
             background: var(--chartreuse-soft);
         }
 
         .btn-outline {
-            background: rgba(245, 242, 228, 0.06);
+            background: rgba(250, 249, 242, 0.06);
             color: var(--cream);
-            border: 1.5px solid rgba(245, 242, 228, 0.28);
+            border: 1.5px solid rgba(250, 249, 242, 0.28);
         }
 
         .btn-outline:hover {
-            border-color: rgba(245, 242, 228, 0.7);
-            background: rgba(245, 242, 228, 0.12);
+            border-color: rgba(250, 249, 242, 0.7);
+            background: rgba(250, 249, 242, 0.12);
         }
 
         .btn-outline-dark {
             background: #fff;
             color: var(--aubergine);
-            border: 1.5px solid rgba(59, 30, 58, 0.18);
+            border: 1.5px solid rgba(6, 59, 0, 0.18);
         }
 
         .btn-outline-dark:hover {
@@ -613,7 +613,7 @@
         /* ================= HERO ================= */
         .hero {
             position: relative;
-            background: radial-gradient(ellipse at 50% 34%, rgba(168, 178, 46, 0.16), transparent 60%), linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 40%, var(--aubergine-deep) 100%);
+            background: radial-gradient(ellipse at 50% 34%, rgba(144, 184, 0, 0.16), transparent 60%), linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 40%, var(--aubergine-deep) 100%);
             color: var(--cream);
             overflow: hidden;
             padding: 64px 0 96px;
@@ -787,14 +787,14 @@
         }
 
         .cat-card {
-            --accent: #A8B22E;
+            --accent: #90B800;
             display: flex;
             flex-direction: column;
             text-decoration: none;
             position: relative;
             overflow: hidden;
-            background: linear-gradient(160deg, rgba(245, 242, 228, 0.07), rgba(245, 242, 228, 0.02));
-            border: 1px solid rgba(245, 242, 228, 0.12);
+            background: linear-gradient(160deg, rgba(250, 249, 242, 0.07), rgba(250, 249, 242, 0.02));
+            border: 1px solid rgba(250, 249, 242, 0.12);
             border-radius: 20px;
             padding: 0;
             min-height: 300px;
@@ -804,8 +804,8 @@
 
         .cat-card:hover {
             transform: translateY(-7px);
-            border-color: color-mix(in srgb, var(--accent) 55%, rgba(245, 242, 228, 0.2));
-            background: linear-gradient(160deg, rgba(245, 242, 228, 0.11), rgba(245, 242, 228, 0.02));
+            border-color: color-mix(in srgb, var(--accent) 55%, rgba(250, 249, 242, 0.2));
+            background: linear-gradient(160deg, rgba(250, 249, 242, 0.11), rgba(250, 249, 242, 0.02));
             box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
         }
 
@@ -821,7 +821,7 @@
 
         .cat-card-bottom {
             padding: 14px 22px 18px;
-            border-top: 1px solid rgba(245, 242, 228, 0.1);
+            border-top: 1px solid rgba(250, 249, 242, 0.1);
             background: rgba(0, 0, 0, 0.1);
             position: relative;
             z-index: 2;
@@ -855,14 +855,14 @@
             margin-bottom: 14px;
             position: relative;
             z-index: 2;
-            background: color-mix(in srgb, var(--accent) 24%, rgba(245, 242, 228, 0.06));
+            background: color-mix(in srgb, var(--accent) 24%, rgba(250, 249, 242, 0.06));
             border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
             transition: transform 0.3s cubic-bezier(.2, .8, .3, 1.1), background 0.3s ease;
         }
 
         .cat-card:hover .cat-icon-badge {
             transform: scale(1.08) rotate(-3deg);
-            background: color-mix(in srgb, var(--accent) 38%, rgba(245, 242, 228, 0.08));
+            background: color-mix(in srgb, var(--accent) 38%, rgba(250, 249, 242, 0.08));
         }
 
         .cat-card h3 {
@@ -899,10 +899,10 @@
 
         /* ================= DELIVERY / ORDER (home) ================= */
         .new-section {
-            background: #EDE6D3;
+            background: #F1F5EA;
             padding: 56px 0 60px;
-            border-top: 1px solid rgba(59,30,58,0.06);
-            border-bottom: 1px solid rgba(59,30,58,0.06);
+            border-top: 1px solid rgba(6,59,0,0.06);
+            border-bottom: 1px solid rgba(6,59,0,0.06);
         }
         .new-section-head {
             display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
@@ -912,7 +912,7 @@
             display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0;
             font-family: var(--display); font-weight: 700; font-size: 13.5px;
             color: var(--aubergine); text-decoration: none;
-            padding: 10px 16px; border-radius: 10px; background: rgba(59,30,58,0.06);
+            padding: 10px 16px; border-radius: 10px; background: rgba(6,59,0,0.06);
             transition: background 0.2s ease, transform 0.2s ease;
         }
         .view-all-btn svg { width: 15px; height: 15px; transition: transform 0.2s ease; }
@@ -932,19 +932,19 @@
             .new-carousel { animation: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         }
         .new-card {
-            flex: 0 0 220px; max-width: 220px; background: #fff; border: 1px solid rgba(59,30,58,0.08); border-radius: 16px;
+            flex: 0 0 220px; max-width: 220px; background: #fff; border: 1px solid rgba(6,59,0,0.08); border-radius: 16px;
             overflow: hidden; text-decoration: none; color: var(--ink);
             transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
-        .new-card:hover { transform: translateY(-5px); box-shadow: 0 14px 26px rgba(59,30,58,0.12); }
+        .new-card:hover { transform: translateY(-5px); box-shadow: 0 14px 26px rgba(6,59,0,0.12); }
         .new-card .thumb { aspect-ratio: 1/1; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,#f0ecdc,#e7e1cc); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: #a89a94; }
         .new-tag {
-            position: absolute; top: 10px; left: 10px; background: var(--orange); color: #fff;
+            position: absolute; top: 10px; left: 10px; background: var(--orange); color: var(--aubergine);
             font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.04em;
             text-transform: uppercase; padding: 5px 11px; border-radius: 999px;
-            box-shadow: 0 3px 8px rgba(217,122,58,0.45), 0 0 0 2px #fff;
+            box-shadow: 0 3px 8px rgba(225,225,0,0.45), 0 0 0 2px #fff;
             z-index: 3;
         }
         .new-card .body { padding: 12px 14px 14px; }
@@ -987,7 +987,7 @@
             position: relative;
             width: 240px;
             height: 240px;
-            filter: drop-shadow(0 16px 30px rgba(59, 30, 58, 0.28));
+            filter: drop-shadow(0 16px 30px rgba(6, 59, 0, 0.28));
         }
 
         .delivery-badge svg {
@@ -1021,7 +1021,7 @@
             font-size: 11.5px;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             margin-top: 8px;
         }
 
@@ -1034,7 +1034,7 @@
             height: 1px;
             max-width: 220px;
             margin: 0 auto 48px;
-            background: linear-gradient(90deg, transparent, rgba(59, 30, 58, 0.22) 50%, transparent);
+            background: linear-gradient(90deg, transparent, rgba(6, 59, 0, 0.22) 50%, transparent);
             position: relative;
         }
 
@@ -1076,14 +1076,14 @@
             bottom: 6px;
             right: 0;
             width: 1.5px;
-            background: linear-gradient(180deg, transparent, rgba(59, 30, 58, 0.16) 20%, rgba(59, 30, 58, 0.16) 80%, transparent);
+            background: linear-gradient(180deg, transparent, rgba(6, 59, 0, 0.16) 20%, rgba(6, 59, 0, 0.16) 80%, transparent);
         }
 
         .step-num {
             font-family: var(--display);
             font-weight: 700;
             font-size: 15px;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             letter-spacing: 0.08em;
             margin-bottom: 14px;
         }
@@ -1115,7 +1115,7 @@
             flex-wrap: wrap;
             gap: 32px;
             padding-bottom: 36px;
-            border-bottom: 1px solid rgba(245, 242, 228, 0.1);
+            border-bottom: 1px solid rgba(250, 249, 242, 0.1);
             margin-bottom: 24px;
         }
 
@@ -1305,7 +1305,7 @@
         }
 
         .cat-nav-strip::-webkit-scrollbar-thumb {
-            background: rgba(245, 242, 228, 0.25);
+            background: rgba(250, 249, 242, 0.25);
             border-radius: 10px;
         }
 
@@ -1316,7 +1316,7 @@
             font-size: 12px;
             padding: 7px 14px;
             border-radius: 999px;
-            border: 1px solid rgba(245, 242, 228, 0.22);
+            border: 1px solid rgba(250, 249, 242, 0.22);
             color: #e2d7e3;
             text-decoration: none;
             transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
@@ -1344,7 +1344,7 @@
 
         .product-card {
             background: #fff;
-            border: 1px solid rgba(59, 30, 58, 0.08);
+            border: 1px solid rgba(6, 59, 0, 0.08);
             border-radius: 18px;
             overflow: hidden;
             transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -1355,7 +1355,7 @@
 
         .product-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 14px 26px rgba(59, 30, 58, 0.12);
+            box-shadow: 0 14px 26px rgba(6, 59, 0, 0.12);
         }
 
         .product-thumb {
@@ -1397,7 +1397,7 @@
             z-index: 3;
         }
         .stock-badge.in { background: var(--chartreuse); color: var(--aubergine-deep); }
-        .stock-badge.low { background: var(--orange); color: #fff; }
+        .stock-badge.low { background: var(--orange); color: var(--aubergine); }
         .stock-badge.out { background: #5a4d48; color: #fff; }
 
         .product-body {
@@ -1432,18 +1432,18 @@
         }
 
         .price-now { font-family: var(--display); font-weight: 700; }
-        .price-now.sale { color: var(--orange); }
+        .price-now.sale { color: var(--aubergine-mid); }
         .price-was {
             font-family: var(--display); font-weight: 500; font-size: 0.78em;
             color: #a89a94; text-decoration: line-through; margin-left: 6px;
         }
         .sale-badge {
             position: absolute; top: 10px; right: 10px;
-            background: var(--orange); color: #fff;
+            background: var(--chartreuse); color: var(--aubergine);
             font-family: var(--display); font-weight: 700; font-size: 10px;
             letter-spacing: 0.03em; text-transform: uppercase;
             padding: 5px 10px; border-radius: 999px;
-            box-shadow: 0 3px 8px rgba(217,122,58,0.4), 0 0 0 2px #fff;
+            box-shadow: 0 3px 8px rgba(144,184,0,0.4), 0 0 0 2px #fff;
             z-index: 3;
         }
 
@@ -1537,7 +1537,7 @@
             font-size: 12px;
             letter-spacing: 0.02em;
             color: var(--aubergine);
-            background: rgba(59,30,58,0.045);
+            background: rgba(6,59,0,0.045);
             border: none;
             border-radius: 10px;
             padding: 9px;
@@ -1606,7 +1606,7 @@
             font-size: 12px;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             margin-bottom: 12px;
         }
 
@@ -1643,7 +1643,7 @@
         .qty-stepper {
             display: inline-flex;
             align-items: center;
-            border: 1.5px solid rgba(59, 30, 58, 0.18);
+            border: 1.5px solid rgba(6, 59, 0, 0.18);
             border-radius: 13px;
             overflow: hidden;
             margin-bottom: 22px;
@@ -1661,7 +1661,7 @@
         }
 
         .qty-stepper button:hover {
-            background: rgba(59, 30, 58, 0.06);
+            background: rgba(6, 59, 0, 0.06);
         }
 
         .qty-stepper span {
@@ -1682,7 +1682,7 @@
             display: flex;
             gap: 26px;
             padding-top: 22px;
-            border-top: 1px solid rgba(59, 30, 58, 0.1);
+            border-top: 1px solid rgba(6, 59, 0, 0.1);
             font-size: 13px;
             color: #6a5f58;
         }
@@ -1787,7 +1787,7 @@
             background: #fff;
             border-radius: 20px;
             padding: 30px 28px;
-            border: 1px solid rgba(59, 30, 58, 0.08);
+            border: 1px solid rgba(6, 59, 0, 0.08);
         }
 
         .panel h2 {
@@ -1803,7 +1803,7 @@
             align-items: center;
             gap: 14px;
             padding: 14px 0;
-            border-bottom: 1px solid rgba(59, 30, 58, 0.08);
+            border-bottom: 1px solid rgba(6, 59, 0, 0.08);
         }
 
         .cart-row:last-child {
@@ -1842,7 +1842,7 @@
         .cart-qty {
             display: flex;
             align-items: center;
-            border: 1px solid rgba(59, 30, 58, 0.16);
+            border: 1px solid rgba(6, 59, 0, 0.16);
             border-radius: 10px;
             overflow: hidden;
         }
@@ -1909,7 +1909,7 @@
             width: 100%;
             padding: 12px 14px;
             border-radius: 11px;
-            border: 1.5px solid rgba(59, 30, 58, 0.14);
+            border: 1.5px solid rgba(6, 59, 0, 0.14);
             font-family: var(--body);
             font-size: 14.5px;
             background: #fff;
@@ -1942,14 +1942,14 @@
             font-weight: 700;
             font-size: 17px;
             color: var(--ink);
-            border-top: 1px solid rgba(59, 30, 58, 0.12);
+            border-top: 1px solid rgba(6, 59, 0, 0.12);
             margin-top: 8px;
             padding-top: 16px;
         }
 
         .payment-note {
-            background: rgba(217, 122, 58, 0.1);
-            border: 1px solid rgba(217, 122, 58, 0.3);
+            background: rgba(225, 225, 0, 0.1);
+            border: 1px solid rgba(225, 225, 0, 0.3);
             border-radius: 14px;
             padding: 16px 18px;
             font-size: 13px;
@@ -1959,7 +1959,7 @@
         }
 
         .payment-note strong {
-            color: var(--orange);
+            color: var(--aubergine-mid);
         }
 
         .card-visual {
@@ -2049,7 +2049,7 @@
         .invoice {
             background: #fff;
             border-radius: 20px;
-            border: 1px solid rgba(59, 30, 58, 0.1);
+            border: 1px solid rgba(6, 59, 0, 0.1);
             max-width: 640px;
             margin: 0 auto;
             padding: 40px 44px;
@@ -2096,7 +2096,7 @@
             font-size: 11px;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             margin-bottom: 8px;
         }
 
@@ -2121,13 +2121,13 @@
             text-transform: uppercase;
             color: #8a7f78;
             padding: 8px 0;
-            border-bottom: 1.5px solid rgba(59, 30, 58, 0.12);
+            border-bottom: 1.5px solid rgba(6, 59, 0, 0.12);
         }
 
         .invoice-table td {
             padding: 11px 0;
             font-size: 13.5px;
-            border-bottom: 1px solid rgba(59, 30, 58, 0.06);
+            border-bottom: 1px solid rgba(6, 59, 0, 0.06);
         }
 
         .invoice-table td:last-child,
@@ -2148,7 +2148,7 @@
         .invoice-footer-note {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px dashed rgba(59, 30, 58, 0.18);
+            border-top: 1px dashed rgba(6, 59, 0, 0.18);
             font-size: 12px;
             color: #8a7f78;
             text-align: center;
@@ -2206,8 +2206,8 @@
             aspect-ratio: 4/3.4;
             border-radius: 20px;
             overflow: hidden;
-            border: 1px solid rgba(59, 30, 58, 0.1);
-            box-shadow: 0 14px 30px rgba(59, 30, 58, 0.1);
+            border: 1px solid rgba(6, 59, 0, 0.1);
+            box-shadow: 0 14px 30px rgba(6, 59, 0, 0.1);
         }
 
         .map-frame iframe {
@@ -2227,7 +2227,7 @@
         .contact-panel {
             background: #fff;
             border-radius: 20px;
-            border: 1px solid rgba(59, 30, 58, 0.08);
+            border: 1px solid rgba(6, 59, 0, 0.08);
             padding: 30px 28px;
         }
 
@@ -2292,18 +2292,18 @@
             font-size: 14px;
             padding: 12px 14px;
             border-radius: 12px;
-            background: rgba(59, 30, 58, 0.04);
+            background: rgba(6, 59, 0, 0.04);
             transition: background 0.2s ease;
         }
 
         .contact-link-row:hover {
-            background: rgba(59, 30, 58, 0.08);
+            background: rgba(6, 59, 0, 0.08);
         }
 
         .contact-link-row svg {
             width: 18px;
             height: 18px;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             flex-shrink: 0;
         }
 
@@ -2313,7 +2313,7 @@
             font-size: 13px;
             letter-spacing: 0.05em;
             text-transform: uppercase;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             margin-bottom: 14px;
         }
 
@@ -2323,7 +2323,7 @@
         }
 
         .hours-table tr {
-            border-bottom: 1px solid rgba(59, 30, 58, 0.07);
+            border-bottom: 1px solid rgba(6, 59, 0, 0.07);
         }
 
         .hours-table tr:last-child {
@@ -2344,11 +2344,11 @@
         }
 
         .hours-table tr.today td {
-            color: var(--orange);
+            color: var(--aubergine-mid);
         }
 
         .hours-table tr.today td:last-child {
-            color: var(--orange);
+            color: var(--aubergine-mid);
         }
 
         .open-badge {
@@ -2360,13 +2360,13 @@
             font-size: 12px;
             padding: 6px 12px;
             border-radius: 999px;
-            background: rgba(168, 178, 46, 0.15);
+            background: rgba(144, 184, 0, 0.15);
             color: #5c6b1a;
             margin-bottom: 18px;
         }
 
         .open-badge.closed {
-            background: rgba(217, 122, 58, 0.15);
+            background: rgba(225, 225, 0, 0.15);
             color: #8a4a26;
         }
 
@@ -2389,7 +2389,7 @@
             gap: 32px;
             background: #fff;
             border-radius: 22px;
-            border: 1px solid rgba(59,30,58,0.08);
+            border: 1px solid rgba(6,59,0,0.08);
             padding: 34px;
             margin-bottom: 30px;
             align-items: center;
@@ -2398,7 +2398,7 @@
         .pc-left p { font-size: 14px; color: #6a5f58; margin-bottom: 18px; }
         .pc-input-row { display: flex; gap: 10px; }
         .pc-input-row input {
-            flex: 1; padding: 13px 16px; border-radius: 12px; border: 1.5px solid rgba(59,30,58,0.16);
+            flex: 1; padding: 13px 16px; border-radius: 12px; border: 1.5px solid rgba(6,59,0,0.16);
             font-family: var(--body); font-size: 15px; text-transform: uppercase;
         }
         .pc-input-row input:focus { outline: none; border-color: var(--chartreuse); }
@@ -2418,7 +2418,7 @@
         .areas-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         .area-chip {
             font-family: var(--display); font-weight: 600; font-size: 13px; padding: 8px 15px;
-            border-radius: 999px; background: rgba(245,242,228,0.1); border: 1px solid rgba(245,242,228,0.18);
+            border-radius: 999px; background: rgba(250,249,242,0.1); border: 1px solid rgba(250,249,242,0.18);
         }
         .areas-note { font-size: 12.5px; color: #cbb9cd; line-height: 1.5; }
 
@@ -2443,7 +2443,7 @@
         .dinfo-card {
             background: #fff;
             border-radius: 16px;
-            border: 1px solid rgba(59, 30, 58, 0.08);
+            border: 1px solid rgba(6, 59, 0, 0.08);
             padding: 20px 22px;
             display: flex;
             gap: 14px;
@@ -2453,7 +2453,7 @@
         .dinfo-card svg {
             width: 22px;
             height: 22px;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -2463,7 +2463,7 @@
             font-weight: 700;
             font-size: 22px;
             line-height: 1;
-            color: var(--orange);
+            color: var(--aubergine-mid);
             flex-shrink: 0;
             width: 22px;
             margin-top: 1px;
@@ -2486,7 +2486,7 @@
         .dinfo-list {
             background: #fff;
             border-radius: 20px;
-            border: 1px solid rgba(59, 30, 58, 0.08);
+            border: 1px solid rgba(6, 59, 0, 0.08);
             padding: 30px 30px;
         }
 
@@ -2506,7 +2506,7 @@
             display: flex;
             gap: 12px;
             padding: 13px 0;
-            border-bottom: 1px solid rgba(59, 30, 58, 0.07);
+            border-bottom: 1px solid rgba(6, 59, 0, 0.07);
             font-size: 14px;
             color: #3d3230;
             line-height: 1.5;
@@ -2539,7 +2539,7 @@
         .guide-section { background: var(--cream); padding: 52px 0 100px; }
         .guide-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 60px; }
         .guide-step {
-            background: #fff; border: 1px solid rgba(59,30,58,0.08); border-radius: 18px; padding: 26px 24px;
+            background: #fff; border: 1px solid rgba(6,59,0,0.08); border-radius: 18px; padding: 26px 24px;
         }
         .guide-step .num {
             width: 34px; height: 34px; border-radius: 50%; background: var(--chartreuse); color: var(--aubergine-deep);
@@ -2550,13 +2550,13 @@
         .guide-step p { font-size: 13.5px; color: #5a4d48; line-height: 1.5; }
 
         .faq-title { font-family: var(--display); font-weight: 700; font-size: 24px; color: var(--aubergine); margin-bottom: 22px; }
-        .faq-item { background: #fff; border: 1px solid rgba(59,30,58,0.08); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+        .faq-item { background: #fff; border: 1px solid rgba(6,59,0,0.08); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
         .faq-q {
             width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px;
             padding: 18px 20px; background: none; border: none; text-align: left;
             font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--aubergine);
         }
-        .faq-q svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform 0.25s ease; color: var(--orange); }
+        .faq-q svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform 0.25s ease; color: var(--aubergine-mid); }
         .faq-item.open .faq-q svg { transform: rotate(45deg); }
         .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
         .faq-item.open .faq-a { max-height: 300px; }
@@ -2616,7 +2616,7 @@
         }
 
         .auth-switch a {
-            color: var(--orange);
+            color: var(--aubergine-mid);
             font-weight: 600;
             text-decoration: none;
         }
@@ -2626,8 +2626,8 @@
         }
 
         .auth-note {
-            background: rgba(217, 122, 58, 0.1);
-            border: 1px solid rgba(217, 122, 58, 0.3);
+            background: rgba(225, 225, 0, 0.1);
+            border: 1px solid rgba(225, 225, 0, 0.3);
             border-radius: 12px;
             padding: 12px 14px;
             font-size: 12px;
@@ -2686,7 +2686,7 @@
                 bottom: 0;
                 width: auto;
                 height: 1.5px;
-                background: linear-gradient(90deg, transparent, rgba(59, 30, 58, 0.16) 15%, rgba(59, 30, 58, 0.16) 85%, transparent);
+                background: linear-gradient(90deg, transparent, rgba(6, 59, 0, 0.16) 15%, rgba(6, 59, 0, 0.16) 85%, transparent);
             }
 
             .field-row {
@@ -2892,7 +2892,7 @@
         <section class="story">
             <div class="wrap story-grid">
                 <svg class="story-seal reveal" viewBox="65 25 875 900"
-                    style="--chartreuse:#A8B22E; --aubergine-deep:#241226; --cream:#F5F2E4; --orange:#D97A3A;">
+                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
                     <use href="#seal-mark" />
                 </svg>
                 <div class="reveal" style="transition-delay:0.12s">
@@ -2921,7 +2921,7 @@
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
-                        <div class="section-eyebrow" style="color:var(--orange);">Just landed</div>
+                        <div class="section-eyebrow" style="color:var(--aubergine-mid);">Just landed</div>
                         <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color:var(--aubergine); letter-spacing:-0.01em;">New in stock</h2>
                     </div>
                     <a class="view-all-btn" href="#/new-arrivals">
@@ -2939,7 +2939,7 @@
             <div class="wrap delivery-grid">
                 <div class="delivery-badge reveal">
                     <svg viewBox="65 25 875 900"
-                        style="--chartreuse:#A8B22E; --aubergine-deep:#241226; --orange:#D97A3A;">
+                        style="--chartreuse: #90B800; --aubergine-deep: #042500; --orange: #E1E100;">
                         <use href="#seal-ring" />
                     </svg>
                     <div class="delivery-badge-text">
@@ -2959,7 +2959,7 @@
             <div class="wrap">
                 <div class="section-divider reveal"></div>
                 <div class="section-head reveal">
-                    <div class="section-eyebrow" style="color:var(--orange);">How it works</div>
+                    <div class="section-eyebrow" style="color:var(--aubergine-mid);">How it works</div>
                     <h2
                         style="font-family:var(--display); font-weight:700; font-size:clamp(28px,4vw,38px); color:var(--aubergine); letter-spacing:-0.01em;">
                         Shop it properly, like any other store</h2>
@@ -3543,7 +3543,7 @@
 
             <div class="auth-box">
                 <svg class="seal-mini" viewBox="65 25 875 900"
-                    style="--chartreuse:#A8B22E; --aubergine-deep:#241226; --cream:#F5F2E4; --orange:#D97A3A;">
+                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
                     <use href="#seal-mark" />
                 </svg>
                 <h1>Welcome back</h1>
@@ -3567,7 +3567,7 @@
         <section class="auth-section">
             <div class="auth-box">
                 <svg class="seal-mini" viewBox="65 25 875 900"
-                    style="--chartreuse:#A8B22E; --aubergine-deep:#241226; --cream:#F5F2E4; --orange:#D97A3A;">
+                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
                     <use href="#seal-mark" />
                 </svg>
                 <h1>Create your account</h1>
@@ -3860,7 +3860,7 @@
         }
 
         /* ================= RENDER: HOME CATEGORY GRID ================= */
-        const CAT_ACCENTS = ['#A8B22E', '#D97A3A', '#D9A441', '#D98C78'];
+        const CAT_ACCENTS = ['#063B00', '#266210', '#90B800', '#E1E100'];
         function renderCatGrid() {
             document.getElementById('catGrid').innerHTML = CATEGORIES.map((c, i) => `
     <a class="cat-card" style="--accent:${CAT_ACCENTS[i % CAT_ACCENTS.length]}" href="#/category/${c.slug}">
