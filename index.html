@@ -76,7 +76,6 @@
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
             border-bottom: 1px solid rgba(250, 249, 242, 0.08);
-            max-width: 100vw;
         }
 
         body { padding-top: 0; }
@@ -101,6 +100,10 @@
         .emb-inner button:hover { background: rgba(6,59,0,0.24); }
 
         .trust-bar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            z-index: 99;
             background: var(--cream);
             border-bottom: 1px solid rgba(144, 184, 0, 0.3);
             overflow: hidden;
@@ -2263,9 +2266,11 @@
             background: #fff;
             border-radius: 20px;
             border: 1px solid rgba(6, 59, 0, 0.1);
+            border-top: 5px solid var(--chartreuse);
             max-width: 640px;
             margin: 0 auto;
             padding: 40px 44px;
+            box-shadow: 0 18px 40px rgba(6,59,0,0.08);
         }
 
         .invoice-top {
@@ -2300,7 +2305,8 @@
         }
 
         .invoice-meta strong {
-            color: var(--ink);
+            color: var(--aubergine);
+            font-family: var(--display);
         }
 
         .invoice-section-title {
@@ -2329,33 +2335,78 @@
         .invoice-table th {
             text-align: left;
             font-family: var(--display);
-            font-size: 11px;
-            letter-spacing: 0.05em;
+            font-size: 10.5px;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
             color: #8a7f78;
-            padding: 8px 0;
-            border-bottom: 1.5px solid rgba(6, 59, 0, 0.12);
+            padding: 9px 6px;
+            border-bottom: 1.5px solid rgba(6, 59, 0, 0.14);
         }
 
         .invoice-table td {
-            padding: 11px 0;
+            padding: 13px 6px;
             font-size: 13.5px;
+            color: var(--ink);
             border-bottom: 1px solid rgba(6, 59, 0, 0.06);
+            vertical-align: top;
         }
 
-        .invoice-table td:last-child,
-        .invoice-table th:last-child {
-            text-align: right;
+        .invoice-table th:first-child, .invoice-table td:first-child { padding-left: 0; }
+        .invoice-table th:last-child, .invoice-table td:last-child { padding-right: 0; }
+
+        .invoice-table th:not(:first-child),
+        .invoice-table td:not(:first-child) { text-align: right; }
+
+        .inv-item-name {
+            font-weight: 600;
+            font-family: var(--display);
+            color: var(--aubergine);
+        }
+        .inv-item-unit {
+            display: block;
+            font-family: var(--body);
+            font-weight: 400;
+            font-size: 11.5px;
+            color: #8a7f78;
+            margin-top: 2px;
+        }
+        .inv-unit-price { white-space: nowrap; }
+        .inv-was {
+            display: block;
+            font-size: 10.5px;
+            color: #a89a94;
+            text-decoration: line-through;
+            margin-top: 2px;
+        }
+        .inv-qty { color: #6a5f58; }
+        .inv-line-total {
+            font-family: var(--display);
+            font-weight: 700;
+            color: var(--ink);
         }
 
         .invoice-totals {
             margin-left: auto;
-            width: 220px;
+            width: 240px;
         }
 
         .invoice-totals .summary-row {
+            display: flex;
+            justify-content: space-between;
             font-size: 13.5px;
-            padding: 6px 0;
+            color: #6a5f58;
+            padding: 7px 0;
+        }
+
+        .invoice-totals .summary-row.total {
+            margin-top: 8px;
+            padding: 12px 14px;
+            background: rgba(144, 184, 0, 0.1);
+            border-radius: 10px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--aubergine);
         }
 
         .invoice-footer-note {
@@ -3063,7 +3114,7 @@
         </div>
     </nav>
 
-    <div class="trust-bar">
+    <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
             <div class="trust-bar-set">
                 <span>Free delivery over &pound;25</span>
@@ -3486,8 +3537,9 @@
                         <thead>
                             <tr>
                                 <th>Item</th>
+                                <th>Unit price</th>
                                 <th>Qty</th>
-                                <th>Price</th>
+                                <th>Total</th>
                             </tr>
                         </thead>
                         <tbody id="invItems"></tbody>
@@ -4616,7 +4668,12 @@
             const di = lastOrder.delivery_info || {};
             document.getElementById('invAddress').innerHTML = `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}`;
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
-    <tr><td>${i.name} <span style="color:#8a7f78;">(${i.unit})</span></td><td>${i.qty}</td><td>${money(i.price * i.qty)}</td></tr>`).join('');
+    <tr>
+      <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.unit}</span></td>
+      <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
+      <td class="inv-qty">${i.qty}</td>
+      <td class="inv-line-total">${money(i.price * i.qty)}</td>
+    </tr>`).join('');
             document.getElementById('invSubtotal').textContent = money(lastOrder.subtotal);
             document.getElementById('invDelivery').textContent = money(lastOrder.delivery);
             document.getElementById('invTotal').textContent = money(lastOrder.total);
@@ -5066,15 +5123,22 @@
             rafId = requestAnimationFrame(tick);
         })();
 
-        /* ================= FIXED NAV SPACER ================= */
-        /* #mainNav is position:fixed, so it's out of normal document flow.
-           Its height also changes across breakpoints (search wraps to its own
-           row on narrower screens), so the spacer is measured live rather than
-           hardcoded, and re-measured on resize/orientation change. */
+        /* ================= FIXED NAV + TRUST BAR SPACER ================= */
+        /* Both #mainNav and #trustBar are position:fixed and stack on top of each
+           other, so the trust bar's own top offset and the body's total padding
+           both need to be measured live rather than hardcoded, same reasoning as
+           the nav: heights change across breakpoints, so we re-measure on resize. */
         function syncNavSpacer() {
             const nav = document.getElementById('mainNav');
+            const trustBar = document.getElementById('trustBar');
             if (!nav) return;
-            document.body.style.paddingTop = nav.offsetHeight + 'px';
+            const navHeight = nav.offsetHeight;
+            let totalHeight = navHeight;
+            if (trustBar) {
+                trustBar.style.top = navHeight + 'px';
+                totalHeight += trustBar.offsetHeight;
+            }
+            document.body.style.paddingTop = totalHeight + 'px';
         }
         window.addEventListener('resize', syncNavSpacer);
         window.addEventListener('orientationchange', syncNavSpacer);
