@@ -103,11 +103,24 @@
         .trust-bar {
             background: var(--cream);
             border-bottom: 1px solid rgba(144, 184, 0, 0.3);
+            overflow: hidden;
         }
-        .trust-bar-inner {
+        .trust-bar-track {
+            display: flex;
+            width: max-content;
+            animation: trustBarScroll 20s linear infinite;
+        }
+        .trust-bar-track.paused { animation-play-state: paused; }
+        @keyframes trustBarScroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .trust-bar-track { animation: none; }
+        }
+        .trust-bar-set {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 10px;
             padding: 9px 28px;
             font-family: var(--display);
@@ -115,13 +128,14 @@
             font-size: 12.5px;
             letter-spacing: 0.01em;
             color: var(--aubergine);
-            flex-wrap: wrap;
-            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .trust-sep { color: var(--chartreuse); font-weight: 700; }
         @media (max-width: 520px) {
-            .trust-bar-inner { font-size: 11.5px; padding: 8px 16px; gap: 7px; }
+            .trust-bar-set { font-size: 11.5px; padding: 8px 16px; gap: 7px; }
         }
+
 
         .card-edit-btn {
             display: none;
@@ -1404,6 +1418,11 @@
             transform: scale(1) translateY(0);
             pointer-events: auto;
         }
+        .float-order.float-suppressed {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(0.6) translateY(12px) !important;
+        }
 
         .float-order:hover {
             background: var(--chartreuse-soft);
@@ -1965,6 +1984,10 @@
         }
 
         .panel {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            margin: 0;
             background: #fff;
             border-radius: 20px;
             padding: 30px 28px;
@@ -2355,6 +2378,8 @@
         @media print {
 
             #mainNav,
+            .trust-bar,
+            .edit-mode-banner,
             footer,
             .float-order,
             .confirm-head,
@@ -2364,6 +2389,7 @@
 
             body {
                 background: #fff;
+                padding-top: 0 !important;
             }
 
             .invoice {
@@ -2570,7 +2596,7 @@
         /* ================= DELIVERY INFO PAGE ================= */
         .dinfo-section {
             background: var(--cream);
-            padding: 52px 0 60px;
+            padding: 52px 0 96px;
         }
 
         .postcode-checker {
@@ -3038,10 +3064,19 @@
     </nav>
 
     <div class="trust-bar">
-        <div class="wrap trust-bar-inner">
-            <span>Free delivery over &pound;25</span>
-            <span class="trust-sep">&bull;</span>
-            <span>Next-day across Essex &amp; Suffolk</span>
+        <div class="trust-bar-track" id="trustBarTrack">
+            <div class="trust-bar-set">
+                <span>Free delivery over &pound;25</span>
+                <span class="trust-sep">&bull;</span>
+                <span>Next-day across Essex &amp; Suffolk</span>
+                <span class="trust-sep">&bull;</span>
+            </div>
+            <div class="trust-bar-set" aria-hidden="true">
+                <span>Free delivery over &pound;25</span>
+                <span class="trust-sep">&bull;</span>
+                <span>Next-day across Essex &amp; Suffolk</span>
+                <span class="trust-sep">&bull;</span>
+            </div>
         </div>
     </div>
 
@@ -4189,6 +4224,29 @@
             }, { passive: true });
         })();
 
+        (function initTrustBarPause() {
+            const track = document.getElementById('trustBarTrack');
+            if (!track) return;
+            let resumeTimer = null;
+            function pause() {
+                track.classList.add('paused');
+                clearTimeout(resumeTimer);
+                resumeTimer = setTimeout(() => track.classList.remove('paused'), 2000);
+            }
+            track.addEventListener('mouseenter', () => track.classList.add('paused'));
+            track.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); track.classList.remove('paused'); });
+            let touchStartX = 0, touchStartY = 0;
+            track.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            track.addEventListener('touchmove', (e) => {
+                const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                if (dx > dy && dx > 6) pause();
+            }, { passive: true });
+        })();
+
         function stockLabel(s) {
             if (s === 'low') return 'Low stock';
             if (s === 'out') return 'Out of stock';
@@ -4852,8 +4910,11 @@
 
         /* ================= ROUTER ================= */
         const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-group'];
+        const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
+            const floatBtn = document.getElementById('floatOrder');
+            if (floatBtn) floatBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
         }
         function route() {
             const hash = window.location.hash;
