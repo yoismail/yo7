@@ -3051,7 +3051,7 @@
             </div>
             <div class="nav-links">
                 <a href="#/">Home</a>
-                <a href="#/group/staples">Shop</a>
+                <a href="#/" data-scroll-to="shopByGroup">Shop</a>
                 <a href="#/delivery-info">Delivery</a>
                 <a href="#/contact">Contact</a>
                 <a href="#/guide">New Here?</a>
@@ -3107,7 +3107,7 @@
         </div>
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
-            <a href="#/group/staples">Shop</a>
+            <a href="#/" data-scroll-to="shopByGroup">Shop</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
@@ -3154,7 +3154,7 @@
                 <p class="hero-sub">Held long enough to be sure. Now it's time to flourish. West African and Caribbean
                     staples, sourced properly and delivered locally.</p>
                 <div class="cta-row">
-                    <a class="btn btn-primary" href="#/group/staples">
+                    <a class="btn btn-primary" href="#/" data-scroll-to="shopByGroup">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round">
                             <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
@@ -3190,7 +3190,7 @@
             </div>
         </section>
 
-        <section class="shop-section">
+        <section class="shop-section" id="shopByGroup">
             <div class="wrap">
                 <div class="section-head reveal">
                     <div class="section-eyebrow">Shop by group</div>
@@ -3920,7 +3920,7 @@
                     <div class="footer-col">
                         <h4>Site</h4>
                         <a href="#/">Home</a>
-                        <a href="#/group/staples">Shop</a>
+                        <a href="#/" data-scroll-to="shopByGroup">Shop</a>
                         <a href="#/checkout">Cart</a>
                         <a href="#/delivery-info">Delivery Info</a>
                         <a href="#/guide">New Here?</a>
@@ -5029,10 +5029,27 @@
             if (!link) return;
             e.preventDefault();
             const targetHash = link.getAttribute('href');
+            const scrollTargetId = link.getAttribute('data-scroll-to');
             if (window.location.hash === targetHash) {
                 route();
             } else {
                 window.location.hash = targetHash;
+            }
+            if (scrollTargetId) {
+                setTimeout(() => {
+                    const el = document.getElementById(scrollTargetId);
+                    if (!el) return;
+                    // The nav and trust bar are position:fixed and stack on top of page
+                    // content (body's own padding-top, kept in sync by syncNavSpacer,
+                    // already equals their combined height). A plain scrollIntoView()
+                    // aligns the section's top edge with the viewport's top edge, which
+                    // is exactly where those fixed elements sit, so the section header
+                    // ends up hidden behind them instead of visible. Offset by that same
+                    // height, plus a little breathing room, so it lands in view.
+                    const fixedHeaderHeight = parseFloat(document.body.style.paddingTop) || 0;
+                    const targetY = el.getBoundingClientRect().top + window.scrollY - fixedHeaderHeight - 16;
+                    window.scrollTo({ top: targetY, behavior: 'smooth' });
+                }, 60);
             }
         });
 
