@@ -257,13 +257,19 @@
             letter-spacing: -0.04em;
         }
 
+        .nav-mark-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
         .nav-mark .nav-foods {
-            font-weight: 600;
-            font-size: 12px;
-            letter-spacing: 0.1em;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.28em;
             text-transform: uppercase;
-            color: rgba(250, 249, 242, 0.65);
-            margin-left: 1px;
+            color: var(--chartreuse-soft);
+            margin-top: 1px;
         }
 
         .nav-search {
@@ -1485,11 +1491,11 @@
         }
 
         .footer-foods {
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.16em;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.28em;
             text-transform: uppercase;
-            color: rgba(250, 249, 242, 0.6);
+            color: var(--chartreuse-soft);
         }
 
         .footer-mark svg {
@@ -3276,7 +3282,10 @@
                 <svg viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <span class="word">yo<span class="accent">-7</span></span><span class="nav-foods">Foods</span>
+                <span class="nav-mark-text">
+                    <span class="word">yo<span class="accent">-7</span></span>
+                    <span class="nav-foods">Foods</span>
+                </span>
             </a>
             <div class="search-wrap">
                 <div class="nav-search">
