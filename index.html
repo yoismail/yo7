@@ -257,6 +257,15 @@
             letter-spacing: -0.04em;
         }
 
+        .nav-mark .nav-foods {
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(250, 249, 242, 0.65);
+            margin-left: 1px;
+        }
+
         .nav-search {
             flex: 1;
             min-width: 0;
@@ -601,6 +610,10 @@
                 font-size: 15px;
             }
 
+            .nav-mark .nav-foods {
+                display: none;
+            }
+
             .nav-account {
                 width: 34px;
                 height: 34px;
@@ -853,6 +866,15 @@
 
         .hero h1 .dash {
             color: var(--chartreuse);
+        }
+
+        .hero h1 .hero-foods {
+            display: block;
+            font-size: clamp(14px, 1.8vw, 20px);
+            font-weight: 700;
+            letter-spacing: 0.32em;
+            color: var(--chartreuse-soft);
+            margin-top: 6px;
         }
 
         .hero-sub {
@@ -1454,6 +1476,20 @@
             font-size: 19px;
             color: var(--cream);
             text-decoration: none;
+        }
+
+        .footer-mark-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .footer-foods {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(250, 249, 242, 0.6);
         }
 
         .footer-mark svg {
@@ -3240,7 +3276,7 @@
                 <svg viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <span class="word">yo<span class="accent">-7</span></span>
+                <span class="word">yo<span class="accent">-7</span></span><span class="nav-foods">Foods</span>
             </a>
             <div class="search-wrap">
                 <div class="nav-search">
@@ -3358,7 +3394,7 @@
                 <svg class="seal" viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <h1>yo<span class="dash">-7</span></h1>
+                <h1>yo<span class="dash">-7</span><span class="hero-foods">Foods</span></h1>
                 <p class="hero-sub">Held long enough to be sure. Now it's time to flourish. West African and Caribbean
                     staples, sourced properly and delivered locally.</p>
                 <div class="cta-row">
@@ -4150,7 +4186,7 @@
                         <svg viewBox="65 25 875 900">
                             <use href="#seal-mark" />
                         </svg>
-                        yo-7
+                        <span class="footer-mark-text">yo-7<span class="footer-foods">Foods</span></span>
                     </a>
                     <p class="footer-tag">African Food Store, Essex &amp; Suffolk. Held long enough to be sure.</p>
                 </div>
