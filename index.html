@@ -644,8 +644,21 @@
             flex-shrink: 0;
         }
 
-        .btn:hover {
-            transform: translateY(-3px);
+        @media (hover: hover) and (pointer: fine) {
+            .btn:hover {
+                transform: translateY(-3px);
+            }
+            .btn-primary:hover {
+                box-shadow: 0 14px 30px rgba(144, 184, 0, 0.4);
+                background: var(--chartreuse-soft);
+            }
+            .btn-outline:hover {
+                border-color: rgba(250, 249, 242, 0.7);
+                background: rgba(250, 249, 242, 0.12);
+            }
+            .btn-outline-dark:hover {
+                border-color: var(--aubergine);
+            }
         }
 
         .btn:active {
@@ -658,30 +671,16 @@
             box-shadow: 0 6px 20px rgba(144, 184, 0, 0.28);
         }
 
-        .btn-primary:hover {
-            box-shadow: 0 14px 30px rgba(144, 184, 0, 0.4);
-            background: var(--chartreuse-soft);
-        }
-
         .btn-outline {
             background: rgba(250, 249, 242, 0.06);
             color: var(--cream);
             border: 1.5px solid rgba(250, 249, 242, 0.28);
         }
 
-        .btn-outline:hover {
-            border-color: rgba(250, 249, 242, 0.7);
-            background: rgba(250, 249, 242, 0.12);
-        }
-
         .btn-outline-dark {
             background: #fff;
             color: var(--aubergine);
             border: 1.5px solid rgba(6, 59, 0, 0.18);
-        }
-
-        .btn-outline-dark:hover {
-            border-color: var(--aubergine);
         }
 
         .btn-block {
@@ -2548,6 +2547,9 @@
         }
 
         @media print {
+            @page {
+                margin: 10mm;
+            }
 
             #mainNav,
             .trust-bar,
@@ -2565,15 +2567,25 @@
                 padding-top: 0 !important;
             }
 
+            .confirm-section {
+                padding: 0;
+            }
+
             .invoice {
                 border: none;
                 box-shadow: none;
                 margin: 0;
                 max-width: 100%;
+                padding: 8px 4px;
             }
 
-            .confirm-section {
-                padding: 0;
+            .invoice-top {
+                padding-bottom: 14px;
+                margin-bottom: 14px;
+            }
+
+            .invoice-section-title {
+                margin-top: 14px;
             }
         }
 
@@ -3662,7 +3674,14 @@
                     <div class="invoice-top">
                         <div>
                             <div class="invoice-mark"><svg viewBox="65 25 875 900">
-                                    <use href="#seal-mark" />
+                                    <path d="M 885.91 500.00 Q 885.91 500.00 860.56 580.72 Q 835.22 661.43 796.07 741.80 Q 756.92 822.17 669.16 839.40 Q 581.40 856.62 495.87 874.70 Q 410.35 892.77 333.83 848.55 Q 257.30 804.33 214.39 731.27 Q 171.47 658.21 135.44 579.11 Q 99.41 500.00 136.18 421.25 Q 172.95 342.50 213.43 266.96 Q 253.91 191.42 336.28 167.50 Q 418.65 143.58 500.19 142.76 Q 581.72 141.95 663.68 166.97 Q 745.63 191.99 814.79 253.54 Q 883.95 315.10 884.93 407.55 Z" fill="#90B800"/>
+                                    <path d="M 811.10 500.00 Q 811.10 500.00 799.66 569.40 Q 788.22 638.80 753.14 706.12 Q 718.06 773.44 643.76 788.90 Q 569.47 804.36 499.62 806.04 Q 429.76 807.73 364.45 779.80 Q 299.14 751.87 269.30 688.67 Q 239.46 625.47 211.74 562.73 Q 184.02 500.00 195.32 429.36 Q 206.61 358.71 247.63 296.84 Q 288.64 234.96 362.97 230.13 Q 437.30 225.31 501.91 216.95 Q 566.51 208.60 621.00 244.26 Q 675.50 279.93 741.08 316.13 Q 806.65 352.32 808.88 426.16 Z" fill="#042500"/>
+                                    <text x="500" y="629" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="360" fill="#FAF9F2">7</text>
+                                    <g fill="none" stroke="#E1E100" stroke-width="14" stroke-linecap="round">
+                                        <path d="M532,178 C532,146 532,118 532,86"/>
+                                        <path d="M532,118 C506,114 492,96 492,70 C520,74 534,90 537,116 Z" fill="#E1E100" stroke="none"/>
+                                        <path d="M532,104 C556,98 568,80 566,56 C540,62 528,76 528,100 Z" fill="#E1E100" stroke="none"/>
+                                    </g>
                                 </svg> Yo7 Foods</div>
                             <div style="font-size:12px; color:#8a7f78; margin-top:4px;">African Food Store, Essex &amp;
                                 Suffolk</div>
