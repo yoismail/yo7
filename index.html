@@ -36,6 +36,15 @@
 
         html { overflow-x: hidden; }
 
+        /* Removes the ~300ms tap delay and stops double-tap-to-zoom on
+           interactive elements specifically (quantity buttons, links, etc)
+           without disabling pinch-to-zoom anywhere on the page — that stays
+           fully available since we deliberately don't touch the viewport
+           meta tag's scaling. */
+        button, a, input, select, [role="button"] {
+            touch-action: manipulation;
+        }
+
         body {
             font-family: var(--body);
             color: var(--ink);
@@ -680,6 +689,28 @@
             justify-content: center;
         }
 
+        .place-order-label {
+            display: inline-flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+        }
+        #payButtonTotal {
+            font-variant-numeric: tabular-nums;
+        }
+        @media (max-width: 600px) {
+            #placeOrderBtn {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            .place-order-label {
+                gap: 5px;
+                font-size: 14px;
+                letter-spacing: 0;
+            }
+        }
+
         .btn-lg {
             padding: 16px 30px;
             font-size: 15.5px;
@@ -836,7 +867,7 @@
            scoped by ID so the group-detail page's .shop-section (which
            reuses the same class) is unaffected. */
         #shopByGroup {
-            background: #FFFFFF;
+            background: #F1F5EA;
             color: var(--aubergine);
         }
         #shopByGroup .section-eyebrow {
@@ -2496,6 +2527,19 @@
             flex-wrap: wrap;
         }
 
+        .email-fallback-note {
+            max-width: 480px;
+            margin: 16px auto 0;
+            padding: 12px 16px;
+            background: rgba(144,184,0,0.12);
+            border: 1px solid rgba(144,184,0,0.3);
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--aubergine);
+            text-align: center;
+            line-height: 1.5;
+        }
+
         @media print {
 
             #mainNav,
@@ -2504,7 +2548,8 @@
             footer,
             .float-order,
             .confirm-head,
-            .confirm-actions {
+            .confirm-actions,
+            .email-fallback-note {
                 display: none !important;
             }
 
@@ -2744,6 +2789,24 @@
         .pc-result.no { color: #8a4a26; }
         .pc-map { border-radius: 16px; overflow: hidden; aspect-ratio: 4/3; }
         .pc-map iframe { width: 100%; height: 100%; border: 0; }
+
+        @media (max-width: 760px) {
+            .postcode-checker {
+                grid-template-columns: 1fr;
+                padding: 24px;
+                gap: 22px;
+            }
+            .pc-map {
+                aspect-ratio: 16/10;
+            }
+            .pc-input-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .pc-input-row .btn {
+                width: 100%;
+            }
+        }
 
         .areas-strip {
             background: var(--aubergine); border-radius: 22px; padding: 30px 32px; color: var(--cream);
@@ -3557,8 +3620,8 @@
                                 <div style="display:flex; gap:12px; margin-top:10px;">
                                     <button class="btn btn-outline-dark" type="button"
                                         id="backToDeliveryBtn">Back</button>
-                                    <button class="btn btn-primary btn-block" type="submit">Place order &middot; <span
-                                            id="payButtonTotal">£0.00</span></button>
+                                    <button class="btn btn-primary btn-block" id="placeOrderBtn" type="submit"><span class="place-order-label">Place order &middot; <span
+                                            id="payButtonTotal">£0.00</span></span></button>
                                 </div>
                             </form>
                         </div>
@@ -3637,9 +3700,28 @@
                             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
                             <rect x="6" y="14" width="12" height="8" />
                         </svg>
-                        Print / Save as PDF
+                        Print
+                    </button>
+                    <button class="btn btn-outline-dark" id="savePdfBtn" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3v12m0 0-4-4m4 4 4-4" />
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                        </svg>
+                        Save PDF
+                    </button>
+                    <button class="btn btn-outline-dark" id="emailInvoiceBtn" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16v16H4z" />
+                            <path d="m4 6 8 7 8-7" />
+                        </svg>
+                        Email invoice
                     </button>
                     <a class="btn btn-primary" href="#/">Continue shopping</a>
+                </div>
+                <div class="email-fallback-note" id="emailFallbackNote" style="display:none;">
+                    Your invoice PDF has downloaded, and your email app should have opened. Attach the downloaded file to send it.
                 </div>
             </div>
         </section>
@@ -4763,6 +4845,123 @@
             document.getElementById('invTotal').textContent = money(lastOrder.total);
         }
         document.getElementById('printInvoiceBtn').addEventListener('click', () => window.print());
+
+        /* ============ INVOICE PDF: generation, download, and email-attach ============
+           No backend exists here, so "email the invoice" can only be done two ways:
+           1) The Web Share API with a real File — on browsers that support sharing
+              files (most mobile browsers), this opens the native share sheet and the
+              PDF genuinely attaches to whichever app the person picks, including Mail.
+           2) Everywhere else (most desktop browsers don't support file sharing): the
+              PDF is downloaded automatically and a blank email opens for the person to
+              attach it themselves. No invoice details are pre-filled into the email body. */
+
+        function loadScriptOnce(src) {
+            return new Promise((resolve, reject) => {
+                if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = () => resolve();
+                s.onerror = () => reject(new Error('Failed to load ' + src));
+                document.head.appendChild(s);
+            });
+        }
+
+        let pdfLibsPromise = null;
+        function ensurePdfLibsLoaded() {
+            if (!pdfLibsPromise) {
+                pdfLibsPromise = Promise.all([
+                    loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
+                    loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+                ]);
+            }
+            return pdfLibsPromise;
+        }
+
+        async function buildInvoicePdfBlob() {
+            await ensurePdfLibsLoaded();
+            const el = document.getElementById('invoiceBox');
+            const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' });
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 20;
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = canvas.height * (imgWidth / canvas.width);
+            const imgData = canvas.toDataURL('image/png');
+
+            if (imgHeight <= pageHeight - margin * 2) {
+                pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+            } else {
+                // Taller than one page — slice across multiple pages.
+                let heightLeft = imgHeight;
+                let position = margin;
+                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - margin * 2);
+                while (heightLeft > 0) {
+                    position = margin - (imgHeight - heightLeft);
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - margin * 2);
+                }
+            }
+            return pdf.output('blob');
+        }
+
+        function invoiceFileName() {
+            const num = (document.getElementById('invNumber').textContent || 'order').trim();
+            return `Yo7-Foods-Invoice-${num}.pdf`;
+        }
+
+        function withButtonBusyState(btn, busyLabel, fn) {
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = busyLabel;
+            return fn().finally(() => { btn.disabled = false; btn.innerHTML = original; });
+        }
+
+        document.getElementById('savePdfBtn').addEventListener('click', () => {
+            const btn = document.getElementById('savePdfBtn');
+            withButtonBusyState(btn, 'Preparing PDF…', async () => {
+                try {
+                    const blob = await buildInvoicePdfBlob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = invoiceFileName();
+                    document.body.appendChild(a); a.click(); a.remove();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    alert('Could not generate the PDF right now — please try the Print button instead.');
+                }
+            });
+        });
+
+        document.getElementById('emailInvoiceBtn').addEventListener('click', () => {
+            const btn = document.getElementById('emailInvoiceBtn');
+            document.getElementById('emailFallbackNote').style.display = 'none';
+            withButtonBusyState(btn, 'Preparing…', async () => {
+                try {
+                    const blob = await buildInvoicePdfBlob();
+                    const fileName = invoiceFileName();
+                    const file = new File([blob], fileName, { type: 'application/pdf' });
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: 'Your Yo7 Foods invoice' });
+                    } else {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = fileName;
+                        document.body.appendChild(a); a.click(); a.remove();
+                        URL.revokeObjectURL(url);
+                        window.location.href = 'mailto:?subject=' + encodeURIComponent('Your Yo7 Foods invoice');
+                        document.getElementById('emailFallbackNote').style.display = 'block';
+                    }
+                } catch (e) {
+                    if (e && e.name === 'AbortError') return; // person closed the share sheet, not an error
+                    alert('Could not prepare the invoice right now — please try again or use Save PDF.');
+                }
+            });
+        });
 
         /* ================= AUTH ================= */
         const accountBtn = document.getElementById('accountBtn');
