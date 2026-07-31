@@ -867,8 +867,15 @@
            scoped by ID so the group-detail page's .shop-section (which
            reuses the same class) is unaffected. */
         #shopByGroup {
-            background: #F1F5EA;
+            background: #FFFFFF;
             color: var(--aubergine);
+        }
+
+        /* Group-detail page: the section housing the category cards
+           (Flour, Rice, Root Vegetables, etc within a chosen group) — this
+           is the one that should match "Just Landed"'s soft warm tone. */
+        #groupCategorySection {
+            background: #F1F5EA;
         }
         #shopByGroup .section-eyebrow {
             color: var(--aubergine-mid);
@@ -3414,7 +3421,7 @@
                 <div class="result-count" id="groupResultCount"></div>
             </div>
         </header>
-        <section class="shop-section" style="padding:56px 0 90px;">
+        <section class="shop-section" id="groupCategorySection" style="padding:56px 0 90px;">
             <div class="wrap">
                 <div class="cat-grid" id="groupCatGrid"></div>
             </div>
