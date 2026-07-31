@@ -832,6 +832,26 @@
             padding: 88px 0 96px;
         }
 
+        /* Shop by group (homepage) gets its own warm yellow treatment,
+           scoped by ID so the group-detail page's .shop-section (which
+           reuses the same class) is unaffected. */
+        #shopByGroup {
+            background: #FFFFFF;
+            color: var(--aubergine);
+        }
+        #shopByGroup .section-eyebrow {
+            color: var(--aubergine-mid);
+        }
+        #shopByGroup .section-head p {
+            color: rgba(6,59,0,0.65);
+        }
+        /* Cards need stronger definition here since section + card are both
+           light, colour alone won't separate them like it did on dark/yellow. */
+        #shopByGroup .group-card {
+            border: 1px solid rgba(6,59,0,0.16);
+            box-shadow: 0 6px 18px rgba(6,59,0,0.1);
+        }
+
         .section-head {
             text-align: center;
             max-width: 620px;
@@ -871,24 +891,35 @@
             flex-direction: column;
             border-radius: 20px;
             overflow: hidden;
-            background: linear-gradient(160deg, var(--aubergine-mid), var(--aubergine-deep));
-            border: 1px solid rgba(144, 184, 0, 0.28);
+            background: var(--cream);
+            border: 1px solid rgba(6, 59, 0, 0.1);
             text-decoration: none;
             box-shadow: 0 8px 20px rgba(0,0,0,0.22);
-            transition: transform 0.3s cubic-bezier(.2,.8,.3,1.1), box-shadow 0.3s ease, border-color 0.3s ease;
+            transition: transform 0.45s cubic-bezier(.16,.84,.44,1), box-shadow 0.45s cubic-bezier(.16,.84,.44,1), border-color 0.35s ease;
+        }
+
+        /* Once a card has entered view, its transition reverts to the fast
+           hover-appropriate timing above rather than the slower entrance
+           curve below, this rule's higher specificity guarantees that. */
+        .group-card.reveal.is-visible {
+            transition: transform 0.45s cubic-bezier(.16,.84,.44,1), box-shadow 0.45s cubic-bezier(.16,.84,.44,1), border-color 0.35s ease;
         }
         .group-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 20px 36px rgba(0,0,0,0.32);
+            box-shadow: 0 20px 36px rgba(0,0,0,0.22);
             border-color: var(--chartreuse);
+        }
+
+        .group-card:hover .group-card-photo {
+            transform: scale(1.06);
         }
         .group-card-photo {
             aspect-ratio: 4/3;
             background-size: cover;
             background-position: center;
-            background-color: rgba(0,0,0,0.15);
+            background-color: rgba(6,59,0,0.06);
             position: relative;
-            border-bottom: 2px solid var(--chartreuse);
+            transition: transform 0.6s cubic-bezier(.16,.84,.44,1);
         }
 
 
@@ -928,16 +959,33 @@
             flex-direction: column;
         }
         .group-card-body h3 {
-            color: #fff;
+            color: var(--aubergine);
             font-family: var(--display);
             font-weight: 700;
             font-size: 16px;
             letter-spacing: -0.01em;
             margin-bottom: 6px;
             line-height: 1.25;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .group-card-arrow {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        .group-card:hover .group-card-arrow {
+            opacity: 0.75;
+            transform: translateX(0);
         }
         .group-card-body p {
-            color: #c9d4bd;
+            color: rgba(6,59,0,0.62);
             font-size: 12.5px;
             line-height: 1.5;
             flex: 1;
@@ -4216,15 +4264,15 @@
         const CAT_ACCENTS = ['#063B00', '#266210', '#90B800', '#E1E100'];
         function renderCatGrid() {
             const withPhoto = ['staples', 'seasoning-oils-flavours', 'proteins-produce', 'drinks-treats', 'home-personal-care'];
-            document.getElementById('catGrid').innerHTML = GROUPS.map((g) => {
+            document.getElementById('catGrid').innerHTML = GROUPS.map((g, i) => {
                 const photoBlock = withPhoto.includes(g.slug)
                     ? `<div class="group-card-photo group-photo-${g.slug}"></div>`
                     : `<div class="group-card-photo no-photo"><span>Photo coming soon</span></div>`;
                 return `
-    <a class="group-card" href="#/group/${g.slug}">
+    <a class="group-card reveal" href="#/group/${g.slug}" style="transition-delay:${(i * 0.08).toFixed(2)}s">
       ${photoBlock}
       <div class="group-card-body">
-        <h3>${g.name}</h3>
+        <h3>${g.name}<svg class="group-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></h3>
         <p>${g.tagline}</p>
         <span class="group-aisles-badge">${g.categories.length} AISLES</span>
       </div>
