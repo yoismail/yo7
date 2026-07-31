@@ -1459,6 +1459,28 @@
             text-decoration: underline;
         }
 
+        .back-to-group-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--aubergine);
+            background: var(--chartreuse);
+            text-decoration: none;
+            padding: 9px 16px 9px 12px;
+            border-radius: 999px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 12px rgba(144,184,0,0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .back-to-group-link svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .back-to-group-link:hover {
+            transform: translateX(-2px);
+            box-shadow: 0 6px 16px rgba(144,184,0,0.4);
+        }
+
         .shop-header h1 {
             font-family: var(--display);
             font-weight: 700;
@@ -3252,8 +3274,8 @@
                 <div class="steps">
                     <div class="step reveal" style="transition-delay:0.05s">
                         <div class="step-num">01</div>
-                        <h3>Browse and add to cart</h3>
-                        <p>Search or tap a category, add what you need as you go.</p>
+                        <h3>Pick a group, then browse</h3>
+                        <p>Choose a shopping group, tap a category inside it, add what you need as you go.</p>
                     </div>
                     <div class="step reveal" style="transition-delay:0.15s">
                         <div class="step-num">02</div>
@@ -3275,7 +3297,7 @@
     <div id="view-group" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; <span id="groupCrumbLabel">Group</span></div>
+                <div class="breadcrumb"><a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <span id="groupCrumbLabel">Group</span></div>
                 <h1><span class="cat-emoji-big" id="groupHeaderIcon"></span><span id="groupHeaderTitle">Group</span></h1>
                 <p id="groupHeaderDesc"></p>
                 <div class="result-count" id="groupResultCount"></div>
@@ -3292,6 +3314,10 @@
         <header class="shop-header">
             <div class="wrap">
                 <div class="breadcrumb" id="shopBreadcrumb"><a href="#/">Home</a> &rsaquo; <span id="crumbLabel">Shop</span></div>
+                <a class="back-to-group-link" id="backToGroupLink" href="#/">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+                    <span id="backToGroupLabel">Back</span>
+                </a>
                 <h1><span class="cat-emoji-big" id="shopHeaderEmoji"></span><span id="shopHeaderTitle">Category</span>
                 </h1>
                 <p id="shopHeaderDesc"></p>
@@ -3833,7 +3859,7 @@
                     <div class="guide-step reveal">
                         <div class="num">1</div>
                         <h3>Browse or search</h3>
-                        <p>Tap a category, or search for exactly what you need, ofada rice, scent leaf, red palm oil, whatever's on your list.</p>
+                        <p>Pick a shopping group and tap a category, or just search for exactly what you need, ofada rice, scent leaf, red palm oil, whatever's on your list.</p>
                     </div>
                     <div class="guide-step reveal" style="transition-delay:0.08s">
                         <div class="num">2</div>
@@ -4381,10 +4407,15 @@
             const group = groupForCategory(slug);
             document.getElementById('crumbLabel').textContent = cat ? cat.name.replace(/&amp;/g, '&') : 'Not found';
             const breadcrumbEl = document.getElementById('shopBreadcrumb');
+            const backLink = document.getElementById('backToGroupLink');
             if (cat && group) {
-                breadcrumbEl.innerHTML = `<a href="#/">Home</a> &rsaquo; <a href="#/group/${group.slug}">${group.name.replace(/&amp;/g, '&')}</a> &rsaquo; <span id="crumbLabel">${cat.name.replace(/&amp;/g, '&')}</span>`;
+                breadcrumbEl.innerHTML = `<a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <a href="#/group/${group.slug}">${group.name.replace(/&amp;/g, '&')}</a> &rsaquo; <span id="crumbLabel">${cat.name.replace(/&amp;/g, '&')}</span>`;
+                backLink.style.display = 'inline-flex';
+                backLink.href = `#/group/${group.slug}`;
+                document.getElementById('backToGroupLabel').textContent = `Back to ${group.name.replace(/&amp;/g, '&')}`;
             } else {
                 breadcrumbEl.innerHTML = `<a href="#/">Home</a> &rsaquo; <span id="crumbLabel">Not found</span>`;
+                backLink.style.display = 'none';
             }
             document.getElementById('shopHeaderEmoji').textContent = cat ? cat.emoji : '🔎';
             document.getElementById('shopHeaderTitle').textContent = cat ? cat.name.replace(/&amp;/g, '&') : 'Category not found';
@@ -4465,6 +4496,8 @@
         }
         function renderSearchPage(query) {
             document.getElementById('crumbLabel').textContent = 'Search';
+            document.getElementById('shopBreadcrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; <span id="crumbLabel">Search</span>`;
+            document.getElementById('backToGroupLink').style.display = 'none';
             document.getElementById('shopHeaderEmoji').textContent = '🔎';
             document.getElementById('shopHeaderTitle').textContent = `"${query}"`;
             document.getElementById('shopHeaderDesc').textContent = 'Results from every aisle in the store.';
@@ -4491,7 +4524,10 @@
                 return;
             }
             const stock = p.stock || 'in';
-            document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
+            const pdGroup = groupForCategory(catSlug);
+            document.getElementById('pdCrumb').innerHTML = pdGroup
+                ? `<a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <a href="#/group/${pdGroup.slug}">${pdGroup.name.replace(/&amp;/g, '&')}</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`
+                : `<a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
             document.getElementById('pdName').textContent = p.name;
             document.getElementById('pdUnit').textContent = p.unit;
