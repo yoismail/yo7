@@ -1794,6 +1794,7 @@
             overflow-x: auto;
             padding: 18px 0 4px;
             scrollbar-width: thin;
+            scrollbar-color: rgba(250, 249, 242, 0.18) transparent;
             cursor: grab;
             user-select: none;
         }
@@ -1806,9 +1807,24 @@
             height: 5px;
         }
 
+        .cat-nav-strip::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .cat-nav-strip::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
         .cat-nav-strip::-webkit-scrollbar-thumb {
-            background: rgba(250, 249, 242, 0.25);
+            background: rgba(250, 249, 242, 0.10);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(250, 249, 242, 0.22);
             border-radius: 10px;
+        }
+
+        .cat-nav-strip::-webkit-scrollbar-thumb:hover {
+            background: rgba(250, 249, 242, 0.16);
         }
 
         .cat-chip {
@@ -1839,9 +1855,30 @@
         }
 
         .product-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            display: flex;
+            flex-wrap: nowrap;
             gap: 22px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding-bottom: 6px;
+            cursor: grab;
+        }
+        .product-grid.dragging {
+            cursor: grabbing;
+            scroll-behavior: auto;
+        }
+        .product-grid .product-card {
+            flex: 0 0 265px;
+            max-width: 265px;
+        }
+        .product-grid .product-card,
+        .product-grid .product-card-link,
+        .product-grid .product-card img {
+            -webkit-user-drag: none;
+            user-select: none;
         }
 
         .product-card {
@@ -3249,8 +3286,7 @@
 
         @media (max-width:900px) {
 
-            .cat-grid,
-            .product-grid {
+            .cat-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
@@ -3328,8 +3364,9 @@
                 grid-template-columns: 1fr;
             }
 
-            .product-grid {
-                grid-template-columns: 1fr;
+            .product-grid .product-card {
+                flex: 0 0 220px;
+                max-width: 220px;
             }
         }
     </style>    <script>
@@ -4645,7 +4682,7 @@
 
         function renderCatStrip(activeSlug) {
             const chipsHTML = CATEGORIES.map(c => `
-    <a class="cat-chip ${c.slug === activeSlug ? 'active' : ''}" href="#/category/${c.slug}">${c.emoji} ${c.name}</a>`).join('');
+    <a class="cat-chip ${c.slug === activeSlug ? 'active' : ''}" href="#/category/${c.slug}">${c.name}</a>`).join('');
             // duplicated once for a seamless auto-scrolling loop
             document.getElementById('catNavStrip').innerHTML = chipsHTML + chipsHTML;
         }
@@ -4679,6 +4716,76 @@
                 if (moon) moon.style.display = 'none';
             }
         }
+        /* ================= HORIZONTAL DRAG-TO-SCROLL =================
+           Applies to the New In Stock / Special Offers / category product
+           rows. Touch swipe already works natively via overflow-x + the
+           -webkit-overflow-scrolling:touch CSS; this adds mouse-drag support
+           for desktop. Uses the Pointer Events API with explicit pointer
+           capture rather than plain mouse events — mouse events are
+           vulnerable to the browser's native drag-and-drop gesture hijacking
+           the interaction partway through (which silently swallows the
+           eventual "mouseup", leaving drag state stuck permanently). Pointer
+           capture guarantees this element keeps receiving move/up events for
+           that pointer no matter what, which is exactly what this needs. */
+        function initDragScroll() {
+            const grids = document.querySelectorAll('.product-grid');
+            grids.forEach(grid => {
+                grid.setAttribute('draggable', 'false');
+                let isDown = false;
+                let startX = 0;
+                let startScroll = 0;
+                let moved = false;
+
+                grid.addEventListener('pointerdown', (e) => {
+                    if (e.pointerType !== 'mouse') return; // touch/pen already handled natively
+                    isDown = true;
+                    moved = false;
+                    startX = e.clientX;
+                    startScroll = grid.scrollLeft;
+                    grid.classList.add('dragging');
+                    // Deliberately NOT calling setPointerCapture here — capturing
+                    // on every pointerdown (even a simple click with no movement)
+                    // redirects the resulting "click" event's target to this
+                    // element, which broke normal card clicks entirely. Capture
+                    // is only taken once a real drag is confirmed, below.
+                });
+
+                grid.addEventListener('pointermove', (e) => {
+                    if (!isDown) return;
+                    const dx = e.clientX - startX;
+                    if (Math.abs(dx) > 4) {
+                        if (!moved) {
+                            moved = true;
+                            grid.setPointerCapture(e.pointerId);
+                        }
+                    }
+                    grid.scrollLeft = startScroll - dx;
+                });
+
+                function endDrag(e) {
+                    if (!isDown) return;
+                    isDown = false;
+                    grid.classList.remove('dragging');
+                    if (e && e.pointerId !== undefined) {
+                        try { grid.releasePointerCapture(e.pointerId); } catch (err) {}
+                    }
+                }
+                grid.addEventListener('pointerup', endDrag);
+                grid.addEventListener('pointercancel', endDrag);
+
+                // If the pointer moved during the drag, swallow the click
+                // that would otherwise follow, so a drag never triggers
+                // navigation into a product card.
+                grid.addEventListener('click', (e) => {
+                    if (moved) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        moved = false;
+                    }
+                }, true);
+            });
+        }
+
         function initThemeToggle() {
             const btn = document.getElementById('themeToggle');
             if (!btn) return;
@@ -4862,7 +4969,7 @@
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             return `
     <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}">
-      <a class="product-card-link" href="${href}">
+      <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
           <span class="stock-badge ${stock}">${stockLabel(stock)}</span>
           ${onSale ? '<span class="sale-badge">Sale</span>' : ''}
@@ -5848,6 +5955,7 @@
         renderNewCarousel();
         renderOfferCarousel();
         initThemeToggle();
+        initDragScroll();
         observeReveals();
         updateCartBadge();
         route();
