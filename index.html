@@ -1331,6 +1331,43 @@
             .new-card { flex-basis: 168px; max-width: 168px; }
         }
 
+        /* ================= SPECIAL OFFER SECTION ================= */
+        .offer-section { background: var(--aubergine); padding: 56px 0 60px; }
+        .offer-carousel-wrap { position: relative; width: 100%; max-width: 100%; overflow: hidden; }
+        .offer-carousel {
+            display: flex; gap: 18px; padding: 4px 2px 10px;
+            width: max-content;
+            animation: offerCarouselMarquee 32s linear infinite;
+        }
+        .offer-carousel.paused { animation-play-state: paused; }
+        @keyframes offerCarouselMarquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .offer-carousel { animation: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        }
+        .offer-card {
+            flex: 0 0 220px; max-width: 220px; background: var(--cream); border: 1px solid rgba(250,249,242,0.14); border-radius: 16px;
+            overflow: hidden; text-decoration: none; color: var(--ink);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .offer-card:hover { transform: translateY(-5px); box-shadow: 0 14px 26px rgba(0,0,0,0.28); }
+        .offer-card .thumb { aspect-ratio: 1/1; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,#f0ecdc,#e7e1cc); }
+        .offer-tag {
+            position: absolute; top: 10px; left: 10px; background: var(--chartreuse); color: var(--aubergine-deep);
+            font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.04em;
+            text-transform: uppercase; padding: 5px 11px; border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(144,184,0,0.45), 0 0 0 2px var(--cream);
+            z-index: 3;
+        }
+        .offer-card .body { padding: 12px 14px 14px; }
+        .offer-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--aubergine); margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .offer-card .cat { font-size: 10.5px; color: #8a7f78; margin-bottom: 6px; }
+        @media (max-width: 900px) {
+            .offer-card { flex-basis: 168px; max-width: 168px; }
+        }
+
         .delivery {
             padding: 96px 0;
         }
@@ -3455,6 +3492,20 @@
             </div>
         </header>
 
+        <section class="offer-section">
+            <div class="wrap">
+                <div class="new-section-head reveal">
+                    <div>
+                        <div class="section-eyebrow">Special offer</div>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color:var(--cream); letter-spacing:-0.01em;">Deals worth stopping for</h2>
+                    </div>
+                </div>
+                <div class="offer-carousel-wrap">
+                    <div class="offer-carousel" id="offerCarousel"></div>
+                </div>
+            </div>
+        </section>
+
         <section class="story">
             <div class="wrap story-grid">
                 <svg class="story-seal reveal" viewBox="65 25 875 900"
@@ -4535,6 +4586,37 @@
         function newArrivalsItems() {
             return allProducts().filter(p => p.isNew).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
         }
+        function offerItems() {
+            return allProducts()
+                .filter(p => typeof p.salePrice === 'number' && p.salePrice < p.price)
+                .map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+        }
+        function renderOfferCarousel() {
+            const items = offerItems();
+            const strip = document.getElementById('offerCarousel');
+            if (!strip) return;
+            if (items.length === 0) {
+                strip.closest('.offer-section').style.display = 'none';
+                return;
+            }
+            const cardHTML = items.map(p => {
+                const pct = Math.round((1 - p.salePrice / p.price) * 100);
+                return `
+    <a class="offer-card" href="#/product/${p.catSlug}/${p.idx}">
+      <div class="thumb">
+        <span class="offer-tag">${pct}% off</span>
+        ${productPhotoHTML(p, p.name)}
+      </div>
+      <div class="body">
+        <h4>${p.name}</h4>
+        <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
+        <div class="price">${priceHTML(p)}</div>
+      </div>
+    </a>`;
+            }).join('');
+            // duplicated once so the CSS animation loop is seamless (translateX(-50%) = one full set)
+            strip.innerHTML = cardHTML + cardHTML;
+        }
         function renderNewCarousel() {
             const items = newArrivalsItems();
 
@@ -4576,6 +4658,30 @@
             strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); strip.classList.remove('paused'); });
             // Only pause for touch when it's a genuine horizontal interaction with the
             // carousel, not a vertical page-scroll swipe that happens to pass over it.
+            let touchStartX = 0, touchStartY = 0;
+            strip.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            strip.addEventListener('touchmove', (e) => {
+                const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                if (dx > dy && dx > 6) pause();
+            }, { passive: true });
+        })();
+
+        /* ================= OFFER CAROUSEL: pause on interaction (mirrors new-arrivals carousel) ================= */
+        (function initOfferCarouselPause() {
+            const strip = document.getElementById('offerCarousel');
+            if (!strip) return;
+            let resumeTimer = null;
+            function pause() {
+                strip.classList.add('paused');
+                clearTimeout(resumeTimer);
+                resumeTimer = setTimeout(() => strip.classList.remove('paused'), 2000);
+            }
+            strip.addEventListener('mouseenter', () => strip.classList.add('paused'));
+            strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); strip.classList.remove('paused'); });
             let touchStartX = 0, touchStartY = 0;
             strip.addEventListener('touchstart', (e) => {
                 touchStartX = e.touches[0].clientX;
@@ -5618,6 +5724,7 @@
         /* ================= INIT ================= */
         renderCatGrid();
         renderNewCarousel();
+        renderOfferCarousel();
         observeReveals();
         updateCartBadge();
         route();
