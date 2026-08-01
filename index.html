@@ -1788,6 +1788,54 @@
             text-transform: uppercase;
         }
 
+        .cat-nav-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cat-nav-arrow {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(250, 249, 242, 0.08);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(250, 249, 242, 0.22);
+            color: var(--cream);
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+
+        .cat-nav-arrow:hover {
+            background: rgba(250, 249, 242, 0.16);
+        }
+
+        .cat-nav-arrow:active {
+            transform: scale(0.92);
+        }
+
+        .cat-nav-arrow svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        @media (max-width: 560px) {
+            .cat-nav-arrow {
+                width: 28px;
+                height: 28px;
+            }
+            .cat-nav-arrow svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
         .cat-nav-strip {
             display: flex;
             gap: 10px;
@@ -1797,14 +1845,12 @@
             scrollbar-color: rgba(250, 249, 242, 0.18) transparent;
             cursor: grab;
             user-select: none;
+            flex: 1;
+            min-width: 0;
         }
 
         .cat-nav-strip:active {
             cursor: grabbing;
-        }
-
-        .cat-nav-strip::-webkit-scrollbar {
-            height: 5px;
         }
 
         .cat-nav-strip::-webkit-scrollbar {
@@ -3727,7 +3773,15 @@
                 <h1><span class="cat-emoji-big" id="shopHeaderEmoji"></span><span id="shopHeaderTitle">Category</span>
                 </h1>
                 <p id="shopHeaderDesc"></p>
-                <div class="cat-nav-strip" id="catNavStrip"></div>
+                <div class="cat-nav-wrap">
+                    <button class="cat-nav-arrow cat-nav-arrow-prev" id="catNavPrev" type="button" aria-label="Scroll categories left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <div class="cat-nav-strip" id="catNavStrip"></div>
+                    <button class="cat-nav-arrow cat-nav-arrow-next" id="catNavNext" type="button" aria-label="Scroll categories right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                </div>
                 <div class="result-count" id="resultCount"></div>
             </div>
         </header>
@@ -5877,18 +5931,34 @@
             let rafId = null;
             const SPEED = 0.45; // px per frame, gentle
 
+            let scrollPos = strip.scrollLeft; // float accumulator — strip.scrollLeft itself
+                                               // rounds to an integer on every write, so a
+                                               // sub-pixel SPEED would otherwise truncate back
+                                               // to 0 every single frame and never move at all
             function tick() {
-                if (!paused && strip.offsetParent !== null) {
-                    strip.scrollLeft += SPEED;
-                    const half = strip.scrollWidth / 2;
-                    if (strip.scrollLeft >= half) { strip.scrollLeft -= half; }
+                if (strip.offsetParent !== null) {
+                    if (paused) {
+                        // Don't touch scrollLeft at all while paused — this is what
+                        // lets drag, arrow clicks, and native smooth-scroll actually
+                        // move the strip without this loop fighting them every frame.
+                        scrollPos = strip.scrollLeft;
+                    } else {
+                        scrollPos += SPEED;
+                        const half = strip.scrollWidth / 2;
+                        if (scrollPos >= half) scrollPos -= half;
+                        else if (scrollPos < 0) scrollPos += half;
+                        strip.scrollLeft = scrollPos;
+                    }
                 }
                 rafId = requestAnimationFrame(tick);
             }
             function pauseThenResume() {
                 paused = true;
                 clearTimeout(resumeTimer);
-                resumeTimer = setTimeout(() => { paused = false; }, 2200);
+                resumeTimer = setTimeout(() => {
+                    scrollPos = strip.scrollLeft; // pick up wherever the user left it
+                    paused = false;
+                }, 2200);
             }
             ['mouseenter', 'wheel', 'pointerdown'].forEach(evt => {
                 strip.addEventListener(evt, pauseThenResume, { passive: true });
@@ -5903,13 +5973,26 @@
                 const dy = Math.abs(e.touches[0].clientY - catTouchStartY);
                 if (dx > dy && dx > 6) pauseThenResume();
             }, { passive: true });
-            strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); resumeTimer = setTimeout(() => { paused = false; }, 800); });
+            strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); resumeTimer = setTimeout(() => { scrollPos = strip.scrollLeft; paused = false; }, 800); });
 
             // simple drag-to-scroll for desktop mouse users
             let isDown = false, startX = 0, startScroll = 0;
             strip.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX; startScroll = strip.scrollLeft; pauseThenResume(); });
             window.addEventListener('mouseup', () => isDown = false);
             window.addEventListener('mousemove', (e) => { if (!isDown) return; strip.scrollLeft = startScroll - (e.pageX - startX); });
+
+            // explicit prev/next arrows for users who'd rather click than drag/swipe
+            const prevBtn = document.getElementById('catNavPrev');
+            const nextBtn = document.getElementById('catNavNext');
+            const STEP = 240; // roughly 2-3 chips per click, comfortable to read
+            if (prevBtn) prevBtn.addEventListener('click', () => {
+                pauseThenResume();
+                strip.scrollBy({ left: -STEP, behavior: 'smooth' });
+            });
+            if (nextBtn) nextBtn.addEventListener('click', () => {
+                pauseThenResume();
+                strip.scrollBy({ left: STEP, behavior: 'smooth' });
+            });
 
             rafId = requestAnimationFrame(tick);
         })();
