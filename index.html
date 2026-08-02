@@ -1851,6 +1851,40 @@
             text-decoration: none;
         }
 
+        .toast-container {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            pointer-events: none;
+            width: 100%;
+            padding: 0 16px;
+        }
+        .toast {
+            background: var(--aubergine-deep);
+            color: var(--cream);
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13.5px;
+            padding: 12px 20px;
+            border-radius: 999px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            max-width: 420px;
+            text-align: center;
+        }
+        .toast.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .float-order.is-visible {
             opacity: 1;
             transform: scale(1) translateY(0);
@@ -4921,6 +4955,8 @@
         </svg>
     </a>
 
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
     <script>
         /* ================= DATA ================= */
         const CATEGORIES = [
@@ -5287,6 +5323,25 @@
     </div>`;
             }).join('');
         }
+        /* ================= TOAST NOTIFICATIONS =================
+           Non-blocking, unlike alert(): a blocking dialog can make a page
+           feel unresponsive to a tap (easy to miss the dialog, or have it
+           suppressed after repeat triggers), which is exactly the kind of
+           "first click does nothing" report this replaces. */
+        function showToast(message, duration = 2600) {
+            const container = document.getElementById('toastContainer');
+            if (!container) { console.log(message); return; }
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('is-visible'));
+            setTimeout(() => {
+                toast.classList.remove('is-visible');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
         function addBundleToCart(bundleIdx) {
             const bundle = BUNDLES[bundleIdx];
             if (!bundle) return;
@@ -5295,7 +5350,7 @@
             const skipped = items.length - added.length;
             added.forEach(p => addToCart(p, 1));
             const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} skipped, out of stock)` : '';
-            alert(`Added ${added.length} items from "${bundle.name}" to your cart.${skippedNote}`);
+            showToast(`Added ${added.length} items from "${bundle.name}" to your cart.${skippedNote}`);
         }
         window.addBundleToCart = addBundleToCart;
 
@@ -5881,7 +5936,7 @@
             const wasNote = onSale ? ` <span class="price-was" style="font-size:0.55em;">${money(pdCurrent.price * pdQty)}</span>` : '';
             document.getElementById('pdPrice').innerHTML = `<span class="${onSale ? 'sale' : ''}">${money(total)}</span>${wasNote}${eachNote}`;
         }
-        document.getElementById('pdAddCart').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); alert(`Added ${pdQty} × ${pdCurrent.name} to your cart.`); } });
+        document.getElementById('pdAddCart').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); showToast(`Added ${pdQty} × ${pdCurrent.name} to your cart.`); } });
         document.getElementById('pdBuyNow').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); window.location.hash = '#/checkout'; } });
 
         /* ================= CHECKOUT ================= */
