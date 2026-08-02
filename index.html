@@ -2727,6 +2727,21 @@
         }
         .secure-badge svg { width: 14px; height: 14px; color: var(--chartreuse); flex-shrink: 0; }
 
+        .cart-trust-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 18px;
+        }
+        .trust-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--display); font-weight: 600; font-size: 11.5px;
+            color: var(--heading); background: rgba(144,184,0,0.1);
+            border: 1px solid rgba(144,184,0,0.3); border-radius: 999px;
+            padding: 6px 12px;
+        }
+        .trust-pill svg { width: 13px; height: 13px; color: var(--aubergine-mid); flex-shrink: 0; }
+
         .payment-note {
             background: rgba(225, 225, 0, 0.1);
             border: 1px solid rgba(225, 225, 0, 0.3);
@@ -4081,6 +4096,20 @@
                             <div class="summary-row total"><span>Total</span><span id="sumTotal">£0.00</span></div>
                             <button class="btn btn-primary btn-block" id="toDeliveryBtn" style="margin-top:20px;"
                                 type="button">Continue to delivery</button>
+                            <div class="cart-trust-strip">
+                                <div class="trust-pill">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                                    Secure checkout
+                                </div>
+                                <div class="trust-pill">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
+                                    Free delivery over £25
+                                </div>
+                                <div class="trust-pill">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                                    Pickup available, no fee
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4191,6 +4220,16 @@
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal3">£0.00</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel3">Delivery</span><span id="sumDelivery3">£3.50</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal3">£0.00</span></div>
+                            <div class="cart-trust-strip">
+                                <div class="trust-pill">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                                    Secure checkout
+                                </div>
+                                <div class="trust-pill">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
+                                    Free delivery over £25
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5575,13 +5614,13 @@
         function pdDetailCards(p, catSlug) {
             const isFood = !NON_FOOD_CATEGORIES.includes(catSlug);
             const cards = [
-                { key: 'origin', label: 'Origin', value: p.origin || '', placeholder: 'Origin not yet added — check back soon or get in touch.' },
+                { key: 'origin', label: 'Origin', value: p.origin || '', placeholder: 'Origin not yet added. Check back soon, or get in touch.' },
                 { key: 'storage', label: 'Storage', value: p.storage || (CATEGORY_STORAGE[catSlug] || 'Store as indicated on the packaging.'), placeholder: '' },
                 { key: 'allergyInfo', label: 'Allergy info', value: p.allergyInfo || '', placeholder: "Please check the product packaging for full allergen information, or get in touch and we'll help." },
             ];
             if (isFood) {
-                cards.push({ key: 'nutrition', label: 'Nutrition', value: p.nutrition || '', placeholder: "Nutritional information isn't listed yet — please check the product packaging." });
-                cards.push({ key: 'cookingTip', label: 'Cooking suggestions', value: p.cookingTip || (CATEGORY_COOKING[catSlug] || 'No special preparation needed — ready to enjoy.'), placeholder: '' });
+                cards.push({ key: 'nutrition', label: 'Nutrition', value: p.nutrition || '', placeholder: "Nutritional information isn't listed yet. Please check the product packaging." });
+                cards.push({ key: 'cookingTip', label: 'Cooking suggestions', value: p.cookingTip || (CATEGORY_COOKING[catSlug] || 'No special preparation needed, ready to enjoy.'), placeholder: '' });
             }
             return cards;
         }
@@ -5880,7 +5919,7 @@
                     document.body.appendChild(a); a.click(); a.remove();
                     URL.revokeObjectURL(url);
                 } catch (e) {
-                    alert('Could not generate the PDF right now — please try the Print button instead.');
+                    alert('Could not generate the PDF right now. Please try the Print button instead.');
                 }
             });
         });
@@ -5907,7 +5946,7 @@
                     }
                 } catch (e) {
                     if (e && e.name === 'AbortError') return; // person closed the share sheet, not an error
-                    alert('Could not prepare the invoice right now — please try again or use Save PDF.');
+                    alert('Could not prepare the invoice right now. Please try again, or use Save PDF.');
                 }
             });
         });
