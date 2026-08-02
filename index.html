@@ -2518,6 +2518,70 @@
             gap: 14px;
         }
 
+        /* ================= DELIVERY / PICKUP TOGGLE ================= */
+        .fulfil-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .fulfil-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            background: var(--card-bg);
+            color: var(--text-body);
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .fulfil-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .fulfil-btn.active {
+            border-color: var(--aubergine);
+            background: var(--aubergine);
+            color: var(--cream);
+        }
+        .fulfil-free {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+        }
+        .pickup-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            background: var(--section-alt-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            margin-bottom: 14px;
+        }
+        .pickup-info-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--heading);
+            font-weight: 600;
+        }
+        .pickup-info-row svg { width: 19px; height: 19px; flex-shrink: 0; color: var(--aubergine-mid); }
+        .pickup-info-note {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
         .summary-row {
             display: flex;
             justify-content: space-between;
@@ -3888,7 +3952,7 @@
                         <div class="panel">
                             <h2>Order summary</h2>
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal">£0.00</span></div>
-                            <div class="summary-row"><span>Delivery</span><span id="sumDelivery">£3.50</span></div>
+                            <div class="summary-row"><span id="sumDeliveryLabel">Delivery</span><span id="sumDelivery">£3.50</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal">£0.00</span></div>
                             <button class="btn btn-primary btn-block" id="toDeliveryBtn" style="margin-top:20px;"
                                 type="button">Continue to delivery</button>
@@ -3901,21 +3965,44 @@
                     <div class="checkout-grid">
                         <div class="panel">
                             <h2>Delivery details</h2>
+                            <div class="fulfil-toggle" role="group" aria-label="Choose delivery or pickup">
+                                <button type="button" class="fulfil-btn active" id="fulfilDeliveryBtn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
+                                    Delivery
+                                </button>
+                                <button type="button" class="fulfil-btn" id="fulfilPickupBtn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                                    Pickup <span class="fulfil-free">Free</span>
+                                </button>
+                            </div>
                             <form id="deliveryForm">
                                 <div class="field"><label>Full name</label><input type="text" required id="dName"
                                         placeholder="Your name"></div>
                                 <div class="field"><label>Phone number</label><input type="tel" required id="dPhone"
                                         placeholder="07000 000000"></div>
-                                <div class="field"><label>Delivery address</label><input type="text" required
-                                        id="dAddress" placeholder="Street address"></div>
-                                <div class="field-row">
-                                    <div class="field"><label>Town</label><input type="text" required id="dTown"
-                                            placeholder="Colchester"></div>
-                                    <div class="field"><label>Postcode</label><input type="text" required id="dPostcode"
-                                            placeholder="CO1 1AA"></div>
+                                <div id="deliveryAddressFields">
+                                    <div class="field"><label>Delivery address</label><input type="text" required
+                                            id="dAddress" placeholder="Street address"></div>
+                                    <div class="field-row">
+                                        <div class="field"><label>Town</label><input type="text" required id="dTown"
+                                                placeholder="Colchester"></div>
+                                        <div class="field"><label>Postcode</label><input type="text" required id="dPostcode"
+                                                placeholder="CO1 1AA"></div>
+                                    </div>
+                                    <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
+                                            rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
                                 </div>
-                                <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
-                                        rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
+                                <div id="pickupInfoBlock" class="pickup-info hidden-view">
+                                    <div class="pickup-info-row">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        <span>14 Trinity Street, Colchester, Essex, CO1 1JN</span>
+                                    </div>
+                                    <div class="pickup-info-row">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                        <span>Mon&ndash;Sat 8am&ndash;9pm, Sun 10am&ndash;5pm</span>
+                                    </div>
+                                    <p class="pickup-info-note">We'll have your order ready to collect, usually within 2 hours during opening times.</p>
+                                </div>
                                 <div style="display:flex; gap:12px; margin-top:10px;">
                                     <button class="btn btn-outline-dark" type="button" id="backToCartBtn">Back</button>
                                     <button class="btn btn-primary btn-block" type="submit">Continue to payment</button>
@@ -3925,7 +4012,7 @@
                         <div class="panel">
                             <h2>Order summary</h2>
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal2">£0.00</span></div>
-                            <div class="summary-row"><span>Delivery</span><span id="sumDelivery2">£3.50</span></div>
+                            <div class="summary-row"><span id="sumDeliveryLabel2">Delivery</span><span id="sumDelivery2">£3.50</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal2">£0.00</span></div>
                         </div>
                     </div>
@@ -3977,7 +4064,7 @@
                         <div class="panel">
                             <h2>Order summary</h2>
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal3">£0.00</span></div>
-                            <div class="summary-row"><span>Delivery</span><span id="sumDelivery3">£3.50</span></div>
+                            <div class="summary-row"><span id="sumDeliveryLabel3">Delivery</span><span id="sumDelivery3">£3.50</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal3">£0.00</span></div>
                         </div>
                     </div>
@@ -4040,7 +4127,7 @@
 
                     <div class="invoice-totals">
                         <div class="summary-row"><span>Subtotal</span><span id="invSubtotal"></span></div>
-                        <div class="summary-row"><span>Delivery</span><span id="invDelivery"></span></div>
+                        <div class="summary-row"><span id="invDeliveryLabel">Delivery</span><span id="invDelivery"></span></div>
                         <div class="summary-row total"><span>Total paid</span><span id="invTotal"></span></div>
                     </div>
 
@@ -4673,6 +4760,7 @@
 
         /* ================= STATE ================= */
         let cart = [];          // {id, name, unit, price, emoji, qty, catSlug}
+        let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         let currentUser = null;
         let deliveryInfo = null;
         let lastOrder = null;
@@ -5296,10 +5384,12 @@
 
         function updateSummaries() {
             const sub = cartSubtotal();
-            const delivery = cart.length ? DELIVERY_FEE : 0;
+            const delivery = (cart.length && fulfilmentMethod === 'delivery') ? DELIVERY_FEE : 0;
             const total = sub + delivery;
+            const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
             ['sumSubtotal', 'sumSubtotal2', 'sumSubtotal3'].forEach(id => document.getElementById(id).textContent = money(sub));
-            ['sumDelivery', 'sumDelivery2', 'sumDelivery3'].forEach(id => document.getElementById(id).textContent = money(delivery));
+            ['sumDelivery', 'sumDelivery2', 'sumDelivery3'].forEach(id => document.getElementById(id).textContent = fulfilmentMethod === 'pickup' ? 'Free' : money(delivery));
+            ['sumDeliveryLabel', 'sumDeliveryLabel2', 'sumDeliveryLabel3'].forEach(id => document.getElementById(id).textContent = label);
             ['sumTotal', 'sumTotal2', 'sumTotal3'].forEach(id => document.getElementById(id).textContent = money(total));
             document.getElementById('payButtonTotal').textContent = money(total);
         }
@@ -5320,15 +5410,33 @@
         document.getElementById('backToCartBtn').addEventListener('click', () => showCheckoutStep('cart'));
         document.getElementById('backToDeliveryBtn').addEventListener('click', () => showCheckoutStep('delivery'));
 
+        /* ================= DELIVERY / PICKUP TOGGLE ================= */
+        function setFulfilmentMethod(method) {
+            fulfilmentMethod = method;
+            const isPickup = method === 'pickup';
+            document.getElementById('fulfilDeliveryBtn').classList.toggle('active', !isPickup);
+            document.getElementById('fulfilPickupBtn').classList.toggle('active', isPickup);
+            document.getElementById('deliveryAddressFields').classList.toggle('hidden-view', isPickup);
+            document.getElementById('pickupInfoBlock').classList.toggle('hidden-view', !isPickup);
+            // Address/town/postcode only need to be filled in (and validated) for delivery —
+            // toggling `required` here, not just hiding the fields, so a hidden required
+            // field can't silently block form submission on pickup.
+            ['dAddress', 'dTown', 'dPostcode'].forEach(id => { document.getElementById(id).required = !isPickup; });
+            updateSummaries();
+        }
+        document.getElementById('fulfilDeliveryBtn').addEventListener('click', () => setFulfilmentMethod('delivery'));
+        document.getElementById('fulfilPickupBtn').addEventListener('click', () => setFulfilmentMethod('pickup'));
+
         document.getElementById('deliveryForm').addEventListener('submit', (e) => {
             e.preventDefault();
             deliveryInfo = {
+                method: fulfilmentMethod,
                 name: document.getElementById('dName').value.trim(),
                 phone: document.getElementById('dPhone').value.trim(),
-                address: document.getElementById('dAddress').value.trim(),
-                town: document.getElementById('dTown').value.trim(),
-                postcode: document.getElementById('dPostcode').value.trim(),
-                notes: document.getElementById('dNotes').value.trim(),
+                address: fulfilmentMethod === 'pickup' ? '14 Trinity Street' : document.getElementById('dAddress').value.trim(),
+                town: fulfilmentMethod === 'pickup' ? 'Colchester, Essex' : document.getElementById('dTown').value.trim(),
+                postcode: fulfilmentMethod === 'pickup' ? 'CO1 1JN' : document.getElementById('dPostcode').value.trim(),
+                notes: fulfilmentMethod === 'pickup' ? 'Collecting in store' : document.getElementById('dNotes').value.trim(),
             };
             showCheckoutStep('payment');
         });
@@ -5351,14 +5459,16 @@
 
         document.getElementById('paymentForm').addEventListener('submit', (e) => {
             e.preventDefault();
+            const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : DELIVERY_FEE;
             lastOrder = {
                 number: 'YO7-' + Math.floor(100000 + Math.random() * 899999),
                 date: new Date(),
                 items: cart.map(i => ({ ...i })),
                 subtotal: cartSubtotal(),
-                delivery: DELIVERY_FEE,
-                total: cartSubtotal() + DELIVERY_FEE,
+                delivery: deliveryCharge,
+                total: cartSubtotal() + deliveryCharge,
                 delivery_info: deliveryInfo,
+                fulfilment: fulfilmentMethod,
             };
             cart = [];
             updateCartBadge();
@@ -5374,7 +5484,11 @@
             document.getElementById('invNumber').textContent = lastOrder.number;
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const di = lastOrder.delivery_info || {};
-            document.getElementById('invAddress').innerHTML = `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}`;
+            const isPickup = lastOrder.fulfilment === 'pickup';
+            document.getElementById('invAddress').innerHTML = isPickup
+                ? `${di.name || ''}<br>Collecting in store: 14 Trinity Street<br>Colchester, Essex, CO1 1JN<br>${di.phone || ''}`
+                : `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}`;
+            document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
       <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.unit}</span></td>
@@ -5383,7 +5497,7 @@
       <td class="inv-line-total">${money(i.price * i.qty)}</td>
     </tr>`).join('');
             document.getElementById('invSubtotal').textContent = money(lastOrder.subtotal);
-            document.getElementById('invDelivery').textContent = money(lastOrder.delivery);
+            document.getElementById('invDelivery').textContent = isPickup ? 'Free' : money(lastOrder.delivery);
             document.getElementById('invTotal').textContent = money(lastOrder.total);
         }
         document.getElementById('printInvoiceBtn').addEventListener('click', () => window.print());
