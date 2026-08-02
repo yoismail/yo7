@@ -2303,6 +2303,65 @@
             gap: 18px;
         }
 
+        /* ================= PRODUCT DETAILS (origin, storage, allergy, nutrition, cooking) ================= */
+        .pd-details {
+            margin-top: 56px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(var(--border-rgb), 0.1);
+        }
+        .pd-details-heading {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 21px;
+            color: var(--heading);
+            margin-bottom: 20px;
+        }
+        .pd-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .pd-detail-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 14px;
+            padding: 18px 20px;
+        }
+        .pd-detail-card .label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            color: var(--heading);
+            margin-bottom: 8px;
+        }
+        .pd-detail-card .label svg { width: 17px; height: 17px; color: var(--aubergine-mid); flex-shrink: 0; }
+        .pd-detail-card .body {
+            font-size: 13.5px;
+            color: var(--text-body);
+            line-height: 1.55;
+        }
+        .pd-detail-card .body.is-placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .pd-detail-edit-btn {
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--aubergine-mid);
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            text-decoration: underline;
+            display: none;
+        }
+        body.edit-mode-on .pd-detail-edit-btn { display: inline-block; }
+
         /* ================= CHECKOUT ================= */
         .checkout-section {
             background: var(--page-bg);
@@ -3921,6 +3980,11 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="pd-details" id="pdDetailsSection">
+                    <h2 class="pd-details-heading">Product details</h2>
+                    <div class="pd-details-grid" id="pdDetailsGrid"></div>
+                </div>
             </div>
         </section>
     </div>
@@ -4758,6 +4822,53 @@
             { day: 'Sunday', open: '10:00', close: '17:00' },
         ];
 
+        /* ================= PRODUCT DETAIL FALLBACKS =================
+           General, category-level guidance only — nothing specific to an
+           individual real product is invented here. Storage/cooking notes
+           are standard best-practice advice, safe to show by default.
+           Origin, allergy info, and nutrition are NOT guessed per product:
+           origin only appears if a category default is genuinely common
+           knowledge (left blank otherwise), and allergy/nutrition always
+           default to an honest "check the packaging" note rather than a
+           fabricated claim, until real data is entered via edit mode. */
+        const NON_FOOD_CATEGORIES = ['hair-products', 'body-oral-products'];
+        const CATEGORY_STORAGE = {
+            flour: 'Store in an airtight container in a cool, dry place.',
+            oils: 'Store in a cool, dark place away from direct sunlight.',
+            noodles: 'Store in a cool, dry place, unopened.',
+            seasoning: 'Store in a cool, dry place, tightly sealed after opening.',
+            beverages: 'Store in a cool place; refrigerate before serving if a chilled drink is preferred.',
+            'sea-foods': 'Keep frozen until ready to use. Thaw in the refrigerator, not at room temperature.',
+            'tropical-foods': 'Store as indicated on the packaging; many items keep best refrigerated or frozen.',
+            'fruits-vegetables': 'Store in a cool place or refrigerator; use fresh produce within a few days for best quality.',
+            condiments: 'Refrigerate after opening unless otherwise stated on the label.',
+            miscellaneous: 'Store as indicated on the product packaging.',
+            'hair-products': 'Store at room temperature, away from direct sunlight.',
+            'snacks-confectionary': 'Store in a cool, dry place; reseal after opening to keep fresh.',
+            rice: 'Store in an airtight container in a cool, dry place.',
+            meat: 'Keep refrigerated or frozen. Thaw safely in the refrigerator before cooking.',
+            'body-oral-products': 'Store at room temperature, away from direct sunlight.',
+            poultry: 'Keep refrigerated or frozen. Thaw safely in the refrigerator before cooking.',
+            'root-vegetables': 'Store in a cool, dark, well-ventilated place.',
+            beans: 'Store in an airtight container in a cool, dry place.',
+            drinks: 'Store in a cool place; refrigerate before serving if preferred chilled.',
+        };
+        const CATEGORY_COOKING = {
+            flour: 'Sift before use for the lightest texture in baking.',
+            oils: 'A little goes a long way, start with a small amount and adjust to taste.',
+            noodles: 'Cook in plenty of boiling water and drain well to avoid clumping.',
+            seasoning: 'Add gradually and taste as you go, blends vary in strength.',
+            'sea-foods': 'Cook thoroughly until opaque throughout.',
+            'tropical-foods': 'Follow any preparation notes on the packaging for best results.',
+            'fruits-vegetables': 'Wash thoroughly before use.',
+            condiments: 'A versatile addition to marinades, stews, and dips.',
+            rice: 'Rinse before cooking for the best texture.',
+            meat: 'Cook thoroughly to a safe internal temperature before serving.',
+            poultry: 'Cook thoroughly until juices run clear and no pink remains.',
+            'root-vegetables': 'Peel and rinse before cooking.',
+            beans: 'Rinse and check for debris before cooking; soaking dried beans reduces cooking time.',
+        };
+
         /* ================= STATE ================= */
         let cart = [];          // {id, name, unit, price, emoji, qty, catSlug}
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
@@ -5330,7 +5441,69 @@
 
             const related = cat.products.map((rp, ri) => ({ ...rp, emoji: cat.emoji, catSlug, idx: ri })).filter(rp => rp.idx !== p.idx).slice(0, 4);
             renderGrid(related, 'relatedGrid');
+            renderProductDetailsSection(p, catSlug);
         }
+
+        /* ================= PRODUCT DETAILS SECTION ================= */
+        const PD_DETAIL_ICONS = {
+            origin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+            storage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="15" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></svg>',
+            allergyInfo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+            nutrition: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></svg>',
+            cookingTip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 6 5 9 5 13a7 7 0 0 0 14 0c0-2-1-4-2-5 0 2-1 3-2 3 1-3-1-6-3-9z"/></svg>',
+        };
+        function pdDetailCards(p, catSlug) {
+            const isFood = !NON_FOOD_CATEGORIES.includes(catSlug);
+            const cards = [
+                { key: 'origin', label: 'Origin', value: p.origin || '', placeholder: 'Origin not yet added — check back soon or get in touch.' },
+                { key: 'storage', label: 'Storage', value: p.storage || (CATEGORY_STORAGE[catSlug] || 'Store as indicated on the packaging.'), placeholder: '' },
+                { key: 'allergyInfo', label: 'Allergy info', value: p.allergyInfo || '', placeholder: "Please check the product packaging for full allergen information, or get in touch and we'll help." },
+            ];
+            if (isFood) {
+                cards.push({ key: 'nutrition', label: 'Nutrition', value: p.nutrition || '', placeholder: "Nutritional information isn't listed yet — please check the product packaging." });
+                cards.push({ key: 'cookingTip', label: 'Cooking suggestions', value: p.cookingTip || (CATEGORY_COOKING[catSlug] || 'No special preparation needed — ready to enjoy.'), placeholder: '' });
+            }
+            return cards;
+        }
+        function renderProductDetailsSection(p, catSlug) {
+            const grid = document.getElementById('pdDetailsGrid');
+            const cards = pdDetailCards(p, catSlug);
+            grid.innerHTML = cards.map(c => {
+                const text = c.value || c.placeholder;
+                const isPlaceholder = !c.value;
+                return `
+    <div class="pd-detail-card" id="pdCard-${c.key}">
+      <div class="label">${PD_DETAIL_ICONS[c.key]} ${c.label}</div>
+      <div class="body ${isPlaceholder ? 'is-placeholder' : ''}" id="pdCardBody-${c.key}">${text}</div>
+      <button class="pd-detail-edit-btn" type="button" onclick="openPdDetailEdit('${c.key}')">Edit</button>
+    </div>`;
+            }).join('');
+        }
+        function openPdDetailEdit(key) {
+            if (!pdCurrent) return;
+            const card = document.getElementById(`pdCard-${key}`);
+            const currentValue = pdCurrent[key] || '';
+            card.querySelector('.body').outerHTML = `
+      <div class="body">
+        <textarea id="pdEdit-${key}" rows="3" style="width:100%; font-family:var(--body); font-size:13.5px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${currentValue}</textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="savePdDetailEdit('${key}')">Save</button>
+          <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderProductDetailsSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
+        </div>
+      </div>`;
+        }
+        function savePdDetailEdit(key) {
+            if (!pdCurrent) return;
+            const val = document.getElementById(`pdEdit-${key}`).value.trim();
+            const cat = findCategory(pdCurrent.catSlug);
+            const realProduct = cat && cat.products[pdCurrent.idx];
+            if (!realProduct) return;
+            if (val) { realProduct[key] = val; pdCurrent[key] = val; }
+            else { delete realProduct[key]; delete pdCurrent[key]; }
+            renderProductDetailsSection(pdCurrent, pdCurrent.catSlug);
+        }
+        window.openPdDetailEdit = openPdDetailEdit;
+        window.savePdDetailEdit = savePdDetailEdit;
         document.getElementById('pdQtyMinus').addEventListener('click', () => { pdQty = Math.max(1, pdQty - 1); document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         document.getElementById('pdQtyPlus').addEventListener('click', () => { pdQty += 1; document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         function updatePdPrice() {
