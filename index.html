@@ -3747,13 +3747,12 @@
         }
     </style>    <script>
         // Runs before first paint to avoid a flash of the wrong theme.
-        // Priority: an explicit saved choice from the toggle, then the
-        // device's OS-level preference.
+        // Defaults to light regardless of the device's OS-level preference;
+        // dark mode only applies if the person has explicitly chosen it via
+        // the toggle on a previous visit.
         (function () {
             var saved = localStorage.getItem('yo7-theme');
-            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            var theme = saved || (prefersDark ? 'dark' : 'light');
-            if (theme === 'dark') {
+            if (saved === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
         })();
@@ -5465,7 +5464,8 @@
             if (!btn) return;
 
             // Sync the sun/moon icon to whatever the early head-script already
-            // applied (it runs before this, based on saved choice or OS setting).
+            // applied (defaults to light, unless a previous explicit choice
+            // was saved).
             const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
             applyTheme(current);
 
@@ -5475,15 +5475,6 @@
                 localStorage.setItem('yo7-theme', next);
                 applyTheme(next);
             });
-
-            // If the visitor hasn't made an explicit choice, keep following
-            // their OS-level setting live (e.g. system switches to dark at sunset).
-            if (window.matchMedia) {
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                    if (localStorage.getItem('yo7-theme')) return; // explicit choice wins
-                    applyTheme(e.matches ? 'dark' : 'light');
-                });
-            }
         }
 
         function renderOfferCarousel() {
