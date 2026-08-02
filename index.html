@@ -3446,6 +3446,48 @@
         }
         .areas-note { font-size: 12.5px; color: #c8d1ba; line-height: 1.5; }
 
+        .delivery-admin-panel {
+            display: none;
+            margin-top: 22px;
+            padding: 26px 28px;
+            border-radius: 20px;
+            background: rgba(225, 225, 0, 0.06);
+            border: 1.5px dashed rgba(225, 225, 0, 0.35);
+        }
+        body.edit-mode-on .delivery-admin-panel { display: block; }
+        .delivery-admin-panel h3 {
+            font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading);
+            display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+        }
+        .admin-only-tag {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+            background: var(--orange); color: var(--aubergine-deep); padding: 3px 9px; border-radius: 999px;
+        }
+        .delivery-admin-note { font-size: 12.5px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+        .delivery-admin-block { margin-bottom: 22px; }
+        .delivery-admin-block:last-child { margin-bottom: 0; }
+        .delivery-admin-block h4 {
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 10px;
+        }
+        .delivery-rule-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+        .delivery-rule-row {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.1); border-radius: 10px;
+            padding: 10px 14px; font-size: 13px; color: var(--text-body);
+        }
+        .delivery-rule-row .rule-remove-btn {
+            background: none; border: none; color: #b34a4a; font-size: 12px; font-weight: 600; cursor: pointer;
+            flex-shrink: 0; padding: 4px 8px;
+        }
+        .delivery-admin-form {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-items: center;
+        }
+        .delivery-admin-form input, .delivery-admin-form select {
+            padding: 9px 11px; border-radius: 8px; border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            font-family: var(--body); font-size: 13.5px; background: var(--card-bg); color: var(--text-body);
+        }
+        .delivery-admin-form button { grid-column: 1 / -1; justify-self: start; }
+
         @media (max-width: 760px) {
             .postcode-checker { grid-template-columns: 1fr; }
             .pc-map { order: -1; }
@@ -4663,6 +4705,46 @@
                     </div>
                     <div class="areas-note">Postcode areas: CO, IP, CM, and parts of SS &amp; CB. Not seeing your town? Message us, we're expanding steadily.</div>
                 </div>
+
+                <div class="delivery-admin-panel">
+                    <h3>Delivery rules <span class="admin-only-tag">Edit mode only</span></h3>
+                    <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh, same as other edit-mode changes on this site.</p>
+
+                    <div class="delivery-admin-block">
+                        <h4>Regions &amp; rates</h4>
+                        <div id="deliveryRegionsList" class="delivery-rule-list"></div>
+                        <form id="addRegionForm" class="delivery-admin-form">
+                            <input type="text" id="newRegionName" placeholder="Region name (e.g. Sudbury)" required>
+                            <input type="text" id="newRegionAreas" placeholder="Postcode areas, comma separated (e.g. CO, IP)" required>
+                            <input type="number" id="newRegionFee" placeholder="Fee (£)" step="0.01" min="0" required>
+                            <button type="submit" class="btn btn-primary">Add region</button>
+                        </form>
+                    </div>
+
+                    <div class="delivery-admin-block">
+                        <h4>Threshold rules</h4>
+                        <div id="deliveryRulesList" class="delivery-rule-list"></div>
+                        <form id="addDeliveryRuleForm" class="delivery-admin-form">
+                            <input type="text" id="newRuleName" placeholder="Rule name (e.g. Free over 10 items)" required>
+                            <select id="newRuleCondition">
+                                <option value="price">Order price (£)</option>
+                                <option value="weight">Total weight (kg)</option>
+                                <option value="items">Number of items</option>
+                            </select>
+                            <select id="newRuleOperator">
+                                <option value="gte">At least</option>
+                                <option value="lte">At most</option>
+                            </select>
+                            <input type="number" id="newRuleValue" placeholder="Value" step="0.01" min="0" required>
+                            <select id="newRuleEffect">
+                                <option value="free">Make delivery free</option>
+                                <option value="fixed">Set a fixed fee instead</option>
+                            </select>
+                            <input type="number" id="newRuleFeeOverride" placeholder="Fixed fee (£)" step="0.01" min="0" style="display:none;">
+                            <button type="submit" class="btn btn-primary">Add rule</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -5141,7 +5223,94 @@
         function findGroup(slug) { return GROUPS.find(g => g.slug === slug); }
         function groupForCategory(catSlug) { return GROUPS.find(g => g.categories.includes(catSlug)); }
 
-        const DELIVERY_FEE = 3.50;
+        /* ================= DELIVERY RULES =================
+           Two layers, matching how real delivery pricing usually works:
+           1. deliveryRegions: a base rate per region, matched by UK postcode
+              area (reusing the same CO/IP/CM areas the postcode checker
+              already uses, rather than inventing a separate region system).
+              DEFAULT_DELIVERY_FEE applies if no region matches.
+           2. deliveryThresholdRules: separate override rules keyed to the
+              order itself (subtotal, total weight, item count) — e.g. "free
+              delivery over £25". If any threshold rule's condition is met,
+              its effect overrides the region's base rate.
+           Both are plain in-memory arrays, editable via the delivery rules
+           admin panel in edit mode. Nothing here persists past a refresh,
+           same as every other edit-mode change on this site currently. */
+        const DEFAULT_DELIVERY_FEE = 3.50;
+        let deliveryRegions = [
+            { id: 'reg-co', name: 'Colchester (CO)', postcodeAreas: ['CO'], fee: 3.50 },
+            { id: 'reg-ip', name: 'Ipswich (IP)', postcodeAreas: ['IP'], fee: 4.50 },
+            { id: 'reg-cm', name: 'Chelmsford (CM)', postcodeAreas: ['CM'], fee: 4.50 },
+        ];
+        let deliveryThresholdRules = [
+            { id: 'rule-free25', name: 'Free delivery over £25', conditionType: 'price', operator: 'gte', value: 25, effect: 'free' },
+        ];
+
+        function resolveDeliveryRegion(postcode) {
+            const raw = (postcode || '').trim().toUpperCase().replace(/\s+/g, '');
+            const match = raw.match(/^([A-Z]{1,2})\d/);
+            const area = match ? match[1] : null;
+            if (!area) return null;
+            return deliveryRegions.find(r => r.postcodeAreas.includes(area)) || null;
+        }
+
+        function cartTotalWeight() {
+            // Products without a real recorded weight contribute 0 — no invented
+            // figure is substituted, so a weight-based rule simply won't trigger
+            // off an unweighed item rather than guessing at its weight.
+            return cart.reduce((sum, i) => sum + (typeof i.weight === 'number' ? i.weight * i.qty : 0), 0);
+        }
+        function cartItemCount() {
+            return cart.reduce((sum, i) => sum + i.qty, 0);
+        }
+
+        function resolveDeliveryFee(postcode) {
+            const region = resolveDeliveryRegion(postcode);
+            let fee = region ? region.fee : DEFAULT_DELIVERY_FEE;
+            const subtotal = cartSubtotal();
+            const weight = cartTotalWeight();
+            const items = cartItemCount();
+
+            for (const rule of deliveryThresholdRules) {
+                const actual = rule.conditionType === 'price' ? subtotal
+                    : rule.conditionType === 'weight' ? weight
+                    : rule.conditionType === 'items' ? items
+                    : null;
+                if (actual === null) continue;
+                const met = rule.operator === 'gte' ? actual >= rule.value : actual <= rule.value;
+                if (!met) continue;
+                if (rule.effect === 'free') { fee = 0; }
+                else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') { fee = Math.min(fee, rule.feeOverride); }
+            }
+            return { fee, region };
+        }
+
+        /* ================= DELIVERY RULES ADMIN PANEL (edit mode) ================= */
+        function renderDeliveryAdmin() {
+            const regionsList = document.getElementById('deliveryRegionsList');
+            if (regionsList) {
+                regionsList.innerHTML = deliveryRegions.map((r, i) => `
+      <div class="delivery-rule-row">
+        <span>${r.name}, areas: ${r.postcodeAreas.join(', ')}, £${r.fee.toFixed(2)}</span>
+        <button type="button" class="rule-remove-btn" onclick="removeDeliveryRegion(${i})">Remove</button>
+      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No regions defined, DEFAULT_DELIVERY_FEE applies everywhere.</p>';
+            }
+            const rulesList = document.getElementById('deliveryRulesList');
+            if (rulesList) {
+                const conditionLabel = { price: 'order price', weight: 'total weight', items: 'item count' };
+                const opLabel = { gte: 'at least', lte: 'at most' };
+                rulesList.innerHTML = deliveryThresholdRules.map((r, i) => `
+      <div class="delivery-rule-row">
+        <span>${r.name}: ${conditionLabel[r.conditionType]} ${opLabel[r.operator]} ${r.value} &rarr; ${r.effect === 'free' ? 'free delivery' : 'fee set to £' + (r.feeOverride || 0).toFixed(2)}</span>
+        <button type="button" class="rule-remove-btn" onclick="removeDeliveryRule(${i})">Remove</button>
+      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No threshold rules yet.</p>';
+            }
+        }
+        function removeDeliveryRegion(i) { deliveryRegions.splice(i, 1); renderDeliveryAdmin(); updateSummaries(); }
+        function removeDeliveryRule(i) { deliveryThresholdRules.splice(i, 1); renderDeliveryAdmin(); updateSummaries(); }
+        window.removeDeliveryRegion = removeDeliveryRegion;
+        window.removeDeliveryRule = removeDeliveryRule;
+
         const OPENING_HOURS = [
             { day: 'Monday', open: '08:00', close: '21:00' },
             { day: 'Tuesday', open: '08:00', close: '21:00' },
@@ -5967,14 +6136,15 @@
         window.changeQty = changeQty;
         window.removeFromCart = removeFromCart;
 
-        const FREE_DELIVERY_THRESHOLD = 25;
         function updateSummaries() {
             const sub = cartSubtotal();
-            const qualifiesForFreeDelivery = sub >= FREE_DELIVERY_THRESHOLD;
-            const delivery = (cart.length && fulfilmentMethod === 'delivery' && !qualifiesForFreeDelivery) ? DELIVERY_FEE : 0;
+            const postcodeField = document.getElementById('dPostcode');
+            const postcode = postcodeField ? postcodeField.value : '';
+            const { fee: resolvedFee } = resolveDeliveryFee(postcode);
+            const delivery = (cart.length && fulfilmentMethod === 'delivery') ? resolvedFee : 0;
             const total = sub + delivery;
             const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
-            const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && qualifiesForFreeDelivery);
+            const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && resolvedFee === 0);
             ['sumSubtotal', 'sumSubtotal2', 'sumSubtotal3'].forEach(id => document.getElementById(id).textContent = money(sub));
             ['sumDelivery', 'sumDelivery2', 'sumDelivery3'].forEach(id => document.getElementById(id).textContent = deliveryIsFree ? 'Free' : money(delivery));
             ['sumDeliveryLabel', 'sumDeliveryLabel2', 'sumDeliveryLabel3'].forEach(id => document.getElementById(id).textContent = label);
@@ -6014,6 +6184,7 @@
         }
         document.getElementById('fulfilDeliveryBtn').addEventListener('click', () => setFulfilmentMethod('delivery'));
         document.getElementById('fulfilPickupBtn').addEventListener('click', () => setFulfilmentMethod('pickup'));
+        document.getElementById('dPostcode').addEventListener('input', () => { if (fulfilmentMethod === 'delivery') updateSummaries(); });
 
         document.getElementById('deliveryForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -6048,7 +6219,8 @@
         document.getElementById('paymentForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const orderSubtotal = cartSubtotal();
-            const deliveryCharge = (fulfilmentMethod === 'pickup' || orderSubtotal >= FREE_DELIVERY_THRESHOLD) ? 0 : DELIVERY_FEE;
+            const { fee: resolvedFee, region } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
+            const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
             lastOrder = {
                 number: 'YO7-' + Math.floor(100000 + Math.random() * 899999),
                 date: new Date(),
@@ -6058,6 +6230,7 @@
                 total: orderSubtotal + deliveryCharge,
                 delivery_info: deliveryInfo,
                 fulfilment: fulfilmentMethod,
+                deliveryRegion: region ? region.name : null,
             };
             cart = [];
             updateCartBadge();
@@ -6628,6 +6801,51 @@
             document.getElementById('postcodeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPostcode(); });
         }
 
+        /* ================= DELIVERY ADMIN FORMS (edit mode) ================= */
+        const addRegionForm = document.getElementById('addRegionForm');
+        if (addRegionForm) {
+            addRegionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newRegionName').value.trim();
+                const areas = document.getElementById('newRegionAreas').value.trim().toUpperCase().split(',').map(a => a.trim()).filter(Boolean);
+                const fee = parseFloat(document.getElementById('newRegionFee').value);
+                if (!name || !areas.length || isNaN(fee) || fee < 0) return;
+                deliveryRegions.push({ id: 'reg-' + Date.now(), name, postcodeAreas: areas, fee });
+                addRegionForm.reset();
+                renderDeliveryAdmin();
+                updateSummaries();
+                showToast(`Added delivery region "${name}".`);
+            });
+        }
+
+        const newRuleEffectSelect = document.getElementById('newRuleEffect');
+        if (newRuleEffectSelect) {
+            newRuleEffectSelect.addEventListener('change', () => {
+                document.getElementById('newRuleFeeOverride').style.display = newRuleEffectSelect.value === 'fixed' ? '' : 'none';
+            });
+        }
+        const addDeliveryRuleForm = document.getElementById('addDeliveryRuleForm');
+        if (addDeliveryRuleForm) {
+            addDeliveryRuleForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newRuleName').value.trim();
+                const conditionType = document.getElementById('newRuleCondition').value;
+                const operator = document.getElementById('newRuleOperator').value;
+                const value = parseFloat(document.getElementById('newRuleValue').value);
+                const effect = document.getElementById('newRuleEffect').value;
+                const feeOverrideRaw = document.getElementById('newRuleFeeOverride').value;
+                const feeOverride = feeOverrideRaw ? parseFloat(feeOverrideRaw) : undefined;
+                if (!name || isNaN(value) || value < 0) return;
+                if (effect === 'fixed' && (feeOverride === undefined || isNaN(feeOverride) || feeOverride < 0)) return;
+                deliveryThresholdRules.push({ id: 'rule-' + Date.now(), name, conditionType, operator, value, effect, feeOverride });
+                addDeliveryRuleForm.reset();
+                document.getElementById('newRuleFeeOverride').style.display = 'none';
+                renderDeliveryAdmin();
+                updateSummaries();
+                showToast(`Added delivery rule "${name}".`);
+            });
+        }
+
         /* ================= CATEGORY STRIP: auto-carousel + manual scroll ================= */
         (function initCatCarousel() {
             const strip = document.getElementById('catNavStrip');
@@ -6741,6 +6959,7 @@
         /* ================= INIT ================= */
         renderCatGrid();
         renderBundles();
+        renderDeliveryAdmin();
 
         /* ================= NEWSLETTER =================
            No backend exists to store emails, so this doesn't pretend to save
