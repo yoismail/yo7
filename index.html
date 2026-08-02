@@ -1057,6 +1057,48 @@
             padding: 88px 0 96px;
         }
 
+        .bundles-section {
+            background: var(--page-bg);
+            padding: 80px 0 88px;
+        }
+        .bundles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+            margin-top: 12px;
+        }
+        .bundle-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 18px;
+            padding: 24px 24px 22px;
+        }
+        .bundle-card h3 {
+            font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px;
+        }
+        .bundle-card .bundle-tagline {
+            font-size: 13px; color: var(--text-muted); margin-bottom: 16px;
+        }
+        .bundle-items {
+            display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;
+        }
+        .bundle-item-row {
+            display: flex; justify-content: space-between; font-size: 13.5px; color: var(--text-body);
+            padding-bottom: 8px; border-bottom: 1px dashed rgba(var(--border-rgb), 0.14);
+        }
+        .bundle-item-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .bundle-item-row.out-of-stock { color: var(--text-muted); }
+        .bundle-item-row.out-of-stock em { font-style: italic; font-size: 11.5px; }
+        .bundle-total-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--heading);
+            margin-bottom: 16px; padding-top: 6px;
+        }
+        .bundle-add-btn {
+            width: 100%; background: var(--chartreuse); color: var(--aubergine); border: none; border-radius: 12px;
+            padding: 11px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
+        }
+
         /* Shop by group (homepage) gets its own warm yellow treatment,
            scoped by ID so the group-detail page's .shop-section (which
            reuses the same class) is unaffected. */
@@ -1534,6 +1576,25 @@
             padding: 0 0 96px;
         }
 
+        .reviews-section {
+            background: var(--section-alt-bg);
+            padding: 72px 0 80px;
+        }
+        .reviews-section .section-head p {
+            max-width: 46ch;
+            margin: 14px auto 0;
+            color: var(--text-body);
+            font-size: 15.5px;
+            line-height: 1.6;
+        }
+        .reviews-cta {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+
         .section-divider {
             height: 1px;
             max-width: 220px;
@@ -1614,6 +1675,35 @@
             overflow: hidden;
         }
         footer .wrap { position: relative; z-index: 1; }
+
+        .footer-newsletter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding-bottom: 32px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid rgba(250, 249, 242, 0.1);
+        }
+        .footer-newsletter h4 {
+            font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--cream); margin-bottom: 4px;
+        }
+        .footer-newsletter p { font-size: 13px; color: #c8d1ba; }
+        .newsletter-form {
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+        .newsletter-form input {
+            padding: 11px 14px; border-radius: 10px; border: 1.5px solid rgba(250,249,242,0.18);
+            background: rgba(250,249,242,0.06); color: var(--cream); font-family: var(--body); font-size: 14px;
+            min-width: 220px;
+        }
+        .newsletter-form input::placeholder { color: rgba(250,249,242,0.45); }
+        .newsletter-form button {
+            background: var(--chartreuse); color: var(--aubergine-deep); border: none; border-radius: 10px;
+            padding: 11px 20px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
+            white-space: nowrap;
+        }
 
         .footer-top {
             display: flex;
@@ -3874,6 +3964,18 @@
             </div>
         </section>
 
+        <section class="bundles-section">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <div class="section-eyebrow" style="color: var(--heading-mid);">Shop by meal</div>
+                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
+                        A few things that go together</h2>
+                    <p>Real products from the aisles, grouped for a specific meal. Add the whole set in one tap, or pick and choose.</p>
+                </div>
+                <div class="bundles-grid" id="bundlesGrid"></div>
+            </div>
+        </section>
+
         <section class="new-section">
             <div class="wrap">
                 <div class="new-section-head reveal">
@@ -3938,6 +4040,21 @@
                         <h3>Delivery or pickup</h3>
                         <p>Local delivery across Essex &amp; Suffolk, or collect it yourself.</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="reviews-section">
+            <div class="wrap">
+                <div class="section-head reveal" style="text-align:center;">
+                    <div class="section-eyebrow" style="color: var(--heading-mid);">Reviews</div>
+                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
+                        No reviews yet</h2>
+                    <p>Yo7 is brand new, so there's nothing here to show off yet, honestly. If you shop with us, we'd genuinely like to hear how it went, good or bad.</p>
+                </div>
+                <div class="reviews-cta">
+                    <a class="btn btn-primary" href="https://wa.me/447000000000" target="_blank" rel="noopener">Leave a review on WhatsApp</a>
+                    <a class="btn btn-outline-dark" href="mailto:hello@yo7foods.co.uk?subject=My%20Yo7%20Foods%20review">Email us instead</a>
                 </div>
             </div>
         </section>
@@ -4743,6 +4860,16 @@
 
     <footer>
         <div class="wrap">
+            <div class="footer-newsletter">
+                <div>
+                    <h4>Stay in the loop</h4>
+                    <p>New arrivals, offers, and updates. No spam, just the useful stuff.</p>
+                </div>
+                <form class="newsletter-form" id="newsletterForm">
+                    <input type="email" id="newsletterEmail" placeholder="you@example.com" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
             <div class="footer-top">
                 <div>
                     <a class="footer-mark" href="#/">
@@ -5028,6 +5155,43 @@
             beans: 'Rinse and check for debris before cooking; soaking dried beans reduces cooking time.',
         };
 
+        /* ================= BUNDLES =================
+           Each entry references real existing products by category slug and
+           index, nothing here is a fabricated SKU or invented discount. Price
+           is always pulled live from the actual product data at render time,
+           so a bundle stays accurate if a price changes via edit mode. */
+        const BUNDLES = [
+            {
+                name: 'Classic Jollof Night',
+                tagline: 'Everything for a proper pot of jollof.',
+                items: [
+                    { catSlug: 'rice', idx: 1 },
+                    { catSlug: 'oils', idx: 2 },
+                    { catSlug: 'condiments', idx: 0 },
+                    { catSlug: 'seasoning', idx: 0 },
+                ],
+            },
+            {
+                name: 'Sunday Stew Pot',
+                tagline: 'A rich, slow stew from scratch.',
+                items: [
+                    { catSlug: 'meat', idx: 0 },
+                    { catSlug: 'seasoning', idx: 2 },
+                    { catSlug: 'condiments', idx: 1 },
+                    { catSlug: 'oils', idx: 1 },
+                ],
+            },
+            {
+                name: 'Beans & Sauce',
+                tagline: 'A simple, filling classic.',
+                items: [
+                    { catSlug: 'beans', idx: 0 },
+                    { catSlug: 'oils', idx: 0 },
+                    { catSlug: 'seasoning', idx: 1 },
+                ],
+            },
+        ];
+
         /* ================= STATE ================= */
         let cart = [];          // {id, name, unit, price, emoji, qty, catSlug}
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
@@ -5091,6 +5255,40 @@
     </a>`;
             }).join('');
         }
+
+        function renderBundles() {
+            const grid = document.getElementById('bundlesGrid');
+            if (!grid) return;
+            grid.innerHTML = BUNDLES.map((bundle, bi) => {
+                const items = bundle.items.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+                const inStockItems = items.filter(p => p.stock !== 'out');
+                const total = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
+                const itemRows = items.map(p => {
+                    const outOfStock = p.stock === 'out';
+                    return `
+      <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}"><span>${p.name}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span><span>${outOfStock ? '' : money(effectivePrice(p))}</span></div>`;
+                }).join('');
+                return `
+    <div class="bundle-card">
+      <h3>${bundle.name}</h3>
+      <div class="bundle-tagline">${bundle.tagline}</div>
+      <div class="bundle-items">${itemRows}</div>
+      <div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(total)}</span></div>
+      <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add all to cart</button>
+    </div>`;
+            }).join('');
+        }
+        function addBundleToCart(bundleIdx) {
+            const bundle = BUNDLES[bundleIdx];
+            if (!bundle) return;
+            const items = bundle.items.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const added = items.filter(p => p.stock !== 'out');
+            const skipped = items.length - added.length;
+            added.forEach(p => addToCart(p, 1));
+            const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} skipped, out of stock)` : '';
+            alert(`Added ${added.length} items from "${bundle.name}" to your cart.${skippedNote}`);
+        }
+        window.addBundleToCart = addBundleToCart;
 
         function renderCatStrip(activeSlug) {
             const chipsHTML = CATEGORIES.map(c => `
@@ -6483,6 +6681,24 @@
 
         /* ================= INIT ================= */
         renderCatGrid();
+        renderBundles();
+
+        /* ================= NEWSLETTER =================
+           No backend exists to store emails, so this doesn't pretend to save
+           anything, it opens a real, pre-filled email to hello@yo7foods.co.uk
+           instead. Genuinely functional rather than a form that silently
+           goes nowhere. */
+        const newsletterForm = document.getElementById('newsletterForm');
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('newsletterEmail').value.trim();
+                if (!email) return;
+                const body = encodeURIComponent(`Please add ${email} to the Yo7 Foods mailing list.`);
+                window.location.href = `mailto:hello@yo7foods.co.uk?subject=Newsletter%20signup&body=${body}`;
+                document.getElementById('newsletterEmail').value = '';
+            });
+        }
         renderNewCarousel();
         renderOfferCarousel();
         initThemeToggle();
