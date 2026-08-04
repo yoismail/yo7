@@ -2605,6 +2605,33 @@
         }
         body.edit-mode-on .pd-detail-edit-btn { display: inline-block; }
 
+        .allergen-checklist {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 6px 10px;
+        }
+        .allergen-check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            color: var(--text-body);
+            cursor: pointer;
+        }
+        .allergen-check input { width: auto; margin: 0; }
+
+        .allergen-summary-banner {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(225, 225, 0, 0.1);
+            border: 1px solid rgba(225, 225, 0, 0.32);
+            font-size: 13px;
+            color: #7a4a26;
+            line-height: 1.5;
+        }
+        .allergen-summary-banner strong { display: block; margin-bottom: 4px; font-family: var(--display); }
+
         /* ================= CHECKOUT ================= */
         .checkout-section {
             background: var(--page-bg);
@@ -4337,6 +4364,7 @@
                         <div class="panel">
                             <h2>Your cart</h2>
                             <div id="cartList"></div>
+                            <div id="cartAllergenBanner" class="allergen-summary-banner" style="display:none;"></div>
                             <div id="cartEmpty" class="empty-cart" style="display:none;">
                                 <h3>Your cart is empty</h3>
                                 <p>Add a few staples from the shop before checking out.</p>
@@ -6123,12 +6151,37 @@
             nutrition: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></svg>',
             cookingTip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 6 5 9 5 13a7 7 0 0 0 14 0c0-2-1-4-2-5 0 2-1 3-2 3 1-3-1-6-3-9z"/></svg>',
         };
+        /* The 14 allergens UK food law (Food Information Regulations) requires
+           businesses to declare, not an arbitrary list — matches the FSA's own
+           enumeration. Structured checkboxes rather than free text so this
+           can't accidentally omit one through a typo or vague wording. */
+        const UK_ALLERGENS = [
+            { key: 'celery', label: 'Celery' },
+            { key: 'gluten', label: 'Cereals containing gluten' },
+            { key: 'crustaceans', label: 'Crustaceans' },
+            { key: 'eggs', label: 'Eggs' },
+            { key: 'fish', label: 'Fish' },
+            { key: 'lupin', label: 'Lupin' },
+            { key: 'milk', label: 'Milk' },
+            { key: 'molluscs', label: 'Molluscs' },
+            { key: 'mustard', label: 'Mustard' },
+            { key: 'peanuts', label: 'Peanuts' },
+            { key: 'sesame', label: 'Sesame' },
+            { key: 'soybeans', label: 'Soybeans' },
+            { key: 'sulphites', label: 'Sulphur dioxide / sulphites' },
+            { key: 'treenuts', label: 'Tree nuts' },
+        ];
+
         function pdDetailCards(p, catSlug) {
             const isFood = !NON_FOOD_CATEGORIES.includes(catSlug);
+            const declared = p.allergens || [];
+            const allergyValue = declared.length
+                ? declared.map(k => (UK_ALLERGENS.find(a => a.key === k) || {}).label).filter(Boolean).join(', ') + (p.allergyNote ? `. ${p.allergyNote}` : '')
+                : (p.allergyNote || '');
             const cards = [
                 { key: 'origin', label: 'Origin', value: p.origin || '', placeholder: 'Origin not yet added. Check back soon, or get in touch.' },
                 { key: 'storage', label: 'Storage', value: p.storage || (CATEGORY_STORAGE[catSlug] || 'Store as indicated on the packaging.'), placeholder: '' },
-                { key: 'allergyInfo', label: 'Allergy info', value: p.allergyInfo || '', placeholder: "Please check the product packaging for full allergen information, or get in touch and we'll help." },
+                { key: 'allergyInfo', label: 'Allergy info', value: allergyValue, placeholder: "No allergens declared yet for this product. Please check the packaging, or get in touch and we'll help." },
             ];
             if (isFood) {
                 cards.push({ key: 'nutrition', label: 'Nutrition', value: p.nutrition || '', placeholder: "Nutritional information isn't listed yet. Please check the product packaging." });
@@ -6146,10 +6199,42 @@
     <div class="pd-detail-card" id="pdCard-${c.key}">
       <div class="label">${PD_DETAIL_ICONS[c.key]} ${c.label}</div>
       <div class="body ${isPlaceholder ? 'is-placeholder' : ''}" id="pdCardBody-${c.key}">${text}</div>
-      <button class="pd-detail-edit-btn" type="button" onclick="openPdDetailEdit('${c.key}')">Edit</button>
+      <button class="pd-detail-edit-btn" type="button" onclick="${c.key === 'allergyInfo' ? 'openAllergenEdit()' : `openPdDetailEdit('${c.key}')`}">Edit</button>
     </div>`;
             }).join('');
         }
+        function openAllergenEdit() {
+            if (!pdCurrent) return;
+            const card = document.getElementById('pdCard-allergyInfo');
+            const declared = pdCurrent.allergens || [];
+            card.querySelector('.body').outerHTML = `
+      <div class="body">
+        <div class="allergen-checklist">${UK_ALLERGENS.map(a => `
+          <label class="allergen-check"><input type="checkbox" value="${a.key}" ${declared.includes(a.key) ? 'checked' : ''}> ${a.label}</label>`).join('')}
+        </div>
+        <label style="font-size:11px; color:var(--text-muted); display:block; margin:10px 0 4px;">May contain traces of (optional, free text)</label>
+        <textarea id="pdEdit-allergyNote" rows="2" style="width:100%; font-family:var(--body); font-size:13.5px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${pdCurrent.allergyNote || ''}</textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="saveAllergenEdit()">Save</button>
+          <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderProductDetailsSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
+        </div>
+      </div>`;
+        }
+        window.openAllergenEdit = openAllergenEdit;
+        function saveAllergenEdit() {
+            if (!pdCurrent) return;
+            const checked = Array.from(document.querySelectorAll('.allergen-check input:checked')).map(el => el.value);
+            const note = document.getElementById('pdEdit-allergyNote').value.trim();
+            const cat = findCategory(pdCurrent.catSlug);
+            const realProduct = cat && cat.products[pdCurrent.idx];
+            if (!realProduct) return;
+            if (checked.length) { realProduct.allergens = checked; pdCurrent.allergens = checked; }
+            else { delete realProduct.allergens; delete pdCurrent.allergens; }
+            if (note) { realProduct.allergyNote = note; pdCurrent.allergyNote = note; }
+            else { delete realProduct.allergyNote; delete pdCurrent.allergyNote; }
+            renderProductDetailsSection(pdCurrent, pdCurrent.catSlug);
+        }
+        window.saveAllergenEdit = saveAllergenEdit;
         function openPdDetailEdit(key) {
             if (!pdCurrent) return;
             const card = document.getElementById(`pdCard-${key}`);
@@ -6246,7 +6331,23 @@
         </button>
       </div>`).join('');
             }
+            renderCartAllergenBanner();
             updateSummaries();
+        }
+        function renderCartAllergenBanner() {
+            const banner = document.getElementById('cartAllergenBanner');
+            if (!banner) return;
+            const found = new Set();
+            cart.forEach(item => {
+                const idx = parseInt(item.id.split('::')[1], 10);
+                const cat = findCategory(item.catSlug);
+                const realProduct = cat && cat.products[idx];
+                if (realProduct && realProduct.allergens) realProduct.allergens.forEach(a => found.add(a));
+            });
+            if (found.size === 0) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
+            const labels = [...found].map(k => (UK_ALLERGENS.find(a => a.key === k) || {}).label).filter(Boolean);
+            banner.style.display = 'block';
+            banner.innerHTML = `<strong>Contains allergens</strong>This order contains: ${labels.join(', ')}. Please double-check individual product pages if you have a specific allergy or intolerance.`;
         }
         function changeQty(i, delta) {
             cart[i].qty += delta;
