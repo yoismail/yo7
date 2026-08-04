@@ -230,6 +230,21 @@
             background: none; border: 1.5px solid rgba(var(--border-rgb), 0.16); color: var(--heading);
             border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
         }
+        .ep-variants-block { margin-bottom: 10px; }
+        .ep-variants-list { display: flex; flex-direction: column; gap: 5px; margin: 6px 0 8px; }
+        .ep-variant-row {
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.12); border-radius: 6px;
+            padding: 6px 10px; font-size: 12px; color: var(--text-body);
+        }
+        .ep-variant-row button {
+            background: none; border: none; color: #b34a4a; font-size: 11px; font-weight: 600; cursor: pointer; padding: 2px 4px;
+        }
+        .ep-variant-add-row { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 6px; }
+        .ep-variant-add-row button {
+            background: var(--aubergine-mid); color: var(--cream); border: none; border-radius: 8px;
+            font-family: var(--display); font-weight: 700; font-size: 11.5px; padding: 0 12px; cursor: pointer;
+        }
 
         .add-product-btn {
             display: none;
@@ -2195,6 +2210,12 @@
             margin-bottom: 10px;
         }
 
+        .unit-price {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
         .product-row {
             display: flex;
             align-items: center;
@@ -2407,7 +2428,14 @@
             font-weight: 700;
             font-size: 30px;
             color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        .pd-unit-price {
+            font-size: 13px;
+            color: var(--text-muted);
             margin-bottom: 22px;
+            min-height: 1px;
         }
 
         .pd-desc {
@@ -2415,6 +2443,29 @@
             color: var(--text-body);
             max-width: 52ch;
             margin-bottom: 28px;
+        }
+
+        .pd-variant-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+        .pd-variant-pill {
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            background: var(--card-bg);
+            color: var(--text-body);
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .pd-variant-pill.active {
+            border-color: var(--aubergine);
+            background: var(--aubergine);
+            color: var(--cream);
         }
 
         .qty-stepper {
@@ -4224,7 +4275,9 @@
                         <h1 id="pdName"></h1>
                         <div class="pd-unit" id="pdUnit"></div>
                         <div class="pd-price" id="pdPrice"></div>
+                        <div class="pd-unit-price" id="pdUnitPrice"></div>
                         <p class="pd-desc" id="pdDesc"></p>
+                        <div class="pd-variant-picker" id="pdVariantPicker"></div>
                         <div class="qty-stepper">
                             <button type="button" id="pdQtyMinus">&minus;</button>
                             <span id="pdQtyVal">1</span>
@@ -5417,6 +5470,36 @@
         function effectivePrice(p) {
             return (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
         }
+
+        /* ================= UNIT PRICING (Price Marking Order) =================
+           UK law requires showing a price per kg/litre alongside the selling
+           price for goods sold by weight or volume, so shoppers can compare
+           products of different pack sizes. Auto-derived from the existing
+           `unit` text (e.g. "5kg bag" -> £/kg) wherever it's parseable;
+           `p.unitOverride` lets edit mode correct or supply one where it
+           isn't (e.g. "Single pack"). Pure count items (per piece, per bird,
+           pack of 10) are deliberately left without a unit price — the
+           comparison the law is aimed at doesn't apply to those. */
+        function parseUnitQuantity(unitStr) {
+            if (!unitStr) return null;
+            const s = unitStr.toLowerCase();
+            let m = s.match(/(\d+(?:\.\d+)?)\s*kg\b/);
+            if (m) return { qty: parseFloat(m[1]), measure: 'kg' };
+            m = s.match(/(\d+(?:\.\d+)?)\s*g\b/);
+            if (m) return { qty: parseFloat(m[1]) / 1000, measure: 'kg' };
+            m = s.match(/(\d+(?:\.\d+)?)\s*l\b/);
+            if (m) return { qty: parseFloat(m[1]), measure: 'l' };
+            m = s.match(/(\d+(?:\.\d+)?)\s*ml\b/);
+            if (m) return { qty: parseFloat(m[1]) / 1000, measure: 'l' };
+            return null;
+        }
+        function unitPriceInfo(p) {
+            const parsed = (p.unitOverride && p.unitOverride.qty > 0) ? p.unitOverride : parseUnitQuantity(p.unit);
+            if (!parsed || !parsed.qty) return null;
+            const perUnit = effectivePrice(p) / parsed.qty;
+            const measureLabel = parsed.measure === 'kg' ? 'kg' : 'litre';
+            return { text: `£${perUnit.toFixed(2)}/${measureLabel}`, perUnit, measure: parsed.measure };
+        }
         function priceHTML(p, size) {
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             if (!onSale) return `<span class="price-now">${money(p.price)}</span>`;
@@ -5801,6 +5884,7 @@
             const stock = p.stock || 'in';
             const outOfStock = stock === 'out';
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
+            const unitInfo = unitPriceInfo(p);
             return `
     <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}">
       <a class="product-card-link" href="${href}" draggable="false">
@@ -5815,6 +5899,7 @@
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
           </div>
+          ${unitInfo ? `<div class="unit-price">${unitInfo.text}</div>` : ''}
         </div>
       </a>
       <div class="card-actions">
@@ -5962,11 +6047,13 @@
         /* ================= RENDER: PRODUCT DETAIL ================= */
         let pdQty = 1;
         let pdCurrent = null;
+        let pdSelectedVariant = null; // index into pdCurrent.weightVariants, or null for the base price
         function renderProductPage(catSlug, idx) {
             const p = getProduct(catSlug, Number(idx));
             const cat = findCategory(catSlug);
             pdCurrent = p;
             pdQty = 1;
+            pdSelectedVariant = null;
             document.getElementById('pdQtyVal').textContent = pdQty;
             if (!p) {
                 document.getElementById('pdName').textContent = 'Product not found';
@@ -5984,6 +6071,9 @@
             document.getElementById('pdName').textContent = p.name;
             document.getElementById('pdUnit').textContent = p.unit;
             document.getElementById('pdPrice').textContent = money(p.price);
+            const pdUnitInfo = unitPriceInfo(p);
+            document.getElementById('pdUnitPrice').textContent = pdUnitInfo ? pdUnitInfo.text : '';
+            renderPdVariantPicker(p);
             document.getElementById('pdDesc').textContent = `${p.name}, a Yo7 staple from our ${cat.name.replace(/&amp;/g, '&')} aisle. ${cat.tagline}`;
 
             const badge = document.getElementById('pdStockBadge');
@@ -6089,15 +6179,47 @@
         document.getElementById('pdQtyPlus').addEventListener('click', () => { pdQty += 1; document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         function updatePdPrice() {
             if (!pdCurrent) return;
-            const unit = effectivePrice(pdCurrent);
+            const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
+            const unit = variant ? variant.price : effectivePrice(pdCurrent);
             const total = unit * pdQty;
-            const onSale = typeof pdCurrent.salePrice === 'number' && pdCurrent.salePrice < pdCurrent.price;
+            const onSale = !variant && typeof pdCurrent.salePrice === 'number' && pdCurrent.salePrice < pdCurrent.price;
             const eachNote = pdQty > 1 ? ` <span style="font-size:14px; color:var(--text-muted); font-weight:500;">(${money(unit)} each)</span>` : '';
             const wasNote = onSale ? ` <span class="price-was" style="font-size:0.55em;">${money(pdCurrent.price * pdQty)}</span>` : '';
             document.getElementById('pdPrice').innerHTML = `<span class="${onSale ? 'sale' : ''}">${money(total)}</span>${wasNote}${eachNote}`;
+
+            // Unit price reflects whichever weight is actually selected, not the base pack.
+            const unitInfo = variant
+                ? (() => { const parsed = parseUnitQuantity(variant.label); return parsed ? { text: `£${(variant.price / parsed.qty).toFixed(2)}/${parsed.measure === 'kg' ? 'kg' : 'litre'}` } : null; })()
+                : unitPriceInfo(pdCurrent);
+            document.getElementById('pdUnitPrice').textContent = unitInfo ? unitInfo.text : '';
         }
-        document.getElementById('pdAddCart').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); showToast(`Added ${pdQty} × ${pdCurrent.name} to your cart.`); } });
-        document.getElementById('pdBuyNow').addEventListener('click', () => { if (pdCurrent && pdCurrent.stock !== 'out') { addToCart(pdCurrent, pdQty); window.location.hash = '#/checkout'; } });
+        function renderPdVariantPicker(p) {
+            const picker = document.getElementById('pdVariantPicker');
+            if (!picker) return;
+            if (!p.weightVariants || !p.weightVariants.length) { picker.innerHTML = ''; return; }
+            picker.innerHTML = p.weightVariants.map((v, i) => `
+      <button type="button" class="pd-variant-pill ${pdSelectedVariant === i ? 'active' : ''}" onclick="selectPdVariant(${i})">${v.label}, ${money(v.price)}</button>`).join('');
+        }
+        function selectPdVariant(i) {
+            pdSelectedVariant = i;
+            renderPdVariantPicker(pdCurrent);
+            updatePdPrice();
+        }
+        window.selectPdVariant = selectPdVariant;
+        document.getElementById('pdAddCart').addEventListener('click', () => {
+            if (!pdCurrent || pdCurrent.stock === 'out') return;
+            const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
+            const toAdd = variant ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label } : pdCurrent;
+            addToCart(toAdd, pdQty);
+            showToast(`Added ${pdQty} × ${pdCurrent.name}${variant ? ' (' + variant.label + ')' : ''} to your cart.`);
+        });
+        document.getElementById('pdBuyNow').addEventListener('click', () => {
+            if (!pdCurrent || pdCurrent.stock === 'out') return;
+            const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
+            const toAdd = variant ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label } : pdCurrent;
+            addToCart(toAdd, pdQty);
+            window.location.hash = '#/checkout';
+        });
 
         /* ================= CHECKOUT ================= */
         function renderCartList() {
@@ -6433,10 +6555,13 @@
         });
         document.getElementById('editModeBannerClose').addEventListener('click', () => setEditMode(false));
 
+        let currentEditSlot = null;
         function openEditPanel(cardEl, catSlug, idx) {
             const slot = cardEl.querySelector('.edit-panel-slot');
+            currentEditSlot = slot;
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
+            const currentUnitInfo = (product.unitOverride && product.unitOverride.qty > 0) ? product.unitOverride : parseUnitQuantity(product.unit);
             slot.innerHTML = `
         <div class="edit-panel">
           <div class="ep-row">
@@ -6459,6 +6584,33 @@
               </select>
             </div>
           </div>
+          <div class="ep-row">
+            <div>
+              <label>Unit pricing: quantity</label>
+              <input type="number" step="0.01" min="0" id="ep-unitqty-${catSlug}-${idx}" placeholder="e.g. 5 for a 5kg bag" value="${currentUnitInfo ? currentUnitInfo.qty : ''}">
+            </div>
+            <div>
+              <label>Unit pricing: measure</label>
+              <select id="ep-unitmeasure-${catSlug}-${idx}">
+                <option value="kg" ${!currentUnitInfo || currentUnitInfo.measure === 'kg' ? 'selected' : ''}>kg</option>
+                <option value="l" ${currentUnitInfo && currentUnitInfo.measure === 'l' ? 'selected' : ''}>litre</option>
+              </select>
+            </div>
+          </div>
+          <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">Leave quantity blank for items sold by count (per piece, per bird, pack of X), no unit price is required for those.</p>
+          <div class="ep-variants-block">
+            <label>Weight options (optional, lets a customer pick e.g. 500g / 1kg / 2kg)</label>
+            <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${(product.weightVariants || []).map((v, vi) => `
+              <div class="ep-variant-row">
+                <span>${v.label}, ${money(v.price)}</span>
+                <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
+              </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>'}</div>
+            <div class="ep-variant-add-row">
+              <input type="text" id="ep-varlabel-${catSlug}-${idx}" placeholder="Label, e.g. 500g">
+              <input type="number" step="0.01" min="0" id="ep-varprice-${catSlug}-${idx}" placeholder="Price (£)">
+              <button type="button" onclick="addWeightVariant('${catSlug}', ${idx})">Add</button>
+            </div>
+          </div>
           <div class="ep-actions">
             <button class="ep-save" type="button" onclick="saveEditPanel('${catSlug}', ${idx}, this)">Save (this tab only)</button>
             <button class="ep-cancel" type="button" onclick="this.closest('.edit-panel-slot').innerHTML='';">Cancel</button>
@@ -6467,12 +6619,33 @@
         }
         window.openEditPanel = openEditPanel;
 
+        function addWeightVariant(catSlug, idx) {
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            const label = document.getElementById(`ep-varlabel-${catSlug}-${idx}`).value.trim();
+            const price = parseFloat(document.getElementById(`ep-varprice-${catSlug}-${idx}`).value);
+            if (!label || isNaN(price) || price < 0) return;
+            if (!product.weightVariants) product.weightVariants = [];
+            product.weightVariants.push({ label, price });
+            if (currentEditSlot) openEditPanel({ querySelector: () => currentEditSlot }, catSlug, idx);
+        }
+        window.addWeightVariant = addWeightVariant;
+        function removeWeightVariant(catSlug, idx, variantIdx) {
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            if (product.weightVariants) product.weightVariants.splice(variantIdx, 1);
+            if (currentEditSlot) openEditPanel({ querySelector: () => currentEditSlot }, catSlug, idx);
+        }
+        window.removeWeightVariant = removeWeightVariant;
+
         function saveEditPanel(catSlug, idx, btn) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             const priceVal = parseFloat(document.getElementById(`ep-price-${catSlug}-${idx}`).value);
             const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`).value;
             const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`).value;
+            const unitQtyVal = document.getElementById(`ep-unitqty-${catSlug}-${idx}`).value;
+            const unitMeasureVal = document.getElementById(`ep-unitmeasure-${catSlug}-${idx}`).value;
 
             if (!isNaN(priceVal) && priceVal >= 0) product.price = priceVal;
             if (saleVal === '' ) { delete product.salePrice; }
@@ -6481,6 +6654,12 @@
                 if (!isNaN(sv) && sv >= 0) product.salePrice = sv;
             }
             product.stock = stockVal;
+
+            if (unitQtyVal === '') { delete product.unitOverride; }
+            else {
+                const qtyNum = parseFloat(unitQtyVal);
+                if (!isNaN(qtyNum) && qtyNum > 0) product.unitOverride = { qty: qtyNum, measure: unitMeasureVal };
+            }
 
             btn.closest('.edit-panel-slot').innerHTML = '';
             route(); // re-render the current view so the change is visible immediately everywhere it appears
