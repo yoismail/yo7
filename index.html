@@ -2772,6 +2772,7 @@
         .panel {
             width: 100%;
             max-width: 100%;
+            min-width: 0;
             box-sizing: border-box;
             margin: 0;
             background: var(--card-bg);
@@ -6186,9 +6187,11 @@
         }
         window.saveComboEdit = saveComboEdit;
 
+        let newComboItems = [];
         function openAddComboForm() {
             const slot = document.getElementById('addComboSlot');
-            if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; return; }
+            if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newComboItems = []; return; }
+            newComboItems = [];
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             slot.innerHTML = `
         <div class="add-product-form">
@@ -6201,21 +6204,55 @@
           <div class="apf-row">
             <div><label>Link to category (optional)</label><select id="acf-link"><option value="">No link</option>${catOptions}</select></div>
           </div>
+          <div>
+            <label>Items included (optional, shown on the card)</label>
+            <div id="acf-items-list" class="delivery-rule-list"></div>
+            <div class="apf-row">
+              <div><select id="acf-item-cat"></select></div>
+              <div><select id="acf-item-product"></select></div>
+            </div>
+            <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToNewCombo()">Add item to combo</button>
+          </div>
           <div class="apf-actions">
             <button class="apf-save" type="button" onclick="saveNewCombo()">Add combo (this tab only)</button>
-            <button class="apf-cancel" type="button" onclick="document.getElementById('addComboSlot').innerHTML='';">Cancel</button>
+            <button class="apf-cancel" type="button" onclick="document.getElementById('addComboSlot').innerHTML=''; newComboItems=[];">Cancel</button>
           </div>
         </div>`;
+            document.getElementById('acf-item-cat').innerHTML = catOptions;
+            populateAcfProductSelect();
+            document.getElementById('acf-item-cat').addEventListener('change', populateAcfProductSelect);
+            renderNewComboItemsList();
         }
         window.openAddComboForm = openAddComboForm;
+        function populateAcfProductSelect() {
+            const catSlug = document.getElementById('acf-item-cat').value;
+            const cat = findCategory(catSlug);
+            document.getElementById('acf-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        }
+        function renderNewComboItemsList() {
+            document.getElementById('acf-items-list').innerHTML = newComboItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="newComboItems.splice(${i},1); renderNewComboItemsList();">Remove</button></div>`;
+            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
+        }
+        window.renderNewComboItemsList = renderNewComboItemsList;
+        function addItemToNewCombo() {
+            const catSlug = document.getElementById('acf-item-cat').value;
+            const idx = parseInt(document.getElementById('acf-item-product').value, 10);
+            if (!getProduct(catSlug, idx)) return;
+            newComboItems.push({ catSlug, idx });
+            renderNewComboItemsList();
+        }
+        window.addItemToNewCombo = addItemToNewCombo;
         function saveNewCombo() {
             const name = document.getElementById('acf-name').value.trim();
             const price = document.getElementById('acf-price').value.trim();
             const description = document.getElementById('acf-desc').value.trim();
             const linkCategory = document.getElementById('acf-link').value || null;
             if (!name || !price) { showToast('Give the combo a name and a price tag.'); return; }
-            COMBOS.push({ name, price, description, linkCategory });
+            COMBOS.push({ name, price, description, linkCategory, items: [...newComboItems] });
             document.getElementById('addComboSlot').innerHTML = '';
+            newComboItems = [];
             renderCombos();
             showToast(`Added combo "${name}".`);
         }
