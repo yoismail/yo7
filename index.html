@@ -4157,13 +4157,13 @@
             <div class="trust-bar-set">
                 <span>Free delivery over &pound;50</span>
                 <span class="trust-sep">&bull;</span>
-                <span>Next-day across Essex &amp; Suffolk</span>
+                <span>We Deliver To All UK Postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
             <div class="trust-bar-set" aria-hidden="true">
                 <span>Free delivery over &pound;50</span>
                 <span class="trust-sep">&bull;</span>
-                <span>Next-day across Essex &amp; Suffolk</span>
+                <span>We Deliver To All UK Postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
         </div>
@@ -4366,7 +4366,7 @@
                     <div class="step reveal" style="transition-delay:0.25s">
                         <div class="step-num">03</div>
                         <h3>Delivery or pickup</h3>
-                        <p>Local delivery across Essex &amp; Suffolk, or collect it yourself.</p>
+                        <p>We Deliver To All UK Postcodes, or collect it yourself.</p>
                     </div>
                 </div>
             </div>
@@ -4495,7 +4495,7 @@
                                     stroke-linecap="round">
                                     <rect x="3" y="7" width="15" height="13" rx="2" />
                                     <path d="M16 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" />
-                                </svg> Essex &amp; Suffolk delivery</div>
+                                </svg> We Deliver To All UK Postcodes</div>
                         </div>
                         <div class="related-strip">
                             <h3>More from this aisle</h3>
@@ -4948,27 +4948,13 @@
                         <div class="pc-result" id="postcodeResult"></div>
                     </div>
                     <div class="pc-map">
-                        <iframe src="https://www.google.com/maps?q=Essex+and+Suffolk+UK&z=8&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        <iframe src="https://www.google.com/maps?q=United+Kingdom&z=5&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                 </div>
 
                 <div class="areas-strip">
-                    <div class="areas-title">Currently delivering across</div>
-                    <div class="areas-chips">
-                        <span class="area-chip">Colchester</span>
-                        <span class="area-chip">Ipswich</span>
-                        <span class="area-chip">Chelmsford</span>
-                        <span class="area-chip">Clacton-on-Sea</span>
-                        <span class="area-chip">Sudbury</span>
-                        <span class="area-chip">Braintree</span>
-                        <span class="area-chip">Witham</span>
-                        <span class="area-chip">Harwich</span>
-                        <span class="area-chip">Felixstowe</span>
-                        <span class="area-chip">Woodbridge</span>
-                        <span class="area-chip">Maldon</span>
-                        <span class="area-chip">Halstead</span>
-                    </div>
-                    <div class="areas-note">Postcode areas: CO, IP, CM, and parts of SS &amp; CB. Not seeing your town? Message us, we're expanding steadily.</div>
+                    <div class="areas-title">We Deliver To All UK Postcodes</div>
+                    <div class="areas-note">England, Scotland, Wales, and Northern Ireland, wherever you are, we'll get it to you. Type your postcode in below to double-check the format.</div>
                 </div>
 
                 <div class="delivery-admin-panel">
@@ -4976,13 +4962,14 @@
                     <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh, same as other edit-mode changes on this site.</p>
 
                     <div class="delivery-admin-block">
-                        <h4>Regions &amp; rates</h4>
-                        <div id="deliveryRegionsList" class="delivery-rule-list"></div>
-                        <form id="addRegionForm" class="delivery-admin-form">
-                            <input type="text" id="newRegionName" placeholder="Region name (e.g. Sudbury)" required>
-                            <input type="text" id="newRegionAreas" placeholder="Postcode areas, comma separated (e.g. CO, IP)" required>
-                            <input type="number" id="newRegionFee" placeholder="Fee (£)" step="0.01" min="0" required>
-                            <button type="submit" class="btn btn-primary">Add region</button>
+                        <h4>Weight tiers</h4>
+                        <p style="font-size:11.5px; color:var(--text-muted); margin:-4px 0 10px;">Delivery is priced by total order weight. Only applies to products with a weight set (edit a product &rarr; Weight field).</p>
+                        <div id="deliveryWeightTiersList" class="delivery-rule-list"></div>
+                        <form id="addWeightTierForm" class="delivery-admin-form">
+                            <input type="text" id="newTierLabel" placeholder="Label (e.g. Up to 15kg)" required>
+                            <input type="number" id="newTierMaxWeight" placeholder="Max weight (kg), leave blank for &quot;above all others&quot;" step="0.1" min="0">
+                            <input type="number" id="newTierFee" placeholder="Fee (£)" step="0.01" min="0" required>
+                            <button type="submit" class="btn btn-primary">Add tier</button>
                         </form>
                     </div>
 
@@ -5024,7 +5011,7 @@
                         </svg>
                         <div>
                             <h4>Delivery area</h4>
-                            <p>Essex &amp; Suffolk only, for now. The radius grows as we do.</p>
+                            <p>We Deliver To All UK Postcodes.</p>
                         </div>
                     </div>
                     <div class="dinfo-card">
@@ -5099,8 +5086,8 @@
                                 stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 6 9 17l-5-5" />
                             </svg>
-                            Outside the Essex &amp; Suffolk radius right now, but want to be first to know when that
-                            changes? Message us on WhatsApp.
+                            We deliver to every UK postcode, from major cities to smaller towns, wherever you
+                            are, we'll get it to you.
                         </li>
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
@@ -5247,7 +5234,7 @@
                     <div class="guide-step reveal" style="transition-delay:0.16s">
                         <div class="num">3</div>
                         <h3>Checkout and receive</h3>
-                        <p>Confirm delivery details, pay, and get a proper invoice. Delivery across Essex &amp; Suffolk, or pick up yourself.</p>
+                        <p>Confirm delivery details, pay, and get a proper invoice. We Deliver To All UK Postcodes, or pick up yourself.</p>
                     </div>
                 </div>
 
@@ -5562,28 +5549,37 @@
            Both are plain in-memory arrays, editable via the delivery rules
            admin panel in edit mode. Nothing here persists past a refresh,
            same as every other edit-mode change on this site currently. */
-        const DEFAULT_DELIVERY_FEE = 3.50;
-        let deliveryRegions = [
-            { id: 'reg-co', name: 'Colchester (CO)', postcodeAreas: ['CO'], fee: 3.50 },
-            { id: 'reg-ip', name: 'Ipswich (IP)', postcodeAreas: ['IP'], fee: 4.50 },
-            { id: 'reg-cm', name: 'Chelmsford (CM)', postcodeAreas: ['CM'], fee: 4.50 },
+        /* ================= DELIVERY FEE (weight-based) =================
+           Delivery is priced by total order weight, not by postcode region
+           anymore. Three tiers, all editable via the delivery rules admin
+           panel: up to 10kg, up to 20kg, and above that. Separately,
+           deliveryThresholdRules can still override to free (e.g. "free
+           over £50"), that's a promotional layer on top of the weight fee,
+           not a replacement for it.
+           Important known gap: this only works once products actually have
+           a real weight set via edit mode. No product has one yet, so every
+           order currently falls into the "up to 10kg" tier by default, not
+           because that's accurate, but because an unweighed item
+           contributes 0kg rather than a guessed figure. */
+        let deliveryWeightTiers = [
+            { id: 'tier-10kg', label: 'Up to 10kg', maxWeight: 10, fee: 7.99 },
+            { id: 'tier-20kg', label: 'Up to 20kg', maxWeight: 20, fee: 11.99 },
+            { id: 'tier-above', label: 'Above 20kg', maxWeight: Infinity, fee: 15.99 },
         ];
         let deliveryThresholdRules = [
             { id: 'rule-free50', name: 'Free delivery over £50', conditionType: 'price', operator: 'gte', value: 50, effect: 'free' },
         ];
 
-        function resolveDeliveryRegion(postcode) {
-            const raw = (postcode || '').trim().toUpperCase().replace(/\s+/g, '');
-            const match = raw.match(/^([A-Z]{1,2})\d/);
-            const area = match ? match[1] : null;
-            if (!area) return null;
-            return deliveryRegions.find(r => r.postcodeAreas.includes(area)) || null;
+        function resolveWeightTierFee(weight) {
+            const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
+            const tier = sorted.find(t => weight <= t.maxWeight);
+            return tier ? tier.fee : sorted[sorted.length - 1].fee;
         }
 
         function cartTotalWeight() {
             // Products without a real recorded weight contribute 0 — no invented
-            // figure is substituted, so a weight-based rule simply won't trigger
-            // off an unweighed item rather than guessing at its weight.
+            // figure is substituted, so the weight tier simply won't reflect an
+            // unweighed item rather than guessing at its weight.
             return cart.reduce((sum, i) => sum + (typeof i.weight === 'number' ? i.weight * i.qty : 0), 0);
         }
         function cartItemCount() {
@@ -5591,10 +5587,9 @@
         }
 
         function resolveDeliveryFee(postcode) {
-            const region = resolveDeliveryRegion(postcode);
-            let fee = region ? region.fee : DEFAULT_DELIVERY_FEE;
-            const subtotal = cartSubtotal();
             const weight = cartTotalWeight();
+            let fee = resolveWeightTierFee(weight);
+            const subtotal = cartSubtotal();
             const items = cartItemCount();
 
             for (const rule of deliveryThresholdRules) {
@@ -5609,7 +5604,7 @@
                 else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') { fee = Math.min(fee, rule.feeOverride); }
             }
             if (appliedDiscount && appliedDiscount.type === 'freeDelivery' && cartQualifiesForDiscount(appliedDiscount)) { fee = 0; }
-            return { fee, region };
+            return { fee, region: null };
         }
 
         /* ================= DISCOUNT ENGINE =================
@@ -5733,13 +5728,20 @@
 
         /* ================= DELIVERY RULES ADMIN PANEL (edit mode) ================= */
         function renderDeliveryAdmin() {
-            const regionsList = document.getElementById('deliveryRegionsList');
-            if (regionsList) {
-                regionsList.innerHTML = deliveryRegions.map((r, i) => `
+            const tiersList = document.getElementById('deliveryWeightTiersList');
+            if (tiersList) {
+                const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
+                tiersList.innerHTML = sorted.map((t) => {
+                    const realIdx = deliveryWeightTiers.indexOf(t);
+                    return `
       <div class="delivery-rule-row">
-        <span>${r.name}, areas: ${r.postcodeAreas.join(', ')}, £${r.fee.toFixed(2)}</span>
-        <button type="button" class="rule-remove-btn" onclick="removeDeliveryRegion(${i})">Remove</button>
-      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No regions defined, DEFAULT_DELIVERY_FEE applies everywhere.</p>';
+        <span>${t.label} (${t.maxWeight === Infinity ? 'no upper limit' : 'up to ' + t.maxWeight + 'kg'})</span>
+        <span style="display:flex; align-items:center; gap:6px;">
+          £<input type="number" step="0.01" min="0" value="${t.fee.toFixed(2)}" style="width:64px; padding:4px 6px; border-radius:6px; border:1.5px solid rgba(var(--border-rgb),0.16); font-family:var(--body); font-size:12.5px;" onchange="setWeightTierFee(${realIdx}, this.value)">
+          <button type="button" class="rule-remove-btn" onclick="removeWeightTier(${realIdx})">Remove</button>
+        </span>
+      </div>`;
+                }).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No weight tiers defined, delivery fee defaults to £0.</p>';
             }
             const rulesList = document.getElementById('deliveryRulesList');
             if (rulesList) {
@@ -5752,9 +5754,16 @@
       </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No threshold rules yet.</p>';
             }
         }
-        function removeDeliveryRegion(i) { deliveryRegions.splice(i, 1); renderDeliveryAdmin(); updateSummaries(); }
+        function setWeightTierFee(i, value) {
+            const fee = parseFloat(value);
+            if (!isNaN(fee) && fee >= 0) deliveryWeightTiers[i].fee = fee;
+            renderDeliveryAdmin();
+            updateSummaries();
+        }
+        window.setWeightTierFee = setWeightTierFee;
+        function removeWeightTier(i) { deliveryWeightTiers.splice(i, 1); renderDeliveryAdmin(); updateSummaries(); }
+        window.removeWeightTier = removeWeightTier;
         function removeDeliveryRule(i) { deliveryThresholdRules.splice(i, 1); renderDeliveryAdmin(); updateSummaries(); }
-        window.removeDeliveryRegion = removeDeliveryRegion;
         window.removeDeliveryRule = removeDeliveryRule;
 
         const OPENING_HOURS = [
@@ -5927,6 +5936,7 @@
             else {
                 const entry = { id: product.id, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
                 if (product.isCombo) { entry.isCombo = true; entry.comboItems = product.comboItems; }
+                if (typeof product.weight === 'number') { entry.weight = product.weight; }
                 cart.push(entry);
             }
             updateCartBadge();
@@ -7181,7 +7191,7 @@
         document.getElementById('paymentForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const orderSubtotal = cartSubtotal();
-            const { fee: resolvedFee, region } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
+            const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
             const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
             if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
@@ -7196,7 +7206,7 @@
                 total: Math.max(0, orderSubtotal + deliveryCharge - discountAmount),
                 delivery_info: deliveryInfo,
                 fulfilment: fulfilmentMethod,
-                deliveryRegion: region ? region.name : null,
+                deliveryWeight: cartTotalWeight(),
             };
             cart = [];
             appliedDiscount = null;
@@ -7431,6 +7441,12 @@
               </select>
             </div>
           </div>
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div>
+              <label>Weight (kg, used for delivery pricing)</label>
+              <input type="number" step="0.01" min="0" id="ep-weight-${catSlug}-${idx}" placeholder="e.g. 5 for a 5kg bag" value="${typeof product.weight === 'number' ? product.weight : ''}">
+            </div>
+          </div>
           <div class="ep-row">
             <div>
               <label>Unit pricing: quantity</label>
@@ -7501,6 +7517,13 @@
                 if (!isNaN(sv) && sv >= 0) product.salePrice = sv;
             }
             product.stock = stockVal;
+
+            const weightVal = document.getElementById(`ep-weight-${catSlug}-${idx}`).value;
+            if (weightVal === '') { delete product.weight; }
+            else {
+                const wv = parseFloat(weightVal);
+                if (!isNaN(wv) && wv >= 0) product.weight = wv;
+            }
 
             if (unitQtyVal === '') { delete product.unitOverride; }
             else {
@@ -7803,24 +7826,22 @@
             document.querySelectorAll('.reveal').forEach(el => io.observe(el));
         }
 
-        /* ================= POSTCODE CHECKER ================= */
-        const DELIVERY_POSTCODE_AREAS = ['CO', 'IP', 'CM'];
-        const PARTIAL_POSTCODE_AREAS = ['SS', 'CB']; // only parts of these areas are covered
+        /* ================= POSTCODE CHECKER =================
+           Delivery now covers all UK postcodes, so this no longer needs to
+           distinguish covered vs uncovered areas — it just confirms the
+           postcode looks like a real UK postcode, which is still useful
+           feedback for a genuine typo. */
         function checkPostcode() {
             const input = document.getElementById('postcodeInput');
             const resultEl = document.getElementById('postcodeResult');
             const raw = input.value.trim().toUpperCase().replace(/\s+/g, '');
             if (!raw) { resultEl.textContent = 'Type a postcode to check.'; resultEl.className = 'pc-result'; return; }
-            const match = raw.match(/^([A-Z]{1,2})\d/);
-            const area = match ? match[1] : null;
-            if (area && DELIVERY_POSTCODE_AREAS.includes(area)) {
-                resultEl.textContent = `Yes, we deliver to ${area} postcodes.`;
+            const validFormat = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(raw);
+            if (validFormat) {
+                resultEl.textContent = `Yes, we deliver to all UK postcodes.`;
                 resultEl.className = 'pc-result yes';
-            } else if (area && PARTIAL_POSTCODE_AREAS.includes(area)) {
-                resultEl.textContent = `Partly, only some ${area} postcodes are covered, message us on WhatsApp to confirm your exact address.`;
-                resultEl.className = 'pc-result no';
             } else {
-                resultEl.textContent = `Not yet, that's outside Essex & Suffolk for now. Message us and we'll let you know if that changes.`;
+                resultEl.textContent = `That doesn't look like a full UK postcode, but we deliver everywhere in the UK, double-check it and try again.`;
                 resultEl.className = 'pc-result no';
             }
         }
@@ -7831,19 +7852,20 @@
         }
 
         /* ================= DELIVERY ADMIN FORMS (edit mode) ================= */
-        const addRegionForm = document.getElementById('addRegionForm');
-        if (addRegionForm) {
-            addRegionForm.addEventListener('submit', (e) => {
+        const addWeightTierForm = document.getElementById('addWeightTierForm');
+        if (addWeightTierForm) {
+            addWeightTierForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const name = document.getElementById('newRegionName').value.trim();
-                const areas = document.getElementById('newRegionAreas').value.trim().toUpperCase().split(',').map(a => a.trim()).filter(Boolean);
-                const fee = parseFloat(document.getElementById('newRegionFee').value);
-                if (!name || !areas.length || isNaN(fee) || fee < 0) return;
-                deliveryRegions.push({ id: 'reg-' + Date.now(), name, postcodeAreas: areas, fee });
-                addRegionForm.reset();
+                const label = document.getElementById('newTierLabel').value.trim();
+                const maxWeightRaw = document.getElementById('newTierMaxWeight').value;
+                const fee = parseFloat(document.getElementById('newTierFee').value);
+                if (!label || isNaN(fee) || fee < 0) return;
+                const maxWeight = maxWeightRaw ? parseFloat(maxWeightRaw) : Infinity;
+                deliveryWeightTiers.push({ id: 'tier-' + Date.now(), label, maxWeight, fee });
+                addWeightTierForm.reset();
                 renderDeliveryAdmin();
                 updateSummaries();
-                showToast(`Added delivery region "${name}".`);
+                showToast(`Added weight tier "${label}".`);
             });
         }
 
