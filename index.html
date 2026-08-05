@@ -256,6 +256,16 @@
         .add-product-btn svg { width: 16px; height: 16px; }
         body.edit-mode-on .add-product-btn { display: inline-flex; }
 
+        .add-bundle-btn {
+            display: none;
+            align-items: center; gap: 8px; margin-top: 18px;
+            background: var(--chartreuse); color: var(--aubergine); border: none; border-radius: 12px;
+            padding: 12px 18px; font-family: var(--display); font-weight: 700; font-size: 13.5px;
+            box-shadow: 0 6px 16px rgba(144,184,0,0.3); cursor: pointer;
+        }
+        .add-bundle-btn svg { width: 16px; height: 16px; }
+        body.edit-mode-on .add-bundle-btn { display: inline-flex; }
+
         .add-product-form {
             background: var(--card-bg); border: 1.5px dashed var(--chartreuse); border-radius: 18px;
             padding: 22px 24px; margin-bottom: 26px;
@@ -1096,7 +1106,16 @@
             border: 1px solid rgba(var(--border-rgb), 0.08);
             border-radius: 18px;
             padding: 24px 24px 22px;
+            position: relative;
         }
+        .bundle-remove-btn {
+            display: none;
+            position: absolute; top: 12px; right: 12px;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(179,74,74,0.12); color: #b34a4a; border: none;
+            font-size: 16px; line-height: 1; cursor: pointer;
+        }
+        body.edit-mode-on .bundle-remove-btn { display: block; }
         .bundle-card h3 {
             font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px;
         }
@@ -1122,6 +1141,30 @@
             width: 100%; background: var(--chartreuse); color: var(--aubergine); border: none; border-radius: 12px;
             padding: 11px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
         }
+
+        .combos-section { background: var(--section-alt-bg); padding: 64px 0 40px; }
+        .combos-scroll { padding-bottom: 6px; }
+        .combo-card {
+            flex: 0 0 265px; max-width: 265px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
+            padding: 20px; position: relative; display: flex; flex-direction: column;
+        }
+        .combo-card .combo-price-tag {
+            align-self: flex-start; background: var(--orange); color: var(--aubergine-deep);
+            font-family: var(--display); font-weight: 700; font-size: 13px; padding: 5px 12px;
+            border-radius: 999px; margin-bottom: 12px;
+        }
+        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); margin-bottom: 6px; }
+        .combo-card p { font-size: 13px; color: var(--text-body); line-height: 1.5; margin-bottom: 16px; flex: 1; }
+        .combo-card .btn { width: 100%; text-align: center; }
+        .combo-remove-btn {
+            display: none;
+            position: absolute; top: 12px; right: 12px;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(179,74,74,0.12); color: #b34a4a; border: none;
+            font-size: 16px; line-height: 1; cursor: pointer;
+        }
+        body.edit-mode-on .combo-remove-btn { display: block; }
 
         /* Shop by group (homepage) gets its own warm yellow treatment,
            scoped by ID so the group-detail page's .shop-section (which
@@ -2847,6 +2890,23 @@
             gap: 14px;
         }
 
+        .substitution-field { margin-top: 16px; margin-bottom: 16px; }
+        .sub-pref-toggle {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .sub-pref-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            color: var(--text-body);
+            cursor: pointer;
+        }
+        .sub-pref-option input { width: auto; margin: 0; }
+
         /* ================= DELIVERY / PICKUP TOGGLE ================= */
         .fulfil-toggle {
             display: flex;
@@ -2918,6 +2978,40 @@
             color: var(--text-body);
             padding: 8px 0;
         }
+
+        .discount-row { color: var(--aubergine-mid); }
+        .discount-code-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .discount-code-row input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            font-family: var(--body);
+            font-size: 13.5px;
+            background: var(--card-bg);
+            color: var(--text-body);
+        }
+        .discount-code-row button {
+            background: var(--aubergine);
+            color: var(--cream);
+            border: none;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 12.5px;
+            cursor: pointer;
+        }
+        .discount-code-msg {
+            font-size: 12px;
+            margin: -6px 0 10px;
+        }
+        .discount-code-msg.error { color: #b34a4a; }
+        .discount-code-msg.success { color: var(--aubergine-mid); }
 
         .summary-row.total {
             font-family: var(--display);
@@ -3566,6 +3660,11 @@
         }
         .delivery-admin-form button { grid-column: 1 / -1; justify-self: start; }
 
+        .discount-admin-panel { margin-top: 32px; }
+        .discount-admin-form { display: flex; flex-direction: column; gap: 4px; max-width: 460px; }
+        .discount-admin-form .field { margin-bottom: 10px; }
+        .discount-admin-form button[type="submit"] { margin-top: 6px; align-self: flex-start; }
+
         @media (max-width: 760px) {
             .postcode-checker { grid-template-columns: 1fr; }
             .pc-map { order: -1; }
@@ -3958,7 +4057,7 @@
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
                     </svg>
                 </button>
-                <a class="icon-btn" href="#/checkout" aria-label="Cart">
+                <a class="icon-btn" href="#/checkout" aria-label="Basket">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                         stroke-linejoin="round">
                         <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
@@ -4128,13 +4227,43 @@
 
         <section class="bundles-section">
             <div class="wrap">
-                <div class="section-head reveal">
-                    <div class="section-eyebrow" style="color: var(--heading-mid);">Shop by meal</div>
-                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
-                        A few things that go together</h2>
-                    <p>Real products from the aisles, grouped for a specific meal. Add the whole set in one tap, or pick and choose.</p>
+                <div class="new-section-head reveal">
+                    <div>
+                        <div class="section-eyebrow" style="color: var(--heading-mid);">Shop by meal</div>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
+                            A few things that go together</h2>
+                        <p>Real products from the aisles, grouped for a specific meal. Add the whole set in one tap, or pick and choose.</p>
+                    </div>
+                    <a class="view-all-btn" href="#/bundles">
+                        View all
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
                 </div>
                 <div class="bundles-grid" id="bundlesGrid"></div>
+                <button type="button" class="add-bundle-btn" id="addBundleBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Add a bundle
+                </button>
+                <div id="addBundleSlot"></div>
+            </div>
+        </section>
+
+        <section class="combos-section">
+            <div class="wrap">
+                <div class="new-section-head reveal">
+                    <div>
+                        <div class="section-eyebrow" style="color: var(--heading-mid);">Bundle</div>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
+                            Combo deals</h2>
+                        <p>Advertised bundles and meal combos, swipe or drag to browse.</p>
+                    </div>
+                </div>
+                <div class="product-grid combos-scroll" id="combosGrid"></div>
+                <button type="button" class="add-bundle-btn" id="addComboBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Add a combo
+                </button>
+                <div id="addComboSlot"></div>
             </div>
         </section>
 
@@ -4316,7 +4445,7 @@
                                     stroke-linecap="round">
                                     <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
                                 </svg>
-                                Add to cart
+                                Add to basket
                             </button>
                             <button class="btn btn-primary" id="pdBuyNow" type="button">Buy now</button>
                         </div>
@@ -4351,7 +4480,7 @@
         <section class="checkout-section">
             <div class="wrap">
                 <div class="checkout-steps">
-                    <div class="cstep" id="cstep-cart"><span class="dot">1</span> Cart</div>
+                    <div class="cstep" id="cstep-cart"><span class="dot">1</span> Basket</div>
                     <div class="cstep-sep"></div>
                     <div class="cstep" id="cstep-delivery"><span class="dot">2</span> Delivery</div>
                     <div class="cstep-sep"></div>
@@ -4362,19 +4491,25 @@
                 <div id="checkout-step-cart">
                     <div class="checkout-grid">
                         <div class="panel">
-                            <h2>Your cart</h2>
+                            <h2>Your basket</h2>
                             <div id="cartList"></div>
                             <div id="cartAllergenBanner" class="allergen-summary-banner" style="display:none;"></div>
                             <div id="cartEmpty" class="empty-cart" style="display:none;">
-                                <h3>Your cart is empty</h3>
+                                <h3>Your basket is empty</h3>
                                 <p>Add a few staples from the shop before checking out.</p>
                                 <a class="btn btn-primary" href="#/">Browse the shop</a>
                             </div>
                         </div>
                         <div class="panel">
                             <h2>Order summary</h2>
+                            <div class="discount-code-row">
+                                <input type="text" id="discountCodeInput" placeholder="Discount code">
+                                <button type="button" id="applyDiscountBtn">Apply</button>
+                            </div>
+                            <div id="discountCodeMsg" class="discount-code-msg"></div>
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal">£0.00</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel">Delivery</span><span id="sumDelivery">£3.50</span></div>
+                            <div class="summary-row discount-row" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Discount</span><span id="sumDiscount">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal">£0.00</span></div>
                             <button class="btn btn-primary btn-block" id="toDeliveryBtn" style="margin-top:20px;"
                                 type="button">Continue to delivery</button>
@@ -4425,8 +4560,25 @@
                                         <div class="field"><label>Postcode</label><input type="text" required id="dPostcode"
                                                 placeholder="CO1 1AA"></div>
                                     </div>
+                                    <div class="field"><label>Delivery day</label>
+                                        <select id="dSlotDay"></select>
+                                    </div>
+                                    <div class="field"><label>Delivery window</label>
+                                        <select id="dSlotWindow">
+                                            <option value="morning">Morning, 9am&ndash;12pm</option>
+                                            <option value="afternoon">Afternoon, 12pm&ndash;5pm</option>
+                                            <option value="evening">Evening, 5pm&ndash;8pm</option>
+                                        </select>
+                                    </div>
                                     <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
+                                </div>
+                                <div class="field substitution-field">
+                                    <label>If something's out of stock</label>
+                                    <div class="sub-pref-toggle">
+                                        <label class="sub-pref-option"><input type="radio" name="subPref" value="substitute" checked> Substitute with something similar</label>
+                                        <label class="sub-pref-option"><input type="radio" name="subPref" value="remove"> Just leave it out, don't substitute</label>
+                                    </div>
                                 </div>
                                 <div id="pickupInfoBlock" class="pickup-info hidden-view">
                                     <div class="pickup-info-row">
@@ -4449,6 +4601,7 @@
                             <h2>Order summary</h2>
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal2">£0.00</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel2">Delivery</span><span id="sumDelivery2">£3.50</span></div>
+                            <div class="summary-row discount-row" id="sumDiscountRow2" style="display:none;"><span id="sumDiscountLabel2">Discount</span><span id="sumDiscount2">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal2">£0.00</span></div>
                         </div>
                     </div>
@@ -4501,6 +4654,7 @@
                             <h2>Order summary</h2>
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal3">£0.00</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel3">Delivery</span><span id="sumDelivery3">£3.50</span></div>
+                            <div class="summary-row discount-row" id="sumDiscountRow3" style="display:none;"><span id="sumDiscountLabel3">Discount</span><span id="sumDiscount3">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal3">£0.00</span></div>
                             <div class="cart-trust-strip">
                                 <div class="trust-pill">
@@ -4857,7 +5011,7 @@
                         </svg>
                         <div>
                             <h4>Minimum order</h4>
-                            <p>£15 minimum on all delivered orders. No minimum for pickup.</p>
+                            <p>No minimum order, delivery or pickup.</p>
                         </div>
                     </div>
                     <div class="dinfo-card">
@@ -4961,6 +5115,22 @@
         </section>
     </div>
 
+    <div id="view-bundles" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Bundles</div>
+                <h1>Shop by meal</h1>
+                <p>Real products from the aisles, grouped for a specific meal.</p>
+                <div class="result-count" id="allBundlesCount"></div>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="bundles-grid" id="allBundlesGrid"></div>
+            </div>
+        </section>
+    </div>
+
     <div id="view-special-offers" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
@@ -4975,6 +5145,51 @@
                 <div class="product-grid" id="specialOffersGrid"></div>
             </div>
         </section>
+
+        <div class="wrap">
+            <div class="delivery-admin-panel discount-admin-panel">
+                <h3>Discounts &amp; codes <span class="admin-only-tag">Edit mode only</span></h3>
+                <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh. "Max per customer" is tracked in this browser's storage only, it isn't a hard guarantee across devices.</p>
+
+                <div id="discountsList" class="delivery-rule-list"></div>
+
+                <form id="addDiscountForm" class="discount-admin-form">
+                    <div class="field"><label>Internal name</label><input type="text" id="newDiscName" placeholder="e.g. August welcome offer" required></div>
+                    <div class="field"><label>Code customers enter</label><input type="text" id="newDiscCode" placeholder="e.g. WELCOME10" required></div>
+                    <div class="field"><label>Type</label>
+                        <select id="newDiscType">
+                            <option value="percent">Percent off</option>
+                            <option value="fixed">Fixed amount off</option>
+                            <option value="freeDelivery">Free delivery</option>
+                            <option value="bogo">Buy X get Y free</option>
+                        </select>
+                    </div>
+                    <div class="field" id="newDiscValueField"><label>Value (% or £)</label><input type="number" step="0.01" min="0" id="newDiscValue"></div>
+                    <div class="field-row" id="newDiscBogoFields" style="display:none;">
+                        <div class="field"><label>Buy quantity</label><input type="number" min="1" id="newDiscBuyQty" value="1"></div>
+                        <div class="field"><label>Get free quantity</label><input type="number" min="1" id="newDiscGetQty" value="1"></div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field"><label>Start date (optional)</label><input type="date" id="newDiscStart"></div>
+                        <div class="field"><label>End date (optional)</label><input type="date" id="newDiscEnd"></div>
+                    </div>
+                    <div class="field"><label>Applies to</label>
+                        <select id="newDiscScope">
+                            <option value="all">All items</option>
+                            <option value="category">One category</option>
+                            <option value="product">One specific product</option>
+                        </select>
+                    </div>
+                    <div class="field" id="newDiscCategoryField" style="display:none;"><label>Category</label><select id="newDiscCategory"></select></div>
+                    <div class="field" id="newDiscProductField" style="display:none;"><label>Product</label><select id="newDiscProduct"></select></div>
+                    <div class="field-row">
+                        <div class="field"><label>Minimum order £ (optional)</label><input type="number" step="0.01" min="0" id="newDiscMinOrder"></div>
+                        <div class="field"><label>Max uses per customer (optional)</label><input type="number" min="1" id="newDiscMaxPerCustomer"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create discount</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- ================= NEW HERE / FAQ ================= -->
@@ -4996,7 +5211,7 @@
                     </div>
                     <div class="guide-step reveal" style="transition-delay:0.08s">
                         <div class="num">2</div>
-                        <h3>Add to your cart</h3>
+                        <h3>Add to your basket</h3>
                         <p>Build your basket as you go. Prices and stock status are shown clearly on every item, no surprises at checkout.</p>
                     </div>
                     <div class="guide-step reveal" style="transition-delay:0.16s">
@@ -5091,7 +5306,7 @@
                         <a href="#/">Home</a>
                         <a href="#/" data-scroll-to="shopByGroup">Shop</a>
                         <a href="#/about">Our Story</a>
-                        <a href="#/checkout">Cart</a>
+                        <a href="#/checkout">Basket</a>
                         <a href="#/delivery-info">Delivery Info</a>
                         <a href="#/guide">New Here?</a>
                     </div>
@@ -5363,8 +5578,128 @@
                 if (rule.effect === 'free') { fee = 0; }
                 else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') { fee = Math.min(fee, rule.feeOverride); }
             }
+            if (appliedDiscount && appliedDiscount.type === 'freeDelivery' && cartQualifiesForDiscount(appliedDiscount)) { fee = 0; }
             return { fee, region };
         }
+
+        /* ================= DISCOUNT ENGINE =================
+           Codes are matched case-insensitively. Each discount can restrict
+           itself to a date range, a minimum order, and specific qualifying
+           items (all products, one category, or one specific product).
+           "Max per customer" is tracked via localStorage as a best-effort
+           limit — there's no real backend or accounts yet, so this can be
+           bypassed by clearing browser storage or using a different device.
+           It's honest to say so rather than imply it's a hard guarantee. */
+        let discounts = [];
+        let appliedDiscount = null; // the currently-applied discount object, or null
+
+        function findDiscountByCode(code) {
+            const norm = (code || '').trim().toLowerCase();
+            return discounts.find(d => d.code.toLowerCase() === norm) || null;
+        }
+        function discountUsageCount(discountId) {
+            try { return parseInt(localStorage.getItem(`yo7-discount-used-${discountId}`) || '0', 10); }
+            catch (e) { return 0; }
+        }
+        function recordDiscountUsage(discountId) {
+            try { localStorage.setItem(`yo7-discount-used-${discountId}`, String(discountUsageCount(discountId) + 1)); }
+            catch (e) { /* localStorage unavailable — usage just won't be capped this session */ }
+        }
+        function cartQualifiesForDiscount(d) {
+            if (d.qualifyingScope === 'all' || !d.qualifyingScope) return cart.length > 0;
+            if (d.qualifyingScope === 'category') return cart.some(i => i.catSlug === d.qualifyingCategory);
+            if (d.qualifyingScope === 'product') return cart.some(i => i.id.startsWith(d.qualifyingProductId));
+            return false;
+        }
+        function validateDiscount(code) {
+            const d = findDiscountByCode(code);
+            if (!d) return { ok: false, error: 'That code doesn\'t match any current discount.' };
+            if (d.active === false) return { ok: false, error: 'That discount code is no longer active.' };
+            const today = new Date().toISOString().slice(0, 10);
+            if (d.startDate && today < d.startDate) return { ok: false, error: `That code isn't valid until ${d.startDate}.` };
+            if (d.endDate && today > d.endDate) return { ok: false, error: 'That discount code has expired.' };
+            if (typeof d.minOrder === 'number' && cartSubtotal() < d.minOrder) return { ok: false, error: `This code needs a minimum order of ${money(d.minOrder)}.` };
+            if (!cartQualifiesForDiscount(d)) return { ok: false, error: 'Your basket doesn\'t contain the items this code applies to.' };
+            if (typeof d.maxPerCustomer === 'number' && discountUsageCount(d.id) >= d.maxPerCustomer) return { ok: false, error: 'You\'ve already used this code the maximum number of times.' };
+            return { ok: true, discount: d };
+        }
+        function qualifyingCartItems(d) {
+            if (d.qualifyingScope === 'category') return cart.filter(i => i.catSlug === d.qualifyingCategory);
+            if (d.qualifyingScope === 'product') return cart.filter(i => i.id.startsWith(d.qualifyingProductId));
+            return cart;
+        }
+        function computeDiscountAmount(d) {
+            if (!d) return 0;
+            const items = qualifyingCartItems(d);
+            const qualifyingSubtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+            if (d.type === 'percent') return qualifyingSubtotal * (d.value / 100);
+            if (d.type === 'fixed') return Math.min(d.value, qualifyingSubtotal);
+            if (d.type === 'bogo') {
+                // Buy `buyQty`, get `getQty` free, applied to the qualifying items only,
+                // cheapest units made free first (standard, customer-friendly convention).
+                const units = [];
+                items.forEach(i => { for (let n = 0; n < i.qty; n++) units.push(i.price); });
+                units.sort((a, b) => a - b);
+                const groupSize = d.buyQty + d.getQty;
+                if (groupSize <= 0) return 0;
+                let free = 0;
+                for (let i = 0; i < units.length; i++) {
+                    const posInGroup = i % groupSize;
+                    if (posInGroup >= d.buyQty) free += units[i];
+                }
+                return free;
+            }
+            return 0; // freeDelivery has no cart-total effect — handled in delivery fee resolution
+        }
+        function applyDiscountCode(code) {
+            const result = validateDiscount(code);
+            if (!result.ok) return result;
+            appliedDiscount = result.discount;
+            updateSummaries();
+            return { ok: true };
+        }
+        function removeAppliedDiscount() {
+            appliedDiscount = null;
+            updateSummaries();
+        }
+
+        /* ================= DISCOUNT ADMIN PANEL (edit mode) ================= */
+        function discountDescribe(d) {
+            const typeLabel = d.type === 'percent' ? `${d.value}% off`
+                : d.type === 'fixed' ? `${money(d.value)} off`
+                : d.type === 'freeDelivery' ? 'Free delivery'
+                : d.type === 'bogo' ? `Buy ${d.buyQty}, get ${d.getQty} free` : d.type;
+            const scopeLabel = d.qualifyingScope === 'category' ? `on ${d.qualifyingCategory}`
+                : d.qualifyingScope === 'product' ? 'on one product' : 'on all items';
+            const dateLabel = (d.startDate || d.endDate) ? `, ${d.startDate || 'any time'} to ${d.endDate || 'no end date'}` : '';
+            const minLabel = d.minOrder ? `, min order ${money(d.minOrder)}` : '';
+            const maxLabel = d.maxPerCustomer ? `, max ${d.maxPerCustomer}/customer` : '';
+            return `"${d.code}", ${typeLabel} ${scopeLabel}${dateLabel}${minLabel}${maxLabel}`;
+        }
+        function renderDiscountsAdmin() {
+            const list = document.getElementById('discountsList');
+            if (list) {
+                list.innerHTML = discounts.map((d, i) => `
+      <div class="delivery-rule-row">
+        <span>${discountDescribe(d)}</span>
+        <button type="button" class="rule-remove-btn" onclick="removeDiscount(${i})">Remove</button>
+      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No discounts created yet.</p>';
+            }
+            const catSelect = document.getElementById('newDiscCategory');
+            if (catSelect && !catSelect.dataset.populated) {
+                catSelect.innerHTML = CATEGORIES.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+                catSelect.dataset.populated = 'true';
+            }
+            const prodSelect = document.getElementById('newDiscProduct');
+            if (prodSelect && !prodSelect.dataset.populated) {
+                const options = [];
+                CATEGORIES.forEach(c => c.products.forEach((p, i) => options.push(`<option value="${c.slug}::${i}">${p.name}</option>`)));
+                prodSelect.innerHTML = options.join('');
+                prodSelect.dataset.populated = 'true';
+            }
+        }
+        function removeDiscount(i) { discounts.splice(i, 1); renderDiscountsAdmin(); }
+        window.removeDiscount = removeDiscount;
 
         /* ================= DELIVERY RULES ADMIN PANEL (edit mode) ================= */
         function renderDeliveryAdmin() {
@@ -5580,28 +5915,168 @@
             }).join('');
         }
 
-        function renderBundles() {
-            const grid = document.getElementById('bundlesGrid');
-            if (!grid) return;
-            grid.innerHTML = BUNDLES.map((bundle, bi) => {
-                const items = bundle.items.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
-                const inStockItems = items.filter(p => p.stock !== 'out');
-                const total = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
-                const itemRows = items.map(p => {
-                    const outOfStock = p.stock === 'out';
-                    return `
-      <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}"><span>${p.name}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span><span>${outOfStock ? '' : money(effectivePrice(p))}</span></div>`;
-                }).join('');
+        function bundleCardHTML(bundle, bi) {
+            const items = bundle.items.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const inStockItems = items.filter(p => p.stock !== 'out');
+            const total = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
+            const itemRows = items.map(p => {
+                const outOfStock = p.stock === 'out';
                 return `
+      <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}"><span>${p.name}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span><span>${outOfStock ? '' : money(effectivePrice(p))}</span></div>`;
+            }).join('');
+            return `
     <div class="bundle-card">
+      <button type="button" class="bundle-remove-btn" onclick="removeBundle(${bi})" aria-label="Remove bundle">&times;</button>
       <h3>${bundle.name}</h3>
       <div class="bundle-tagline">${bundle.tagline}</div>
       <div class="bundle-items">${itemRows}</div>
       <div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(total)}</span></div>
-      <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add all to cart</button>
+      <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add all to basket</button>
     </div>`;
+        }
+        function renderBundles() {
+            const grid = document.getElementById('bundlesGrid');
+            if (!grid) return;
+            grid.innerHTML = BUNDLES.map((bundle, bi) => bundleCardHTML(bundle, bi)).join('');
+            renderBundlesViewAllPage();
+        }
+        function renderBundlesViewAllPage() {
+            const grid = document.getElementById('allBundlesGrid');
+            if (!grid) return;
+            grid.innerHTML = BUNDLES.map((bundle, bi) => bundleCardHTML(bundle, bi)).join('');
+            const countEl = document.getElementById('allBundlesCount');
+            if (countEl) countEl.textContent = `${BUNDLES.length} bundle${BUNDLES.length === 1 ? '' : 's'}`;
+        }
+        function removeBundle(i) { BUNDLES.splice(i, 1); renderBundles(); }
+        window.removeBundle = removeBundle;
+
+        /* ================= ADD A BUNDLE (edit mode) ================= */
+        let newBundleItems = [];
+        function openAddBundleForm() {
+            const slot = document.getElementById('addBundleSlot');
+            if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newBundleItems = []; return; }
+            newBundleItems = [];
+            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            slot.innerHTML = `
+        <div class="add-product-form">
+          <h3>Add a new bundle</h3>
+          <div class="apf-row">
+            <div><label>Bundle name</label><input type="text" id="abf-name" placeholder="e.g. Sunday Stew Pot"></div>
+            <div><label>Tagline</label><input type="text" id="abf-tagline" placeholder="e.g. A rich, slow stew from scratch."></div>
+          </div>
+          <div id="abf-items-list" class="delivery-rule-list"></div>
+          <div class="apf-row">
+            <div><label>Category</label><select id="abf-cat"></select></div>
+            <div><label>Product</label><select id="abf-product"></select></div>
+          </div>
+          <button type="button" class="ep-save" style="margin-bottom:14px;" onclick="addItemToNewBundle()">Add item to bundle</button>
+          <div class="apf-actions">
+            <button class="apf-save" type="button" onclick="saveNewBundle()">Create bundle (this tab only)</button>
+            <button class="apf-cancel" type="button" onclick="document.getElementById('addBundleSlot').innerHTML=''; newBundleItems=[];">Cancel</button>
+          </div>
+        </div>`;
+            document.getElementById('abf-cat').innerHTML = catOptions;
+            populateAbfProductSelect();
+            document.getElementById('abf-cat').addEventListener('change', populateAbfProductSelect);
+        }
+        window.openAddBundleForm = openAddBundleForm;
+        function populateAbfProductSelect() {
+            const catSlug = document.getElementById('abf-cat').value;
+            const cat = findCategory(catSlug);
+            const select = document.getElementById('abf-product');
+            select.innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        }
+        function addItemToNewBundle() {
+            const catSlug = document.getElementById('abf-cat').value;
+            const idx = parseInt(document.getElementById('abf-product').value, 10);
+            const p = getProduct(catSlug, idx);
+            if (!p) return;
+            newBundleItems.push({ catSlug, idx });
+            document.getElementById('abf-items-list').innerHTML = newBundleItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
             }).join('');
         }
+        window.addItemToNewBundle = addItemToNewBundle;
+        function addItemToNewBundle_refresh() {
+            document.getElementById('abf-items-list').innerHTML = newBundleItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
+            }).join('');
+        }
+        window.addItemToNewBundle_refresh = addItemToNewBundle_refresh;
+        function saveNewBundle() {
+            const name = document.getElementById('abf-name').value.trim();
+            const tagline = document.getElementById('abf-tagline').value.trim();
+            if (!name || newBundleItems.length < 2) { showToast('Give the bundle a name and at least 2 items.'); return; }
+            BUNDLES.push({ name, tagline: tagline || '', items: [...newBundleItems] });
+            document.getElementById('addBundleSlot').innerHTML = '';
+            newBundleItems = [];
+            renderBundles();
+            showToast(`Added bundle "${name}".`);
+        }
+        window.saveNewBundle = saveNewBundle;
+
+        /* ================= COMBOS (advertised meal deals) =================
+           Distinct from BUNDLES: bundles are real products at their real
+           summed prices, an "add all to basket" convenience. Combos are
+           free-form advertising, a single set price, an optional link to
+           browse the relevant aisle. Reuses the .product-grid class purely
+           for its already-working horizontal drag-scroll behaviour. */
+        let COMBOS = [];
+        function comboCardHTML(combo, ci) {
+            return `
+    <div class="combo-card">
+      <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
+      <div class="combo-price-tag">${combo.price}</div>
+      <h3>${combo.name}</h3>
+      <p>${combo.description}</p>
+      ${combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : ''}
+    </div>`;
+        }
+        function renderCombos() {
+            const grid = document.getElementById('combosGrid');
+            if (!grid) return;
+            grid.innerHTML = COMBOS.map((c, i) => comboCardHTML(c, i)).join('') || '<p style="font-size:13px; color:var(--text-muted);">No combos advertised yet.</p>';
+        }
+        function removeCombo(i) { COMBOS.splice(i, 1); renderCombos(); }
+        window.removeCombo = removeCombo;
+
+        function openAddComboForm() {
+            const slot = document.getElementById('addComboSlot');
+            if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; return; }
+            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            slot.innerHTML = `
+        <div class="add-product-form">
+          <h3>Add a new combo</h3>
+          <div class="apf-row">
+            <div><label>Combo name</label><input type="text" id="acf-name" placeholder="e.g. Weekend Jollof Combo"></div>
+            <div><label>Price tag text</label><input type="text" id="acf-price" placeholder="e.g. £15 combo"></div>
+          </div>
+          <div><label>Description</label><input type="text" id="acf-desc" placeholder="What's included, in a sentence" style="width:100%;"></div>
+          <div class="apf-row">
+            <div><label>Link to category (optional)</label><select id="acf-link"><option value="">No link</option>${catOptions}</select></div>
+          </div>
+          <div class="apf-actions">
+            <button class="apf-save" type="button" onclick="saveNewCombo()">Add combo (this tab only)</button>
+            <button class="apf-cancel" type="button" onclick="document.getElementById('addComboSlot').innerHTML='';">Cancel</button>
+          </div>
+        </div>`;
+        }
+        window.openAddComboForm = openAddComboForm;
+        function saveNewCombo() {
+            const name = document.getElementById('acf-name').value.trim();
+            const price = document.getElementById('acf-price').value.trim();
+            const description = document.getElementById('acf-desc').value.trim();
+            const linkCategory = document.getElementById('acf-link').value || null;
+            if (!name || !price) { showToast('Give the combo a name and a price tag.'); return; }
+            COMBOS.push({ name, price, description, linkCategory });
+            document.getElementById('addComboSlot').innerHTML = '';
+            renderCombos();
+            showToast(`Added combo "${name}".`);
+        }
+        window.saveNewCombo = saveNewCombo;
+
         /* ================= TOAST NOTIFICATIONS =================
            Non-blocking, unlike alert(): a blocking dialog can make a page
            feel unresponsive to a tap (easy to miss the dialog, or have it
@@ -5629,7 +6104,7 @@
             const skipped = items.length - added.length;
             added.forEach(p => addToCart(p, 1));
             const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} skipped, out of stock)` : '';
-            showToast(`Added ${added.length} items from "${bundle.name}" to your cart.${skippedNote}`);
+            showToast(`Added ${added.length} items from "${bundle.name}" to your basket.${skippedNote}`);
         }
         window.addBundleToCart = addBundleToCart;
 
@@ -5933,7 +6408,7 @@
       <div class="card-actions">
         <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="quickAdd('${p.catSlug}', ${pidx});">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          ${outOfStock ? 'Out of stock' : 'Add to cart'}
+          ${outOfStock ? 'Out of stock' : 'Add to basket'}
         </button>
         <a class="view-details-btn" href="${href}">
           View details
@@ -6296,7 +6771,7 @@
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
             const toAdd = variant ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label } : pdCurrent;
             addToCart(toAdd, pdQty);
-            showToast(`Added ${pdQty} × ${pdCurrent.name}${variant ? ' (' + variant.label + ')' : ''} to your cart.`);
+            showToast(`Added ${pdQty} × ${pdCurrent.name}${variant ? ' (' + variant.label + ')' : ''} to your basket.`);
         });
         document.getElementById('pdBuyNow').addEventListener('click', () => {
             if (!pdCurrent || pdCurrent.stock === 'out') return;
@@ -6365,7 +6840,8 @@
             const postcode = postcodeField ? postcodeField.value : '';
             const { fee: resolvedFee } = resolveDeliveryFee(postcode);
             const delivery = (cart.length && fulfilmentMethod === 'delivery') ? resolvedFee : 0;
-            const total = sub + delivery;
+            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
+            const total = Math.max(0, sub + delivery - discountAmount);
             const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
             const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && resolvedFee === 0);
             ['sumSubtotal', 'sumSubtotal2', 'sumSubtotal3'].forEach(id => document.getElementById(id).textContent = money(sub));
@@ -6373,6 +6849,17 @@
             ['sumDeliveryLabel', 'sumDeliveryLabel2', 'sumDeliveryLabel3'].forEach(id => document.getElementById(id).textContent = label);
             ['sumTotal', 'sumTotal2', 'sumTotal3'].forEach(id => document.getElementById(id).textContent = money(total));
             document.getElementById('payButtonTotal').textContent = money(total);
+
+            const showDiscount = appliedDiscount && discountAmount > 0;
+            [['sumDiscountRow', 'sumDiscountLabel', 'sumDiscount'], ['sumDiscountRow2', 'sumDiscountLabel2', 'sumDiscount2'], ['sumDiscountRow3', 'sumDiscountLabel3', 'sumDiscount3']].forEach(([rowId, labelId, amountId]) => {
+                const row = document.getElementById(rowId);
+                if (!row) return;
+                row.style.display = showDiscount ? 'flex' : 'none';
+                if (showDiscount) {
+                    document.getElementById(labelId).textContent = `Discount (${appliedDiscount.code})`;
+                    document.getElementById(amountId).textContent = `-${money(discountAmount)}`;
+                }
+            });
         }
 
         function showCheckoutStep(step) {
@@ -6409,8 +6896,30 @@
         document.getElementById('fulfilPickupBtn').addEventListener('click', () => setFulfilmentMethod('pickup'));
         document.getElementById('dPostcode').addEventListener('input', () => { if (fulfilmentMethod === 'delivery') updateSummaries(); });
 
+        /* ================= DISCOUNT CODE ENTRY ================= */
+        const applyDiscountBtn = document.getElementById('applyDiscountBtn');
+        if (applyDiscountBtn) {
+            applyDiscountBtn.addEventListener('click', () => {
+                const input = document.getElementById('discountCodeInput');
+                const msg = document.getElementById('discountCodeMsg');
+                const code = input.value.trim();
+                if (!code) return;
+                const result = applyDiscountCode(code);
+                if (result.ok) {
+                    msg.textContent = `"${appliedDiscount.code}" applied.`;
+                    msg.className = 'discount-code-msg success';
+                    input.value = '';
+                } else {
+                    msg.textContent = result.error;
+                    msg.className = 'discount-code-msg error';
+                }
+            });
+            document.getElementById('discountCodeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyDiscountBtn.click(); } });
+        }
+
         document.getElementById('deliveryForm').addEventListener('submit', (e) => {
             e.preventDefault();
+            const subPrefEl = document.querySelector('input[name="subPref"]:checked');
             deliveryInfo = {
                 method: fulfilmentMethod,
                 name: document.getElementById('dName').value.trim(),
@@ -6419,9 +6928,34 @@
                 town: fulfilmentMethod === 'pickup' ? 'Colchester, Essex' : document.getElementById('dTown').value.trim(),
                 postcode: fulfilmentMethod === 'pickup' ? 'CO1 1JN' : document.getElementById('dPostcode').value.trim(),
                 notes: fulfilmentMethod === 'pickup' ? 'Collecting in store' : document.getElementById('dNotes').value.trim(),
+                slotDay: fulfilmentMethod === 'delivery' ? document.getElementById('dSlotDay').value : null,
+                slotWindow: fulfilmentMethod === 'delivery' ? document.getElementById('dSlotWindow').value : null,
+                substitutionPref: subPrefEl ? subPrefEl.value : 'substitute',
             };
             showCheckoutStep('payment');
         });
+
+        /* ================= DELIVERY SLOTS =================
+           Real upcoming days, not a vague "next-day" promise. Today is only
+           offered before the same cutoff already stated in the FAQ (orders
+           before 2pm go out same/next day) — after that it's not genuinely
+           available, so it isn't offered as a false option. */
+        function populateDeliverySlots() {
+            const select = document.getElementById('dSlotDay');
+            if (!select) return;
+            const now = new Date();
+            const pastCutoff = now.getHours() >= 14;
+            const days = [];
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            for (let i = pastCutoff ? 1 : 0; days.length < 5; i++) {
+                const d = new Date(now);
+                d.setDate(now.getDate() + i);
+                const label = (i === 0 ? 'Today, ' : i === 1 ? 'Tomorrow, ' : '') + `${dayNames[d.getDay()]} ${d.getDate()} ${monthNames[d.getMonth()]}`;
+                days.push({ value: d.toISOString().slice(0, 10), label });
+            }
+            select.innerHTML = days.map(d => `<option value="${d.value}">${d.label}</option>`).join('');
+        }
 
         const cNumberInput = document.getElementById('cNumber');
         cNumberInput.addEventListener('input', () => {
@@ -6444,18 +6978,23 @@
             const orderSubtotal = cartSubtotal();
             const { fee: resolvedFee, region } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
             const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
+            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
+            if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
             lastOrder = {
                 number: 'YO7-' + Math.floor(100000 + Math.random() * 899999),
                 date: new Date(),
                 items: cart.map(i => ({ ...i })),
                 subtotal: orderSubtotal,
                 delivery: deliveryCharge,
-                total: orderSubtotal + deliveryCharge,
+                discount: discountAmount,
+                discountCode: appliedDiscount ? appliedDiscount.code : null,
+                total: Math.max(0, orderSubtotal + deliveryCharge - discountAmount),
                 delivery_info: deliveryInfo,
                 fulfilment: fulfilmentMethod,
                 deliveryRegion: region ? region.name : null,
             };
             cart = [];
+            appliedDiscount = null;
             updateCartBadge();
             window.location.hash = '#/order-confirmation';
         });
@@ -6470,9 +7009,12 @@
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const di = lastOrder.delivery_info || {};
             const isPickup = lastOrder.fulfilment === 'pickup';
+            const windowLabels = { morning: 'Morning, 9am\u201312pm', afternoon: 'Afternoon, 12pm\u20135pm', evening: 'Evening, 5pm\u20138pm' };
+            const slotLine = (!isPickup && di.slotDay) ? `<br>${new Date(di.slotDay).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}, ${windowLabels[di.slotWindow] || ''}` : '';
+            const subLine = di.substitutionPref === 'remove' ? '<br>No substitutions, out-of-stock items left out' : '<br>Substitutions OK if something\'s out of stock';
             document.getElementById('invAddress').innerHTML = isPickup
-                ? `${di.name || ''}<br>Collecting in store: 14 Trinity Street<br>Colchester, Essex, CO1 1JN<br>${di.phone || ''}`
-                : `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}`;
+                ? `${di.name || ''}<br>Collecting in store: 14 Trinity Street<br>Colchester, Essex, CO1 1JN<br>${di.phone || ''}${subLine}`
+                : `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}${slotLine}${subLine}`;
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
@@ -6902,10 +7444,10 @@
         /* ================= GUIDE / FAQ ================= */
         const FAQS = [
             { q: 'What areas do you deliver to?', a: 'Essex and Suffolk right now, mainly the CO, IP, and CM postcode areas, with parts of SS and CB also covered. Use the postcode checker on the Delivery Information page to check your exact address.' },
-            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is £3.50 per order, and free once your order reaches £25. There\'s a £15 minimum for delivered orders, no minimum if you choose pickup instead.' },
+            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is £3.50 per order, and free once your order reaches £25. There\'s no minimum order for delivery or pickup.' },
             { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 2pm are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
-            { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your cart. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
+            { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
             { q: 'Is payment on the site secure?', a: 'The checkout you see now is a preview, it doesn\'t process real payments yet. Once live payment is switched on, it\'ll run through a proper secure processor, not through this site directly.' },
             { q: 'Do I need an account to order?', a: 'Not necessarily for browsing, but you\'ll need delivery details at checkout either way. Creating an account just makes future orders quicker.' },
             { q: 'How do I get in touch if I have a problem with my order?', a: 'WhatsApp is the fastest way, there\'s a button on the Contact page and a floating button on every page. We read every message.' },
@@ -6947,7 +7489,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-special-offers', 'view-group', 'view-about'];
+        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-special-offers', 'view-group', 'view-about', 'view-bundles'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
@@ -6998,6 +7540,9 @@
             } else if (hash === '#/special-offers') {
                 showView('view-special-offers');
                 renderSpecialOffersPage();
+            } else if (hash === '#/bundles') {
+                showView('view-bundles');
+                renderBundlesViewAllPage();
             } else {
                 showView('view-home');
             }
@@ -7126,6 +7671,60 @@
             });
         }
 
+        /* ================= DISCOUNT ADMIN FORM (edit mode) ================= */
+        const newDiscTypeSelect = document.getElementById('newDiscType');
+        if (newDiscTypeSelect) {
+            newDiscTypeSelect.addEventListener('change', () => {
+                const isBogo = newDiscTypeSelect.value === 'bogo';
+                const needsValue = newDiscTypeSelect.value === 'percent' || newDiscTypeSelect.value === 'fixed';
+                document.getElementById('newDiscBogoFields').style.display = isBogo ? 'grid' : 'none';
+                document.getElementById('newDiscValueField').style.display = needsValue ? '' : 'none';
+            });
+        }
+        const newDiscScopeSelect = document.getElementById('newDiscScope');
+        if (newDiscScopeSelect) {
+            newDiscScopeSelect.addEventListener('change', () => {
+                document.getElementById('newDiscCategoryField').style.display = newDiscScopeSelect.value === 'category' ? '' : 'none';
+                document.getElementById('newDiscProductField').style.display = newDiscScopeSelect.value === 'product' ? '' : 'none';
+            });
+        }
+        const addDiscountForm = document.getElementById('addDiscountForm');
+        if (addDiscountForm) {
+            addDiscountForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newDiscName').value.trim();
+                const code = document.getElementById('newDiscCode').value.trim();
+                if (!name || !code) return;
+                if (findDiscountByCode(code)) { showToast(`A discount with code "${code}" already exists.`); return; }
+                const type = document.getElementById('newDiscType').value;
+                const value = parseFloat(document.getElementById('newDiscValue').value) || 0;
+                const buyQty = parseInt(document.getElementById('newDiscBuyQty').value, 10) || 1;
+                const getQty = parseInt(document.getElementById('newDiscGetQty').value, 10) || 1;
+                const startDate = document.getElementById('newDiscStart').value || null;
+                const endDate = document.getElementById('newDiscEnd').value || null;
+                const scope = document.getElementById('newDiscScope').value;
+                const minOrderRaw = document.getElementById('newDiscMinOrder').value;
+                const maxPerCustomerRaw = document.getElementById('newDiscMaxPerCustomer').value;
+                const discount = {
+                    id: 'disc-' + Date.now(),
+                    name, code, type, value, buyQty, getQty, startDate, endDate,
+                    qualifyingScope: scope,
+                    qualifyingCategory: scope === 'category' ? document.getElementById('newDiscCategory').value : null,
+                    qualifyingProductId: scope === 'product' ? document.getElementById('newDiscProduct').value : null,
+                    minOrder: minOrderRaw ? parseFloat(minOrderRaw) : null,
+                    maxPerCustomer: maxPerCustomerRaw ? parseInt(maxPerCustomerRaw, 10) : null,
+                    active: true,
+                };
+                discounts.push(discount);
+                addDiscountForm.reset();
+                document.getElementById('newDiscBogoFields').style.display = 'none';
+                document.getElementById('newDiscCategoryField').style.display = 'none';
+                document.getElementById('newDiscProductField').style.display = 'none';
+                renderDiscountsAdmin();
+                showToast(`Created discount code "${code}".`);
+            });
+        }
+
         /* ================= CATEGORY STRIP: auto-carousel + manual scroll ================= */
         (function initCatCarousel() {
             const strip = document.getElementById('catNavStrip');
@@ -7240,6 +7839,13 @@
         renderCatGrid();
         renderBundles();
         renderDeliveryAdmin();
+        populateDeliverySlots();
+        renderDiscountsAdmin();
+        const addBundleBtn = document.getElementById('addBundleBtn');
+        if (addBundleBtn) addBundleBtn.addEventListener('click', openAddBundleForm);
+        renderCombos();
+        const addComboBtn = document.getElementById('addComboBtn');
+        if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
 
         /* ================= NEWSLETTER =================
            No backend exists to store emails, so this doesn't pretend to save
