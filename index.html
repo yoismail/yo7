@@ -1166,15 +1166,15 @@
         .combo-card {
             flex: 0 0 265px; max-width: 265px;
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
-            padding: 20px; position: relative; display: flex; flex-direction: column;
+            padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
         }
         .combo-card .combo-price-tag {
             align-self: flex-start; background: var(--orange); color: var(--aubergine-deep);
             font-family: var(--display); font-weight: 700; font-size: 13px; padding: 5px 12px;
             border-radius: 999px; margin-bottom: 12px;
         }
-        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); margin-bottom: 6px; }
-        .combo-card p { font-size: 13px; color: var(--text-body); line-height: 1.5; margin-bottom: 16px; flex: 1; }
+        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px; }
+        .combo-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
         .combo-card .btn { width: 100%; text-align: center; }
         .combo-remove-btn {
             display: none;
@@ -1184,9 +1184,6 @@
             font-size: 16px; line-height: 1; cursor: pointer;
         }
         body.edit-mode-on .combo-remove-btn { display: block; }
-        .combo-items-list {
-            font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;
-        }
         .combo-edit-btn {
             display: none;
             width: 100%; margin-top: 8px; background: none; border: 1.5px solid rgba(var(--border-rgb), 0.18);
@@ -4603,13 +4600,6 @@
                                     <div class="field"><label>Delivery day</label>
                                         <select id="dSlotDay"></select>
                                     </div>
-                                    <div class="field"><label>Delivery window</label>
-                                        <select id="dSlotWindow">
-                                            <option value="morning">Morning, 9am&ndash;12pm</option>
-                                            <option value="afternoon">Afternoon, 12pm&ndash;5pm</option>
-                                            <option value="evening">Evening, 5pm&ndash;8pm</option>
-                                        </select>
-                                    </div>
                                     <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
                                 </div>
@@ -6097,7 +6087,7 @@
         function comboCardHTML(combo, ci) {
             const items = (combo.items || []).map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
             const itemsList = items.length
-                ? `<div class="combo-items-list">${items.map(p => `<span>${p.name}</span>`).join(', ')}</div>`
+                ? `<div class="bundle-items">${items.map(p => `<div class="bundle-item-row"><span>${p.name}</span></div>`).join('')}</div>`
                 : '';
             return `
     <div class="combo-card" id="comboCard-${ci}">
@@ -7145,7 +7135,6 @@
                 postcode: fulfilmentMethod === 'pickup' ? 'CO1 1JN' : document.getElementById('dPostcode').value.trim(),
                 notes: fulfilmentMethod === 'pickup' ? 'Collecting in store' : document.getElementById('dNotes').value.trim(),
                 slotDay: fulfilmentMethod === 'delivery' ? document.getElementById('dSlotDay').value : null,
-                slotWindow: fulfilmentMethod === 'delivery' ? document.getElementById('dSlotWindow').value : null,
                 substitutionPref: subPrefEl ? subPrefEl.value : 'substitute',
             };
             showCheckoutStep('payment');
@@ -7225,8 +7214,7 @@
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const di = lastOrder.delivery_info || {};
             const isPickup = lastOrder.fulfilment === 'pickup';
-            const windowLabels = { morning: 'Morning, 9am\u201312pm', afternoon: 'Afternoon, 12pm\u20135pm', evening: 'Evening, 5pm\u20138pm' };
-            const slotLine = (!isPickup && di.slotDay) ? `<br>${new Date(di.slotDay).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}, ${windowLabels[di.slotWindow] || ''}` : '';
+            const slotLine = (!isPickup && di.slotDay) ? `<br>${new Date(di.slotDay).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}` : '';
             const subLine = di.substitutionPref === 'remove' ? '<br>No substitutions, out-of-stock items left out' : '<br>Substitutions OK if something\'s out of stock';
             document.getElementById('invAddress').innerHTML = isPickup
                 ? `${di.name || ''}<br>Collecting in store: 14 Trinity Street<br>Colchester, Essex, CO1 1JN<br>${di.phone || ''}${subLine}`
@@ -7234,7 +7222,7 @@
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
-      <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.unit}</span></td>
+      <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}</span></td>
       <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
       <td class="inv-qty">${i.qty}</td>
       <td class="inv-line-total">${money(i.price * i.qty)}</td>
