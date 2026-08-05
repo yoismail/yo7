@@ -1184,6 +1184,16 @@
             font-size: 16px; line-height: 1; cursor: pointer;
         }
         body.edit-mode-on .combo-remove-btn { display: block; }
+        .combo-items-list {
+            font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;
+        }
+        .combo-edit-btn {
+            display: none;
+            width: 100%; margin-top: 8px; background: none; border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            color: var(--heading); border-radius: 10px; padding: 8px; font-family: var(--display);
+            font-weight: 600; font-size: 12px; cursor: pointer;
+        }
+        body.edit-mode-on .combo-edit-btn { display: block; }
 
         /* Shop by group (homepage) gets its own warm yellow treatment,
            scoped by ID so the group-detail page's .shop-section (which
@@ -4147,13 +4157,13 @@
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
             <div class="trust-bar-set">
-                <span>Free delivery over &pound;25</span>
+                <span>Free delivery over &pound;50</span>
                 <span class="trust-sep">&bull;</span>
                 <span>Next-day across Essex &amp; Suffolk</span>
                 <span class="trust-sep">&bull;</span>
             </div>
             <div class="trust-bar-set" aria-hidden="true">
-                <span>Free delivery over &pound;25</span>
+                <span>Free delivery over &pound;50</span>
                 <span class="trust-sep">&bull;</span>
                 <span>Next-day across Essex &amp; Suffolk</span>
                 <span class="trust-sep">&bull;</span>
@@ -4385,7 +4395,7 @@
     <div id="view-group" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <span id="groupCrumbLabel">Group</span></div>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; <span id="groupCrumbLabel">Group</span></div>
                 <h1><span class="cat-emoji-big" id="groupHeaderIcon"></span><span id="groupHeaderTitle">Group</span></h1>
                 <p id="groupHeaderDesc"></p>
                 <div class="result-count" id="groupResultCount"></div>
@@ -4549,7 +4559,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    Free delivery over £25
+                                    Free delivery over £50
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -4692,7 +4702,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    Free delivery over £25
+                                    Free delivery over £50
                                 </div>
                             </div>
                         </div>
@@ -5030,7 +5040,7 @@
                         <span class="pound-icon">£</span>
                         <div>
                             <h4>Delivery fee</h4>
-                            <p>£3.50 per order, free once your order reaches £25. Pickup is always free. Your exact fee is shown at checkout before you pay.</p>
+                            <p>£3.50 per order, free once your order reaches £50. Pickup is always free. Your exact fee is shown at checkout before you pay.</p>
                         </div>
                     </div>
                     <div class="dinfo-card">
@@ -5556,7 +5566,7 @@
               DEFAULT_DELIVERY_FEE applies if no region matches.
            2. deliveryThresholdRules: separate override rules keyed to the
               order itself (subtotal, total weight, item count) — e.g. "free
-              delivery over £25". If any threshold rule's condition is met,
+              delivery over £50". If any threshold rule's condition is met,
               its effect overrides the region's base rate.
            Both are plain in-memory arrays, editable via the delivery rules
            admin panel in edit mode. Nothing here persists past a refresh,
@@ -5568,7 +5578,7 @@
             { id: 'reg-cm', name: 'Chelmsford (CM)', postcodeAreas: ['CM'], fee: 4.50 },
         ];
         let deliveryThresholdRules = [
-            { id: 'rule-free25', name: 'Free delivery over £25', conditionType: 'price', operator: 'gte', value: 25, effect: 'free' },
+            { id: 'rule-free50', name: 'Free delivery over £50', conditionType: 'price', operator: 'gte', value: 50, effect: 'free' },
         ];
 
         function resolveDeliveryRegion(postcode) {
@@ -5977,7 +5987,7 @@
         <label>Combo discount %</label>
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setBundleDiscount(${bi}, this.value)">
       </div>
-      <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add combo to basket</button>
+      <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add bundle to basket</button>
     </div>`;
         }
         function setBundleDiscount(bi, value) {
@@ -6084,13 +6094,19 @@
             { name: 'Fry-Up Combo', price: '£10 combo', description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods' },
         ];
         function comboCardHTML(combo, ci) {
+            const items = (combo.items || []).map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const itemsList = items.length
+                ? `<div class="combo-items-list">${items.map(p => `<span>${p.name}</span>`).join(', ')}</div>`
+                : '';
             return `
-    <div class="combo-card">
+    <div class="combo-card" id="comboCard-${ci}">
       <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
       <div class="combo-price-tag">${combo.price}</div>
       <h3>${combo.name}</h3>
       <p>${combo.description}</p>
+      ${itemsList}
       ${combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : ''}
+      <button type="button" class="combo-edit-btn" onclick="openComboEdit(${ci})">Edit combo</button>
     </div>`;
         }
         function renderCombos() {
@@ -6100,6 +6116,75 @@
         }
         function removeCombo(i) { COMBOS.splice(i, 1); renderCombos(); }
         window.removeCombo = removeCombo;
+
+        /* ================= EDIT AN EXISTING COMBO (edit mode) ================= */
+        let comboEditNewItems = null; // working copy of items while a combo is being edited
+        function openComboEdit(ci) {
+            const combo = COMBOS[ci];
+            const card = document.getElementById(`comboCard-${ci}`);
+            comboEditNewItems = [...(combo.items || [])];
+            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            card.innerHTML = `
+      <h3>Edit combo</h3>
+      <div class="field"><label>Combo name</label><input type="text" id="cce-name" value="${combo.name}"></div>
+      <div class="field"><label>Price tag text</label><input type="text" id="cce-price" value="${combo.price}"></div>
+      <div class="field"><label>Description</label><input type="text" id="cce-desc" value="${combo.description || ''}"></div>
+      <div class="field"><label>Link to category</label><select id="cce-link"><option value="">No link</option>${catOptions}</select></div>
+      <div class="field">
+        <label>Items included (optional, shown on the card)</label>
+        <div id="cce-items-list" class="delivery-rule-list"></div>
+        <div class="apf-row">
+          <div><select id="cce-item-cat"></select></div>
+          <div><select id="cce-item-product"></select></div>
+        </div>
+        <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToComboEdit()">Add item</button>
+      </div>
+      <div class="apf-actions">
+        <button class="apf-save" type="button" onclick="saveComboEdit(${ci})">Save changes</button>
+        <button class="apf-cancel" type="button" onclick="renderCombos();">Cancel</button>
+      </div>`;
+            document.getElementById('cce-link').value = combo.linkCategory || '';
+            document.getElementById('cce-item-cat').innerHTML = catOptions;
+            populateComboEditProductSelect();
+            document.getElementById('cce-item-cat').addEventListener('change', populateComboEditProductSelect);
+            renderComboEditItemsList();
+        }
+        window.openComboEdit = openComboEdit;
+        function populateComboEditProductSelect() {
+            const catSlug = document.getElementById('cce-item-cat').value;
+            const cat = findCategory(catSlug);
+            document.getElementById('cce-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        }
+        function renderComboEditItemsList() {
+            document.getElementById('cce-items-list').innerHTML = comboEditNewItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="comboEditNewItems.splice(${i},1); renderComboEditItemsList();">Remove</button></div>`;
+            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
+        }
+        window.renderComboEditItemsList = renderComboEditItemsList;
+        function addItemToComboEdit() {
+            const catSlug = document.getElementById('cce-item-cat').value;
+            const idx = parseInt(document.getElementById('cce-item-product').value, 10);
+            if (!getProduct(catSlug, idx)) return;
+            comboEditNewItems.push({ catSlug, idx });
+            renderComboEditItemsList();
+        }
+        window.addItemToComboEdit = addItemToComboEdit;
+        function saveComboEdit(ci) {
+            const name = document.getElementById('cce-name').value.trim();
+            const price = document.getElementById('cce-price').value.trim();
+            if (!name || !price) { showToast('A combo needs a name and a price tag.'); return; }
+            COMBOS[ci] = {
+                name, price,
+                description: document.getElementById('cce-desc').value.trim(),
+                linkCategory: document.getElementById('cce-link').value || null,
+                items: [...comboEditNewItems],
+            };
+            comboEditNewItems = null;
+            renderCombos();
+            showToast(`Updated "${name}".`);
+        }
+        window.saveComboEdit = saveComboEdit;
 
         function openAddComboForm() {
             const slot = document.getElementById('addComboSlot');
@@ -6525,7 +6610,7 @@
             const breadcrumbEl = document.getElementById('shopBreadcrumb');
             const backLink = document.getElementById('backToGroupLink');
             if (cat && group) {
-                breadcrumbEl.innerHTML = `<a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <a href="#/group/${group.slug}">${group.name.replace(/&amp;/g, '&')}</a> &rsaquo; <span id="crumbLabel">${cat.name.replace(/&amp;/g, '&')}</span>`;
+                breadcrumbEl.innerHTML = `<a href="#/">Home</a> &rsaquo; <a href="#/group/${group.slug}">${group.name.replace(/&amp;/g, '&')}</a> &rsaquo; <span id="crumbLabel">${cat.name.replace(/&amp;/g, '&')}</span>`;
                 backLink.style.display = 'inline-flex';
                 backLink.href = `#/group/${group.slug}`;
                 document.getElementById('backToGroupLabel').textContent = `Back to ${group.name.replace(/&amp;/g, '&')}`;
@@ -6644,8 +6729,8 @@
             const stock = p.stock || 'in';
             const pdGroup = groupForCategory(catSlug);
             document.getElementById('pdCrumb').innerHTML = pdGroup
-                ? `<a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <a href="#/group/${pdGroup.slug}">${pdGroup.name.replace(/&amp;/g, '&')}</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`
-                : `<a href="#/" data-scroll-to="shopByGroup">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
+                ? `<a href="#/">Home</a> &rsaquo; <a href="#/group/${pdGroup.slug}">${pdGroup.name.replace(/&amp;/g, '&')}</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`
+                : `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
             document.getElementById('pdName').textContent = p.name;
             document.getElementById('pdUnit').textContent = p.unit;
@@ -7538,7 +7623,7 @@
         /* ================= GUIDE / FAQ ================= */
         const FAQS = [
             { q: 'What areas do you deliver to?', a: 'Essex and Suffolk right now, mainly the CO, IP, and CM postcode areas, with parts of SS and CB also covered. Use the postcode checker on the Delivery Information page to check your exact address.' },
-            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is £3.50 per order, and free once your order reaches £25. There\'s no minimum order for delivery or pickup.' },
+            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is £3.50 per order, and free once your order reaches £50. There\'s no minimum order for delivery or pickup.' },
             { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 2pm are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
