@@ -1168,11 +1168,6 @@
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
             padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
         }
-        .combo-card .combo-price-tag {
-            align-self: flex-start; background: var(--orange); color: var(--aubergine-deep);
-            font-family: var(--display); font-weight: 700; font-size: 13px; padding: 5px 12px;
-            border-radius: 999px; margin-bottom: 12px;
-        }
         .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px; }
         .combo-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
         .combo-card .btn { width: 100%; text-align: center; }
@@ -4319,6 +4314,10 @@
                             Combo deals</h2>
                         <p>Advertised bundles and meal combos, swipe or drag to browse.</p>
                     </div>
+                    <a class="view-all-btn" href="#/combos">
+                        View all
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
                 </div>
                 <div class="product-grid combos-scroll" id="combosGrid"></div>
                 <button type="button" class="add-bundle-btn" id="addComboBtn">
@@ -5175,6 +5174,22 @@
         <section class="products-section">
             <div class="wrap">
                 <div class="bundles-grid" id="allBundlesGrid"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-combos" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Combo deals</div>
+                <h1>Combo deals</h1>
+                <p>Advertised bundles and meal combos, all in one place.</p>
+                <div class="result-count" id="allCombosCount"></div>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="bundles-grid" id="allCombosGrid"></div>
             </div>
         </section>
     </div>
@@ -6129,32 +6144,86 @@
            browse the relevant aisle. Reuses the .product-grid class purely
            for its already-working horizontal drag-scroll behaviour. */
         let COMBOS = [
-            { name: 'Rice Night Combo', price: '£15 combo', description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice' },
-            { name: 'Suya Night Combo', price: '£12 combo', description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat' },
-            { name: 'Soup Pot Combo', price: '£18 combo', description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables' },
-            { name: 'Snack Attack Combo', price: '£8 combo', description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary' },
-            { name: 'Fry-Up Combo', price: '£10 combo', description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods' },
+            { name: 'Rice Night Combo', discountPercent: 8, items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }], description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice' },
+            { name: 'Suya Night Combo', discountPercent: 8, items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }], description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat' },
+            { name: 'Soup Pot Combo', discountPercent: 10, items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'root-vegetables', idx: 0 }, { catSlug: 'seasoning', idx: 2 }], description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables' },
+            { name: 'Snack Attack Combo', discountPercent: 5, items: [{ catSlug: 'snacks-confectionary', idx: 0 }, { catSlug: 'snacks-confectionary', idx: 1 }], description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary' },
+            { name: 'Fry-Up Combo', discountPercent: 5, items: [{ catSlug: 'tropical-foods', idx: 0 }, { catSlug: 'oils', idx: 1 }], description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods' },
         ];
         function comboCardHTML(combo, ci) {
             const items = (combo.items || []).map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
-            const itemsList = items.length
-                ? `<div class="bundle-items">${items.map(p => `<div class="bundle-item-row"><span>${p.name}</span></div>`).join('')}</div>`
-                : '';
+            const inStockItems = items.filter(p => p.stock !== 'out');
+            const rawTotal = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
+            const discountPct = combo.discountPercent || 0;
+            const discountedTotal = rawTotal * (1 - discountPct / 100);
+            const itemRows = items.map(p => {
+                const outOfStock = p.stock === 'out';
+                return `
+      <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}"><span>${p.name}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span><span>${outOfStock ? '' : money(effectivePrice(p))}</span></div>`;
+            }).join('');
+            const totalRow = items.length ? (discountPct > 0
+                ? `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span><span class="bundle-was">${money(rawTotal)}</span> ${money(discountedTotal)}</span></div>`
+                : `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(discountedTotal)}</span></div>`) : '';
             return `
     <div class="combo-card" id="comboCard-${ci}">
       <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
-      <div class="combo-price-tag">${combo.price}</div>
+      ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
       <h3>${combo.name}</h3>
-      <p>${combo.description}</p>
-      ${itemsList}
-      ${combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : ''}
+      <div class="bundle-tagline">${combo.description || ''}</div>
+      <div class="bundle-items">${itemRows}</div>
+      ${totalRow}
+      ${items.length ? `<div class="bundle-discount-edit">
+        <label>Combo discount %</label>
+        <input type="number" min="0" max="90" value="${discountPct}" onchange="setComboDiscount(${ci}, this.value)">
+      </div>` : ''}
+      ${items.length
+                ? `<button class="bundle-add-btn" type="button" onclick="addComboToCart(${ci})">Add combo to basket</button>`
+                : (combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : '')}
       <button type="button" class="combo-edit-btn" onclick="openComboEdit(${ci})">Edit combo</button>
     </div>`;
         }
+        function setComboDiscount(ci, value) {
+            const pct = parseFloat(value);
+            COMBOS[ci].discountPercent = isNaN(pct) ? 0 : Math.max(0, Math.min(90, pct));
+            renderCombos();
+        }
+        window.setComboDiscount = setComboDiscount;
+        function addComboToCart(ci) {
+            const combo = COMBOS[ci];
+            if (!combo) return;
+            const items = (combo.items || []).map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const added = items.filter(p => p.stock !== 'out');
+            const skipped = items.length - added.length;
+            if (added.length === 0) { showToast(`Everything in "${combo.name}" is currently out of stock.`); return; }
+            const rawTotal = added.reduce((s, p) => s + effectivePrice(p), 0);
+            const discountPct = combo.discountPercent || 0;
+            const discountedTotal = rawTotal * (1 - discountPct / 100);
+            const comboItem = {
+                id: `combo::${ci}`,
+                name: combo.name,
+                unit: `Combo, ${added.length} items${discountPct > 0 ? `, ${discountPct}% off` : ''}`,
+                price: discountedTotal,
+                catSlug: null,
+                emoji: '🍽️',
+                isCombo: true,
+                comboItems: added.map(p => p.name),
+            };
+            addToCart(comboItem, 1);
+            const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} left out, out of stock)` : '';
+            showToast(`Added "${combo.name}" combo to your basket.${skippedNote}`);
+        }
+        window.addComboToCart = addComboToCart;
         function renderCombos() {
             const grid = document.getElementById('combosGrid');
+            if (grid) grid.innerHTML = COMBOS.map((c, i) => comboCardHTML(c, i)).join('') || '<p style="font-size:13px; color:var(--text-muted);">No combos advertised yet.</p>';
+            renderCombosViewAllPage();
+        }
+        function renderCombosViewAllPage() {
+            const grid = document.getElementById('allCombosGrid');
             if (!grid) return;
             grid.innerHTML = COMBOS.map((c, i) => comboCardHTML(c, i)).join('') || '<p style="font-size:13px; color:var(--text-muted);">No combos advertised yet.</p>';
+            const countEl = document.getElementById('allCombosCount');
+            if (countEl) countEl.textContent = `${COMBOS.length} combo${COMBOS.length === 1 ? '' : 's'}`;
         }
         function removeCombo(i) { COMBOS.splice(i, 1); renderCombos(); }
         window.removeCombo = removeCombo;
@@ -6169,9 +6238,9 @@
             card.innerHTML = `
       <h3>Edit combo</h3>
       <div class="field"><label>Combo name</label><input type="text" id="cce-name" value="${combo.name}"></div>
-      <div class="field"><label>Price tag text</label><input type="text" id="cce-price" value="${combo.price}"></div>
+      <div class="field"><label>Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="cce-discount" value="${combo.discountPercent || 0}"></div>
       <div class="field"><label>Description</label><input type="text" id="cce-desc" value="${combo.description || ''}"></div>
-      <div class="field"><label>Link to category</label><select id="cce-link"><option value="">No link</option>${catOptions}</select></div>
+      <div class="field"><label>Link to category (used only if no items are added)</label><select id="cce-link"><option value="">No link</option>${catOptions}</select></div>
       <div class="field">
         <label>Items included (optional, shown on the card)</label>
         <div id="cce-items-list" class="delivery-rule-list"></div>
@@ -6214,10 +6283,11 @@
         window.addItemToComboEdit = addItemToComboEdit;
         function saveComboEdit(ci) {
             const name = document.getElementById('cce-name').value.trim();
-            const price = document.getElementById('cce-price').value.trim();
-            if (!name || !price) { showToast('A combo needs a name and a price tag.'); return; }
+            if (!name) { showToast('A combo needs a name.'); return; }
+            const discountPct = parseFloat(document.getElementById('cce-discount').value);
             COMBOS[ci] = {
-                name, price,
+                name,
+                discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)),
                 description: document.getElementById('cce-desc').value.trim(),
                 linkCategory: document.getElementById('cce-link').value || null,
                 items: [...comboEditNewItems],
@@ -6239,7 +6309,7 @@
           <h3>Add a new combo</h3>
           <div class="apf-row">
             <div><label>Combo name</label><input type="text" id="acf-name" placeholder="e.g. Weekend Jollof Combo"></div>
-            <div><label>Price tag text</label><input type="text" id="acf-price" placeholder="e.g. £15 combo"></div>
+            <div><label>Discount % (optional)</label><input type="number" min="0" max="90" id="acf-discount" placeholder="e.g. 10"></div>
           </div>
           <div><label>Description</label><input type="text" id="acf-desc" placeholder="What's included, in a sentence" style="width:100%;"></div>
           <div class="apf-row">
@@ -6287,11 +6357,11 @@
         window.addItemToNewCombo = addItemToNewCombo;
         function saveNewCombo() {
             const name = document.getElementById('acf-name').value.trim();
-            const price = document.getElementById('acf-price').value.trim();
+            const discountPct = parseFloat(document.getElementById('acf-discount').value);
             const description = document.getElementById('acf-desc').value.trim();
             const linkCategory = document.getElementById('acf-link').value || null;
-            if (!name || !price) { showToast('Give the combo a name and a price tag.'); return; }
-            COMBOS.push({ name, price, description, linkCategory, items: [...newComboItems] });
+            if (!name) { showToast('Give the combo a name.'); return; }
+            COMBOS.push({ name, discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)), description, linkCategory, items: [...newComboItems] });
             document.getElementById('addComboSlot').innerHTML = '';
             newComboItems = [];
             renderCombos();
@@ -7759,7 +7829,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-special-offers', 'view-group', 'view-about', 'view-bundles'];
+        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
@@ -7813,6 +7883,9 @@
             } else if (hash === '#/bundles') {
                 showView('view-bundles');
                 renderBundlesViewAllPage();
+            } else if (hash === '#/combos') {
+                showView('view-combos');
+                renderCombosViewAllPage();
             } else {
                 showView('view-home');
             }
