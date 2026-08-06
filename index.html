@@ -988,6 +988,20 @@
             justify-content: center;
         }
 
+        .hero-social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 18px;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 12.5px;
+            color: rgba(250, 249, 242, 0.75);
+        }
+        .hero-social-link svg { width: 15px; height: 15px; }
+        .hero-social-link:hover { color: var(--cream); }
+
         /* ================= STORY ================= */
         .story {
             padding: 88px 0 80px;
@@ -1028,6 +1042,27 @@
         /* ================= ABOUT PAGE ================= */
         .about-section {
             padding: 64px 0 90px;
+        }
+        .legal-section { padding: 56px 0 90px; }
+        .legal-content { max-width: 68ch; }
+        .legal-content h2 {
+            font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--heading);
+            margin: 32px 0 12px;
+        }
+        .legal-content h2:first-child { margin-top: 0; }
+        .legal-content p { font-size: 14.5px; color: var(--text-body); line-height: 1.65; margin-bottom: 14px; }
+        .legal-content ul { margin: 0 0 14px 20px; }
+        .legal-content li { font-size: 14.5px; color: var(--text-body); line-height: 1.65; margin-bottom: 6px; }
+        .legal-updated { font-size: 12.5px; color: var(--text-muted); margin-bottom: 28px; }
+        .legal-draft-note {
+            background: rgba(225, 225, 0, 0.1);
+            border: 1px solid rgba(225, 225, 0, 0.32);
+            border-radius: 14px;
+            padding: 16px 18px;
+            font-size: 13px;
+            color: #7a4a26;
+            line-height: 1.55;
+            margin-bottom: 32px;
         }
         .about-story-grid {
             display: grid;
@@ -1770,9 +1805,11 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
-            padding-bottom: 32px;
+            padding: 22px 24px;
             margin-bottom: 32px;
-            border-bottom: 1px solid rgba(250, 249, 242, 0.1);
+            background: rgba(250, 249, 242, 0.05);
+            border: 1px solid rgba(250, 249, 242, 0.1);
+            border-radius: 16px;
         }
         .footer-newsletter h4 {
             font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--cream); margin-bottom: 4px;
@@ -1845,6 +1882,26 @@
             margin-top: 6px;
             max-width: 34ch;
         }
+
+        .footer-social-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .footer-social-row a {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(250, 249, 242, 0.08);
+            border: 1px solid rgba(250, 249, 242, 0.18);
+            color: var(--cream);
+            transition: background 0.2s ease;
+        }
+        .footer-social-row a:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
+        .footer-social-row svg { width: 17px; height: 17px; }
 
         .footer-links {
             display: flex;
@@ -3062,6 +3119,18 @@
         .discount-code-msg.error { color: #b34a4a; }
         .discount-code-msg.success { color: var(--aubergine-mid); }
 
+        .continue-shopping-link {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            padding: 10px;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--aubergine-mid);
+            text-decoration: underline;
+        }
+
         .summary-row-weight { color: var(--text-muted); font-size: 13px; }
         .delivery-fee-note {
             font-size: 11.5px;
@@ -4224,15 +4293,15 @@
                         </svg>
                         Start shopping
                     </a>
-                    <a class="btn btn-outline" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <rect x="3" y="3" width="18" height="18" rx="5" />
-                            <circle cx="12" cy="12" r="4" />
-                            <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
-                        </svg>
-                        Follow @yo7foods
-                    </a>
                 </div>
+                <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <rect x="3" y="3" width="18" height="18" rx="5" />
+                        <circle cx="12" cy="12" r="4" />
+                        <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+                    </svg>
+                    Follow @yo7foods
+                </a>
             </div>
         </header>
 
@@ -4576,6 +4645,7 @@
                             <div class="summary-row total"><span>Total</span><span id="sumTotal">£0.00</span></div>
                             <button class="btn btn-primary btn-block" id="toDeliveryBtn" style="margin-top:20px;"
                                 type="button">Continue to delivery</button>
+                            <a href="#/" class="continue-shopping-link" data-scroll-to="shopByGroup">Continue shopping</a>
                             <div class="cart-trust-strip">
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -4952,6 +5022,114 @@
                 <div class="about-cta">
                     <a class="btn btn-primary" href="#/" data-scroll-to="shopByGroup">Start shopping</a>
                     <a class="btn btn-outline-dark" href="#/contact">Get in touch</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-privacy" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Privacy Policy</div>
+                <h1>Privacy Policy</h1>
+                <p>What we collect, why, and what we do with it.</p>
+            </div>
+        </header>
+        <section class="legal-section">
+            <div class="wrap">
+                <div class="legal-content">
+                    <div class="legal-draft-note">This is a working draft, written to be genuinely accurate about how the site currently operates, not a substitute for a solicitor's review before the site goes live and starts processing real orders.</div>
+                    <div class="legal-updated">Last updated: August 2026</div>
+
+                    <h2>Who we are</h2>
+                    <p>Yo7 Foods Limited ("Yo7", "we", "us"), 14 Trinity Street, Colchester, Essex, CO1 1JN. You can reach us at hello@yo7foods.co.uk or via WhatsApp.</p>
+
+                    <h2>What we collect</h2>
+                    <p>When you place an order, we ask for your name, phone number, and (for delivery orders) your address and postcode. If you sign up for an account, we ask for your name and email. If you use the newsletter link in our footer, it opens your own email client to send us your email directly, we don't capture it automatically.</p>
+                    <p>We don't currently use cookies or analytics tracking. The site does store a small amount of information in your browser's local storage, your dark/light mode preference, and a record of which discount codes you've used, so a one-per-customer code can't simply be reapplied after a page refresh.</p>
+
+                    <h2>Payment information</h2>
+                    <p>The checkout on this site is currently a preview and does not process real payments. No card details are transmitted to us or stored anywhere. Once real payment processing is switched on, this policy will be updated to reflect exactly how that's handled, and by which payment provider.</p>
+
+                    <h2>What we do with it</h2>
+                    <ul>
+                        <li>Order details (name, address, phone) are used to fulfil and deliver your order, nothing more.</li>
+                        <li>We don't sell or share your information with third parties for marketing purposes.</li>
+                        <li>Where we need to share delivery details with a courier to get your order to you, we only share what's necessary for that delivery.</li>
+                    </ul>
+
+                    <h2>Your rights</h2>
+                    <p>You can ask us what information we hold about you, ask us to correct it, or ask us to delete it, by emailing hello@yo7foods.co.uk. We'll respond as quickly as we reasonably can.</p>
+
+                    <h2>Changes to this policy</h2>
+                    <p>If how we handle your information changes, particularly once real payment processing goes live, we'll update this page and change the date above.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-terms" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Terms &amp; Conditions</div>
+                <h1>Terms &amp; Conditions</h1>
+                <p>The basics of using this site and ordering from us.</p>
+            </div>
+        </header>
+        <section class="legal-section">
+            <div class="wrap">
+                <div class="legal-content">
+                    <div class="legal-draft-note">This is a working draft, written to be genuinely accurate about how the site currently operates, not a substitute for a solicitor's review before the site goes live and starts processing real orders.</div>
+                    <div class="legal-updated">Last updated: August 2026</div>
+
+                    <h2>Who we are</h2>
+                    <p>These terms apply to yo7foods.co.uk, operated by Yo7 Foods Limited, 14 Trinity Street, Colchester, Essex, CO1 1JN.</p>
+
+                    <h2>Orders and pricing</h2>
+                    <p>Prices are shown in pounds sterling and include any applicable tax. We try to keep prices and stock status accurate, but mistakes can happen, if something's priced or listed incorrectly, we'll contact you before processing the order rather than simply honouring an obvious error.</p>
+                    <p>Placing an order is an offer to buy, we'll confirm acceptance by email or on-screen confirmation. A contract is only formed once we've confirmed your order.</p>
+
+                    <h2>Delivery</h2>
+                    <p>We deliver to all UK postcodes. Delivery is priced by the total weight of your order, shown at checkout before you pay, and is free once your order reaches £50. Pickup from our Colchester address is available at no charge. Delivery timing is estimated and can be affected by factors outside our control, including the delivery company itself.</p>
+
+                    <h2>Discount codes</h2>
+                    <p>Discount codes are subject to the conditions shown when applied, including any minimum order, date range, or per-customer usage limit. We reserve the right to withdraw or amend a code at any time.</p>
+
+                    <h2>Liability</h2>
+                    <p>We're not liable for delays or failures caused by circumstances outside our reasonable control. Nothing in these terms limits your statutory rights as a consumer under UK law.</p>
+
+                    <h2>Governing law</h2>
+                    <p>These terms are governed by the law of England and Wales.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-returns" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Returns Policy</div>
+                <h1>Returns Policy</h1>
+                <p>What to do if something's wrong with your order.</p>
+            </div>
+        </header>
+        <section class="legal-section">
+            <div class="wrap">
+                <div class="legal-content">
+                    <div class="legal-draft-note">This is a working starting point, reflecting standard practice for a food retailer, not your final confirmed policy. Please review and adjust it to match how you actually want to handle returns before the site goes live, then this note can come out.</div>
+                    <div class="legal-updated">Last updated: August 2026</div>
+
+                    <h2>Food and perishable items</h2>
+                    <p>Because most of what we sell is food, we're generally not able to accept returns once an order has been delivered, for hygiene and food safety reasons. This is standard practice across food retailers.</p>
+
+                    <h2>If something arrives damaged, wrong, or faulty</h2>
+                    <p>If an item arrives damaged, isn't what you ordered, or there's a genuine problem with it, contact us within 48 hours of delivery on WhatsApp or at hello@yo7foods.co.uk with a photo where possible, and we'll sort out a replacement or refund for that item.</p>
+
+                    <h2>Non-food items</h2>
+                    <p>For non-food items (such as hair or body/oral care products), unopened and unused items can be returned within 14 days of delivery. Contact us first so we can arrange it.</p>
+
+                    <h2>Cancelling before delivery</h2>
+                    <p>If you need to cancel or change an order, contact us as soon as possible, if it hasn't already been prepared or dispatched, we'll cancel it and refund you in full.</p>
                 </div>
             </div>
         </section>
@@ -5362,6 +5540,14 @@
                         <span class="footer-mark-text">Yo7<span class="footer-foods">Foods</span></span>
                     </a>
                     <p class="footer-tag">African Food Store, Essex &amp; Suffolk. Held long enough to be sure.</p>
+                    <div class="footer-social-row">
+                        <a href="https://wa.me/447398810052" target="_blank" rel="noopener" aria-label="WhatsApp">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+                        </a>
+                        <a href="https://instagram.com/yo7foods" target="_blank" rel="noopener" aria-label="Instagram">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+                        </a>
+                    </div>
                 </div>
                 <div class="footer-links">
                     <div class="footer-col">
@@ -5380,6 +5566,12 @@
                         <a href="https://instagram.com/yo7foods" target="_blank" rel="noopener">Instagram</a>
                         <a href="mailto:hello@yo7foods.co.uk">hello@yo7foods.co.uk</a>
                         <span class="footer-addr">14 Trinity Street, Colchester, Essex, CO1 1JN</span>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Legal</h4>
+                        <a href="#/privacy">Privacy Policy</a>
+                        <a href="#/terms">Terms &amp; Conditions</a>
+                        <a href="#/returns">Returns Policy</a>
                     </div>
                 </div>
             </div>
@@ -6198,6 +6390,7 @@
             const rawTotal = added.reduce((s, p) => s + effectivePrice(p), 0);
             const discountPct = combo.discountPercent || 0;
             const discountedTotal = rawTotal * (1 - discountPct / 100);
+            const totalWeight = added.reduce((s, p) => s + (typeof p.weight === 'number' ? p.weight : 0), 0);
             const comboItem = {
                 id: `combo::${ci}`,
                 name: combo.name,
@@ -6207,6 +6400,7 @@
                 emoji: '🍽️',
                 isCombo: true,
                 comboItems: added.map(p => p.name),
+                weight: totalWeight,
             };
             addToCart(comboItem, 1);
             const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} left out, out of stock)` : '';
@@ -6398,6 +6592,7 @@
             const rawTotal = added.reduce((s, p) => s + effectivePrice(p), 0);
             const discountPct = bundle.discountPercent || 0;
             const discountedTotal = rawTotal * (1 - discountPct / 100);
+            const totalWeight = added.reduce((s, p) => s + (typeof p.weight === 'number' ? p.weight : 0), 0);
             // Added as ONE fixed-price line item, not as separate products —
             // this is what stops a customer nudging individual quantities up
             // or down and quietly breaking the combo's discounted pricing.
@@ -6410,6 +6605,7 @@
                 emoji: '🍽️',
                 isCombo: true,
                 comboItems: added.map(p => p.name),
+                weight: totalWeight,
             };
             addToCart(comboItem, 1);
             const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} left out, out of stock)` : '';
@@ -7829,7 +8025,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos'];
+        const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
@@ -7886,6 +8082,12 @@
             } else if (hash === '#/combos') {
                 showView('view-combos');
                 renderCombosViewAllPage();
+            } else if (hash === '#/privacy') {
+                showView('view-privacy');
+            } else if (hash === '#/terms') {
+                showView('view-terms');
+            } else if (hash === '#/returns') {
+                showView('view-returns');
             } else {
                 showView('view-home');
             }
