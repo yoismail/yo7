@@ -2201,6 +2201,38 @@
             min-width: 0;
         }
 
+        /* Shop by category (homepage): same arrow/scroll pattern as the
+           in-category nav strip, but on a light background, so the arrows
+           need dark styling instead of the light/blur treatment used on
+           the dark shop-header. */
+        #shopByGroup .cat-nav-arrow {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.16);
+            color: var(--heading);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        #shopByGroup .cat-nav-arrow:hover { background: var(--section-alt-bg); }
+        .cat-flat-scroll { gap: 14px; padding: 6px 2px 10px; }
+        .cat-flat-card {
+            flex: 0 0 150px; max-width: 150px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
+            padding: 20px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
+            text-decoration: none;
+        }
+        .cat-flat-icon {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+        }
+        .cat-flat-card h3 {
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); line-height: 1.3;
+        }
+        .cat-flat-count { font-size: 11px; color: var(--text-muted); }
+        .swipe-hint {
+            text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 4px;
+        }
+
         .cat-nav-strip:active {
             cursor: grabbing;
         }
@@ -4373,11 +4405,20 @@
         <section class="shop-section" id="shopByGroup">
             <div class="wrap">
                 <div class="section-head reveal">
-                    <div class="section-eyebrow">Shop by group</div>
-                    <h2>Everything for a proper kitchen</h2>
-                    <p>Five simple groups, nineteen aisles inside. Find what you need in two taps.</p>
+                    <div class="section-eyebrow">Shop by category</div>
+                    <h2>Every aisle, one tap away</h2>
+                    <p>All 19 categories in one place, no need to go through a group first.</p>
                 </div>
-                <div class="group-card-grid" id="catGrid"></div>
+                <div class="cat-nav-wrap">
+                    <button class="cat-nav-arrow cat-nav-arrow-prev" id="homeCatNavPrev" type="button" aria-label="Scroll categories left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <div class="product-grid cat-flat-scroll" id="catGrid"></div>
+                    <button class="cat-nav-arrow cat-nav-arrow-next" id="homeCatNavNext" type="button" aria-label="Scroll categories right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                </div>
+                <p class="swipe-hint">Swipe to see more, or use the arrows</p>
             </div>
         </section>
 
@@ -6229,21 +6270,12 @@
         /* ================= RENDER: HOME CATEGORY GRID ================= */
         const CAT_ACCENTS = ['#063B00', '#266210', '#90B800', '#E1E100'];
         function renderCatGrid() {
-            const withPhoto = ['staples', 'seasoning-oils-flavours', 'proteins-produce', 'drinks-treats', 'home-personal-care'];
-            document.getElementById('catGrid').innerHTML = GROUPS.map((g, i) => {
-                const photoBlock = withPhoto.includes(g.slug)
-                    ? `<div class="group-card-photo group-photo-${g.slug}"></div>`
-                    : `<div class="group-card-photo no-photo"><span>Photo coming soon</span></div>`;
-                return `
-    <a class="group-card reveal" href="#/group/${g.slug}" style="transition-delay:${(i * 0.08).toFixed(2)}s">
-      ${photoBlock}
-      <div class="group-card-body">
-        <h3>${g.name}<svg class="group-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></h3>
-        <p>${g.tagline}</p>
-        <span class="group-aisles-badge">${g.categories.length} AISLES</span>
-      </div>
-    </a>`;
-            }).join('');
+            document.getElementById('catGrid').innerHTML = CATEGORIES.map((c, i) => `
+    <a class="cat-flat-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.03).toFixed(2)}s">
+      <span class="cat-flat-icon">${c.emoji}</span>
+      <h3>${c.name.replace(/&amp;/g, '&')}</h3>
+      <span class="cat-flat-count">${c.products.length} item${c.products.length === 1 ? '' : 's'}</span>
+    </a>`).join('');
         }
 
         function bundleCardHTML(bundle, bi) {
@@ -8427,6 +8459,12 @@
         const addComboBtn = document.getElementById('addComboBtn');
         if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
         renderHeroGlimpse();
+        const homeCatNavPrev = document.getElementById('homeCatNavPrev');
+        const homeCatNavNext = document.getElementById('homeCatNavNext');
+        const homeCatGrid = document.getElementById('catGrid');
+        const HOME_CAT_STEP = 320;
+        if (homeCatNavPrev && homeCatGrid) homeCatNavPrev.addEventListener('click', () => homeCatGrid.scrollBy({ left: -HOME_CAT_STEP, behavior: 'smooth' }));
+        if (homeCatNavNext && homeCatGrid) homeCatNavNext.addEventListener('click', () => homeCatGrid.scrollBy({ left: HOME_CAT_STEP, behavior: 'smooth' }));
 
         /* ================= NEWSLETTER =================
            No backend exists to store emails, so this doesn't pretend to save
