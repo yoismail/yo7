@@ -1589,6 +1589,30 @@
         }
 
         /* ================= SPECIAL OFFER SECTION ================= */
+        .hero-glimpse-strip { background: var(--cream); padding: 22px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
+        .hero-glimpse-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .hero-glimpse-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--heading);
+            text-decoration: none;
+        }
+        .hero-glimpse-pill span.emoji { font-size: 16px; }
+        .hero-glimpse-pill:hover { border-color: var(--aubergine-mid); }
+
         .offer-section { background: var(--section-alt-bg); padding: 56px 0 60px; border-top: 1px solid rgba(var(--border-rgb), 0.06); border-bottom: 1px solid rgba(var(--border-rgb), 0.06); }
         .offer-carousel-wrap { position: relative; width: 100%; max-width: 100%; overflow: hidden; }
         .offer-carousel {
@@ -4305,6 +4329,12 @@
             </div>
         </header>
 
+        <div class="hero-glimpse-strip">
+            <div class="wrap">
+                <div class="hero-glimpse-row" id="heroGlimpseRow"></div>
+            </div>
+        </div>
+
         <section class="offer-section">
             <div class="wrap">
                 <div class="new-section-head reveal">
@@ -5773,6 +5803,12 @@
         ];
         function findGroup(slug) { return GROUPS.find(g => g.slug === slug); }
         function groupForCategory(catSlug) { return GROUPS.find(g => g.categories.includes(catSlug)); }
+        function renderHeroGlimpse() {
+            const row = document.getElementById('heroGlimpseRow');
+            if (!row) return;
+            row.innerHTML = GROUPS.map(g => `
+      <a class="hero-glimpse-pill" href="#/group/${g.slug}"><span class="emoji">${g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+        }
 
         /* ================= DELIVERY RULES =================
            Two layers, matching how real delivery pricing usually works:
@@ -8390,6 +8426,7 @@
         renderCombos();
         const addComboBtn = document.getElementById('addComboBtn');
         if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
+        renderHeroGlimpse();
 
         /* ================= NEWSLETTER =================
            No backend exists to store emails, so this doesn't pretend to save
