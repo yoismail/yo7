@@ -1136,6 +1136,8 @@
             gap: 22px;
             margin-top: 12px;
         }
+        .bundles-scroll { gap: 20px; padding: 4px 2px 10px; }
+        .bundles-scroll .bundle-card { flex: 0 0 300px; max-width: 300px; }
         .bundle-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
@@ -2213,29 +2215,38 @@
             -webkit-backdrop-filter: none;
         }
         #shopByGroup .cat-nav-arrow:hover { background: var(--section-alt-bg); }
-        .cat-flat-scroll { gap: 14px; padding: 6px 2px 10px; }
+        .cat-flat-scroll { gap: 18px; padding: 4px 2px 10px; }
         .cat-flat-card {
-            flex: 0 0 150px; max-width: 150px;
+            flex: 0 0 220px; max-width: 220px;
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
-            padding: 20px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
-            text-decoration: none;
+            overflow: hidden; text-decoration: none; color: var(--ink);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
-        .cat-flat-icon {
-            width: 52px; height: 52px; border-radius: 50%;
+        .cat-flat-card:hover { transform: translateY(-5px); box-shadow: 0 14px 26px rgba(var(--border-rgb), 0.12); }
+        .cat-flat-card .thumb {
+            aspect-ratio: 1/1; position: relative; overflow: hidden;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
-            display: flex; align-items: center; justify-content: center; font-size: 24px;
         }
-        .cat-flat-icon-photo {
-            width: 72px; height: 72px;
+        .cat-flat-photo {
+            display: block; width: 100%; height: 100%;
             background-size: cover; background-position: center;
-            border: 2px solid var(--card-bg); box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.1);
         }
+        .cat-flat-photo-emoji {
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cat-flat-photo-emoji span { font-size: 44px; }
+        .cat-flat-card .body { padding: 12px 14px 14px; }
         .cat-flat-card h3 {
-            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); line-height: 1.3;
+            font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--heading); line-height: 1.3;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px;
         }
         .cat-flat-count { font-size: 11px; color: var(--text-muted); }
         .swipe-hint {
             text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 4px;
+        }
+
+        @media (max-width: 900px) {
+            .cat-flat-card { flex-basis: 168px; max-width: 168px; }
         }
 
         .cat-nav-strip:active {
@@ -2681,12 +2692,60 @@
             font-weight: 700;
         }
 
-        .pd-actions {
-            display: flex;
-            gap: 14px;
-            flex-wrap: wrap;
-            margin-bottom: 36px;
+        .subscribe-box {
+            background: var(--section-alt-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 22px;
         }
+        .subscribe-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-body);
+            padding: 6px 0;
+            cursor: pointer;
+        }
+        .subscribe-option input { width: auto; margin: 0; }
+        .subscribe-option strong { color: var(--aubergine-mid); }
+        .subscribe-frequency-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0 2px 26px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .subscribe-frequency-row select {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            font-family: var(--body);
+            font-size: 13px;
+            background: var(--card-bg);
+            color: var(--text-body);
+        }
+        .subscribe-discount-edit {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0 4px 26px;
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+        .subscribe-discount-edit input {
+            width: 56px;
+            padding: 5px 7px;
+            border-radius: 6px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            font-family: var(--body);
+            font-size: 12.5px;
+            background: var(--card-bg);
+            color: var(--text-body);
+        }
+        body.edit-mode-on .subscribe-discount-edit { display: flex; }
 
         .pd-meta {
             display: flex;
@@ -2813,6 +2872,18 @@
             line-height: 1.5;
         }
         .allergen-summary-banner strong { display: block; margin-bottom: 4px; font-family: var(--display); }
+
+        .subscription-summary-banner {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(144,184,0,0.08);
+            border: 1px solid rgba(144,184,0,0.28);
+            font-size: 13px;
+            color: var(--text-body);
+            line-height: 1.5;
+        }
+        .subscription-summary-banner strong { display: block; margin-bottom: 4px; font-family: var(--display); color: var(--aubergine-mid); }
 
         /* ================= CHECKOUT ================= */
         .checkout-section {
@@ -2951,6 +3022,11 @@
         .cart-row-combo .cart-thumb { font-size: 20px; display: flex; align-items: center; justify-content: center; }
         .combo-included {
             display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px;
+        }
+        .subscription-badge {
+            display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em;
+            color: var(--aubergine-mid); background: rgba(144,184,0,0.14);
+            padding: 3px 8px; border-radius: 999px; margin-top: 4px;
         }
         .cart-qty-locked {
             font-size: 11.5px; font-weight: 600; color: var(--text-muted);
@@ -4434,14 +4510,14 @@
                         <div class="section-eyebrow" style="color: var(--heading-mid);">Shop by meal</div>
                         <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
                             A few things that go together</h2>
-                        <p>Real products from the aisles, grouped for a specific meal. Add the whole set in one tap, or pick and choose.</p>
+                        <p>Real products from the aisles, grouped for a specific meal. Add the whole set in one tap, or pick and choose. Swipe to browse.</p>
                     </div>
                     <a class="view-all-btn" href="#/bundles">
                         View all
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                 </div>
-                <div class="bundles-grid" id="bundlesGrid"></div>
+                <div class="product-grid bundles-scroll" id="bundlesGrid"></div>
                 <button type="button" class="add-bundle-btn" id="addBundleBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                     Add a bundle
@@ -4524,8 +4600,8 @@
                 <div class="steps">
                     <div class="step reveal" style="transition-delay:0.05s">
                         <div class="step-num">01</div>
-                        <h3>Pick a group, then browse</h3>
-                        <p>Choose a shopping group, tap a category inside it, add what you need as you go.</p>
+                        <h3>Browse by category</h3>
+                        <p>Every aisle is one tap away from the homepage, add what you need as you go.</p>
                     </div>
                     <div class="step reveal" style="transition-delay:0.15s">
                         <div class="step-num">02</div>
@@ -4642,6 +4718,28 @@
                             <span id="pdQtyVal">1</span>
                             <button type="button" id="pdQtyPlus">+</button>
                         </div>
+                        <div class="subscribe-box">
+                            <label class="subscribe-option">
+                                <input type="radio" name="purchaseType" value="onetime" checked id="pdOneTimeRadio">
+                                <span>One-time purchase</span>
+                            </label>
+                            <label class="subscribe-option">
+                                <input type="radio" name="purchaseType" value="subscribe" id="pdSubscribeRadio">
+                                <span>Subscribe &amp; save <strong id="pdSubscribePct">10%</strong></span>
+                            </label>
+                            <div class="subscribe-discount-edit">
+                                <label>Subscription discount % (site-wide)</label>
+                                <input type="number" min="0" max="50" id="subscribeDiscountInput" value="10">
+                            </div>
+                            <div class="subscribe-frequency-row" id="pdSubscribeFrequencyRow" style="display:none;">
+                                <label>Deliver every</label>
+                                <select id="pdSubscribeFrequency">
+                                    <option value="2">2 weeks</option>
+                                    <option value="4" selected>4 weeks</option>
+                                    <option value="6">6 weeks</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="pd-actions">
                             <button class="btn btn-outline-dark" id="pdAddCart" type="button">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -4697,6 +4795,7 @@
                             <h2>Your basket</h2>
                             <div id="cartList"></div>
                             <div id="cartAllergenBanner" class="allergen-summary-banner" style="display:none;"></div>
+                            <div id="cartSubscriptionBanner" class="subscription-summary-banner" style="display:none;"></div>
                             <div id="cartEmpty" class="empty-cart" style="display:none;">
                                 <h3>Your basket is empty</h3>
                                 <p>Add a few staples from the shop before checking out.</p>
@@ -6264,6 +6363,7 @@
                 const entry = { id: product.id, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
                 if (product.isCombo) { entry.isCombo = true; entry.comboItems = product.comboItems; }
                 if (typeof product.weight === 'number') { entry.weight = product.weight; }
+                if (product.isSubscription) { entry.isSubscription = true; entry.subscriptionFrequency = product.subscriptionFrequency; }
                 cart.push(entry);
             }
             updateCartBadge();
@@ -6274,14 +6374,16 @@
         function renderCatGrid() {
             document.getElementById('catGrid').innerHTML = CATEGORIES.map((c, i) => {
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
-                const iconBlock = photoClass
-                    ? `<span class="cat-flat-icon cat-flat-icon-photo ${photoClass}"></span>`
-                    : `<span class="cat-flat-icon">${c.emoji}</span>`;
+                const thumbBlock = photoClass
+                    ? `<span class="cat-flat-photo ${photoClass}"></span>`
+                    : `<span class="cat-flat-photo cat-flat-photo-emoji"><span>${c.emoji}</span></span>`;
                 return `
     <a class="cat-flat-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.03).toFixed(2)}s">
-      ${iconBlock}
-      <h3>${c.name.replace(/&amp;/g, '&')}</h3>
-      <span class="cat-flat-count">${c.products.length} item${c.products.length === 1 ? '' : 's'}</span>
+      <div class="thumb">${thumbBlock}</div>
+      <div class="body">
+        <h3>${c.name.replace(/&amp;/g, '&')}</h3>
+        <span class="cat-flat-count">${c.products.length} item${c.products.length === 1 ? '' : 's'}</span>
+      </div>
     </a>`;
             }).join('');
         }
@@ -6838,6 +6940,7 @@
             }).join('');
             // duplicated once so the CSS animation loop is seamless (translateX(-50%) = one full set)
             strip.innerHTML = cardHTML + cardHTML;
+            matchCarouselSpeed(strip);
         }
         function renderNewCarousel() {
             const items = newArrivalsItems();
@@ -6855,7 +6958,25 @@
       </div>
     </a>`).join('');
             // duplicated once so the CSS animation loop is seamless (translateX(-50%) = one full set)
-            document.getElementById('newCarousel').innerHTML = cardHTML + cardHTML;
+            const strip = document.getElementById('newCarousel');
+            strip.innerHTML = cardHTML + cardHTML;
+            matchCarouselSpeed(strip);
+        }
+        // Both marquee carousels share the same 32s @keyframes duration in CSS, but that
+        // only produces the same *visual* speed when both have the same total content
+        // width. With a different number of cards (e.g. fewer items currently on offer
+        // than new arrivals), the shorter track covers less real distance in the same
+        // 32s and visibly crawls. This recalculates each carousel's animation-duration
+        // from its actual rendered width so every carousel moves at the same pixels-per-
+        // second rate, matching "Just landed" as the reference speed, regardless of how
+        // many cards either one currently has.
+        const CAROUSEL_PX_PER_SECOND = 74; // derived from the new-arrivals carousel's original 32s/full-width pace
+        function matchCarouselSpeed(strip) {
+            if (!strip) return;
+            const halfWidth = strip.scrollWidth / 2; // content is duplicated for the seamless loop
+            if (!halfWidth) return;
+            const duration = Math.max(6, halfWidth / CAROUSEL_PX_PER_SECOND);
+            strip.style.animationDuration = `${duration}s`;
         }
         function renderNewArrivalsPage() {
             const items = newArrivalsItems();
@@ -7139,6 +7260,11 @@
             pdCurrent = p;
             pdQty = 1;
             pdSelectedVariant = null;
+            pdPurchaseType = 'onetime';
+            const oneTimeRadio = document.getElementById('pdOneTimeRadio');
+            if (oneTimeRadio) oneTimeRadio.checked = true;
+            const freqRow = document.getElementById('pdSubscribeFrequencyRow');
+            if (freqRow) freqRow.style.display = 'none';
             document.getElementById('pdQtyVal').textContent = pdQty;
             if (!p) {
                 document.getElementById('pdName').textContent = 'Product not found';
@@ -7320,15 +7446,19 @@
         window.savePdDetailEdit = savePdDetailEdit;
         document.getElementById('pdQtyMinus').addEventListener('click', () => { pdQty = Math.max(1, pdQty - 1); document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         document.getElementById('pdQtyPlus').addEventListener('click', () => { pdQty += 1; document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
+        let subscriptionDiscountPct = 10;
+        let pdPurchaseType = 'onetime';
         function updatePdPrice() {
             if (!pdCurrent) return;
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
-            const unit = variant ? variant.price : effectivePrice(pdCurrent);
+            let unit = variant ? variant.price : effectivePrice(pdCurrent);
+            if (pdPurchaseType === 'subscribe') unit = unit * (1 - subscriptionDiscountPct / 100);
             const total = unit * pdQty;
-            const onSale = !variant && typeof pdCurrent.salePrice === 'number' && pdCurrent.salePrice < pdCurrent.price;
+            const onSale = !variant && pdPurchaseType === 'onetime' && typeof pdCurrent.salePrice === 'number' && pdCurrent.salePrice < pdCurrent.price;
             const eachNote = pdQty > 1 ? ` <span style="font-size:14px; color:var(--text-muted); font-weight:500;">(${money(unit)} each)</span>` : '';
-            const wasNote = onSale ? ` <span class="price-was" style="font-size:0.55em;">${money(pdCurrent.price * pdQty)}</span>` : '';
-            document.getElementById('pdPrice').innerHTML = `<span class="${onSale ? 'sale' : ''}">${money(total)}</span>${wasNote}${eachNote}`;
+            const basePrice = variant ? variant.price : pdCurrent.price;
+            const wasNote = (onSale || pdPurchaseType === 'subscribe') ? ` <span class="price-was" style="font-size:0.55em;">${money(basePrice * pdQty)}</span>` : '';
+            document.getElementById('pdPrice').innerHTML = `<span class="${onSale || pdPurchaseType === 'subscribe' ? 'sale' : ''}">${money(total)}</span>${wasNote}${eachNote}`;
 
             // Unit price reflects whichever weight is actually selected, not the base pack.
             const unitInfo = variant
@@ -7349,17 +7479,33 @@
             updatePdPrice();
         }
         window.selectPdVariant = selectPdVariant;
+        function buildPdCartItem() {
+            const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
+            let toAdd = variant ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label } : { ...pdCurrent };
+            if (pdPurchaseType === 'subscribe') {
+                const freq = document.getElementById('pdSubscribeFrequency').value;
+                const baseForSub = effectivePrice(toAdd);
+                toAdd = {
+                    ...toAdd,
+                    price: baseForSub * (1 - subscriptionDiscountPct / 100),
+                    salePrice: undefined,
+                    id: toAdd.id + '::sub' + freq,
+                    isSubscription: true,
+                    subscriptionFrequency: freq,
+                };
+            }
+            return toAdd;
+        }
         document.getElementById('pdAddCart').addEventListener('click', () => {
             if (!pdCurrent || pdCurrent.stock === 'out') return;
-            const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
-            const toAdd = variant ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label } : pdCurrent;
+            const toAdd = buildPdCartItem();
             addToCart(toAdd, pdQty);
-            showToast(`Added ${pdQty} × ${pdCurrent.name}${variant ? ' (' + variant.label + ')' : ''} to your basket.`);
+            const subNote = pdPurchaseType === 'subscribe' ? ` (subscription, every ${document.getElementById('pdSubscribeFrequency').value} weeks)` : '';
+            showToast(`Added ${pdQty} × ${pdCurrent.name}${subNote} to your basket.`);
         });
         document.getElementById('pdBuyNow').addEventListener('click', () => {
             if (!pdCurrent || pdCurrent.stock === 'out') return;
-            const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
-            const toAdd = variant ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label } : pdCurrent;
+            const toAdd = buildPdCartItem();
             addToCart(toAdd, pdQty);
             window.location.hash = '#/checkout';
         });
@@ -7394,7 +7540,11 @@
                     return `
       <div class="cart-row">
         <div class="cart-thumb"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#b3a998;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
-        <div class="cart-info"><h4>${item.name}</h4><span>${item.unit}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span></div>
+        <div class="cart-info">
+          <h4>${item.name}</h4>
+          <span>${item.unit}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
+          ${item.isSubscription ? `<span class="subscription-badge">Subscription, every ${item.subscriptionFrequency} weeks</span>` : ''}
+        </div>
         <div class="cart-qty">
           <button type="button" onclick="changeQty(${i},-1)">&minus;</button>
           <span>${item.qty}</span>
@@ -7408,6 +7558,7 @@
                 }).join('');
             }
             renderCartAllergenBanner();
+            renderCartSubscriptionBanner();
             updateSummaries();
         }
         function renderCartAllergenBanner() {
@@ -7424,6 +7575,14 @@
             const labels = [...found].map(k => (UK_ALLERGENS.find(a => a.key === k) || {}).label).filter(Boolean);
             banner.style.display = 'block';
             banner.innerHTML = `<strong>Contains allergens</strong>This order contains: ${labels.join(', ')}. Please double-check individual product pages if you have a specific allergy or intolerance.`;
+        }
+        function renderCartSubscriptionBanner() {
+            const banner = document.getElementById('cartSubscriptionBanner');
+            if (!banner) return;
+            const hasSubscription = cart.some(item => item.isSubscription);
+            if (!hasSubscription) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
+            banner.style.display = 'block';
+            banner.innerHTML = `<strong>About your subscription item(s)</strong>Today's delivery is charged as normal. Automatic recurring billing isn't switched on yet, so we'll personally reach out on WhatsApp or email ahead of each future delivery to confirm it before charging you again.`;
         }
         function changeQty(i, delta) {
             cart[i].qty += delta;
@@ -7619,7 +7778,7 @@
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
-      <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}</span></td>
+      <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
       <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
       <td class="inv-qty">${i.qty}</td>
       <td class="inv-line-total">${money(i.price * i.qty)}</td>
@@ -8469,6 +8628,34 @@
         const addComboBtn = document.getElementById('addComboBtn');
         if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
         renderHeroGlimpse();
+
+        /* ================= SUBSCRIBE & SAVE: wiring ================= */
+        const pdOneTimeRadio = document.getElementById('pdOneTimeRadio');
+        const pdSubscribeRadio = document.getElementById('pdSubscribeRadio');
+        const pdSubscribeFrequencyRow = document.getElementById('pdSubscribeFrequencyRow');
+        if (pdOneTimeRadio && pdSubscribeRadio) {
+            pdOneTimeRadio.addEventListener('change', () => {
+                pdPurchaseType = 'onetime';
+                pdSubscribeFrequencyRow.style.display = 'none';
+                updatePdPrice();
+            });
+            pdSubscribeRadio.addEventListener('change', () => {
+                pdPurchaseType = 'subscribe';
+                pdSubscribeFrequencyRow.style.display = 'flex';
+                updatePdPrice();
+            });
+        }
+        const pdSubscribeFrequency = document.getElementById('pdSubscribeFrequency');
+        if (pdSubscribeFrequency) pdSubscribeFrequency.addEventListener('change', updatePdPrice);
+        const subscribeDiscountInput = document.getElementById('subscribeDiscountInput');
+        if (subscribeDiscountInput) {
+            subscribeDiscountInput.addEventListener('change', () => {
+                const pct = parseFloat(subscribeDiscountInput.value);
+                subscriptionDiscountPct = isNaN(pct) ? 0 : Math.max(0, Math.min(50, pct));
+                document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
+                updatePdPrice();
+            });
+        }
         const homeCatNavPrev = document.getElementById('homeCatNavPrev');
         const homeCatNavNext = document.getElementById('homeCatNavNext');
         const homeCatGrid = document.getElementById('catGrid');
