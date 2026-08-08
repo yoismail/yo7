@@ -8360,7 +8360,7 @@
                 confirmLoyaltyEl.classList.toggle('loyalty-note-earned', !!justEarnedCode);
                 confirmLoyaltyEl.innerHTML = justEarnedCode
                     ? `🎉 Thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${justEarnedCode}</strong> at checkout. It's yours alone, valid for one order only.`
-                    : `Thank you! ${loyaltyStatusHTML()}`;
+                    : `Thank you! Spend <strong>${money(loyaltySpendThreshold)}</strong> on your next order to earn <strong>${loyaltyRewardPct}% off</strong> the one after that.`;
                 if (justEarnedCode) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off, code ${justEarnedCode}`, 5000);
             }
             document.getElementById('invNumber').textContent = lastOrder.number;
