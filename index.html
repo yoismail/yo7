@@ -1021,6 +1021,7 @@
         /* ================= STORY ================= */
         .story {
             padding: 88px 0 80px;
+            background: var(--card-bg);
         }
 
         .story-grid {
@@ -1254,8 +1255,8 @@
         }
 
         .combos-scroll { padding-bottom: 6px; }
+        .combos-scroll .combo-card { flex: 0 0 265px; max-width: 265px; }
         .combo-card {
-            flex: 0 0 265px; max-width: 265px;
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
             padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
         }
@@ -1629,7 +1630,7 @@
 
         /* ================= DELIVERY / ORDER (home) ================= */
         .new-section {
-            background: var(--section-alt-bg);
+            background: var(--cream);
             padding: 56px 0 60px;
             border-top: 1px solid rgba(var(--border-rgb), 0.06);
             border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
@@ -1749,6 +1750,7 @@
 
         .delivery {
             padding: 96px 0;
+            background: var(--section-alt-bg);
         }
 
         .delivery-grid {
@@ -3744,6 +3746,15 @@
             color: var(--heading);
         }
 
+        .invoice-loyalty-note {
+            margin-top: 18px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: var(--orange);
+            color: var(--ink);
+            font-size: 12.5px;
+            text-align: center;
+        }
         .invoice-footer-note {
             margin-top: 30px;
             padding-top: 20px;
@@ -4683,7 +4694,7 @@
                 <div class="section-head reveal">
                     <div class="section-eyebrow">Shop by category</div>
                     <h2>Every aisle, one tap away</h2>
-                    <p>All 19 categories in one place, no need to go through a group first.</p>
+                    <p>Everything you're used to cooking with, in one place, ready to add to your basket in a couple of taps.</p>
                 </div>
                 <div class="cat-nav-wrap">
                     <button class="cat-nav-arrow cat-nav-arrow-prev" id="homeCatNavPrev" type="button" aria-label="Scroll categories left">
@@ -5266,6 +5277,8 @@
                         <div class="summary-row total"><span>Total paid</span><span id="invTotal"></span></div>
                     </div>
 
+                    <div class="invoice-loyalty-note" id="invLoyaltyNote" style="display:none;"></div>
+
                     <div class="invoice-footer-note">Yo7 Foods Limited &middot; hello@yo7foods.co.uk &middot; This is a
                         preview invoice generated for demonstration.</div>
                 </div>
@@ -5829,9 +5842,9 @@
         <div class="wrap">
             <div class="delivery-admin-panel">
                 <h3>Loyalty nudge <span class="admin-only-tag">Edit mode only</span></h3>
-                <p class="delivery-admin-note">Counts completed orders in each customer's own browser storage, not a real account system, so it resets if they clear their browser or switch devices. The reward is a genuine working code (<strong id="loyaltyCodeDisplay">LOYALTY10</strong>), just not advertised anywhere until it's earned.</p>
+                <p class="delivery-admin-note">Tracks cumulative spend in each customer's own browser storage, not a real account system, so it resets if they clear their browser or switch devices. Crossing the threshold mints a unique, single-use code, shown on their receipt and valid for their next order only.</p>
                 <div class="field-row">
-                    <div class="field"><label>Orders needed for a reward</label><input type="number" min="1" id="loyaltyThresholdInput" value="5"></div>
+                    <div class="field"><label>Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="100"></div>
                     <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="10"></div>
                 </div>
             </div>
@@ -5896,7 +5909,7 @@
                     <div class="guide-step reveal">
                         <div class="num">1</div>
                         <h3>Browse or search</h3>
-                        <p>Pick a shopping group and tap a category, or just search for exactly what you need, ofada rice, scent leaf, red palm oil, whatever's on your list.</p>
+                        <p>Every category is right there on the homepage, one tap to any aisle, or just search for exactly what you need, ofada rice, scent leaf, red palm oil, whatever's on your list.</p>
                     </div>
                     <div class="guide-step reveal" style="transition-delay:0.08s">
                         <div class="num">2</div>
@@ -6324,41 +6337,82 @@
 
         /* ================= LOYALTY NUDGE =================
            Not a full account-based loyalty program, there's no real login
-           system to hang one off. This counts completed orders in this
+           system to hang one off. This tracks cumulative spend in this
            browser's local storage (same honest caveat as discount-code
            usage limits: it resets if storage is cleared or a different
-           device is used) and reveals a real, working discount code once
-           a threshold is hit. The code itself is a genuine entry in the
-           discounts array from the start, it just isn't advertised
-           anywhere until the customer has actually earned it. */
-        let loyaltyThreshold = 5;
+           device is used). Crossing every £loyaltySpendThreshold mints a
+           genuine, unique, single-use discount code, registered as a real
+           entry in the discounts array so it actually works at checkout,
+           valid for the next order only, then automatically invalidated
+           once it's been used (maxPerCustomer: 1 plus the existing usage
+           tracker already does this correctly). */
+        let loyaltySpendThreshold = 100;
         let loyaltyRewardPct = 10;
-        const LOYALTY_CODE = 'LOYALTY10';
-        function ensureLoyaltyDiscount() {
-            if (findDiscountByCode(LOYALTY_CODE)) return;
-            discounts.push({
-                id: 'disc-loyalty', name: 'Loyalty reward', code: LOYALTY_CODE,
-                type: 'percent', value: loyaltyRewardPct,
-                qualifyingScope: 'all', minOrder: null, maxPerCustomer: null, active: true,
-            });
-        }
-        function getLoyaltyOrderCount() {
-            try { return parseInt(localStorage.getItem('yo7-loyalty-orders') || '0', 10); }
+        function getLoyaltySpend() {
+            try { return parseFloat(localStorage.getItem('yo7-loyalty-spend') || '0'); }
             catch (e) { return 0; }
         }
-        function incrementLoyaltyOrderCount() {
-            try { localStorage.setItem('yo7-loyalty-orders', String(getLoyaltyOrderCount() + 1)); }
-            catch (e) { /* localStorage unavailable, loyalty count just won't persist this session */ }
+        function addLoyaltySpend(amount) {
+            try { localStorage.setItem('yo7-loyalty-spend', String(getLoyaltySpend() + amount)); }
+            catch (e) { /* localStorage unavailable, spend just won't persist this session */ }
+        }
+        function getLoyaltyCodes() {
+            try { return JSON.parse(localStorage.getItem('yo7-loyalty-codes') || '[]'); }
+            catch (e) { return []; }
+        }
+        function saveLoyaltyCodes(codes) {
+            try { localStorage.setItem('yo7-loyalty-codes', JSON.stringify(codes)); }
+            catch (e) { /* localStorage unavailable, code just won't persist this session */ }
+        }
+        function generateLoyaltyCodeString() {
+            return 'THANKS' + Math.random().toString(36).slice(2, 7).toUpperCase();
+        }
+        // Re-registers any still-unused, previously-earned codes into the live
+        // discounts array. Needed because `discounts` is in-memory only and
+        // resets on refresh, but the codes themselves must keep working.
+        function registerStoredLoyaltyCodes() {
+            getLoyaltyCodes().filter(c => !c.used).forEach(c => {
+                if (findDiscountByCode(c.code)) return;
+                discounts.push({
+                    id: 'loyalty-' + c.code, name: 'Loyalty reward', code: c.code,
+                    type: 'percent', value: c.pct,
+                    qualifyingScope: 'all', minOrder: null, maxPerCustomer: 1, active: true,
+                });
+            });
+        }
+        // Call once per completed order. Adds this order's total to cumulative
+        // spend and, if that crossed a new £threshold, mints and returns a
+        // fresh unique code. Returns null if nothing was earned this time.
+        function issueLoyaltyRewardIfEarned(orderTotal) {
+            const before = getLoyaltySpend();
+            addLoyaltySpend(orderTotal);
+            const after = before + orderTotal;
+            if (Math.floor(after / loyaltySpendThreshold) <= Math.floor(before / loyaltySpendThreshold)) return null;
+            const code = generateLoyaltyCodeString();
+            const codes = getLoyaltyCodes();
+            codes.push({ code, pct: loyaltyRewardPct, used: false, earnedAt: new Date().toISOString() });
+            saveLoyaltyCodes(codes);
+            registerStoredLoyaltyCodes();
+            return code;
+        }
+        // Flags a code as permanently spent once an order using it goes through.
+        // maxPerCustomer:1 + recordDiscountUsage() already block reuse in this
+        // browser; this additionally stops the "you have a reward" UI mentioning it.
+        function markLoyaltyCodeUsed(code) {
+            const codes = getLoyaltyCodes();
+            const entry = codes.find(c => c.code.toLowerCase() === (code || '').toLowerCase());
+            if (entry) { entry.used = true; saveLoyaltyCodes(codes); }
+        }
+        function unusedLoyaltyCode() {
+            return getLoyaltyCodes().find(c => !c.used) || null;
         }
         function loyaltyStatusHTML() {
-            const count = getLoyaltyOrderCount();
-            const remainder = count % loyaltyThreshold;
-            const hasReward = count > 0 && remainder === 0;
-            if (hasReward) {
-                return `You've earned <strong>${loyaltyRewardPct}% off</strong>, use code <strong>${LOYALTY_CODE}</strong> at checkout.`;
+            const pending = unusedLoyaltyCode();
+            if (pending) {
+                return `You've earned <strong>${pending.pct}% off</strong>, use code <strong>${pending.code}</strong> at checkout.`;
             }
-            const away = loyaltyThreshold - remainder;
-            return `${away} more order${away === 1 ? '' : 's'} until <strong>${loyaltyRewardPct}% off</strong> your next one.`;
+            const remaining = loyaltySpendThreshold - (getLoyaltySpend() % loyaltySpendThreshold);
+            return `Spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> your next order.`;
         }
 
         function findDiscountByCode(code) {
@@ -8079,8 +8133,7 @@
             renderCartSubscriptionBanner();
             const loyaltyNoteEl = document.getElementById('loyaltyNote');
             if (loyaltyNoteEl) {
-                const earned = getLoyaltyOrderCount() > 0 && getLoyaltyOrderCount() % loyaltyThreshold === 0;
-                loyaltyNoteEl.classList.toggle('loyalty-note-earned', earned);
+                loyaltyNoteEl.classList.toggle('loyalty-note-earned', !!unusedLoyaltyCode());
                 loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
             }
             updateSummaries();
@@ -8264,8 +8317,12 @@
             const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
             const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
-            if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
-            incrementLoyaltyOrderCount();
+            const orderTotal = Math.max(0, orderSubtotal + deliveryCharge - discountAmount);
+            if (appliedDiscount) {
+                recordDiscountUsage(appliedDiscount.id);
+                if (appliedDiscount.id.startsWith('loyalty-')) markLoyaltyCodeUsed(appliedDiscount.code);
+            }
+            const loyaltyCodeEarned = issueLoyaltyRewardIfEarned(orderTotal);
             lastOrder = {
                 number: 'YO7-' + Math.floor(100000 + Math.random() * 899999),
                 date: new Date(),
@@ -8274,11 +8331,11 @@
                 delivery: deliveryCharge,
                 discount: discountAmount,
                 discountCode: appliedDiscount ? appliedDiscount.code : null,
-                total: Math.max(0, orderSubtotal + deliveryCharge - discountAmount),
+                total: orderTotal,
                 delivery_info: deliveryInfo,
                 fulfilment: fulfilmentMethod,
                 deliveryWeight: cartTotalWeight(),
-                loyaltyOrderNumber: getLoyaltyOrderCount(),
+                loyaltyCodeEarned,
             };
             cart = [];
             appliedDiscount = null;
@@ -8294,15 +8351,23 @@
             }
             const confirmLoyaltyEl = document.getElementById('confirmLoyaltyNote');
             if (confirmLoyaltyEl) {
-                const n = lastOrder.loyaltyOrderNumber || getLoyaltyOrderCount();
-                const justEarned = n > 0 && n % loyaltyThreshold === 0;
-                confirmLoyaltyEl.classList.toggle('loyalty-note-earned', justEarned);
-                confirmLoyaltyEl.innerHTML = justEarned
-                    ? `🎉 This was order #${n} with us, thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${LOYALTY_CODE}</strong> at checkout.`
-                    : `This was order #${n} with us, thank you! ${loyaltyStatusHTML()}`;
-                if (justEarned) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off, code ${LOYALTY_CODE}`, 5000);
+                const justEarnedCode = lastOrder.loyaltyCodeEarned;
+                confirmLoyaltyEl.classList.toggle('loyalty-note-earned', !!justEarnedCode);
+                confirmLoyaltyEl.innerHTML = justEarnedCode
+                    ? `🎉 Thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${justEarnedCode}</strong> at checkout. It's yours alone, valid for one order only.`
+                    : `Thank you! ${loyaltyStatusHTML()}`;
+                if (justEarnedCode) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off, code ${justEarnedCode}`, 5000);
             }
             document.getElementById('invNumber').textContent = lastOrder.number;
+            const invLoyaltyEl = document.getElementById('invLoyaltyNote');
+            if (invLoyaltyEl) {
+                if (lastOrder.loyaltyCodeEarned) {
+                    invLoyaltyEl.style.display = 'block';
+                    invLoyaltyEl.innerHTML = `<strong>Reward earned:</strong> ${loyaltyRewardPct}% off your next order with code <strong>${lastOrder.loyaltyCodeEarned}</strong>. One-time use, keep this for reference.`;
+                } else {
+                    invLoyaltyEl.style.display = 'none';
+                }
+            }
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const di = lastOrder.delivery_info || {};
             const isPickup = lastOrder.fulfilment === 'pickup';
@@ -9167,13 +9232,13 @@
         renderBundles();
         renderDeliveryAdmin();
         populateDeliverySlots();
-        ensureLoyaltyDiscount();
+        registerStoredLoyaltyCodes();
         const loyaltyThresholdInput = document.getElementById('loyaltyThresholdInput');
         const loyaltyRewardInput = document.getElementById('loyaltyRewardInput');
         if (loyaltyThresholdInput) {
             loyaltyThresholdInput.addEventListener('change', () => {
-                const n = parseInt(loyaltyThresholdInput.value, 10);
-                loyaltyThreshold = (!isNaN(n) && n > 0) ? n : 5;
+                const n = parseFloat(loyaltyThresholdInput.value);
+                loyaltySpendThreshold = (!isNaN(n) && n > 0) ? n : 100;
                 renderCartList();
             });
         }
@@ -9181,8 +9246,6 @@
             loyaltyRewardInput.addEventListener('change', () => {
                 const n = parseFloat(loyaltyRewardInput.value);
                 loyaltyRewardPct = isNaN(n) ? 10 : Math.max(0, Math.min(50, n));
-                const existing = findDiscountByCode(LOYALTY_CODE);
-                if (existing) existing.value = loyaltyRewardPct;
                 renderCartList();
             });
         }
