@@ -2097,6 +2097,58 @@
         }
 
         /* ================= FLOATING ORDER BUTTON ================= */
+        .float-cart {
+            position: fixed;
+            left: 24px;
+            bottom: 24px;
+            z-index: 90;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--aubergine);
+            color: var(--cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+            opacity: 0;
+            transform: scale(0.6) translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.34, 1.56, .64, 1), background 0.2s ease;
+            pointer-events: none;
+            text-decoration: none;
+        }
+        .float-cart.is-visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+        .float-cart.float-suppressed {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(0.6) translateY(12px) !important;
+        }
+        .float-cart:hover { background: var(--aubergine-mid); transform: scale(1.08); }
+        .float-cart svg { width: 24px; height: 24px; }
+        .float-cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--page-bg);
+        }
+        .float-cart-badge.is-empty { display: none; }
+
         .float-order {
             position: fixed;
             right: 24px;
@@ -3349,6 +3401,13 @@
             margin-bottom: 14px;
         }
         .loyalty-note strong { font-weight: 700; }
+        .loyalty-note-earned {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--ink);
+            background: var(--orange);
+            border: 1px solid rgba(var(--border-rgb), 0.2);
+        }
         .confirm-loyalty-note {
             max-width: 420px; margin: 0 auto 28px; text-align: center; font-size: 13.5px;
         }
@@ -5971,6 +6030,15 @@
         </div>
     </footer>
 
+    <a class="float-cart" id="floatCart" href="#/checkout" aria-label="View basket">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
+            <circle cx="9" cy="21" r="1.4" />
+            <circle cx="18" cy="21" r="1.4" />
+        </svg>
+        <span class="float-cart-badge" id="floatCartBadge">0</span>
+    </a>
+
     <a class="float-order" id="floatOrder" href="https://wa.me/447398810052" target="_blank" rel="noopener"
         aria-label="Order on WhatsApp">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -6630,6 +6698,11 @@
             const n = cartCount();
             badge.textContent = n;
             badge.classList.toggle('zero', n === 0);
+            const floatBadge = document.getElementById('floatCartBadge');
+            if (floatBadge) {
+                floatBadge.textContent = n;
+                floatBadge.classList.toggle('is-empty', n === 0);
+            }
         }
         function addToCart(product, qty) {
             const existing = cart.find(i => i.id === product.id);
@@ -7569,7 +7642,9 @@
         }
         function quickAdd(catSlug, idx) {
             const p = getProduct(catSlug, idx);
-            if (p && p.stock !== 'out') addToCart(p, 1);
+            if (!p || p.stock === 'out') return;
+            addToCart(p, 1);
+            showToast(`Added ${p.name} to your basket.`);
         }
         window.quickAdd = quickAdd;
 
@@ -8003,7 +8078,11 @@
             renderCartAllergenBanner();
             renderCartSubscriptionBanner();
             const loyaltyNoteEl = document.getElementById('loyaltyNote');
-            if (loyaltyNoteEl) loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
+            if (loyaltyNoteEl) {
+                const earned = getLoyaltyOrderCount() > 0 && getLoyaltyOrderCount() % loyaltyThreshold === 0;
+                loyaltyNoteEl.classList.toggle('loyalty-note-earned', earned);
+                loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
+            }
             updateSummaries();
         }
         function renderCartAllergenBanner() {
@@ -8217,9 +8296,11 @@
             if (confirmLoyaltyEl) {
                 const n = lastOrder.loyaltyOrderNumber || getLoyaltyOrderCount();
                 const justEarned = n > 0 && n % loyaltyThreshold === 0;
+                confirmLoyaltyEl.classList.toggle('loyalty-note-earned', justEarned);
                 confirmLoyaltyEl.innerHTML = justEarned
-                    ? `This was order #${n} with us, thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${LOYALTY_CODE}</strong> at checkout.`
+                    ? `🎉 This was order #${n} with us, thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${LOYALTY_CODE}</strong> at checkout.`
                     : `This was order #${n} with us, thank you! ${loyaltyStatusHTML()}`;
+                if (justEarned) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off, code ${LOYALTY_CODE}`, 5000);
             }
             document.getElementById('invNumber').textContent = lastOrder.number;
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -8719,10 +8800,13 @@
         /* ================= ROUTER ================= */
         const VIEWS = ['view-home', 'view-shop', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-guide', 'view-new-arrivals', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
+        const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
             const floatBtn = document.getElementById('floatOrder');
             if (floatBtn) floatBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
+            const floatCartBtn = document.getElementById('floatCart');
+            if (floatCartBtn) floatCartBtn.classList.toggle('float-suppressed', FLOAT_CART_HIDDEN_VIEWS.includes(id));
         }
         function route() {
             const hash = window.location.hash;
@@ -8826,7 +8910,11 @@
 
         /* ================= SCROLL: float button + reveal ================= */
         const floatOrder = document.getElementById('floatOrder');
-        function onScroll() { floatOrder.classList.toggle('is-visible', window.scrollY > 260); }
+        const floatCart = document.getElementById('floatCart');
+        function onScroll() {
+            floatOrder.classList.toggle('is-visible', window.scrollY > 260);
+            if (floatCart) floatCart.classList.toggle('is-visible', window.scrollY > 260);
+        }
         window.addEventListener('scroll', onScroll, { passive: true });
         onScroll();
 
