@@ -6411,7 +6411,12 @@
             if (pending) {
                 return `You've earned <strong>${pending.pct}% off</strong>, use code <strong>${pending.code}</strong> at checkout.`;
             }
-            const remaining = loyaltySpendThreshold - (getLoyaltySpend() % loyaltySpendThreshold);
+            const before = getLoyaltySpend();
+            const projected = before + cartSubtotal();
+            if (cartSubtotal() > 0 && Math.floor(projected / loyaltySpendThreshold) > Math.floor(before / loyaltySpendThreshold)) {
+                return `This order earns you <strong>${loyaltyRewardPct}% off</strong> your next one!`;
+            }
+            const remaining = loyaltySpendThreshold - (projected % loyaltySpendThreshold);
             return `Spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> your next order.`;
         }
 
