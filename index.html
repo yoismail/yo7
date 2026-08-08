@@ -803,6 +803,10 @@
             justify-content: center;
         }
 
+        .whatsapp-order-btn { color: #25D366; border-color: rgba(37, 211, 102, 0.35); }
+        .whatsapp-order-btn svg { width: 18px; height: 18px; }
+        .whatsapp-order-btn:hover { background: rgba(37, 211, 102, 0.08); }
+
         .place-order-label {
             display: inline-flex;
             align-items: baseline;
@@ -1222,6 +1226,32 @@
         }
         .build-bundle-promo-inner p { color: rgba(250,249,242,0.8); font-size: 14px; max-width: 46ch; }
         .build-bundle-promo-inner .btn { flex-shrink: 0; }
+
+        .whatsapp-list-section { background: var(--section-alt-bg); padding: 48px 0; }
+        .whatsapp-list-inner {
+            display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap;
+        }
+        .whatsapp-list-icon {
+            width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+            background: #25D366; color: var(--cream);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .whatsapp-list-icon svg { width: 26px; height: 26px; }
+        .whatsapp-list-text { flex: 1 1 280px; min-width: 240px; }
+        .whatsapp-list-text h2 {
+            font-family: var(--display); font-weight: 700; font-size: clamp(20px, 2.6vw, 25px);
+            color: var(--heading); letter-spacing: -0.01em; margin: 4px 0 8px;
+        }
+        .whatsapp-list-text p { color: var(--text-muted); font-size: 14px; max-width: 46ch; }
+        .whatsapp-list-form {
+            flex: 1 1 320px; min-width: 280px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .whatsapp-list-form textarea {
+            width: 100%; padding: 12px 14px; border-radius: 12px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            font-family: var(--body); font-size: 14px; resize: vertical;
+            background: var(--card-bg); color: var(--text-body);
+        }
 
         .combos-scroll { padding-bottom: 6px; }
         .combo-card {
@@ -3309,6 +3339,19 @@
         }
 
         .discount-row { color: var(--aubergine-mid); }
+        .loyalty-note {
+            font-size: 12.5px;
+            color: var(--aubergine-mid);
+            background: rgba(144,184,0,0.1);
+            border: 1px solid rgba(144,184,0,0.25);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+        }
+        .loyalty-note strong { font-weight: 700; }
+        .confirm-loyalty-note {
+            max-width: 420px; margin: 0 auto 28px; text-align: center; font-size: 13.5px;
+        }
         .discount-code-row {
             display: flex;
             gap: 8px;
@@ -4654,6 +4697,25 @@
             </div>
         </section>
 
+        <section class="whatsapp-list-section">
+            <div class="wrap">
+                <div class="whatsapp-list-inner reveal">
+                    <div class="whatsapp-list-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+                    </div>
+                    <div class="whatsapp-list-text">
+                        <div class="section-eyebrow">Skip the browsing</div>
+                        <h2>Just know what you want? Send us the list.</h2>
+                        <p>Type it out below, we'll get it on WhatsApp exactly as you wrote it. No need to find each item on the site first.</p>
+                    </div>
+                    <div class="whatsapp-list-form">
+                        <textarea id="whatsappListInput" rows="3" placeholder="e.g. 2 bags of rice, palm oil, a bag of garri, some crayfish..."></textarea>
+                        <button type="button" class="btn btn-primary" id="whatsappListSendBtn">Send list on WhatsApp</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="new-section">
             <div class="wrap">
                 <div class="new-section-head reveal">
@@ -4909,6 +4971,7 @@
                         </div>
                         <div class="panel">
                             <h2>Order summary</h2>
+                            <div class="loyalty-note" id="loyaltyNote"></div>
                             <div class="discount-code-row">
                                 <input type="text" id="discountCodeInput" placeholder="Discount code">
                                 <button type="button" id="applyDiscountBtn">Apply</button>
@@ -4922,6 +4985,10 @@
                             <div class="summary-row total"><span>Total</span><span id="sumTotal">£0.00</span></div>
                             <button class="btn btn-primary btn-block" id="toDeliveryBtn" style="margin-top:20px;"
                                 type="button">Continue to delivery</button>
+                            <button class="btn btn-outline-dark btn-block whatsapp-order-btn" id="whatsappOrderBtn" type="button" style="margin-top:10px;">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+                                Prefer WhatsApp? Order this basket instead
+                            </button>
                             <a href="#/" class="continue-shopping-link" data-scroll-to="shopByGroup">Continue shopping</a>
                             <div class="cart-trust-strip">
                                 <div class="trust-pill">
@@ -5093,6 +5160,8 @@
                     <p>Thank you, your order is confirmed. A copy of your invoice is below, you can print or save it for
                         your records.</p>
                 </div>
+
+                <div class="loyalty-note confirm-loyalty-note" id="confirmLoyaltyNote"></div>
 
                 <div class="invoice" id="invoiceBox">
                     <div class="invoice-top">
@@ -5699,6 +5768,15 @@
         </section>
 
         <div class="wrap">
+            <div class="delivery-admin-panel">
+                <h3>Loyalty nudge <span class="admin-only-tag">Edit mode only</span></h3>
+                <p class="delivery-admin-note">Counts completed orders in each customer's own browser storage, not a real account system, so it resets if they clear their browser or switch devices. The reward is a genuine working code (<strong id="loyaltyCodeDisplay">LOYALTY10</strong>), just not advertised anywhere until it's earned.</p>
+                <div class="field-row">
+                    <div class="field"><label>Orders needed for a reward</label><input type="number" min="1" id="loyaltyThresholdInput" value="5"></div>
+                    <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="10"></div>
+                </div>
+            </div>
+
             <div class="delivery-admin-panel discount-admin-panel">
                 <h3>Discounts &amp; codes <span class="admin-only-tag">Edit mode only</span></h3>
                 <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh. "Max per customer" is tracked in this browser's storage only, it isn't a hard guarantee across devices.</p>
@@ -6176,6 +6254,45 @@
         let discounts = [];
         let appliedDiscount = null; // the currently-applied discount object, or null
 
+        /* ================= LOYALTY NUDGE =================
+           Not a full account-based loyalty program, there's no real login
+           system to hang one off. This counts completed orders in this
+           browser's local storage (same honest caveat as discount-code
+           usage limits: it resets if storage is cleared or a different
+           device is used) and reveals a real, working discount code once
+           a threshold is hit. The code itself is a genuine entry in the
+           discounts array from the start, it just isn't advertised
+           anywhere until the customer has actually earned it. */
+        let loyaltyThreshold = 5;
+        let loyaltyRewardPct = 10;
+        const LOYALTY_CODE = 'LOYALTY10';
+        function ensureLoyaltyDiscount() {
+            if (findDiscountByCode(LOYALTY_CODE)) return;
+            discounts.push({
+                id: 'disc-loyalty', name: 'Loyalty reward', code: LOYALTY_CODE,
+                type: 'percent', value: loyaltyRewardPct,
+                qualifyingScope: 'all', minOrder: null, maxPerCustomer: null, active: true,
+            });
+        }
+        function getLoyaltyOrderCount() {
+            try { return parseInt(localStorage.getItem('yo7-loyalty-orders') || '0', 10); }
+            catch (e) { return 0; }
+        }
+        function incrementLoyaltyOrderCount() {
+            try { localStorage.setItem('yo7-loyalty-orders', String(getLoyaltyOrderCount() + 1)); }
+            catch (e) { /* localStorage unavailable, loyalty count just won't persist this session */ }
+        }
+        function loyaltyStatusHTML() {
+            const count = getLoyaltyOrderCount();
+            const remainder = count % loyaltyThreshold;
+            const hasReward = count > 0 && remainder === 0;
+            if (hasReward) {
+                return `You've earned <strong>${loyaltyRewardPct}% off</strong>, use code <strong>${LOYALTY_CODE}</strong> at checkout.`;
+            }
+            const away = loyaltyThreshold - remainder;
+            return `${away} more order${away === 1 ? '' : 's'} until <strong>${loyaltyRewardPct}% off</strong> your next one.`;
+        }
+
         function findDiscountByCode(code) {
             const norm = (code || '').trim().toLowerCase();
             return discounts.find(d => d.code.toLowerCase() === norm) || null;
@@ -6490,6 +6607,24 @@
 
         function cartCount() { return cart.reduce((s, i) => s + i.qty, 0); }
         function cartSubtotal() { return cart.reduce((s, i) => s + i.qty * i.price, 0); }
+
+        /* ================= ORDER VIA WHATSAPP =================
+           For anyone who'd rather send a message than fill in a card form.
+           Builds a real, itemised message from the actual basket, opens
+           WhatsApp with it pre-filled, the person still has to hit send,
+           and Yo7 confirms and takes payment manually from there, this
+           isn't a substitute for checkout, it's a genuine alternative to it. */
+        function sendCartViaWhatsApp() {
+            if (cart.length === 0) { showToast('Your basket is empty.'); return; }
+            const lines = cart.map(i => {
+                const note = i.isCombo ? ' (combo)' : i.isSubscription ? ` (subscription, every ${i.subscriptionFrequency} weeks)` : '';
+                return `${i.qty}x ${i.name}${note} - ${money(i.price * i.qty)}`;
+            });
+            const message = `Hi Yo7! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${money(cartSubtotal())}\n\n(Sent from yo7foods.co.uk, delivery/pickup and payment to confirm with you.)`;
+            window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank');
+        }
+        window.sendCartViaWhatsApp = sendCartViaWhatsApp;
+
         function updateCartBadge() {
             const badge = document.getElementById('cartBadge');
             const n = cartCount();
@@ -7867,6 +8002,8 @@
             }
             renderCartAllergenBanner();
             renderCartSubscriptionBanner();
+            const loyaltyNoteEl = document.getElementById('loyaltyNote');
+            if (loyaltyNoteEl) loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
             updateSummaries();
         }
         function renderCartAllergenBanner() {
@@ -8049,6 +8186,7 @@
             const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
             if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
+            incrementLoyaltyOrderCount();
             lastOrder = {
                 number: 'YO7-' + Math.floor(100000 + Math.random() * 899999),
                 date: new Date(),
@@ -8061,6 +8199,7 @@
                 delivery_info: deliveryInfo,
                 fulfilment: fulfilmentMethod,
                 deliveryWeight: cartTotalWeight(),
+                loyaltyOrderNumber: getLoyaltyOrderCount(),
             };
             cart = [];
             appliedDiscount = null;
@@ -8073,6 +8212,14 @@
             if (!lastOrder) {
                 document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">No recent order found. <a href="#/">Return home</a>.</p>';
                 return;
+            }
+            const confirmLoyaltyEl = document.getElementById('confirmLoyaltyNote');
+            if (confirmLoyaltyEl) {
+                const n = lastOrder.loyaltyOrderNumber || getLoyaltyOrderCount();
+                const justEarned = n > 0 && n % loyaltyThreshold === 0;
+                confirmLoyaltyEl.innerHTML = justEarned
+                    ? `This was order #${n} with us, thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${LOYALTY_CODE}</strong> at checkout.`
+                    : `This was order #${n} with us, thank you! ${loyaltyStatusHTML()}`;
             }
             document.getElementById('invNumber').textContent = lastOrder.number;
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -8932,6 +9079,25 @@
         renderBundles();
         renderDeliveryAdmin();
         populateDeliverySlots();
+        ensureLoyaltyDiscount();
+        const loyaltyThresholdInput = document.getElementById('loyaltyThresholdInput');
+        const loyaltyRewardInput = document.getElementById('loyaltyRewardInput');
+        if (loyaltyThresholdInput) {
+            loyaltyThresholdInput.addEventListener('change', () => {
+                const n = parseInt(loyaltyThresholdInput.value, 10);
+                loyaltyThreshold = (!isNaN(n) && n > 0) ? n : 5;
+                renderCartList();
+            });
+        }
+        if (loyaltyRewardInput) {
+            loyaltyRewardInput.addEventListener('change', () => {
+                const n = parseFloat(loyaltyRewardInput.value);
+                loyaltyRewardPct = isNaN(n) ? 10 : Math.max(0, Math.min(50, n));
+                const existing = findDiscountByCode(LOYALTY_CODE);
+                if (existing) existing.value = loyaltyRewardPct;
+                renderCartList();
+            });
+        }
         renderDiscountsAdmin();
         const addBundleBtn = document.getElementById('addBundleBtn');
         if (addBundleBtn) addBundleBtn.addEventListener('click', openAddBundleForm);
@@ -8939,6 +9105,19 @@
         const addComboBtn = document.getElementById('addComboBtn');
         if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
         renderHeroGlimpse();
+        const whatsappOrderBtn = document.getElementById('whatsappOrderBtn');
+        if (whatsappOrderBtn) whatsappOrderBtn.addEventListener('click', sendCartViaWhatsApp);
+        const whatsappListSendBtn = document.getElementById('whatsappListSendBtn');
+        if (whatsappListSendBtn) {
+            whatsappListSendBtn.addEventListener('click', () => {
+                const input = document.getElementById('whatsappListInput');
+                const text = input.value.trim();
+                if (!text) { showToast('Type your list first.'); return; }
+                const message = `Hi Yo7! Here's what I'd like to order:\n\n${text}\n\n(Sent from yo7foods.co.uk)`;
+                window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank');
+                input.value = '';
+            });
+        }
         const dishBuilderAddBtn = document.getElementById('dishBuilderAddBtn');
         if (dishBuilderAddBtn) dishBuilderAddBtn.addEventListener('click', addDishSelectionToCart);
         const addDishBtn = document.getElementById('addDishBtn');
