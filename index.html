@@ -8506,7 +8506,9 @@
         window.selectPdVariant = selectPdVariant;
         function buildPdCartItem() {
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
-            let toAdd = variant ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label } : { ...pdCurrent };
+            let toAdd = variant
+                ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label, weight: (typeof variant.weight === 'number' ? variant.weight : pdCurrent.weight) }
+                : { ...pdCurrent };
             if (pdPurchaseType === 'subscribe') {
                 const freq = document.getElementById('pdSubscribeFrequency').value;
                 const baseForSub = effectivePrice(toAdd);
@@ -9216,17 +9218,19 @@
           </div>
           <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">Leave quantity blank for items sold by count (per piece, per bird, pack of X), no unit price is required for those.</p>
           <div class="ep-variants-block">
-            <label>Weight options (optional, lets a customer pick e.g. 500g / 1kg / 2kg)</label>
+            <label>Weight options (optional, one product with several sizes, e.g. 2kg / 5kg / 10kg / 20kg, instead of a separate product per size)</label>
             <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${(product.weightVariants || []).map((v, vi) => `
               <div class="ep-variant-row">
-                <span>${v.label}, ${money(v.price)}</span>
+                <span>${v.label}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
                 <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
               </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>'}</div>
             <div class="ep-variant-add-row">
-              <input type="text" id="ep-varlabel-${catSlug}-${idx}" placeholder="Label, e.g. 500g">
+              <input type="text" id="ep-varlabel-${catSlug}-${idx}" placeholder="Label, e.g. 5kg">
               <input type="number" step="0.01" min="0" id="ep-varprice-${catSlug}-${idx}" placeholder="Price (£)">
+              <input type="number" step="0.01" min="0" id="ep-varweight-${catSlug}-${idx}" placeholder="Weight (kg)">
               <button type="button" onclick="addWeightVariant('${catSlug}', ${idx})">Add</button>
             </div>
+            <p style="font-size:11px; color:var(--text-muted); margin:6px 0 0;">The weight here is what's actually used for the delivery fee once a customer picks this size, so it's worth getting right, a wrong delivery weight means charging (or undercharging) for the wrong postage.</p>
           </div>
           <div class="ep-actions">
             <button class="ep-save" type="button" onclick="saveEditPanel('${catSlug}', ${idx}, this)">Save (this tab only)</button>
@@ -9236,22 +9240,48 @@
         }
         window.openEditPanel = openEditPanel;
 
+        function renderVariantsList(catSlug, idx) {
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            const list = document.getElementById(`ep-variants-list-${catSlug}-${idx}`);
+            if (!list) return;
+            list.innerHTML = (product.weightVariants || []).map((v, vi) => `
+              <div class="ep-variant-row">
+                <span>${v.label}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
+                <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
+              </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>';
+        }
+        // Updates only the variant list in place rather than re-rendering the
+        // whole edit panel, re-rendering the panel would reset every other
+        // field (price, base weight, stock, description) back to its last
+        // saved value, silently discarding anything typed but not yet saved.
         function addWeightVariant(catSlug, idx) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             const label = document.getElementById(`ep-varlabel-${catSlug}-${idx}`).value.trim();
             const price = parseFloat(document.getElementById(`ep-varprice-${catSlug}-${idx}`).value);
+            const weightVal = document.getElementById(`ep-varweight-${catSlug}-${idx}`).value;
             if (!label || isNaN(price) || price < 0) return;
             if (!product.weightVariants) product.weightVariants = [];
-            product.weightVariants.push({ label, price });
-            if (currentEditSlot) openEditPanel({ querySelector: () => currentEditSlot }, catSlug, idx);
+            const variant = { label, price };
+            if (weightVal !== '') {
+                const w = parseFloat(weightVal);
+                if (!isNaN(w) && w >= 0) variant.weight = w;
+            } else {
+                showToast('Added without a delivery weight, that size will fall back to the product\'s base weight until you set one.');
+            }
+            product.weightVariants.push(variant);
+            renderVariantsList(catSlug, idx);
+            document.getElementById(`ep-varlabel-${catSlug}-${idx}`).value = '';
+            document.getElementById(`ep-varprice-${catSlug}-${idx}`).value = '';
+            document.getElementById(`ep-varweight-${catSlug}-${idx}`).value = '';
         }
         window.addWeightVariant = addWeightVariant;
         function removeWeightVariant(catSlug, idx, variantIdx) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             if (product.weightVariants) product.weightVariants.splice(variantIdx, 1);
-            if (currentEditSlot) openEditPanel({ querySelector: () => currentEditSlot }, catSlug, idx);
+            renderVariantsList(catSlug, idx);
         }
         window.removeWeightVariant = removeWeightVariant;
 
