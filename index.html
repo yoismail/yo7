@@ -6730,20 +6730,34 @@
            tracker already does this correctly). */
         let loyaltySpendThreshold = 100;
         let loyaltyRewardPct = 10;
+        // Loyalty spend and codes are scoped per identity within this browser,
+        // not one single shared bucket. Without this, a guest checkout and a
+        // later logged-in session (or two different logged-in emails on the
+        // same browser) would all read and write the exact same numbers,
+        // which is exactly the "seeing a previous user's loyalty info" bug.
+        // This is still a browser-local approximation, not a real account
+        // system with a server behind it, logging in as the same email
+        // later on a different device won't carry the history over, but it
+        // stops one identity's activity bleeding into another's on the same
+        // browser, which is the actual problem being fixed here.
+        function loyaltyIdentityKey() {
+            if (!currentUser) return 'guest';
+            return String(currentUser).trim().toLowerCase().replace(/[^a-z0-9@.]/g, '') || 'guest';
+        }
         function getLoyaltySpend() {
-            try { return parseFloat(localStorage.getItem('yo7-loyalty-spend') || '0'); }
+            try { return parseFloat(localStorage.getItem('yo7-loyalty-spend-' + loyaltyIdentityKey()) || '0'); }
             catch (e) { return 0; }
         }
         function addLoyaltySpend(amount) {
-            try { localStorage.setItem('yo7-loyalty-spend', String(getLoyaltySpend() + amount)); }
+            try { localStorage.setItem('yo7-loyalty-spend-' + loyaltyIdentityKey(), String(getLoyaltySpend() + amount)); }
             catch (e) { /* localStorage unavailable, spend just won't persist this session */ }
         }
         function getLoyaltyCodes() {
-            try { return JSON.parse(localStorage.getItem('yo7-loyalty-codes') || '[]'); }
+            try { return JSON.parse(localStorage.getItem('yo7-loyalty-codes-' + loyaltyIdentityKey()) || '[]'); }
             catch (e) { return []; }
         }
         function saveLoyaltyCodes(codes) {
-            try { localStorage.setItem('yo7-loyalty-codes', JSON.stringify(codes)); }
+            try { localStorage.setItem('yo7-loyalty-codes-' + loyaltyIdentityKey(), JSON.stringify(codes)); }
             catch (e) { /* localStorage unavailable, code just won't persist this session */ }
         }
         function generateLoyaltyCodeString() {
@@ -8925,11 +8939,18 @@
                 if (onNewPage) onNewPage();
             };
 
-            // ---- Header ----
+            // ---- Header (with a real drawn seal mark, not a raster image,
+            // keeps the file tiny and stays crisp at any zoom) ----
+            const sealCx = margin + 15, sealCy = y + 14, sealR = 15;
+            pdf.setFillColor(...accent);
+            pdf.circle(sealCx, sealCy, sealR, 'F');
+            setText(13, 'bold', [255, 255, 255]);
+            pdf.text('7', sealCx, sealCy + 4.5, { align: 'center' });
+
             setText(19, 'bold', accent);
-            pdf.text('Yo7 Foods', margin, y + 18);
+            pdf.text('Yo7 Foods', margin + sealR * 2 + 10, y + 18);
             setText(9, 'normal', muted);
-            pdf.text('African Food Store, Ipswich', margin, y + 32);
+            pdf.text('African Food Store, Ipswich', margin + sealR * 2 + 10, y + 32);
 
             setText(11, 'bold', ink);
             pdf.text(`Invoice ${lastOrder.number}`, pageWidth - margin, y + 18, { align: 'right' });
@@ -8980,7 +9001,12 @@
                     : item.isSubscription ? `Subscription, every ${item.subscriptionFrequency} weeks`
                     : item.unit;
                 const subLines = subLine ? pdf.splitTextToSize(subLine, colItemWidth) : [];
-                const rowHeight = (nameLines.length * 12) + (subLines.length * 11) + 10;
+                // Total vertical space this row needs: the name line(s), the
+                // sub-line(s), a gap before the divider, and a gap after it,
+                // that trailing gap is what was missing before, without it
+                // the divider and the next row's text landed on top of each
+                // other since y never advanced past the line itself.
+                const rowHeight = (nameLines.length * 12) + (subLines.length * 11) + 20;
 
                 ensureRoom(rowHeight, drawTableHeader);
 
@@ -8998,10 +9024,11 @@
                     y += subLines.length * 11;
                 }
                 y += 8;
-                hr(y - 4);
+                hr(y);
+                y += 12;
             });
 
-            y += 8;
+            y += 4;
 
             // ---- Totals ----
             ensureRoom(110);
@@ -9034,9 +9061,12 @@
             }
 
             // ---- Footer ----
-            ensureRoom(24);
-            y = Math.max(y + 20, pageHeight - margin - 10);
-            hr(y - 14);
+            ensureRoom(38);
+            y = Math.max(y + 20, pageHeight - margin - 24);
+            setText(11, 'bold', accent);
+            pdf.text('Thank you for choosing Yo7 Foods', pageWidth / 2, y, { align: 'center' });
+            y += 16;
+            hr(y - 10);
             setText(8, 'normal', faint);
             pdf.text('Yo7 Foods Limited  \u00b7  hello@yo7foods.co.uk  \u00b7  This is a preview invoice generated for demonstration.', pageWidth / 2, y, { align: 'center' });
 
@@ -9108,6 +9138,9 @@
             document.getElementById('accountLabel').textContent = 'Hi, ' + name.split(' ')[0];
             accountBtn.setAttribute('href', '#');
             accountCaret.style.display = 'inline-block';
+            registerStoredLoyaltyCodes();
+            renderCartList();
+            if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
         }
         function clearUser() {
             currentUser = null;
@@ -9115,6 +9148,9 @@
             accountBtn.setAttribute('href', '#/login');
             accountCaret.style.display = 'none';
             accountDropdown.classList.remove('open');
+            registerStoredLoyaltyCodes();
+            renderCartList();
+            if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
         }
 
         accountBtn.addEventListener('click', (e) => {
@@ -9999,15 +10035,19 @@
         const loyaltyResetBtn = document.getElementById('loyaltyResetBtn');
         if (loyaltyResetBtn) {
             loyaltyResetBtn.addEventListener('click', () => {
-                if (!confirm('Clear all recorded loyalty spend and codes for this browser? This only affects your own testing, real customers each have their own separate browser storage.')) return;
+                if (!confirm('Clear all recorded loyalty spend and codes for every identity on this browser (guest and any logged-in test accounts)? This only affects your own testing, real customers each have their own separate browser storage.')) return;
                 try {
-                    localStorage.removeItem('yo7-loyalty-spend');
-                    localStorage.removeItem('yo7-loyalty-codes');
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.startsWith('yo7-loyalty-spend-') || key.startsWith('yo7-loyalty-codes-'))) keysToRemove.push(key);
+                    }
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
                 } catch (e) { /* localStorage unavailable */ }
                 discounts = discounts.filter(d => !d.id.startsWith('loyalty-'));
                 renderLoyaltySpendDisplay();
                 renderCartList();
-                showToast('Loyalty test data cleared for this browser.');
+                showToast('Loyalty test data cleared for every identity on this browser.');
             });
         }
         renderDiscountsAdmin();
