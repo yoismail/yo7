@@ -80,6 +80,16 @@
             padding: 0;
         }
 
+        /* Browsers default form field text to black regardless of theme.
+           Without this, every input, select, and textarea on the site
+           renders black-on-black in dark mode the moment someone types,
+           the empty-state placeholder text has its own lighter color and
+           looks fine, which is why this is easy to miss without actually
+           typing into a field and checking. */
+        input, select, textarea {
+            color: var(--ink);
+        }
+
         html {
             scroll-behavior: smooth;
         }
@@ -140,6 +150,20 @@
             left: 0;
             right: 0;
             z-index: 100;
+            background: rgba(4, 37, 0, 0.32);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-bottom: 1px solid transparent;
+            transition: background 0.25s ease, backdrop-filter 0.25s ease, border-color 0.25s ease;
+        }
+        /* A genuinely see-through nav depends on whatever happens to be
+           directly behind it, which at the very top of the page (before
+           the hero visually fills the space) turned out to be the plain
+           light page background, not the dark hero, making the logo and
+           search bar unreadable. A light dark tint stays legible no matter
+           what's underneath, while still reading as far more open than
+           the fully solid nav used everywhere else. */
+        #mainNav.nav-solid {
             background: rgba(4, 37, 0, 0.92);
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
@@ -202,6 +226,17 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
+        .trust-bar-set span:not(.trust-sep) {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .trust-bar-icon {
+            width: 13px;
+            height: 13px;
+            color: var(--aubergine-mid);
+            flex-shrink: 0;
+        }
         .trust-sep { color: var(--chartreuse); font-weight: 700; }
         @media (max-width: 520px) {
             .trust-bar-set { font-size: 11.5px; padding: 8px 16px; gap: 7px; }
@@ -242,6 +277,20 @@
             border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
         }
         .ep-variants-block { margin-bottom: 10px; }
+        .ep-photo-row {
+            display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
+        }
+        .ep-photo-preview {
+            width: 64px; height: 64px; border-radius: 12px; overflow: hidden; flex-shrink: 0;
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            display: flex; align-items: center; justify-content: center; font-size: 26px;
+        }
+        .ep-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ep-photo-row input[type="file"] { font-size: 12px; color: var(--text-muted); max-width: 200px; }
+        .ep-photo-remove {
+            display: block; margin-top: 6px; background: none; border: none; color: #b34a4a;
+            font-size: 11.5px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline;
+        }
         .ep-variants-list { display: flex; flex-direction: column; gap: 5px; margin: 6px 0 8px; }
         .ep-variant-row {
             display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -468,10 +517,24 @@
             opacity: 0.82;
             transition: opacity 0.2s;
             color: var(--cream);
+            position: relative;
+            padding-bottom: 4px;
         }
 
         .nav-links a:hover {
             opacity: 1;
+        }
+
+        .nav-links a.nav-link-active {
+            opacity: 1;
+        }
+        .nav-links a.nav-link-active::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: -8px;
+            height: 3px;
+            border-radius: 999px;
+            background: var(--chartreuse);
         }
 
         .nav-right {
@@ -502,6 +565,19 @@
             border-color: rgba(250, 249, 242, 0.4);
         }
 
+        /* Cart gets a filled, accented treatment so it reads as the primary
+           action in this cluster, rather than sitting identical to the
+           theme toggle, which is a secondary utility by comparison. */
+        .nav-cart-btn {
+            background: var(--chartreuse);
+            border-color: var(--chartreuse);
+            color: var(--aubergine-deep);
+        }
+        .nav-cart-btn:hover {
+            background: var(--chartreuse-soft);
+            border-color: var(--chartreuse-soft);
+        }
+
         .icon-btn svg {
             width: 18px;
             height: 18px;
@@ -511,8 +587,8 @@
             position: absolute;
             top: -6px;
             right: -6px;
-            background: var(--chartreuse);
-            color: var(--aubergine-deep);
+            background: var(--aubergine-deep);
+            color: var(--cream);
             font-family: var(--display);
             font-weight: 700;
             font-size: 10.5px;
@@ -523,6 +599,7 @@
             align-items: center;
             justify-content: center;
             padding: 0 4px;
+            border: 2px solid var(--chartreuse);
         }
 
         .cart-badge.zero {
@@ -1020,36 +1097,65 @@
 
         /* ================= STORY ================= */
         .story {
-            padding: 88px 0 80px;
-            background: var(--card-bg);
+            position: relative;
+            padding: 100px 0;
+            background: var(--aubergine);
+            overflow: hidden;
+            text-align: center;
         }
 
-        .story-grid {
-            display: grid;
-            grid-template-columns: 0.85fr 1.15fr;
-            gap: 64px;
-            align-items: center;
+        .story-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: min(70vw, 780px);
+            opacity: 0.05;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
         }
 
-        .story-seal {
-            width: 120px;
-            height: 120px;
+        .story-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .story-quote-mark {
+            display: block;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 96px;
+            line-height: 1;
+            color: var(--chartreuse);
+            opacity: 0.55;
+            margin-bottom: -12px;
+        }
+
+        .story-rule {
+            width: 56px;
+            height: 3px;
+            border-radius: 999px;
+            background: var(--chartreuse);
+            margin: 0 auto 26px;
         }
 
         .story h2 {
             font-family: var(--display);
             font-weight: 700;
-            font-size: clamp(28px, 4vw, 40px);
+            font-size: clamp(28px, 4.4vw, 44px);
             letter-spacing: -0.01em;
             line-height: 1.15;
-            margin-bottom: 22px;
-            color: var(--heading);
+            margin-bottom: 18px;
+            color: var(--cream);
         }
 
         .story p {
             font-size: 17px;
-            color: var(--text-body);
-            max-width: 46ch;
+            color: rgba(250, 249, 242, 0.78);
+            max-width: 50ch;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .story p+p {
@@ -1215,7 +1321,12 @@
             padding: 11px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
         }
 
-        .combos-section { background: #FFFFFF; padding: 64px 0 40px; }
+        .combos-section { background: var(--aubergine-mid); padding: 64px 0 60px; }
+        .combos-section .section-eyebrow { color: var(--chartreuse-soft) !important; }
+        .combos-section h2 { color: var(--cream) !important; }
+        .combos-section .new-section-head p { color: rgba(250, 249, 242, 0.72); }
+        .combos-section .view-all-btn { color: var(--cream); background: rgba(250, 249, 242, 0.1); }
+        .combos-section .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
 
         .build-bundle-promo { background: var(--aubergine); padding: 48px 0; }
         .build-bundle-promo-inner {
@@ -1630,7 +1741,7 @@
 
         /* ================= DELIVERY / ORDER (home) ================= */
         .new-section {
-            background: var(--cream);
+            background: var(--page-bg);
             padding: 56px 0 60px;
             border-top: 1px solid rgba(var(--border-rgb), 0.06);
             border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
@@ -1641,6 +1752,65 @@
             border-top: 1px solid rgba(var(--border-rgb), 0.06);
             border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
         }
+        .best-sellers-spotlight {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+        .best-seller-feature {
+            display: flex; flex-direction: column;
+            background: var(--card-bg); border-radius: 20px; overflow: hidden;
+            border: 1px solid rgba(var(--border-rgb), 0.08); text-decoration: none;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .best-seller-feature:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(var(--border-rgb), 0.12); }
+        .best-seller-feature .thumb {
+            position: relative; aspect-ratio: 4/3;
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+        }
+        .best-seller-feature .body { padding: 22px 24px 26px; }
+        .best-seller-feature .cat {
+            font-family: var(--display); font-weight: 700; font-size: 11px; letter-spacing: 0.05em;
+            text-transform: uppercase; color: var(--aubergine-mid); margin-bottom: 6px;
+        }
+        .best-seller-feature h3 {
+            font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--heading); margin-bottom: 10px;
+        }
+        .best-seller-feature .price { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 16px; }
+        .best-seller-feature-btn { display: inline-flex; }
+
+        .best-seller-list {
+            display: flex; flex-direction: column;
+            background: var(--card-bg); border-radius: 20px; overflow: hidden;
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .best-seller-row {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 18px; text-decoration: none;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+            transition: background 0.15s ease;
+        }
+        .best-seller-row:last-child { border-bottom: none; }
+        .best-seller-row:hover { background: var(--section-alt-bg); }
+        .best-seller-row-thumb {
+            width: 52px; height: 52px; flex-shrink: 0; border-radius: 12px; overflow: hidden; position: relative;
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+        }
+        .best-seller-row-thumb .thumb-placeholder-emoji { font-size: 18px; }
+        .best-seller-row-thumb .thumb-placeholder-label { display: none; }
+        .best-seller-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .best-seller-row-body .name {
+            font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .best-seller-row-body .cat { font-size: 11.5px; color: var(--text-muted); }
+        .best-seller-row .price { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); flex-shrink: 0; }
+
+        @media (max-width: 760px) {
+            .best-sellers-spotlight { grid-template-columns: 1fr; }
+        }
+
         .new-section-head {
             display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
             margin-bottom: 30px; flex-wrap: wrap;
@@ -1694,7 +1864,7 @@
         }
 
         /* ================= SPECIAL OFFER SECTION ================= */
-        .hero-glimpse-strip { background: var(--cream); padding: 22px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
+        .hero-glimpse-strip { background: var(--page-bg); padding: 22px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
         .hero-glimpse-row {
             display: flex;
             justify-content: center;
@@ -1932,6 +2102,18 @@
         }
 
         /* ================= FOOTER ================= */
+        .footer-curve {
+            line-height: 0;
+            margin-bottom: -1px;
+        }
+        .footer-curve svg {
+            display: block;
+            width: 100%;
+            height: 40px;
+        }
+        .footer-curve path {
+            fill: var(--aubergine-deep);
+        }
         footer {
             position: relative;
             background: var(--aubergine-deep);
@@ -1962,6 +2144,15 @@
             border: 1px solid rgba(250, 249, 242, 0.1);
             border-radius: 16px;
         }
+        .footer-newsletter-text {
+            display: flex; align-items: center; gap: 16px;
+        }
+        .footer-newsletter-icon {
+            width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
+            background: rgba(144,184,0,0.16); color: var(--chartreuse-soft);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .footer-newsletter-icon svg { width: 19px; height: 19px; }
         .footer-newsletter h4 {
             font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--cream); margin-bottom: 4px;
         }
@@ -2070,7 +2261,9 @@
         }
 
         .footer-col a {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 14.5px;
             color: #c8d1ba;
             text-decoration: none;
@@ -2083,13 +2276,23 @@
             color: var(--cream);
         }
 
+        .footer-contact-icon {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            color: var(--chartreuse-soft);
+        }
+
         .footer-addr {
-            display: block;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
             font-size: 13px;
             color: #a3ad95;
             margin-top: 4px;
             line-height: 1.5;
         }
+        .footer-addr .footer-contact-icon { margin-top: 2px; }
 
         .footer-bottom {
             font-size: 12.5px;
@@ -2943,7 +3146,7 @@
             padding-top: 22px;
             border-top: 1px solid rgba(var(--border-rgb), 0.1);
             font-size: 13px;
-            color: #6a5f58;
+            color: var(--text-muted);
         }
 
         .pd-meta div {
@@ -3491,6 +3694,9 @@
             color: var(--aubergine-mid);
             text-decoration: underline;
         }
+        [data-theme="dark"] .continue-shopping-link {
+            color: var(--chartreuse-soft);
+        }
 
         .summary-row-weight { color: var(--text-muted); font-size: 13px; }
         .delivery-fee-note {
@@ -3540,7 +3746,7 @@
         .payment-badge {
             display: flex; align-items: center; justify-content: center;
             height: 28px; padding: 0 12px; border-radius: 6px;
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.14);
+            background: #FFFFFF; border: 1px solid rgba(0, 0, 0, 0.1);
             font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.02em;
         }
         .payment-badge-visa { color: #1A1F71; }
@@ -3765,7 +3971,7 @@
             text-decoration: line-through;
             margin-top: 2px;
         }
-        .inv-qty { color: #6a5f58; }
+        .inv-qty { color: var(--text-muted); }
         .inv-line-total {
             font-family: var(--display);
             font-weight: 700;
@@ -3781,7 +3987,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 13.5px;
-            color: #6a5f58;
+            color: var(--text-muted);
             padding: 7px 0;
         }
 
@@ -4085,7 +4291,7 @@
             align-items: center;
         }
         .pc-left h2 { font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--heading); margin-bottom: 6px; }
-        .pc-left p { font-size: 14px; color: #6a5f58; margin-bottom: 18px; }
+        .pc-left p { font-size: 14px; color: var(--text-muted); margin-bottom: 18px; }
         .pc-input-row { display: flex; gap: 10px; }
         .pc-input-row input {
             flex: 1; padding: 13px 16px; border-radius: 12px; border: 1.5px solid rgba(var(--border-rgb), 0.16);
@@ -4234,7 +4440,7 @@
 
         .dinfo-card p {
             font-size: 13px;
-            color: #5a4d48;
+            color: var(--text-muted);
             line-height: 1.5;
         }
 
@@ -4302,7 +4508,7 @@
             font-size: 15px; margin-bottom: 14px;
         }
         .guide-step h3 { font-family: var(--display); font-weight: 700; font-size: 16.5px; color: var(--heading); margin-bottom: 6px; }
-        .guide-step p { font-size: 13.5px; color: #5a4d48; line-height: 1.5; }
+        .guide-step p { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
 
         .faq-title { font-family: var(--display); font-weight: 700; font-size: 24px; color: var(--heading); margin-bottom: 22px; }
         .faq-item { background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
@@ -4402,14 +4608,16 @@
                 grid-template-columns: 1fr;
             }
 
-            .story-grid,
             .delivery-grid {
                 grid-template-columns: 1fr;
                 gap: 36px;
             }
 
-            .story-seal {
-                margin: 0 auto;
+            .story {
+                padding: 72px 0;
+            }
+            .story-quote-mark {
+                font-size: 68px;
             }
 
             .delivery-badge {
@@ -4558,12 +4766,12 @@
                 <div class="search-results" id="navSearchResults"></div>
             </div>
             <div class="nav-links">
-                <a href="#/">Home</a>
-                <a href="#/" data-scroll-to="shopByGroup">Shop</a>
-                <a href="#/about">Our Story</a>
-                <a href="#/delivery-info">Delivery</a>
-                <a href="#/contact">Contact</a>
-                <a href="#/guide">New Here?</a>
+                <a href="#/" id="navLinkHome">Home</a>
+                <a href="#/" data-scroll-to="shopByGroup" id="navLinkShop">Shop</a>
+                <a href="#/about" id="navLinkStory">Our Story</a>
+                <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
+                <a href="#/contact" id="navLinkContact">Contact</a>
+                <a href="#/guide" id="navLinkGuide">New Here?</a>
             </div>
             <div class="nav-right">
                 <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode">
@@ -4575,7 +4783,7 @@
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
                     </svg>
                 </button>
-                <a class="icon-btn" href="#/checkout" aria-label="Basket">
+                <a class="icon-btn nav-cart-btn" href="#/checkout" aria-label="Basket">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                         stroke-linejoin="round">
                         <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
@@ -4636,15 +4844,15 @@
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
             <div class="trust-bar-set">
-                <span>Free delivery over &pound;50</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>Free delivery over &pound;50</span>
                 <span class="trust-sep">&bull;</span>
-                <span>We Deliver To All UK Postcodes</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
             <div class="trust-bar-set" aria-hidden="true">
-                <span>Free delivery over &pound;50</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>Free delivery over &pound;50</span>
                 <span class="trust-sep">&bull;</span>
-                <span>We Deliver To All UK Postcodes</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
         </div>
@@ -4751,9 +4959,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                 </div>
-                <div class="new-carousel-wrap">
-                    <div class="new-carousel" id="bestSellerCarousel"></div>
-                </div>
+                <div class="best-sellers-spotlight" id="bestSellersSpotlight"></div>
             </div>
         </section>
 
@@ -4856,14 +5062,15 @@
         </section>
 
         <section class="story">
-            <div class="wrap story-grid">
-                <svg class="story-seal reveal" viewBox="65 25 875 900"
-                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
-                    <use href="#seal-mark" />
-                </svg>
-                <div class="reveal" style="transition-delay:0.12s">
+            <svg class="story-watermark" viewBox="65 25 875 900" aria-hidden="true">
+                <use href="#seal-mark" />
+            </svg>
+            <div class="wrap story-inner">
+                <span class="story-quote-mark reveal" aria-hidden="true">&ldquo;</span>
+                <div class="reveal" style="transition-delay:0.1s">
                     <h2>Patience first. Then everything else.</h2>
-                    <p>Yo7 started small and stayed small on purpose, built around real ingredients rather than
+                    <div class="story-rule"></div>
+                    <p>Yo7 Foods started small and stayed small on purpose, built around real ingredients rather than
                         shortcuts: rice that cooks the way it should, spices that taste like home, produce picked
                         because it's good, not because it's convenient.</p>
                     <p>Everything here is chosen the way you'd choose it for your own kitchen, because that's exactly
@@ -4886,7 +5093,7 @@
                 </div>
                 <div class="reveal" style="transition-delay:0.1s">
                     <h2>Delivering wherever you are</h2>
-                    <p>Yo7 delivers to every UK postcode, priced by order weight so it's fair whether you're
+                    <p>Yo7 Foods delivers to every UK postcode, priced by order weight so it's fair whether you're
                         five minutes away or five hours. Pickup from Ipswich is free, always.</p>
                 </div>
             </div>
@@ -4928,7 +5135,7 @@
                     <div class="section-eyebrow" style="color: var(--heading-mid);">Reviews</div>
                     <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
                         No reviews yet</h2>
-                    <p>Yo7 is brand new, so there's nothing here to show off yet, honestly. If you shop with us, we'd genuinely like to hear how it went, good or bad.</p>
+                    <p>Yo7 Foods is brand new, so there's nothing here to show off yet, honestly. If you shop with us, we'd genuinely like to hear how it went, good or bad.</p>
                 </div>
                 <div class="reviews-cta">
                     <a class="btn btn-primary" href="https://wa.me/447398810052" target="_blank" rel="noopener">Leave a review on WhatsApp</a>
@@ -5485,7 +5692,7 @@
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Our Story</div>
                 <h1>Our Story</h1>
-                <p>Why Yo7 exists, and what we're trying to build.</p>
+                <p>Why Yo7 Foods exists, and what we're trying to build.</p>
             </div>
         </header>
         <section class="about-section">
@@ -5497,7 +5704,7 @@
                     </svg>
                     <div>
                         <h2>Built around a simple frustration</h2>
-                        <p>Yo7 started the way most useful things start: with a gap nobody else seemed to be filling properly. Finding rice that actually cooks the way it should, spices that taste like the ones back home, produce that's fresh rather than just available, shouldn't take a special trip or a compromise. So we built the shop we wished already existed: African and Caribbean staples, sourced properly, delivered locally, without the shortcuts.</p>
+                        <p>Yo7 Foods started the way most useful things start: with a gap nobody else seemed to be filling properly. Finding rice that actually cooks the way it should, spices that taste like the ones back home, produce that's fresh rather than just available, shouldn't take a special trip or a compromise. So we built the shop we wished already existed: African and Caribbean staples, sourced properly, delivered locally, without the shortcuts.</p>
                         <p>We're small on purpose. Staying close to what we sell, and who we sell it to, matters more to us than growing fast.</p>
                     </div>
                 </div>
@@ -6004,6 +6211,8 @@
                     <div class="field"><label>Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="100"></div>
                     <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="10"></div>
                 </div>
+                <p class="delivery-admin-note" id="loyaltySpendDisplay" style="margin-top:14px;"></p>
+                <button type="button" class="apf-cancel" id="loyaltyResetBtn" style="margin-top:4px;">Reset test spend &amp; codes (this browser only)</button>
             </div>
 
             <div class="delivery-admin-panel discount-admin-panel">
@@ -6057,7 +6266,7 @@
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; New Here?</div>
                 <h1>New Here?</h1>
-                <p>A quick guide to how Yo7 works, and answers to what people usually ask.</p>
+                <p>A quick guide to how Yo7 Foods works, and answers to what people usually ask.</p>
             </div>
         </header>
         <section class="guide-section">
@@ -6104,7 +6313,7 @@
                     </div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Log in</button>
                 </form>
-                <div class="auth-switch">New to Yo7? <a href="#/signup">Create an account</a></div>
+                <div class="auth-switch">New to Yo7 Foods? <a href="#/signup">Create an account</a></div>
                 <div class="auth-note">Preview mode: accounts aren't stored permanently yet, this resets when you
                     refresh the page.</div>
             </div>
@@ -6137,15 +6346,23 @@
         </section>
     </div>
 
+    <div class="footer-curve" aria-hidden="true">
+        <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z"/></svg>
+    </div>
     <footer>
         <svg class="footer-watermark" viewBox="65 25 875 900" aria-hidden="true">
             <use href="#seal-mark" />
         </svg>
         <div class="wrap">
             <div class="footer-newsletter">
-                <div>
-                    <h4>Stay in the loop</h4>
-                    <p>New arrivals, offers, and updates. No spam, just the useful stuff.</p>
+                <div class="footer-newsletter-text">
+                    <span class="footer-newsletter-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+                    </span>
+                    <div>
+                        <h4>Stay in the loop</h4>
+                        <p>New arrivals, offers, and updates. No spam, just the useful stuff.</p>
+                    </div>
                 </div>
                 <form class="newsletter-form" id="newsletterForm">
                     <input type="email" id="newsletterEmail" placeholder="you@example.com" required>
@@ -6182,11 +6399,11 @@
                     </div>
                     <div class="footer-col">
                         <h4>Contact</h4>
-                        <a href="#/contact">Visit Us</a>
-                        <a href="https://wa.me/447398810052" target="_blank" rel="noopener">WhatsApp</a>
-                        <a href="https://instagram.com/yo7foods" target="_blank" rel="noopener">Instagram</a>
-                        <a href="mailto:hello@yo7foods.co.uk">hello@yo7foods.co.uk</a>
-                        <span class="footer-addr">7 Lancaster Road, Ipswich, IP4 2NY</span>
+                        <a href="#/contact"><svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Visit Us</a>
+                        <a href="https://wa.me/447398810052" target="_blank" rel="noopener"><svg class="footer-contact-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>WhatsApp</a>
+                        <a href="https://instagram.com/yo7foods" target="_blank" rel="noopener"><svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></svg>Instagram</a>
+                        <a href="mailto:hello@yo7foods.co.uk"><svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>hello@yo7foods.co.uk</a>
+                        <span class="footer-addr"><svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>7 Lancaster Road, Ipswich, IP4 2NY</span>
                     </div>
                     <div class="footer-col">
                         <h4>Legal</h4>
@@ -6919,7 +7136,7 @@
            For anyone who'd rather send a message than fill in a card form.
            Builds a real, itemised message from the actual basket, opens
            WhatsApp with it pre-filled, the person still has to hit send,
-           and Yo7 confirms and takes payment manually from there, this
+           and Yo7 Foods confirms and takes payment manually from there, this
            isn't a substitute for checkout, it's a genuine alternative to it. */
         function sendCartViaWhatsApp() {
             if (cart.length === 0) { showToast('Your basket is empty.'); return; }
@@ -6927,7 +7144,7 @@
                 const note = i.isCombo ? ' (combo)' : i.isSubscription ? ` (subscription, every ${i.subscriptionFrequency} weeks)` : '';
                 return `${i.qty}x ${i.name}${note} - ${money(i.price * i.qty)}`;
             });
-            const message = `Hi Yo7! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${money(cartSubtotal())}\n\n(Sent from yo7foods.co.uk, delivery/pickup and payment to confirm with you.)`;
+            const message = `Hi Yo7 Foods! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${money(cartSubtotal())}\n\n(Sent from yo7foods.co.uk, delivery/pickup and payment to confirm with you.)`;
             window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank');
         }
         window.sendCartViaWhatsApp = sendCartViaWhatsApp;
@@ -7728,24 +7945,36 @@
             strip.innerHTML = cardHTML + cardHTML;
             matchCarouselSpeed(strip);
         }
-        function renderBestSellerCarousel() {
+        function renderBestSellersSpotlight() {
             const items = bestSellerItems();
-            const cardHTML = items.map(p => `
-    <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
+            const el = document.getElementById('bestSellersSpotlight');
+            if (!el || items.length === 0) return;
+            const [featured, ...rest] = items;
+            const listItems = rest.slice(0, 4);
+            el.innerHTML = `
+    <a class="best-seller-feature" href="#/product/${featured.catSlug}/${featured.idx}">
       <div class="thumb">
         <span class="new-tag">Best seller</span>
-        ${productPhotoHTML(p, p.name)}
+        ${productPhotoHTML(featured, featured.name)}
       </div>
       <div class="body">
-        <h4>${p.name}</h4>
-        <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
-        <div class="price">${priceHTML(p)}</div>
+        <div class="cat">${featured.catName.replace(/&amp;/g,'&')}</div>
+        <h3>${featured.name}</h3>
+        <div class="price">${priceHTML(featured)}</div>
+        <span class="btn btn-primary best-seller-feature-btn">View product</span>
       </div>
-    </a>`).join('');
-            const strip = document.getElementById('bestSellerCarousel');
-            if (!strip) return;
-            strip.innerHTML = cardHTML + cardHTML;
-            matchCarouselSpeed(strip);
+    </a>
+    <div class="best-seller-list">
+      ${listItems.map(p => `
+      <a class="best-seller-row" href="#/product/${p.catSlug}/${p.idx}">
+        <span class="best-seller-row-thumb">${productPhotoHTML(p, p.name)}</span>
+        <span class="best-seller-row-body">
+          <span class="name">${p.name}</span>
+          <span class="cat">${p.catName.replace(/&amp;/g,'&')}</span>
+        </span>
+        <span class="price">${priceHTML(p)}</span>
+      </a>`).join('')}
+    </div>`;
         }
         // Both marquee carousels share the same 32s @keyframes duration in CSS, but that
         // only produces the same *visual* speed when both have the same total content
@@ -8075,13 +8304,13 @@
             document.getElementById('pdUnit').textContent = p.unit;
             const reviewWaBtn = document.getElementById('pdReviewWhatsappBtn');
             const reviewEmailBtn = document.getElementById('pdReviewEmailBtn');
-            if (reviewWaBtn) reviewWaBtn.href = `https://wa.me/447398810052?text=${encodeURIComponent(`Hi Yo7! I'd like to leave a review for ${p.name}: `)}`;
+            if (reviewWaBtn) reviewWaBtn.href = `https://wa.me/447398810052?text=${encodeURIComponent(`Hi Yo7 Foods! I'd like to leave a review for ${p.name}: `)}`;
             if (reviewEmailBtn) reviewEmailBtn.href = `mailto:hello@yo7foods.co.uk?subject=${encodeURIComponent(`My review: ${p.name}`)}`;
             document.getElementById('pdPrice').textContent = money(p.price);
             const pdUnitInfo = unitPriceInfo(p);
             document.getElementById('pdUnitPrice').textContent = pdUnitInfo ? pdUnitInfo.text : '';
             renderPdVariantPicker(p);
-            document.getElementById('pdDesc').textContent = `${p.name}, a Yo7 staple from our ${cat.name.replace(/&amp;/g, '&')} aisle. ${cat.tagline}`;
+            document.getElementById('pdDesc').textContent = p.description || `${p.name}, a Yo7 Foods staple from our ${cat.name.replace(/&amp;/g, '&')} aisle. ${cat.tagline}`;
 
             const badge = document.getElementById('pdStockBadge');
             badge.className = 'stock-badge ' + stock;
@@ -8611,6 +8840,12 @@
             document.getElementById('invSubtotal').textContent = money(lastOrder.subtotal);
             document.getElementById('invDelivery').textContent = lastOrder.delivery === 0 ? 'Free' : money(lastOrder.delivery);
             document.getElementById('invTotal').textContent = money(lastOrder.total);
+
+            // Build the real PDF right away, in the background, rather than
+            // waiting for the person to click Save or Email. By the time
+            // they do, it's usually already sitting ready to go.
+            cachedInvoicePdfBlob = null;
+            buildInvoicePdfBlob().then(blob => { cachedInvoicePdfBlob = blob; }).catch(() => { /* falls back to building on demand when clicked */ });
         }
         document.getElementById('printInvoiceBtn').addEventListener('click', () => window.print());
 
@@ -8635,44 +8870,174 @@
         }
 
         let pdfLibsPromise = null;
+        let cachedInvoicePdfBlob = null;
         function ensurePdfLibsLoaded() {
             if (!pdfLibsPromise) {
-                pdfLibsPromise = Promise.all([
-                    loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
-                    loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
-                ]);
+                pdfLibsPromise = loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
             }
             return pdfLibsPromise;
         }
 
+        /* ================= PDF INVOICE =================
+           Drawn natively with jsPDF's own text/line APIs instead of
+           screenshotting the on-screen invoice with html2canvas. A
+           screenshot-based PDF embeds one big raster image, which is both
+           unnecessarily large (hundreds of KB to a few MB) and awkward to
+           paginate cleanly, slicing an image across a page break tends to
+           cut a row in half. Real vector text is inherently a few KB,
+           genuinely selectable/searchable, and lets us measure exactly how
+           much content there is, so small and medium orders reliably land
+           on one page and only a genuinely long item list spills to a
+           second, with the column headers repeated there for clarity. */
         async function buildInvoicePdfBlob() {
             await ensurePdfLibsLoaded();
-            const el = document.getElementById('invoiceBox');
-            const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' });
             const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+            const pdf = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 20;
-            const imgWidth = pageWidth - margin * 2;
-            const imgHeight = canvas.height * (imgWidth / canvas.width);
-            const imgData = canvas.toDataURL('image/png');
+            const margin = 42;
+            const contentWidth = pageWidth - margin * 2;
+            const colItem = margin;
+            const colItemWidth = contentWidth - 190;
+            const colUnit = margin + colItemWidth + 4;
+            const colQty = colUnit + 62;
+            const colTotal = pageWidth - margin;
+            let y = margin;
 
-            if (imgHeight <= pageHeight - margin * 2) {
-                pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
-            } else {
-                // Taller than one page — slice across multiple pages.
-                let heightLeft = imgHeight;
-                let position = margin;
-                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-                heightLeft -= (pageHeight - margin * 2);
-                while (heightLeft > 0) {
-                    position = margin - (imgHeight - heightLeft);
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-                    heightLeft -= (pageHeight - margin * 2);
-                }
+            const ink = [22, 33, 13];
+            const muted = [122, 111, 104];
+            const faint = [180, 172, 163];
+            const accent = [6, 59, 0];
+            const rule = [225, 221, 212];
+
+            const setText = (size, style, color) => {
+                pdf.setFont('helvetica', style);
+                pdf.setFontSize(size);
+                pdf.setTextColor(...color);
+            };
+            const hr = (yy) => { pdf.setDrawColor(...rule); pdf.setLineWidth(0.75); pdf.line(margin, yy, pageWidth - margin, yy); };
+            const ensureRoom = (needed, onNewPage) => {
+                if (y + needed <= pageHeight - margin) return;
+                pdf.addPage();
+                y = margin;
+                if (onNewPage) onNewPage();
+            };
+
+            // ---- Header ----
+            setText(19, 'bold', accent);
+            pdf.text('Yo7 Foods', margin, y + 18);
+            setText(9, 'normal', muted);
+            pdf.text('African Food Store, Ipswich', margin, y + 32);
+
+            setText(11, 'bold', ink);
+            pdf.text(`Invoice ${lastOrder.number}`, pageWidth - margin, y + 18, { align: 'right' });
+            setText(9, 'normal', muted);
+            const dateStr = new Date(lastOrder.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            pdf.text(dateStr, pageWidth - margin, y + 32, { align: 'right' });
+
+            y += 48;
+            hr(y);
+            y += 22;
+
+            // ---- Delivered to / Collecting ----
+            const di = lastOrder.delivery_info || {};
+            setText(8.5, 'bold', muted);
+            pdf.text(lastOrder.fulfilment === 'pickup' ? 'COLLECTING IN STORE' : 'DELIVERED TO', margin, y);
+            y += 14;
+            setText(10, 'normal', ink);
+            const addrLines = lastOrder.fulfilment === 'pickup'
+                ? [di.name || '', 'Yo7 Foods, 7 Lancaster Road', 'Ipswich, IP4 2NY', di.phone || '']
+                : [di.name || '', di.address || '', `${di.town || ''}${di.postcode ? ', ' + di.postcode : ''}`, di.phone || ''];
+            addrLines.filter(Boolean).forEach(line => { pdf.text(line, margin, y); y += 13; });
+            if (lastOrder.fulfilment !== 'pickup' && di.substitutionPref) {
+                setText(9, 'italic', muted);
+                pdf.text(di.substitutionPref === 'remove' ? 'No substitutions' : 'Substitutions OK if something\'s out of stock', margin, y);
+                y += 13;
             }
+            y += 6;
+            hr(y);
+            y += 20;
+
+            // ---- Order table ----
+            const drawTableHeader = () => {
+                setText(8.5, 'bold', muted);
+                pdf.text('ITEM', colItem, y);
+                pdf.text('UNIT', colUnit, y, { align: 'left' });
+                pdf.text('QTY', colQty, y, { align: 'left' });
+                pdf.text('TOTAL', colTotal, y, { align: 'right' });
+                y += 10;
+                hr(y);
+                y += 16;
+            };
+            drawTableHeader();
+
+            setText(10, 'normal', ink);
+            lastOrder.items.forEach(item => {
+                const nameLines = pdf.splitTextToSize(item.name, colItemWidth);
+                const subLine = item.isCombo && item.comboItems ? `Includes: ${item.comboItems.join(', ')}`
+                    : item.isSubscription ? `Subscription, every ${item.subscriptionFrequency} weeks`
+                    : item.unit;
+                const subLines = subLine ? pdf.splitTextToSize(subLine, colItemWidth) : [];
+                const rowHeight = (nameLines.length * 12) + (subLines.length * 11) + 10;
+
+                ensureRoom(rowHeight, drawTableHeader);
+
+                setText(10, 'bold', ink);
+                pdf.text(nameLines, colItem, y);
+                setText(10, 'normal', ink);
+                pdf.text(money(item.price), colUnit, y);
+                pdf.text(String(item.qty), colQty, y);
+                pdf.text(money(item.price * item.qty), colTotal, y, { align: 'right' });
+                y += nameLines.length * 12;
+
+                if (subLines.length) {
+                    setText(8.5, item.isSubscription ? 'bold' : 'italic', item.isSubscription ? accent : muted);
+                    pdf.text(subLines, colItem, y);
+                    y += subLines.length * 11;
+                }
+                y += 8;
+                hr(y - 4);
+            });
+
+            y += 8;
+
+            // ---- Totals ----
+            ensureRoom(110);
+            const totalsX = pageWidth - margin;
+            const totalsLabelX = totalsX - 150;
+            const totalRow = (label, value, opts = {}) => {
+                setText(opts.size || 10, opts.bold ? 'bold' : 'normal', opts.color || ink);
+                pdf.text(label, totalsLabelX, y);
+                pdf.text(value, totalsX, y, { align: 'right' });
+                y += opts.gap || 16;
+            };
+            totalRow('Subtotal', money(lastOrder.subtotal));
+            totalRow(lastOrder.fulfilment === 'pickup' ? 'Pickup' : 'Delivery', lastOrder.delivery === 0 ? 'Free' : money(lastOrder.delivery));
+            if (lastOrder.discount > 0) {
+                totalRow(`Discount${lastOrder.discountCode ? ' (' + lastOrder.discountCode + ')' : ''}`, '-' + money(lastOrder.discount), { color: accent });
+            }
+            y += 4;
+            hr(y);
+            y += 16;
+            totalRow('Total paid', money(lastOrder.total), { size: 13, bold: true, gap: 20 });
+
+            // ---- Loyalty reward ----
+            if (lastOrder.loyaltyCodeEarned) {
+                ensureRoom(40);
+                pdf.setFillColor(225, 225, 0);
+                pdf.roundedRect(margin, y - 12, contentWidth, 30, 4, 4, 'F');
+                setText(9.5, 'bold', [22, 33, 13]);
+                pdf.text(`Reward earned: ${loyaltyRewardPct}% off your next order with code ${lastOrder.loyaltyCodeEarned}. One-time use.`, margin + 10, y + 6);
+                y += 34;
+            }
+
+            // ---- Footer ----
+            ensureRoom(24);
+            y = Math.max(y + 20, pageHeight - margin - 10);
+            hr(y - 14);
+            setText(8, 'normal', faint);
+            pdf.text('Yo7 Foods Limited  \u00b7  hello@yo7foods.co.uk  \u00b7  This is a preview invoice generated for demonstration.', pageWidth / 2, y, { align: 'center' });
+
             return pdf.output('blob');
         }
 
@@ -8692,7 +9057,7 @@
             const btn = document.getElementById('savePdfBtn');
             withButtonBusyState(btn, 'Preparing PDF…', async () => {
                 try {
-                    const blob = await buildInvoicePdfBlob();
+                    const blob = cachedInvoicePdfBlob || await buildInvoicePdfBlob();
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url; a.download = invoiceFileName();
@@ -8709,7 +9074,7 @@
             document.getElementById('emailFallbackNote').style.display = 'none';
             withButtonBusyState(btn, 'Preparing…', async () => {
                 try {
-                    const blob = await buildInvoicePdfBlob();
+                    const blob = cachedInvoicePdfBlob || await buildInvoicePdfBlob();
                     const fileName = invoiceFileName();
                     const file = new File([blob], fileName, { type: 'application/pdf' });
 
@@ -8792,6 +9157,24 @@
             const currentUnitInfo = (product.unitOverride && product.unitOverride.qty > 0) ? product.unitOverride : parseUnitQuantity(product.unit);
             slot.innerHTML = `
         <div class="edit-panel">
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div>
+              <label>Product photo</label>
+              <div class="ep-photo-row">
+                <div class="ep-photo-preview" id="ep-photo-preview-${catSlug}-${idx}">${product.image ? `<img src="${product.image}" alt="">` : `<span>${product.emoji || '🛒'}</span>`}</div>
+                <div>
+                  <input type="file" accept="image/*" id="ep-photo-${catSlug}-${idx}" onchange="handleEditPhotoUpload('${catSlug}', ${idx}, this)">
+                  ${product.image ? `<button type="button" class="ep-photo-remove" onclick="removeEditPhoto('${catSlug}', ${idx})">Remove photo</button>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div>
+              <label>Description (optional, leave blank to use the default)</label>
+              <textarea id="ep-desc-${catSlug}-${idx}" rows="3" placeholder="${product.name}, a Yo7 Foods staple from our ${cat.name.replace(/&amp;/g, '&')} aisle...">${product.description || ''}</textarea>
+            </div>
+          </div>
           <div class="ep-row">
             <div>
               <label>Price (£)</label>
@@ -8902,10 +9285,50 @@
                 if (!isNaN(qtyNum) && qtyNum > 0) product.unitOverride = { qty: qtyNum, measure: unitMeasureVal };
             }
 
+            const descEl = document.getElementById(`ep-desc-${catSlug}-${idx}`);
+            if (descEl) {
+                const descVal = descEl.value.trim();
+                if (descVal === '') { delete product.description; }
+                else { product.description = descVal; }
+            }
+
             btn.closest('.edit-panel-slot').innerHTML = '';
             route(); // re-render the current view so the change is visible immediately everywhere it appears
         }
         window.saveEditPanel = saveEditPanel;
+
+        // Reads the chosen file straight into memory as a data URL, no server
+        // or storage needed for this to genuinely work. It lives only in this
+        // browser tab's session, same as every other edit-mode change on the
+        // site, and resets on refresh.
+        function handleEditPhotoUpload(catSlug, idx, input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const cat = findCategory(catSlug);
+                const product = cat.products[idx];
+                product.image = e.target.result;
+                // Update the preview in place rather than calling route(), a
+                // full re-render here would regenerate the product grid and
+                // close the very edit panel the person is still filling in.
+                const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
+                if (preview) preview.innerHTML = `<img src="${e.target.result}" alt="">`;
+            };
+            reader.readAsDataURL(file);
+        }
+        window.handleEditPhotoUpload = handleEditPhotoUpload;
+        function removeEditPhoto(catSlug, idx) {
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            delete product.image;
+            const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
+            if (preview) preview.innerHTML = `<span>${product.emoji || '🛒'}</span>`;
+            const removeBtn = document.querySelector(`#ep-photo-preview-${catSlug}-${idx}`)?.closest('.ep-photo-row')?.querySelector('.ep-photo-remove');
+            if (removeBtn) removeBtn.remove();
+        }
+        window.removeEditPhoto = removeEditPhoto;
 
         function openAddProductForm(slotId, presetCategorySlug) {
             const slot = document.getElementById(slotId);
@@ -8919,9 +9342,20 @@
             <div><label>Product name</label><input type="text" id="apf-name-${uid}" placeholder="e.g. Bag of Rice"></div>
             <div><label>Unit</label><input type="text" id="apf-unit-${uid}" placeholder="e.g. 1kg"></div>
           </div>
+          <div>
+            <label>Product photo (optional)</label>
+            <div class="ep-photo-row">
+              <div class="ep-photo-preview" id="apf-photo-preview-${uid}"><span>🛒</span></div>
+              <input type="file" accept="image/*" id="apf-photo-${uid}" onchange="handleNewProductPhotoUpload('${uid}', this)">
+            </div>
+          </div>
           <div class="apf-row">
             <div><label>Price (£)</label><input type="number" step="0.01" min="0" id="apf-price-${uid}" placeholder="0.00"></div>
             <div><label>Sale price (£, optional)</label><input type="number" step="0.01" min="0" id="apf-sale-${uid}"></div>
+          </div>
+          <div>
+            <label>Description (optional, leave blank to use the default)</label>
+            <textarea id="apf-desc-${uid}" rows="2" placeholder="Leave blank to auto-generate from the category"></textarea>
           </div>
           <div class="apf-row">
             <div><label>Category</label><select id="apf-cat-${uid}" ${presetCategorySlug ? 'disabled' : ''}>${catOptions}</select></div>
@@ -8943,6 +9377,21 @@
         }
         window.openAddProductForm = openAddProductForm;
 
+        const newProductPhotoData = {};
+        function handleNewProductPhotoUpload(uid, input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                newProductPhotoData[uid] = e.target.result;
+                const preview = document.getElementById(`apf-photo-preview-${uid}`);
+                if (preview) preview.innerHTML = `<img src="${e.target.result}" alt="">`;
+            };
+            reader.readAsDataURL(file);
+        }
+        window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
+
         function saveNewProduct(slotId, uid, presetCategorySlug) {
             const name = document.getElementById(`apf-name-${uid}`).value.trim();
             const unit = document.getElementById(`apf-unit-${uid}`).value.trim();
@@ -8952,6 +9401,8 @@
             const stock = document.getElementById(`apf-stock-${uid}`).value;
             const isNewChecked = document.getElementById(`apf-isnew-${uid}`).checked;
             const isBestSellerChecked = document.getElementById(`apf-isbestseller-${uid}`).checked;
+            const descEl = document.getElementById(`apf-desc-${uid}`);
+            const descVal = descEl ? descEl.value.trim() : '';
 
             if (!name || !unit || isNaN(price) || price < 0) {
                 alert('Please fill in a product name, unit, and a valid price.');
@@ -8964,6 +9415,8 @@
             if (saleVal !== '' && !isNaN(parseFloat(saleVal))) newProduct.salePrice = parseFloat(saleVal);
             if (isNewChecked) newProduct.isNew = true;
             if (isBestSellerChecked) newProduct.isBestSeller = true;
+            if (descVal) newProduct.description = descVal;
+            if (newProductPhotoData[uid]) { newProduct.image = newProductPhotoData[uid]; delete newProductPhotoData[uid]; }
             cat.products.push(newProduct);
 
             document.getElementById(slotId).innerHTML = '';
@@ -9045,7 +9498,7 @@
         /* ================= GUIDE / FAQ ================= */
         const FAQS = [
             { q: 'What areas do you deliver to?', a: 'We deliver to every UK postcode. Use the postcode checker on the Delivery Information page to double-check the format of yours.' },
-            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is £3.50 per order, and free once your order reaches £50. There\'s no minimum order for delivery or pickup.' },
+            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is priced by the total weight of your order rather than a flat rate, up to 10kg is £7.99, up to 20kg is £11.99, and above that is £15.99, and it\'s free once your order reaches £50. There\'s no minimum order for delivery or pickup.' },
             { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 12pm are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
@@ -9100,9 +9553,26 @@
             const floatCartBtn = document.getElementById('floatCart');
             if (floatCartBtn) floatCartBtn.classList.toggle('float-suppressed', FLOAT_CART_HIDDEN_VIEWS.includes(id));
         }
+        function updateActiveNavLink() {
+            const hash = window.location.hash;
+            const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers', '#/build-bundle'];
+            const links = {
+                navLinkHome: hash === '' || hash === '#/',
+                navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
+                navLinkStory: hash === '#/about',
+                navLinkDelivery: hash === '#/delivery-info' || hash === '#/delivery-policy',
+                navLinkContact: hash === '#/contact',
+                navLinkGuide: hash === '#/guide',
+            };
+            Object.entries(links).forEach(([id, active]) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('nav-link-active', active);
+            });
+        }
         function route() {
             const hash = window.location.hash;
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            updateActiveNavLink();
 
             if (hash.startsWith('#/group/')) {
                 showView('view-group');
@@ -9147,6 +9617,7 @@
             } else if (hash === '#/special-offers') {
                 showView('view-special-offers');
                 renderSpecialOffersPage();
+                if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
             } else if (hash === '#/bundles') {
                 showView('view-bundles');
                 renderBundlesViewAllPage();
@@ -9208,11 +9679,17 @@
         /* ================= SCROLL: float button + reveal ================= */
         const floatOrder = document.getElementById('floatOrder');
         const floatCart = document.getElementById('floatCart');
+        const mainNavEl = document.getElementById('mainNav');
         function onScroll() {
             floatOrder.classList.toggle('is-visible', window.scrollY > 260);
             if (floatCart) floatCart.classList.toggle('is-visible', window.scrollY > 260);
+            if (mainNavEl) {
+                const onHomepage = window.location.hash === '' || window.location.hash === '#/';
+                mainNavEl.classList.toggle('nav-solid', !onHomepage || window.scrollY > 80);
+            }
         }
         window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('hashchange', onScroll);
         onScroll();
 
         function observeReveals() {
@@ -9481,6 +9958,28 @@
                 renderCartList();
             });
         }
+        function renderLoyaltySpendDisplay() {
+            const el = document.getElementById('loyaltySpendDisplay');
+            if (!el) return;
+            const pending = unusedLoyaltyCode();
+            el.innerHTML = `This browser has <strong>${money(getLoyaltySpend())}</strong> in recorded past spend`
+                + (pending ? `, and one unused code waiting: <strong>${pending.code}</strong>.` : '.');
+        }
+        renderLoyaltySpendDisplay();
+        const loyaltyResetBtn = document.getElementById('loyaltyResetBtn');
+        if (loyaltyResetBtn) {
+            loyaltyResetBtn.addEventListener('click', () => {
+                if (!confirm('Clear all recorded loyalty spend and codes for this browser? This only affects your own testing, real customers each have their own separate browser storage.')) return;
+                try {
+                    localStorage.removeItem('yo7-loyalty-spend');
+                    localStorage.removeItem('yo7-loyalty-codes');
+                } catch (e) { /* localStorage unavailable */ }
+                discounts = discounts.filter(d => !d.id.startsWith('loyalty-'));
+                renderLoyaltySpendDisplay();
+                renderCartList();
+                showToast('Loyalty test data cleared for this browser.');
+            });
+        }
         renderDiscountsAdmin();
         const addBundleBtn = document.getElementById('addBundleBtn');
         if (addBundleBtn) addBundleBtn.addEventListener('click', openAddBundleForm);
@@ -9496,7 +9995,7 @@
                 const input = document.getElementById('whatsappListInput');
                 const text = input.value.trim();
                 if (!text) { showToast('Type your list first.'); return; }
-                const message = `Hi Yo7! Here's what I'd like to order:\n\n${text}\n\n(Sent from yo7foods.co.uk)`;
+                const message = `Hi Yo7 Foods! Here's what I'd like to order:\n\n${text}\n\n(Sent from yo7foods.co.uk)`;
                 window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank');
                 input.value = '';
             });
@@ -9557,7 +10056,7 @@
             });
         }
         renderNewCarousel();
-        renderBestSellerCarousel();
+        renderBestSellersSpotlight();
         renderPlatformBadges();
         const trustpilotUrlInput = document.getElementById('trustpilotUrlInput');
         const googleBusinessUrlInput = document.getElementById('googleBusinessUrlInput');
