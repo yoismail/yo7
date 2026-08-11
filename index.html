@@ -2342,10 +2342,17 @@
             pointer-events: none;
             text-decoration: none;
         }
+        @keyframes floatCartBounceIn {
+            0% { transform: scale(0.6) translateY(12px); }
+            55% { transform: scale(1.14) translateY(-8px); }
+            75% { transform: scale(0.96) translateY(2px); }
+            100% { transform: scale(1) translateY(0); }
+        }
         .float-cart.is-visible {
             opacity: 1;
             transform: scale(1) translateY(0);
             pointer-events: auto;
+            animation: floatCartBounceIn 0.6s cubic-bezier(.34, 1.56, .64, 1);
         }
         .float-cart.float-suppressed {
             opacity: 0 !important;
@@ -2354,6 +2361,16 @@
         }
         .float-cart:hover { background: var(--aubergine-mid); transform: scale(1.08); }
         .float-cart svg { width: 24px; height: 24px; }
+        @keyframes badgePop {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.55); }
+            55% { transform: scale(0.88); }
+            100% { transform: scale(1); }
+        }
+        @keyframes badgeRing {
+            0% { box-shadow: 0 0 0 0 rgba(144, 184, 0, 0.6); }
+            100% { box-shadow: 0 0 0 10px rgba(144, 184, 0, 0); }
+        }
         .float-cart-badge {
             position: absolute;
             top: -4px;
@@ -2373,6 +2390,9 @@
             border: 2px solid var(--page-bg);
         }
         .float-cart-badge.is-empty { display: none; }
+        .float-cart-badge.badge-pulse {
+            animation: badgePop 0.5s cubic-bezier(.34, 1.56, .64, 1), badgeRing 0.7s ease-out;
+        }
 
         .float-order {
             position: fixed;
@@ -7163,6 +7183,7 @@
         }
         window.sendCartViaWhatsApp = sendCartViaWhatsApp;
 
+        let lastKnownCartCount = 0;
         function updateCartBadge() {
             const badge = document.getElementById('cartBadge');
             const n = cartCount();
@@ -7172,7 +7193,13 @@
             if (floatBadge) {
                 floatBadge.textContent = n;
                 floatBadge.classList.toggle('is-empty', n === 0);
+                if (n > lastKnownCartCount) {
+                    floatBadge.classList.remove('badge-pulse');
+                    void floatBadge.offsetWidth; // restart the animation even if it's still mid-play from a rapid add
+                    floatBadge.classList.add('badge-pulse');
+                }
             }
+            lastKnownCartCount = n;
         }
         function addToCart(product, qty) {
             const existing = cart.find(i => i.id === product.id);
@@ -8920,11 +8947,18 @@
             const colTotal = pageWidth - margin;
             let y = margin;
 
-            const ink = [22, 33, 13];
-            const muted = [122, 111, 104];
-            const faint = [180, 172, 163];
-            const accent = [6, 59, 0];
-            const rule = [225, 221, 212];
+            // Exact brand palette, not approximated invoice grays, so the
+            // PDF actually reads as the same brand as the website.
+            const ink = [22, 33, 13];        // --ink
+            const aubergine = [6, 59, 0];    // --aubergine
+            const aubergineDeep = [4, 37, 0]; // --aubergine-deep
+            const chartreuse = [144, 184, 0]; // --chartreuse
+            const orange = [225, 225, 0];     // --orange
+            const cream = [250, 249, 242];    // --cream
+            const muted = [138, 127, 120];    // --text-muted
+            const faint = [168, 154, 148];    // --text-faint
+            const accent = aubergine;
+            const rule = [230, 225, 210];
 
             const setText = (size, style, color) => {
                 pdf.setFont('helvetica', style);
@@ -8939,13 +8973,24 @@
                 if (onNewPage) onNewPage();
             };
 
-            // ---- Header (with a real drawn seal mark, not a raster image,
-            // keeps the file tiny and stays crisp at any zoom) ----
-            const sealCx = margin + 15, sealCy = y + 14, sealR = 15;
-            pdf.setFillColor(...accent);
+            // ---- Header, with the real Yo7 Foods seal drawn to match the
+            // actual brand mark: a chartreuse ring, dark aubergine centre,
+            // the cream "7", and the small orange sprout on top, not a
+            // raster image (keeps the file tiny, stays crisp at any zoom) ----
+            const sealCx = margin + 16, sealCy = y + 15, sealR = 16;
+            pdf.setFillColor(...chartreuse);
             pdf.circle(sealCx, sealCy, sealR, 'F');
-            setText(13, 'bold', [255, 255, 255]);
-            pdf.text('7', sealCx, sealCy + 4.5, { align: 'center' });
+            pdf.setFillColor(...aubergineDeep);
+            pdf.circle(sealCx, sealCy, sealR - 2.6, 'F');
+            setText(14, 'bold', cream);
+            pdf.text('7', sealCx, sealCy + 5, { align: 'center' });
+            pdf.setDrawColor(...orange);
+            pdf.setLineWidth(1.3);
+            pdf.setLineCap('round');
+            pdf.line(sealCx, sealCy - sealR - 1, sealCx, sealCy - sealR - 6);
+            pdf.setFillColor(...orange);
+            pdf.ellipse(sealCx + 2.6, sealCy - sealR - 6, 2.6, 1.6, 'F');
+
 
             setText(19, 'bold', accent);
             pdf.text('Yo7 Foods', margin + sealR * 2 + 10, y + 18);
@@ -9053,9 +9098,9 @@
             // ---- Loyalty reward ----
             if (lastOrder.loyaltyCodeEarned) {
                 ensureRoom(40);
-                pdf.setFillColor(225, 225, 0);
+                pdf.setFillColor(...orange);
                 pdf.roundedRect(margin, y - 12, contentWidth, 30, 4, 4, 'F');
-                setText(9.5, 'bold', [22, 33, 13]);
+                setText(9.5, 'bold', ink);
                 pdf.text(`Reward earned: ${loyaltyRewardPct}% off your next order with code ${lastOrder.loyaltyCodeEarned}. One-time use.`, margin + 10, y + 6);
                 y += 34;
             }
