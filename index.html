@@ -32,6 +32,8 @@
             --aubergine-mid: #266210;
             --chartreuse: #90B800;
             --chartreuse-soft: #A6CC2E;
+            --chartreuse-rich: #729400;
+            --forest-deep: #031C00;
             --cream: #FAF9F2;
             --orange: #E1E100;
             --ink: #16210D;
@@ -188,10 +190,11 @@
                aubergine-deep, 135deg), instead of a single flat tone, so the
                nav reads as part of the same premium surface rather than a
                plain green bar bolted on top of it. */
-            background: linear-gradient(135deg, rgba(38, 98, 16, 0.92) 0%, rgba(6, 59, 0, 0.92) 45%, rgba(4, 37, 0, 0.92) 100%);
+            background: linear-gradient(135deg, rgba(38, 98, 16, 0.92) 0%, rgba(6, 59, 0, 0.92) 40%, rgba(4, 37, 0, 0.92) 74%, rgba(3, 28, 0, 0.94) 100%);
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
             border-bottom: 1px solid rgba(250, 249, 242, 0.08);
+            box-shadow: 0 10px 30px rgba(4, 37, 0, 0.18);
         }
 
         body { padding-top: 0; }
@@ -404,6 +407,11 @@
             height: 29px;
             display: block;
             flex-shrink: 0;
+            transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+        }
+
+        .nav-mark:hover svg {
+            transform: scale(1.08);
         }
 
         .nav-badge {
@@ -550,20 +558,30 @@
             padding-bottom: 4px;
         }
 
-        .nav-links a:hover {
-            opacity: 1;
-        }
-
-        .nav-links a.nav-link-active {
-            opacity: 1;
-        }
-        .nav-links a.nav-link-active::after {
+        .nav-links a::after {
             content: '';
             position: absolute;
             left: 0; right: 0; bottom: -8px;
             height: 3px;
             border-radius: 999px;
             background: var(--chartreuse);
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+        }
+        .nav-links a:hover::after {
+            transform: scaleX(0.55);
+        }
+
+        .nav-links a.nav-link-active {
+            opacity: 1;
+        }
+        .nav-links a.nav-link-active::after {
+            transform: scaleX(1);
         }
 
         .nav-right {
@@ -585,13 +603,14 @@
             align-items: center;
             justify-content: center;
             color: var(--cream);
-            transition: background 0.2s ease, border-color 0.2s ease;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
             text-decoration: none;
         }
 
         .icon-btn:hover {
             background: rgba(250, 249, 242, 0.14);
             border-color: rgba(250, 249, 242, 0.4);
+            transform: translateY(-2px);
         }
 
         /* Cart still reads as the primary action in this cluster, but as a
@@ -649,12 +668,13 @@
             font-size: 13px;
             color: var(--cream);
             text-decoration: none;
-            transition: border-color 0.2s ease, background 0.2s ease;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
         }
 
         .nav-account:hover {
             border-color: rgba(250, 249, 242, 0.5);
             background: rgba(250, 249, 242, 0.14);
+            transform: translateY(-2px);
         }
 
         .nav-account svg {
@@ -893,6 +913,10 @@
             box-shadow: 0 6px 20px rgba(144, 184, 0, 0.28);
         }
 
+        .btn-primary:active {
+            background: var(--chartreuse-rich);
+        }
+
         .btn-outline {
             background: rgba(250, 249, 242, 0.06);
             color: var(--cream);
@@ -982,7 +1006,7 @@
         /* ================= HERO ================= */
         .hero {
             position: relative;
-            background: radial-gradient(ellipse at 50% 34%, rgba(144, 184, 0, 0.16), transparent 60%), linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 40%, var(--aubergine-deep) 100%);
+            background: radial-gradient(ellipse at 50% 34%, rgba(144, 184, 0, 0.16), transparent 60%), linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 40%, var(--aubergine-deep) 76%, var(--forest-deep) 100%);
             color: var(--cream);
             overflow: hidden;
             padding: 64px 0 96px;
@@ -1908,20 +1932,14 @@
         }
         .view-all-btn svg { width: 15px; height: 15px; transition: transform 0.2s ease; }
         .view-all-btn:hover { background: var(--aubergine); color: var(--cream); transform: translateX(2px); }
-        .new-carousel-wrap { position: relative; width: 100%; max-width: 100%; overflow: hidden; }
+        .new-carousel-wrap { position: relative; width: 100%; max-width: 100%; display: flex; align-items: center; gap: 8px; }
         .new-carousel {
             display: flex; gap: 18px; padding: 4px 2px 10px;
-            width: max-content;
-            animation: newCarouselMarquee 32s linear infinite;
+            overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+            cursor: grab; flex: 1; min-width: 0;
         }
-        .new-carousel.paused { animation-play-state: paused; }
-        @keyframes newCarouselMarquee {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .new-carousel { animation: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        }
+        .new-carousel.dragging { cursor: grabbing; scroll-behavior: auto; }
         .new-card {
             flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
             overflow: hidden; text-decoration: none; color: var(--ink);
@@ -1973,20 +1991,14 @@
         .hero-glimpse-pill:hover { border-color: var(--heading-mid); }
 
         .offer-section { background: var(--section-alt-bg); padding: 56px 0 60px; border-top: 1px solid rgba(var(--border-rgb), 0.06); border-bottom: 1px solid rgba(var(--border-rgb), 0.06); }
-        .offer-carousel-wrap { position: relative; width: 100%; max-width: 100%; overflow: hidden; }
+        .offer-carousel-wrap { position: relative; width: 100%; max-width: 100%; display: flex; align-items: center; gap: 8px; }
         .offer-carousel {
             display: flex; gap: 18px; padding: 4px 2px 10px;
-            width: max-content;
-            animation: offerCarouselMarquee 32s linear infinite;
+            overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+            cursor: grab; flex: 1; min-width: 0;
         }
-        .offer-carousel.paused { animation-play-state: paused; }
-        @keyframes offerCarouselMarquee {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .offer-carousel { animation: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        }
+        .offer-carousel.dragging { cursor: grabbing; scroll-behavior: auto; }
         .offer-card {
             flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
             overflow: hidden; text-decoration: none; color: var(--ink);
@@ -2206,33 +2218,47 @@
                green slab. */
             background:
                 radial-gradient(ellipse at 50% 0%, rgba(144, 184, 0, 0.10), transparent 55%),
-                linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 45%, var(--aubergine-deep) 100%);
+                linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 45%, var(--aubergine-deep) 78%, var(--forest-deep) 100%);
             color: #d9e0c8;
             padding: 56px 0 36px;
             overflow: hidden;
         }
         .footer-watermark {
             position: absolute;
-            bottom: -18%;
-            left: -8%;
-            width: min(55vw, 560px);
-            opacity: 0.07;
+            bottom: -14%;
+            right: -4%;
+            width: min(38vw, 460px);
+            opacity: 0.05;
             pointer-events: none;
             z-index: 0;
+        }
+        @media (max-width: 780px) {
+            .footer-watermark { display: none; }
         }
         footer .wrap { position: relative; z-index: 1; }
 
         .footer-newsletter {
+            position: relative;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
-            padding: 22px 24px;
+            padding: 26px 28px;
             margin-bottom: 32px;
             background: rgba(250, 249, 242, 0.05);
             border: 1px solid rgba(250, 249, 242, 0.1);
-            border-radius: 16px;
+            border-radius: 20px;
+            box-shadow: 0 24px 48px rgba(3, 26, 0, 0.22);
+            overflow: hidden;
+        }
+        .footer-newsletter::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--chartreuse), transparent);
+            opacity: 0.7;
         }
         .footer-newsletter-text {
             display: flex; align-items: center; gap: 16px;
@@ -2260,6 +2286,10 @@
             background: var(--chartreuse); color: var(--aubergine-deep); border: none; border-radius: 10px;
             padding: 11px 20px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
             white-space: nowrap;
+            transition: background 0.2s ease;
+        }
+        .newsletter-form button:active {
+            background: var(--chartreuse-rich);
         }
 
         .footer-top {
@@ -2330,9 +2360,10 @@
             background: rgba(250, 249, 242, 0.08);
             border: 1px solid rgba(250, 249, 242, 0.18);
             color: var(--cream);
-            transition: background 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
-        .footer-social-row a:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
+        .footer-social-row a:hover { background: var(--chartreuse); color: var(--aubergine-deep); transform: translateY(-2px); }
+        .footer-social-row a:active { background: var(--chartreuse-rich); }
         .footer-social-row svg { width: 17px; height: 17px; }
 
         .footer-links {
@@ -2347,7 +2378,18 @@
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--chartreuse-soft);
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .footer-col h4::after {
+            content: '';
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 22px; height: 2px;
+            border-radius: 999px;
+            background: var(--chartreuse);
+            opacity: 0.7;
         }
 
         .footer-col a {
@@ -2359,11 +2401,13 @@
             text-decoration: none;
             margin-bottom: 8px;
             opacity: 0.9;
+            transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
 
         .footer-col a:hover {
             opacity: 1;
             color: var(--cream);
+            transform: translateX(3px);
         }
 
         .footer-contact-icon {
@@ -2562,7 +2606,7 @@
 
         /* ================= SHOP HEADER (category/search) ================= */
         .shop-header {
-            background: linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 60%, var(--aubergine-deep) 100%);
+            background: linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 60%, var(--aubergine-deep) 85%, var(--forest-deep) 100%);
             color: var(--cream);
             padding: 52px 0 48px;
         }
@@ -2719,14 +2763,18 @@
            in-category nav strip, but on a light background, so the arrows
            need dark styling instead of the light/blur treatment used on
            the dark shop-header. */
-        #shopByGroup .cat-nav-arrow {
+        #shopByGroup .cat-nav-arrow,
+        .new-carousel-wrap .cat-nav-arrow,
+        .offer-carousel-wrap .cat-nav-arrow {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.16);
             color: var(--heading);
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
         }
-        #shopByGroup .cat-nav-arrow:hover { background: var(--section-alt-bg); }
+        #shopByGroup .cat-nav-arrow:hover,
+        .new-carousel-wrap .cat-nav-arrow:hover,
+        .offer-carousel-wrap .cat-nav-arrow:hover { background: var(--section-alt-bg); }
         .cat-flat-scroll { gap: 18px; padding: 4px 2px 10px; }
         .cat-flat-card {
             flex: 0 0 220px; max-width: 220px;
@@ -5216,7 +5264,13 @@
                     </a>
                 </div>
                 <div class="offer-carousel-wrap">
+                    <button class="cat-nav-arrow cat-nav-arrow-prev" id="offerCarouselPrev" type="button" aria-label="Scroll offers left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
                     <div class="offer-carousel" id="offerCarousel"></div>
+                    <button class="cat-nav-arrow cat-nav-arrow-next" id="offerCarouselNext" type="button" aria-label="Scroll offers right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
                 </div>
             </div>
         </section>
@@ -5234,7 +5288,13 @@
                     </a>
                 </div>
                 <div class="new-carousel-wrap">
+                    <button class="cat-nav-arrow cat-nav-arrow-prev" id="newCarouselPrev" type="button" aria-label="Scroll new arrivals left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
                     <div class="new-carousel" id="newCarousel"></div>
+                    <button class="cat-nav-arrow cat-nav-arrow-next" id="newCarouselNext" type="button" aria-label="Scroll new arrivals right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
                 </div>
             </div>
         </section>
@@ -8177,7 +8237,7 @@
            capture guarantees this element keeps receiving move/up events for
            that pointer no matter what, which is exactly what this needs. */
         function initDragScroll() {
-            const grids = document.querySelectorAll('.product-grid');
+            const grids = document.querySelectorAll('.product-grid, .new-carousel, .offer-carousel');
             grids.forEach(grid => {
                 grid.setAttribute('draggable', 'false');
                 let isDown = false;
@@ -8276,9 +8336,7 @@
       </div>
     </a>`;
             }).join('');
-            // duplicated once so the CSS animation loop is seamless (translateX(-50%) = one full set)
-            strip.innerHTML = cardHTML + cardHTML;
-            matchCarouselSpeed(strip);
+            strip.innerHTML = cardHTML;
         }
         function renderNewCarousel() {
             const items = newArrivalsItems();
@@ -8295,10 +8353,8 @@
         <div class="price">${priceHTML(p)}</div>
       </div>
     </a>`).join('');
-            // duplicated once so the CSS animation loop is seamless (translateX(-50%) = one full set)
             const strip = document.getElementById('newCarousel');
-            strip.innerHTML = cardHTML + cardHTML;
-            matchCarouselSpeed(strip);
+            strip.innerHTML = cardHTML;
         }
         function renderBestSellersSpotlight() {
             const items = bestSellerItems();
@@ -8331,22 +8387,6 @@
       </a>`).join('')}
     </div>`;
         }
-        // Both marquee carousels share the same 32s @keyframes duration in CSS, but that
-        // only produces the same *visual* speed when both have the same total content
-        // width. With a different number of cards (e.g. fewer items currently on offer
-        // than new arrivals), the shorter track covers less real distance in the same
-        // 32s and visibly crawls. This recalculates each carousel's animation-duration
-        // from its actual rendered width so every carousel moves at the same pixels-per-
-        // second rate, matching "Just landed" as the reference speed, regardless of how
-        // many cards either one currently has.
-        const CAROUSEL_PX_PER_SECOND = 74; // derived from the new-arrivals carousel's original 32s/full-width pace
-        function matchCarouselSpeed(strip) {
-            if (!strip) return;
-            const halfWidth = strip.scrollWidth / 2; // content is duplicated for the seamless loop
-            if (!halfWidth) return;
-            const duration = Math.max(6, halfWidth / CAROUSEL_PX_PER_SECOND);
-            strip.style.animationDuration = `${duration}s`;
-        }
         function renderNewArrivalsPage() {
             const items = newArrivalsItems();
             document.getElementById('newArrivalsCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
@@ -8362,59 +8402,6 @@
             document.getElementById('specialOffersCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'specialOffersGrid');
         }
-
-        /* ================= NEW PRODUCTS CAROUSEL: pause on interaction ================= */
-        /* The scrolling itself is a pure CSS animation (see @keyframes newCarouselMarquee),
-           which keeps running smoothly on mobile even during active touch scrolling, unlike
-           a JS/requestAnimationFrame-driven version which mobile browsers can throttle. */
-        (function initNewCarouselPause() {
-            const strip = document.getElementById('newCarousel');
-            if (!strip) return;
-            let resumeTimer = null;
-            function pause() {
-                strip.classList.add('paused');
-                clearTimeout(resumeTimer);
-                resumeTimer = setTimeout(() => strip.classList.remove('paused'), 2000);
-            }
-            strip.addEventListener('mouseenter', () => strip.classList.add('paused'));
-            strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); strip.classList.remove('paused'); });
-            // Only pause for touch when it's a genuine horizontal interaction with the
-            // carousel, not a vertical page-scroll swipe that happens to pass over it.
-            let touchStartX = 0, touchStartY = 0;
-            strip.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            strip.addEventListener('touchmove', (e) => {
-                const dx = Math.abs(e.touches[0].clientX - touchStartX);
-                const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                if (dx > dy && dx > 6) pause();
-            }, { passive: true });
-        })();
-
-        /* ================= OFFER CAROUSEL: pause on interaction (mirrors new-arrivals carousel) ================= */
-        (function initOfferCarouselPause() {
-            const strip = document.getElementById('offerCarousel');
-            if (!strip) return;
-            let resumeTimer = null;
-            function pause() {
-                strip.classList.add('paused');
-                clearTimeout(resumeTimer);
-                resumeTimer = setTimeout(() => strip.classList.remove('paused'), 2000);
-            }
-            strip.addEventListener('mouseenter', () => strip.classList.add('paused'));
-            strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); strip.classList.remove('paused'); });
-            let touchStartX = 0, touchStartY = 0;
-            strip.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            strip.addEventListener('touchmove', (e) => {
-                const dx = Math.abs(e.touches[0].clientX - touchStartX);
-                const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                if (dx > dy && dx > 6) pause();
-            }, { passive: true });
-        })();
 
         (function initTrustBarPause() {
             const track = document.getElementById('trustBarTrack');
@@ -10548,6 +10535,16 @@
         const HOME_CAT_STEP = 320;
         if (homeCatNavPrev && homeCatGrid) homeCatNavPrev.addEventListener('click', () => homeCatGrid.scrollBy({ left: -HOME_CAT_STEP, behavior: 'smooth' }));
         if (homeCatNavNext && homeCatGrid) homeCatNavNext.addEventListener('click', () => homeCatGrid.scrollBy({ left: HOME_CAT_STEP, behavior: 'smooth' }));
+        const newCarouselPrev = document.getElementById('newCarouselPrev');
+        const newCarouselNext = document.getElementById('newCarouselNext');
+        const newCarouselStrip = document.getElementById('newCarousel');
+        if (newCarouselPrev && newCarouselStrip) newCarouselPrev.addEventListener('click', () => newCarouselStrip.scrollBy({ left: -460, behavior: 'smooth' }));
+        if (newCarouselNext && newCarouselStrip) newCarouselNext.addEventListener('click', () => newCarouselStrip.scrollBy({ left: 460, behavior: 'smooth' }));
+        const offerCarouselPrev = document.getElementById('offerCarouselPrev');
+        const offerCarouselNext = document.getElementById('offerCarouselNext');
+        const offerCarouselStrip = document.getElementById('offerCarousel');
+        if (offerCarouselPrev && offerCarouselStrip) offerCarouselPrev.addEventListener('click', () => offerCarouselStrip.scrollBy({ left: -460, behavior: 'smooth' }));
+        if (offerCarouselNext && offerCarouselStrip) offerCarouselNext.addEventListener('click', () => offerCarouselStrip.scrollBy({ left: 460, behavior: 'smooth' }));
 
         /* ================= NEWSLETTER =================
            No backend exists to store emails, so this doesn't pretend to save
