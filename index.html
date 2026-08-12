@@ -400,6 +400,7 @@
             flex-shrink: 0;
             text-decoration: none;
             color: var(--cream);
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
         }
 
         .nav-mark svg {
@@ -2743,6 +2744,15 @@
             .cat-nav-arrow svg {
                 width: 14px;
                 height: 14px;
+            }
+        }
+
+        /* Touch devices already scroll these strips natively by swiping, so
+           the arrow buttons are pure clutter there, desktop mouse users are
+           the ones who actually need them. Scrolling itself is untouched. */
+        @media (hover: none) and (pointer: coarse) {
+            .cat-nav-arrow {
+                display: none;
             }
         }
 
@@ -7206,7 +7216,15 @@
             if (cartSubtotal() > 0 && Math.floor(projected / loyaltySpendThreshold) > Math.floor(before / loyaltySpendThreshold)) {
                 return `This order earns you <strong>${loyaltyRewardPct}% off</strong> your next one!`;
             }
-            const remaining = loyaltySpendThreshold - (projected % loyaltySpendThreshold);
+            const progress = projected % loyaltySpendThreshold;
+            const remaining = loyaltySpendThreshold - progress;
+            // Progress carries over between orders (it's tracked per customer, not
+            // per basket), so an empty cart can still show real progress from past
+            // orders. Naming that progress explicitly here stops it from reading
+            // like a bug when the current basket is empty but the number isn't £100.
+            if (progress > 0) {
+                return `You've spent <strong>${money(progress)}</strong> toward your next reward, spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> your next order.`;
+            }
             return `Spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> your next order.`;
         }
 
