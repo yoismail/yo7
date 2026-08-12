@@ -2850,6 +2850,23 @@
         .cat-pill.active {
             background: var(--aubergine); border-color: var(--aubergine); color: var(--cream);
         }
+        /* On a narrow phone, 20-odd wrapping pills push products several
+           screens down before anything is visible. A single swipeable row
+           keeps the whole filter reachable in a thumb-width strip instead,
+           matching the horizontal category strip used elsewhere on mobile. */
+        @media (max-width: 640px) {
+            .cat-pill-row {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x proximity;
+                padding: 2px 2px 8px;
+                margin: 0 -2px 4px;
+                scrollbar-width: none;
+            }
+            .cat-pill-row::-webkit-scrollbar { display: none; }
+            .cat-pill { flex-shrink: 0; scroll-snap-align: start; }
+        }
         .shop-all-result-count {
             margin: 6px 0 18px; font-family: var(--display); font-size: 12.5px;
             letter-spacing: 0.05em; color: var(--text-muted); text-transform: uppercase;
