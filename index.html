@@ -192,6 +192,7 @@
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
             border-bottom: 1px solid rgba(250, 249, 242, 0.08);
+            box-shadow: 0 10px 30px rgba(4, 37, 0, 0.18);
         }
 
         body { padding-top: 0; }
@@ -404,6 +405,11 @@
             height: 29px;
             display: block;
             flex-shrink: 0;
+            transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+        }
+
+        .nav-mark:hover svg {
+            transform: scale(1.08);
         }
 
         .nav-badge {
@@ -550,20 +556,30 @@
             padding-bottom: 4px;
         }
 
-        .nav-links a:hover {
-            opacity: 1;
-        }
-
-        .nav-links a.nav-link-active {
-            opacity: 1;
-        }
-        .nav-links a.nav-link-active::after {
+        .nav-links a::after {
             content: '';
             position: absolute;
             left: 0; right: 0; bottom: -8px;
             height: 3px;
             border-radius: 999px;
             background: var(--chartreuse);
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+        }
+        .nav-links a:hover::after {
+            transform: scaleX(0.55);
+        }
+
+        .nav-links a.nav-link-active {
+            opacity: 1;
+        }
+        .nav-links a.nav-link-active::after {
+            transform: scaleX(1);
         }
 
         .nav-right {
@@ -585,13 +601,14 @@
             align-items: center;
             justify-content: center;
             color: var(--cream);
-            transition: background 0.2s ease, border-color 0.2s ease;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
             text-decoration: none;
         }
 
         .icon-btn:hover {
             background: rgba(250, 249, 242, 0.14);
             border-color: rgba(250, 249, 242, 0.4);
+            transform: translateY(-2px);
         }
 
         /* Cart still reads as the primary action in this cluster, but as a
@@ -649,12 +666,13 @@
             font-size: 13px;
             color: var(--cream);
             text-decoration: none;
-            transition: border-color 0.2s ease, background 0.2s ease;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
         }
 
         .nav-account:hover {
             border-color: rgba(250, 249, 242, 0.5);
             background: rgba(250, 249, 242, 0.14);
+            transform: translateY(-2px);
         }
 
         .nav-account svg {
@@ -2201,26 +2219,40 @@
         }
         .footer-watermark {
             position: absolute;
-            bottom: -18%;
-            left: -8%;
-            width: min(55vw, 560px);
-            opacity: 0.07;
+            bottom: -14%;
+            right: -4%;
+            width: min(38vw, 460px);
+            opacity: 0.05;
             pointer-events: none;
             z-index: 0;
+        }
+        @media (max-width: 780px) {
+            .footer-watermark { display: none; }
         }
         footer .wrap { position: relative; z-index: 1; }
 
         .footer-newsletter {
+            position: relative;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
-            padding: 22px 24px;
+            padding: 26px 28px;
             margin-bottom: 32px;
             background: rgba(250, 249, 242, 0.05);
             border: 1px solid rgba(250, 249, 242, 0.1);
-            border-radius: 16px;
+            border-radius: 20px;
+            box-shadow: 0 24px 48px rgba(3, 26, 0, 0.22);
+            overflow: hidden;
+        }
+        .footer-newsletter::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--chartreuse), transparent);
+            opacity: 0.7;
         }
         .footer-newsletter-text {
             display: flex; align-items: center; gap: 16px;
@@ -2318,9 +2350,9 @@
             background: rgba(250, 249, 242, 0.08);
             border: 1px solid rgba(250, 249, 242, 0.18);
             color: var(--cream);
-            transition: background 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
-        .footer-social-row a:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
+        .footer-social-row a:hover { background: var(--chartreuse); color: var(--aubergine-deep); transform: translateY(-2px); }
         .footer-social-row svg { width: 17px; height: 17px; }
 
         .footer-links {
@@ -2335,7 +2367,18 @@
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--chartreuse-soft);
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .footer-col h4::after {
+            content: '';
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 22px; height: 2px;
+            border-radius: 999px;
+            background: var(--chartreuse);
+            opacity: 0.7;
         }
 
         .footer-col a {
@@ -2347,11 +2390,13 @@
             text-decoration: none;
             margin-bottom: 8px;
             opacity: 0.9;
+            transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
 
         .footer-col a:hover {
             opacity: 1;
             color: var(--cream);
+            transform: translateX(3px);
         }
 
         .footer-contact-icon {
