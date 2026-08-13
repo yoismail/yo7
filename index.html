@@ -740,6 +740,23 @@
             background: rgba(var(--border-rgb), 0.06);
         }
 
+        .admin-order-badge {
+            margin-left: auto;
+            background: #C1552C;
+            color: #fff;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 10.5px;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            flex-shrink: 0;
+        }
+
         .account-dropdown svg {
             width: 15px;
             height: 15px;
@@ -3844,6 +3861,17 @@
             margin-bottom: 16px;
         }
 
+        .auth-forgot-link {
+            display: block;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--heading-mid);
+            margin-top: 7px;
+            text-decoration: none;
+        }
+        .auth-forgot-link:hover { text-decoration: underline; }
+
         .field label {
             display: block;
             font-family: var(--display);
@@ -4947,6 +4975,17 @@
             margin-bottom: 4px;
             line-height: 1.45;
         }
+        .auth-success {
+            background: rgba(144, 184, 0, 0.12);
+            border: 1px solid rgba(144, 184, 0, 0.35);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--chartreuse-rich);
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
 
         /* ================= ORDER HISTORY ================= */
         .orders-section { padding: 48px 0 100px; background: var(--page-bg); }
@@ -4969,11 +5008,16 @@
             font-family: var(--display); font-weight: 700; font-size: 10.5px; letter-spacing: 0.03em; text-transform: uppercase;
             padding: 5px 11px; border-radius: 999px; flex-shrink: 0; white-space: nowrap;
         }
-        .order-status-badge.placed { background: rgba(144,184,0,0.16); color: var(--chartreuse-rich); }
-        .order-status-badge.processing { background: rgba(225,225,0,0.16); color: #9a7f00; }
-        .order-status-badge.out_for_delivery { background: rgba(38,98,16,0.14); color: var(--aubergine-mid); }
+        .order-status-badge.placed { background: rgba(225,225,0,0.16); color: #9a7f00; }
+        .order-status-badge.being_prepared { background: rgba(144,184,0,0.16); color: var(--chartreuse-rich); }
+        .order-status-badge.out_for_delivery,
+        .order-status-badge.ready_for_pickup { background: rgba(38,98,16,0.14); color: var(--aubergine-mid); }
         .order-status-badge.delivered { background: rgba(144,184,0,0.22); color: var(--aubergine); }
         .order-status-badge.cancelled { background: rgba(193,85,44,0.12); color: #C1552C; }
+        .order-card-customer { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+        .order-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(var(--border-rgb), 0.08); }
+        .order-card-actions .btn { padding: 9px 16px; font-size: 12.5px; }
+        .order-admin-btn-cancel { color: #C1552C; border-color: rgba(193,85,44,0.3); }
         .order-card-items { font-size: 13px; color: var(--text-body); line-height: 1.7; margin-bottom: 4px; }
         .order-card-items .item-row { display: flex; justify-content: space-between; gap: 12px; }
         .order-card-items .item-row .qty { color: var(--text-muted); flex-shrink: 0; }
@@ -5199,6 +5243,15 @@
                                 <path d="M9 11h6M9 15h4" />
                             </svg>
                             Order history
+                        </a>
+                        <a href="#/admin/orders" id="adminOrdersLink" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="16" rx="2" />
+                                <path d="M3 9h18M8 4v5" />
+                            </svg>
+                            Admin: Orders
+                            <span class="admin-order-badge" id="adminOrderBadge" style="display:none;">0</span>
                         </a>
                         <button type="button" id="editModeToggle">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -6757,7 +6810,10 @@
                 <form id="loginForm">
                     <div class="field"><label>Email</label><input type="email" id="loginEmail" required placeholder="you@example.com">
                     </div>
-                    <div class="field"><label>Password</label><input type="password" id="loginPassword" required placeholder="••••••••">
+                    <div class="field">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                        <a href="#/forgot-password" class="auth-forgot-link">Forgot password?</a>
                     </div>
                     <div class="auth-error" id="loginError" role="alert" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Log in</button>
@@ -6765,6 +6821,47 @@
                 <div class="auth-switch">New to Yo7 Foods? <a href="#/signup">Create an account</a></div>
                 <div class="auth-note" id="loginAuthNote">Preview mode: accounts aren't stored permanently yet, this resets when you
                     refresh the page.</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= FORGOT PASSWORD ================= -->
+    <div id="view-forgot-password" class="hidden-view">
+        <section class="auth-section">
+            <div class="auth-box">
+                <svg class="seal-mini" viewBox="65 25 875 900"
+                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
+                    <use href="#seal-mark" />
+                </svg>
+                <h1>Reset your password</h1>
+                <div class="sub">Enter the email address on your account and we'll send you a link to reset your password.</div>
+                <form id="forgotPasswordForm">
+                    <div class="field"><label>Email</label><input type="email" id="fpEmail" required placeholder="you@example.com"></div>
+                    <div class="auth-error" id="forgotPasswordError" role="alert" style="display:none;"></div>
+                    <div class="auth-success" id="forgotPasswordSuccess" role="status" style="display:none;"></div>
+                    <button class="btn btn-primary btn-block btn-lg" type="submit">Send reset link</button>
+                </form>
+                <div class="auth-switch">Remembered it? <a href="#/login">Log in</a></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= RESET PASSWORD (landed on from the emailed link) ================= -->
+    <div id="view-reset-password" class="hidden-view">
+        <section class="auth-section">
+            <div class="auth-box">
+                <svg class="seal-mini" viewBox="65 25 875 900"
+                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
+                    <use href="#seal-mark" />
+                </svg>
+                <h1>Choose a new password</h1>
+                <div class="sub">Almost done, set a new password for your account.</div>
+                <form id="resetPasswordForm">
+                    <div class="field"><label>New password</label><input type="password" id="rpPassword" required minlength="6" placeholder="At least 6 characters"></div>
+                    <div class="auth-error" id="resetPasswordError" role="alert" style="display:none;"></div>
+                    <div class="auth-success" id="resetPasswordSuccess" role="status" style="display:none;"></div>
+                    <button class="btn btn-primary btn-block btn-lg" type="submit">Update password</button>
+                </form>
             </div>
         </section>
     </div>
@@ -6784,9 +6881,11 @@
                             placeholder="Your name"></div>
                     <div class="field"><label>Email</label><input type="email" id="suEmail" required placeholder="you@example.com">
                     </div>
+                    <div class="field"><label>Phone number</label><input type="tel" id="suPhone" required placeholder="07123 456789"></div>
                     <div class="field"><label>Password</label><input type="password" id="suPassword" required minlength="6"
                             placeholder="At least 6 characters"></div>
                     <div class="auth-error" id="signupError" role="alert" style="display:none;"></div>
+                    <div class="auth-success" id="signupSuccess" role="status" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
                 </form>
                 <div class="auth-switch">Already have an account? <a href="#/login">Log in</a></div>
@@ -6808,6 +6907,22 @@
         <section class="orders-section">
             <div class="wrap">
                 <div id="orderHistoryList" class="order-history-list"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= ADMIN: ORDERS ================= -->
+    <div id="view-admin-orders" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Admin &rsaquo; Orders</div>
+                <h1>Manage orders</h1>
+                <p>Confirm new orders and move them through to delivery or pickup.</p>
+            </div>
+        </header>
+        <section class="orders-section">
+            <div class="wrap">
+                <div id="adminOrdersList" class="order-history-list"></div>
             </div>
         </section>
     </div>
@@ -7566,8 +7681,10 @@
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         let currentUser = null;
         let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
+        let currentIsAdmin = false; // set from profiles.is_admin after login, gates the admin orders dashboard
         let deliveryInfo = null;
         let lastOrder = null;
+        let adminOrdersChannel = null; // realtime subscription for "new order placed" notifications, admins only
 
         /* ================= SUPABASE ==================
            Fill these in with your own project's values (Project Settings ->
@@ -9373,6 +9490,7 @@
                         user_id: currentSupabaseUser.id,
                         order_number: lastOrder.number,
                         status: 'placed',
+                        fulfilment_method: fulfilmentMethod,
                         items: lastOrder.items,
                         subtotal: lastOrder.subtotal,
                         delivery_fee: lastOrder.delivery,
@@ -9396,23 +9514,55 @@
         });
 
         /* ================= RENDER: CONFIRMATION / INVOICE ================= */
+        // The exact lifecycle: placed -> (admin confirms) being_prepared ->
+        // (admin marks ready) out_for_delivery or ready_for_pickup, depending
+        // on how the customer chose to get it -> delivered. cancelled is the
+        // only off-ramp, available any time before delivered.
         const ORDER_STATUS_LABELS = {
             placed: 'Order placed',
-            processing: 'Processing',
+            being_prepared: 'Being prepared',
             out_for_delivery: 'Out for delivery',
+            ready_for_pickup: 'Ready for pickup',
             delivered: 'Delivered',
             cancelled: 'Cancelled',
         };
-        function orderHistoryRowHTML(order) {
+        // Only ever rendered inside the admin dashboard (isAdmin), customers
+        // never see these buttons, and even if someone forged the markup the
+        // update itself is still blocked server-side by the admin-only RLS
+        // policy on orders, this is just the UI for it.
+        function orderActionButtonsHTML(order) {
+            const status = order.status || 'placed';
+            const isPickup = order.fulfilment_method === 'pickup';
+            if (status === 'placed') {
+                return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="being_prepared">Confirm order</button>
+                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-next-status="cancelled">Cancel order</button>`;
+            }
+            if (status === 'being_prepared') {
+                const nextStatus = isPickup ? 'ready_for_pickup' : 'out_for_delivery';
+                const label = isPickup ? 'Mark ready for pickup' : 'Mark out for delivery';
+                return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="${nextStatus}">${label}</button>
+                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-next-status="cancelled">Cancel order</button>`;
+            }
+            if (status === 'out_for_delivery' || status === 'ready_for_pickup') {
+                return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="delivered">Mark delivered</button>`;
+            }
+            return ''; // delivered / cancelled: nothing further to do
+        }
+        function orderHistoryRowHTML(order, isAdmin) {
             const status = order.status || 'placed';
             const items = Array.isArray(order.items) ? order.items : [];
             const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const customerLine = isAdmin
+                ? `<div class="order-card-customer">${order.delivery_name || 'Unknown customer'} &middot; ${order.delivery_phone || 'no phone on file'} &middot; ${order.fulfilment_method === 'pickup' ? 'Pickup' : 'Delivery'}</div>`
+                : '';
+            const actions = isAdmin ? `<div class="order-card-actions">${orderActionButtonsHTML(order)}</div>` : '';
             return `
     <div class="order-card">
         <div class="order-card-top">
             <div>
                 <div class="order-card-number">${order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase())}</div>
                 <div class="order-card-date">${dateLabel}</div>
+                ${customerLine}
             </div>
             <span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span>
         </div>
@@ -9423,6 +9573,7 @@
             <span class="order-card-total-label">${items.length} item${items.length === 1 ? '' : 's'}</span>
             <span class="order-card-total">${money(order.total)}</span>
         </div>
+        ${actions}
     </div>`;
         }
         // Real order history, reads straight from Supabase (RLS restricts each
@@ -9453,7 +9604,77 @@
                 el.innerHTML = '<div class="order-history-empty">No orders yet. <a href="#/shop">Start shopping</a>.</div>';
                 return;
             }
-            el.innerHTML = data.map(orderHistoryRowHTML).join('');
+            el.innerHTML = data.map(o => orderHistoryRowHTML(o, false)).join('');
+        }
+        // Admin-only dashboard: every order, not just the admin's own (the
+        // "Admins can view all orders" RLS policy is what actually allows
+        // this query to return other people's rows at all). Visiting this
+        // page also clears the new-order notification badge, viewing counts
+        // as acknowledging it.
+        async function renderAdminOrders() {
+            const el = document.getElementById('adminOrdersList');
+            if (!el) return;
+            adminNewOrderCount = 0;
+            const badge = document.getElementById('adminOrderBadge');
+            if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
+            if (!supabaseClient) {
+                el.innerHTML = '<div class="order-history-empty">Admin orders need accounts connected first, this is preview mode right now.</div>';
+                return;
+            }
+            if (!currentSupabaseUser) {
+                el.innerHTML = '<div class="order-history-empty">Log in as an admin to manage orders. <a href="#/login">Log in</a></div>';
+                return;
+            }
+            if (!currentIsAdmin) {
+                el.innerHTML = '<div class="order-history-empty">This area is for admins only.</div>';
+                return;
+            }
+            el.innerHTML = '<div class="order-history-loading">Loading orders…</div>';
+            const { data, error } = await supabaseClient
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) {
+                el.innerHTML = '<div class="order-history-error">Couldn\'t load orders right now, please try again shortly.</div>';
+                return;
+            }
+            if (!data || data.length === 0) {
+                el.innerHTML = '<div class="order-history-empty">No orders yet.</div>';
+                return;
+            }
+            el.innerHTML = data.map(o => orderHistoryRowHTML(o, true)).join('');
+        }
+        const adminOrdersListEl = document.getElementById('adminOrdersList');
+        if (adminOrdersListEl) {
+            adminOrdersListEl.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.order-admin-btn');
+                if (!btn || !supabaseClient) return;
+                const orderId = btn.getAttribute('data-order-id');
+                const nextStatus = btn.getAttribute('data-next-status');
+                if (nextStatus === 'cancelled' && !confirm('Cancel this order? This can\'t be undone.')) return;
+                btn.disabled = true;
+                const { error } = await supabaseClient.from('orders').update({ status: nextStatus }).eq('id', orderId);
+                if (error) { alert('Could not update that order: ' + error.message); btn.disabled = false; return; }
+                renderAdminOrders();
+            });
+        }
+        // Keeps a logged-in customer's Order History page in sync live when
+        // an admin changes a status, no refresh needed. Subscribed for the
+        // whole session (not just while the page is open) since it's cheap
+        // and simpler than wiring subscribe/unsubscribe to page navigation.
+        let myOrdersChannel = null;
+        function subscribeMyOrders() {
+            if (!supabaseClient || !currentSupabaseUser || myOrdersChannel) return;
+            myOrdersChannel = supabaseClient
+                .channel('my-orders-' + currentSupabaseUser.id)
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: 'user_id=eq.' + currentSupabaseUser.id }, () => {
+                    if (window.location.hash === '#/orders') renderOrderHistory();
+                })
+                .subscribe();
+        }
+        function unsubscribeMyOrders() {
+            if (myOrdersChannel && supabaseClient) supabaseClient.removeChannel(myOrdersChannel);
+            myOrdersChannel = null;
         }
         function renderConfirmation() {
             if (!lastOrder) {
@@ -9800,19 +10021,72 @@
             registerStoredLoyaltyCodes();
             renderCartList();
             if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
+            refreshAdminStatus();
+            subscribeMyOrders();
         }
         function clearUser() {
             currentUser = null;
             currentSupabaseUser = null;
+            currentIsAdmin = false;
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             accountBtn.setAttribute('href', '#/login');
             accountCaret.style.display = 'none';
             accountDropdown.classList.remove('open');
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
+            const adminLink = document.getElementById('adminOrdersLink');
+            if (adminLink) adminLink.style.display = 'none';
+            unsubscribeAdminOrderNotifications();
+            unsubscribeMyOrders();
             registerStoredLoyaltyCodes();
             renderCartList();
             if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
+        }
+        // Checked fresh from the database on every login/session-restore
+        // rather than trusted from anything client-side, the actual access
+        // control lives in the RLS policies on orders/profiles, this just
+        // decides whether to show the admin UI at all.
+        async function refreshAdminStatus() {
+            currentIsAdmin = false;
+            const adminLink = document.getElementById('adminOrdersLink');
+            if (!supabaseClient || !currentSupabaseUser) { if (adminLink) adminLink.style.display = 'none'; unsubscribeAdminOrderNotifications(); return; }
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('is_admin')
+                .eq('id', currentSupabaseUser.id)
+                .single();
+            if (error || !data) return;
+            currentIsAdmin = !!data.is_admin;
+            if (adminLink) adminLink.style.display = currentIsAdmin ? 'flex' : 'none';
+            if (currentIsAdmin) subscribeAdminOrderNotifications(); else unsubscribeAdminOrderNotifications();
+        }
+        let adminNewOrderCount = 0;
+        // Live "New order has been placed" notification for whoever's logged
+        // in as admin with the site open, via Supabase Realtime on inserts
+        // into orders. This is the in-app version, it only fires while an
+        // admin actually has a tab open, it isn't a push notification to a
+        // phone or inbox, that needs a transactional email/SMS service wired
+        // up separately.
+        function subscribeAdminOrderNotifications() {
+            if (!supabaseClient || adminOrdersChannel) return;
+            adminOrdersChannel = supabaseClient
+                .channel('admin-new-orders')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+                    adminNewOrderCount++;
+                    const badge = document.getElementById('adminOrderBadge');
+                    if (badge) { badge.textContent = String(adminNewOrderCount); badge.style.display = 'flex'; }
+                    const orderNumber = payload.new && payload.new.order_number;
+                    showToast('🔔 New order has been placed' + (orderNumber ? ' — ' + orderNumber : ''), 6000);
+                    if (window.location.hash === '#/admin/orders') renderAdminOrders();
+                })
+                .subscribe();
+        }
+        function unsubscribeAdminOrderNotifications() {
+            if (adminOrdersChannel && supabaseClient) supabaseClient.removeChannel(adminOrdersChannel);
+            adminOrdersChannel = null;
+            adminNewOrderCount = 0;
+            const badge = document.getElementById('adminOrderBadge');
+            if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
         }
 
         // Accounts only run in "preview mode" (nothing persists past a
@@ -10169,12 +10443,28 @@
             el.textContent = message;
             el.style.display = message ? 'block' : 'none';
         }
+        function setAuthSuccess(id, message) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = message;
+            el.style.display = message ? 'block' : 'none';
+        }
+        // Deliberately permissive on phone (accepts spaces/dashes/brackets and
+        // an optional leading +), the goal is catching real typos, not
+        // enforcing one country's format on every customer.
+        function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+        function isValidPhone(v) { return /^\+?[\d\s().-]{7,20}$/.test(v) && (v.match(/\d/g) || []).length >= 7; }
+
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('suName').value.trim() || 'Friend';
             const email = document.getElementById('suEmail').value.trim();
+            const phone = document.getElementById('suPhone').value.trim();
             const password = document.getElementById('suPassword').value;
             setAuthError('signupError', '');
+            setAuthSuccess('signupSuccess', '');
+            if (!isValidEmail(email)) { setAuthError('signupError', 'That email address doesn\'t look right, double-check it and try again.'); return; }
+            if (!isValidPhone(phone)) { setAuthError('signupError', 'That phone number doesn\'t look right, include the area code and try again.'); return; }
             if (!supabaseClient) {
                 // Not configured yet, same local-only preview the rest of the
                 // site already runs in.
@@ -10186,15 +10476,18 @@
             btn.disabled = true;
             btn.textContent = 'Creating account…';
             const { data, error } = await supabaseClient.auth.signUp({
-                email, password, options: { data: { full_name: name } }
+                email, password, options: { data: { full_name: name, phone } }
             });
             btn.disabled = false;
             btn.textContent = 'Create account';
             if (error) { setAuthError('signupError', error.message); return; }
+            // Supabase returns a user with no session when email confirmation
+            // is required, which is the normal case, not an edge case, so this
+            // is the message almost everyone sees straight after signing up.
             if (data.user && !data.session) {
-                setAuthError('signupError', '');
-                document.getElementById('signupAuthNote').style.display = 'block';
-                document.getElementById('signupAuthNote').textContent = 'Almost there, check ' + email + ' for a confirmation link, then log in.';
+                document.getElementById('signupAuthNote').style.display = 'none';
+                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account.');
+                e.target.reset();
                 return;
             }
             setUser(name, data.user);
@@ -10233,6 +10526,61 @@
             }
         }
         restoreSupabaseSession();
+
+        document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('fpEmail').value.trim();
+            setAuthError('forgotPasswordError', '');
+            setAuthSuccess('forgotPasswordSuccess', '');
+            if (!isValidEmail(email)) { setAuthError('forgotPasswordError', 'That email address doesn\'t look right, double-check it and try again.'); return; }
+            if (!supabaseClient) { setAuthError('forgotPasswordError', 'Password reset needs accounts connected first, this is preview mode right now.'); return; }
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Sending…';
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + window.location.pathname,
+            });
+            btn.disabled = false;
+            btn.textContent = 'Send reset link';
+            // Deliberately the same message whether or not that email is
+            // actually registered, confirming/denying an account exists from
+            // this form would let anyone probe which emails have accounts.
+            if (error) { setAuthError('forgotPasswordError', 'Something went wrong sending that, please try again shortly.'); return; }
+            setAuthSuccess('forgotPasswordSuccess', 'If that email has an account, a reset link is on its way, check your inbox.');
+            e.target.reset();
+        });
+
+        document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('rpPassword').value;
+            setAuthError('resetPasswordError', '');
+            setAuthSuccess('resetPasswordSuccess', '');
+            if (!supabaseClient) { setAuthError('resetPasswordError', 'Password reset needs accounts connected first, this is preview mode right now.'); return; }
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Updating…';
+            const { data, error } = await supabaseClient.auth.updateUser({ password });
+            btn.disabled = false;
+            btn.textContent = 'Update password';
+            if (error) { setAuthError('resetPasswordError', error.message); return; }
+            setAuthSuccess('resetPasswordSuccess', 'Password updated, you\'re logged in.');
+            if (data.user) {
+                const name = (data.user.user_metadata && data.user.user_metadata.full_name) || data.user.email.split('@')[0];
+                setUser(name, data.user);
+            }
+            setTimeout(() => { window.location.hash = '#/'; }, 1200);
+        });
+
+        // The link in a "reset your password" email lands back on the site
+        // carrying a recovery token in the URL that Supabase's client parses
+        // automatically on load, this event is how we find out, rather than
+        // trying to match our own #/reset-password route against whatever
+        // shape that URL happens to be in.
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange((event) => {
+                if (event === 'PASSWORD_RECOVERY') window.location.hash = '#/reset-password';
+            });
+        }
 
         /* ================= LIVE SEARCH (instant results dropdown) ================= */
         function renderSearchDropdown(resultsEl, items, query) {
@@ -10340,7 +10688,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-orders', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin-orders', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         function showView(id) {
@@ -10404,9 +10752,16 @@
                 showView('view-login');
             } else if (hash === '#/signup') {
                 showView('view-signup');
+            } else if (hash === '#/forgot-password') {
+                showView('view-forgot-password');
+            } else if (hash === '#/reset-password') {
+                showView('view-reset-password');
             } else if (hash === '#/orders') {
                 showView('view-orders');
                 renderOrderHistory();
+            } else if (hash === '#/admin/orders') {
+                showView('view-admin-orders');
+                renderAdminOrders();
             } else if (hash === '#/contact') {
                 showView('view-contact');
                 renderContactPage();
