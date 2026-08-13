@@ -25,6 +25,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         :root {
             --aubergine: #063B00;
@@ -715,7 +716,8 @@
             pointer-events: auto;
         }
 
-        .account-dropdown button {
+        .account-dropdown button,
+        .account-dropdown a {
             width: 100%;
             display: flex;
             align-items: center;
@@ -729,10 +731,12 @@
             font-weight: 600;
             font-size: 13px;
             color: var(--heading);
+            text-decoration: none;
             transition: background 0.15s ease;
         }
 
-        .account-dropdown button:hover {
+        .account-dropdown button:hover,
+        .account-dropdown a:hover {
             background: rgba(var(--border-rgb), 0.06);
         }
 
@@ -4933,6 +4937,52 @@
             margin-top: 20px;
             line-height: 1.5;
         }
+        .auth-error {
+            background: rgba(193, 85, 44, 0.1);
+            border: 1px solid rgba(193, 85, 44, 0.3);
+            border-radius: 10px;
+            padding: 10px 13px;
+            font-size: 12.5px;
+            color: #C1552C;
+            margin-bottom: 4px;
+            line-height: 1.45;
+        }
+
+        /* ================= ORDER HISTORY ================= */
+        .orders-section { padding: 48px 0 100px; background: var(--page-bg); }
+        .order-history-list { display: flex; flex-direction: column; gap: 16px; }
+        .order-history-empty, .order-history-loading, .order-history-error {
+            text-align: center; padding: 70px 20px; color: var(--text-muted); font-size: 14.5px;
+        }
+        .order-history-empty a { color: var(--heading-mid); font-weight: 600; }
+        .order-card {
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.1); border-radius: 16px;
+            padding: 20px 22px;
+        }
+        .order-card-top {
+            display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;
+            margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .order-card-number { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--heading); }
+        .order-card-date { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+        .order-status-badge {
+            font-family: var(--display); font-weight: 700; font-size: 10.5px; letter-spacing: 0.03em; text-transform: uppercase;
+            padding: 5px 11px; border-radius: 999px; flex-shrink: 0; white-space: nowrap;
+        }
+        .order-status-badge.placed { background: rgba(144,184,0,0.16); color: var(--chartreuse-rich); }
+        .order-status-badge.processing { background: rgba(225,225,0,0.16); color: #9a7f00; }
+        .order-status-badge.out_for_delivery { background: rgba(38,98,16,0.14); color: var(--aubergine-mid); }
+        .order-status-badge.delivered { background: rgba(144,184,0,0.22); color: var(--aubergine); }
+        .order-status-badge.cancelled { background: rgba(193,85,44,0.12); color: #C1552C; }
+        .order-card-items { font-size: 13px; color: var(--text-body); line-height: 1.7; margin-bottom: 4px; }
+        .order-card-items .item-row { display: flex; justify-content: space-between; gap: 12px; }
+        .order-card-items .item-row .qty { color: var(--text-muted); flex-shrink: 0; }
+        .order-card-bottom {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .order-card-total-label { font-size: 12.5px; color: var(--text-muted); }
+        .order-card-total { font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--ink); }
 
         @media (max-width:900px) {
 
@@ -5142,6 +5192,14 @@
                         </svg>
                     </a>
                     <div class="account-dropdown" id="accountDropdown">
+                        <a href="#/orders" id="orderHistoryLink" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
+                                <path d="M9 11h6M9 15h4" />
+                            </svg>
+                            Order history
+                        </a>
                         <button type="button" id="editModeToggle">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -6697,14 +6755,15 @@
                 <h1>Welcome back</h1>
                 <div class="sub">Log in to see your orders and save your delivery details.</div>
                 <form id="loginForm">
-                    <div class="field"><label>Email</label><input type="email" required placeholder="you@example.com">
+                    <div class="field"><label>Email</label><input type="email" id="loginEmail" required placeholder="you@example.com">
                     </div>
-                    <div class="field"><label>Password</label><input type="password" required placeholder="••••••••">
+                    <div class="field"><label>Password</label><input type="password" id="loginPassword" required placeholder="••••••••">
                     </div>
+                    <div class="auth-error" id="loginError" role="alert" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Log in</button>
                 </form>
                 <div class="auth-switch">New to Yo7 Foods? <a href="#/signup">Create an account</a></div>
-                <div class="auth-note">Preview mode: accounts aren't stored permanently yet, this resets when you
+                <div class="auth-note" id="loginAuthNote">Preview mode: accounts aren't stored permanently yet, this resets when you
                     refresh the page.</div>
             </div>
         </section>
@@ -6723,15 +6782,32 @@
                 <form id="signupForm">
                     <div class="field"><label>Full name</label><input type="text" required id="suName"
                             placeholder="Your name"></div>
-                    <div class="field"><label>Email</label><input type="email" required placeholder="you@example.com">
+                    <div class="field"><label>Email</label><input type="email" id="suEmail" required placeholder="you@example.com">
                     </div>
-                    <div class="field"><label>Password</label><input type="password" required
-                            placeholder="Create a password"></div>
+                    <div class="field"><label>Password</label><input type="password" id="suPassword" required minlength="6"
+                            placeholder="At least 6 characters"></div>
+                    <div class="auth-error" id="signupError" role="alert" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
                 </form>
                 <div class="auth-switch">Already have an account? <a href="#/login">Log in</a></div>
-                <div class="auth-note">Preview mode: accounts aren't stored permanently yet, this resets when you
+                <div class="auth-note" id="signupAuthNote">Preview mode: accounts aren't stored permanently yet, this resets when you
                     refresh the page.</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= ORDER HISTORY ================= -->
+    <div id="view-orders" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Order History</div>
+                <h1>Your orders</h1>
+                <p>Everything you've ordered from Yo7 Foods, in one place.</p>
+            </div>
+        </header>
+        <section class="orders-section">
+            <div class="wrap">
+                <div id="orderHistoryList" class="order-history-list"></div>
             </div>
         </section>
     </div>
@@ -7489,8 +7565,23 @@
         let cart = [];          // {id, name, unit, price, emoji, qty, catSlug}
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         let currentUser = null;
+        let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
         let deliveryInfo = null;
         let lastOrder = null;
+
+        /* ================= SUPABASE ==================
+           Fill these in with your own project's values (Project Settings ->
+           API in the Supabase dashboard). The anon/public key is safe to ship
+           in client-side code, it can only do what the database's row-level
+           security policies allow, never use the service_role key here.
+           Until both are filled in, accounts and order history stay in the
+           same local-only "preview mode" the rest of the site already runs
+           in, nothing else breaks. */
+        const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabaseClient = (SUPABASE_URL.startsWith('https://') && window.supabase)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9272,6 +9363,29 @@
                     deliveryWeight: cartTotalWeight(),
                     loyaltyCodeEarned,
                 };
+                // Saves the order for account holders so it shows up in Order
+                // History. Deliberately fire-and-forget: a failed save here
+                // shouldn't block the confirmation page the customer is about
+                // to see, or make a real purchase look like it didn't go
+                // through when it did.
+                if (supabaseClient && currentSupabaseUser) {
+                    supabaseClient.from('orders').insert({
+                        user_id: currentSupabaseUser.id,
+                        order_number: lastOrder.number,
+                        status: 'placed',
+                        items: lastOrder.items,
+                        subtotal: lastOrder.subtotal,
+                        delivery_fee: lastOrder.delivery,
+                        discount: lastOrder.discount,
+                        total: lastOrder.total,
+                        delivery_name: deliveryInfo ? deliveryInfo.name : null,
+                        delivery_address: deliveryInfo ? `${deliveryInfo.address}, ${deliveryInfo.town} ${deliveryInfo.postcode}` : null,
+                        delivery_phone: deliveryInfo ? deliveryInfo.phone : null,
+                        notes: deliveryInfo ? deliveryInfo.notes : null,
+                    }).then(({ error }) => {
+                        if (error) console.error('Order history save failed:', error.message);
+                    });
+                }
                 cart = [];
                 appliedDiscount = null;
                 updateCartBadge();
@@ -9282,6 +9396,65 @@
         });
 
         /* ================= RENDER: CONFIRMATION / INVOICE ================= */
+        const ORDER_STATUS_LABELS = {
+            placed: 'Order placed',
+            processing: 'Processing',
+            out_for_delivery: 'Out for delivery',
+            delivered: 'Delivered',
+            cancelled: 'Cancelled',
+        };
+        function orderHistoryRowHTML(order) {
+            const status = order.status || 'placed';
+            const items = Array.isArray(order.items) ? order.items : [];
+            const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            return `
+    <div class="order-card">
+        <div class="order-card-top">
+            <div>
+                <div class="order-card-number">${order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase())}</div>
+                <div class="order-card-date">${dateLabel}</div>
+            </div>
+            <span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span>
+        </div>
+        <div class="order-card-items">
+            ${items.map(i => `<div class="item-row"><span>${i.name}</span><span class="qty">&times;${i.qty}</span></div>`).join('')}
+        </div>
+        <div class="order-card-bottom">
+            <span class="order-card-total-label">${items.length} item${items.length === 1 ? '' : 's'}</span>
+            <span class="order-card-total">${money(order.total)}</span>
+        </div>
+    </div>`;
+        }
+        // Real order history, reads straight from Supabase (RLS restricts each
+        // customer to their own rows). Falls back to explanatory empty states
+        // rather than pretending to load when accounts aren't connected yet
+        // or nobody's logged in.
+        async function renderOrderHistory() {
+            const el = document.getElementById('orderHistoryList');
+            if (!el) return;
+            if (!supabaseClient) {
+                el.innerHTML = '<div class="order-history-empty">Order history needs accounts connected first, this is preview mode right now.</div>';
+                return;
+            }
+            if (!currentSupabaseUser) {
+                el.innerHTML = '<div class="order-history-empty">Log in to see your orders. <a href="#/login">Log in</a></div>';
+                return;
+            }
+            el.innerHTML = '<div class="order-history-loading">Loading your orders…</div>';
+            const { data, error } = await supabaseClient
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) {
+                el.innerHTML = '<div class="order-history-error">Couldn\'t load your orders right now, please try again shortly.</div>';
+                return;
+            }
+            if (!data || data.length === 0) {
+                el.innerHTML = '<div class="order-history-empty">No orders yet. <a href="#/shop">Start shopping</a>.</div>';
+                return;
+            }
+            el.innerHTML = data.map(orderHistoryRowHTML).join('');
+        }
         function renderConfirmation() {
             if (!lastOrder) {
                 document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">No recent order found. <a href="#/">Return home</a>.</p>';
@@ -9616,24 +9789,38 @@
         const accountDropdown = document.getElementById('accountDropdown');
         const accountCaret = document.querySelector('.account-caret');
 
-        function setUser(name) {
+        function setUser(name, supabaseUser) {
             currentUser = name;
+            currentSupabaseUser = supabaseUser || null;
             document.getElementById('accountLabel').textContent = 'Hi, ' + name.split(' ')[0];
             accountBtn.setAttribute('href', '#');
             accountCaret.style.display = 'inline-block';
+            const orderHistoryLink = document.getElementById('orderHistoryLink');
+            if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             registerStoredLoyaltyCodes();
             renderCartList();
             if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
         }
         function clearUser() {
             currentUser = null;
+            currentSupabaseUser = null;
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             accountBtn.setAttribute('href', '#/login');
             accountCaret.style.display = 'none';
             accountDropdown.classList.remove('open');
+            const orderHistoryLink = document.getElementById('orderHistoryLink');
+            if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             registerStoredLoyaltyCodes();
             renderCartList();
             if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
+        }
+
+        // Accounts only run in "preview mode" (nothing persists past a
+        // refresh) until SUPABASE_URL/SUPABASE_ANON_KEY above are filled in.
+        // Once they are, this note simply stops rendering, everything else
+        // in the auth flow already talks to the real thing regardless.
+        if (supabaseClient) {
+            document.querySelectorAll('#loginAuthNote, #signupAuthNote').forEach(el => el.style.display = 'none');
         }
 
         accountBtn.addEventListener('click', (e) => {
@@ -9643,7 +9830,10 @@
             }
             // if logged out, default link behaviour navigates to #/login
         });
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            if (supabaseClient) {
+                try { await supabaseClient.auth.signOut(); } catch (e) { /* best-effort, clear local state regardless */ }
+            }
             clearUser();
             window.location.hash = '#/';
         });
@@ -9973,18 +10163,76 @@
         }
         window.saveNewProduct = saveNewProduct;
 
-        document.getElementById('signupForm').addEventListener('submit', (e) => {
+        function setAuthError(id, message) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = message;
+            el.style.display = message ? 'block' : 'none';
+        }
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('suName').value.trim() || 'Friend';
-            setUser(name);
+            const email = document.getElementById('suEmail').value.trim();
+            const password = document.getElementById('suPassword').value;
+            setAuthError('signupError', '');
+            if (!supabaseClient) {
+                // Not configured yet, same local-only preview the rest of the
+                // site already runs in.
+                setUser(name);
+                window.location.hash = '#/';
+                return;
+            }
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Creating account…';
+            const { data, error } = await supabaseClient.auth.signUp({
+                email, password, options: { data: { full_name: name } }
+            });
+            btn.disabled = false;
+            btn.textContent = 'Create account';
+            if (error) { setAuthError('signupError', error.message); return; }
+            if (data.user && !data.session) {
+                setAuthError('signupError', '');
+                document.getElementById('signupAuthNote').style.display = 'block';
+                document.getElementById('signupAuthNote').textContent = 'Almost there, check ' + email + ' for a confirmation link, then log in.';
+                return;
+            }
+            setUser(name, data.user);
             window.location.hash = '#/';
         });
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = e.target.querySelector('input[type="email"]').value.trim();
-            setUser(email.split('@')[0] || 'Friend');
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            setAuthError('loginError', '');
+            if (!supabaseClient) {
+                setUser(email.split('@')[0] || 'Friend');
+                window.location.hash = '#/';
+                return;
+            }
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Logging in…';
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            btn.disabled = false;
+            btn.textContent = 'Log in';
+            if (error) { setAuthError('loginError', error.message); return; }
+            const name = (data.user.user_metadata && data.user.user_metadata.full_name) || email.split('@')[0];
+            setUser(name, data.user);
             window.location.hash = '#/';
         });
+        // Restores a real Supabase session across page refreshes (the client
+        // library persists it in localStorage itself); without this, a
+        // logged-in visitor would appear logged out every time they reload.
+        async function restoreSupabaseSession() {
+            if (!supabaseClient) return;
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                const name = (session.user.user_metadata && session.user.user_metadata.full_name) || session.user.email.split('@')[0];
+                setUser(name, session.user);
+            }
+        }
+        restoreSupabaseSession();
 
         /* ================= LIVE SEARCH (instant results dropdown) ================= */
         function renderSearchDropdown(resultsEl, items, query) {
@@ -10092,7 +10340,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-orders', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         function showView(id) {
@@ -10156,6 +10404,9 @@
                 showView('view-login');
             } else if (hash === '#/signup') {
                 showView('view-signup');
+            } else if (hash === '#/orders') {
+                showView('view-orders');
+                renderOrderHistory();
             } else if (hash === '#/contact') {
                 showView('view-contact');
                 renderContactPage();
