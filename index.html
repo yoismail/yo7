@@ -1937,9 +1937,10 @@
         .new-carousel {
             display: flex; gap: 18px; padding: 4px 2px 10px;
             overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
         }
+        .new-carousel::-webkit-scrollbar { display: none; }
         .new-carousel.dragging { cursor: grabbing; scroll-behavior: auto; }
         .new-card {
             flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
@@ -1996,9 +1997,10 @@
         .offer-carousel {
             display: flex; gap: 18px; padding: 4px 2px 10px;
             overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
         }
+        .offer-carousel::-webkit-scrollbar { display: none; }
         .offer-carousel.dragging { cursor: grabbing; scroll-behavior: auto; }
         .offer-card {
             flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
@@ -2750,10 +2752,12 @@
         /* Touch devices already scroll these strips natively by swiping, so
            the arrow buttons are pure clutter there, desktop mouse users are
            the ones who actually need them. Scrolling itself is untouched. */
-        @media (hover: none) and (pointer: coarse) {
-            .cat-nav-arrow {
-                display: none;
-            }
+        /* Arrows are a fallback affordance, not the primary way to move these
+           strips, everything here is already drag/swipe/wheel-scrollable.
+           Hiding them keeps the row clean; nothing about scrolling depends
+           on them being visible. */
+        .cat-nav-arrow {
+            display: none;
         }
 
         .cat-nav-strip {
@@ -2761,13 +2765,13 @@
             gap: 10px;
             overflow-x: auto;
             padding: 18px 0 4px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(250, 249, 242, 0.18) transparent;
+            scrollbar-width: none;
             cursor: grab;
             user-select: none;
             flex: 1;
             min-width: 0;
         }
+        .cat-nav-strip::-webkit-scrollbar { display: none; }
 
         /* Shop by category (homepage): same arrow/scroll pattern as the
            in-category nav strip, but on a light background, so the arrows
@@ -2825,26 +2829,6 @@
 
         .cat-nav-strip:active {
             cursor: grabbing;
-        }
-
-        .cat-nav-strip::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .cat-nav-strip::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .cat-nav-strip::-webkit-scrollbar-thumb {
-            background: rgba(250, 249, 242, 0.10);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(250, 249, 242, 0.22);
-            border-radius: 10px;
-        }
-
-        .cat-nav-strip::-webkit-scrollbar-thumb:hover {
-            background: rgba(250, 249, 242, 0.16);
         }
 
         .cat-chip {
@@ -2952,10 +2936,11 @@
             overflow-y: hidden;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
+            scrollbar-width: none;
             padding-bottom: 6px;
             cursor: grab;
         }
+        .product-grid::-webkit-scrollbar { display: none; }
         .product-grid.dragging {
             cursor: grabbing;
             scroll-behavior: auto;
@@ -5341,7 +5326,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
                 </div>
-                <p class="swipe-hint">Swipe to see more, or use the arrows</p>
+                <p class="swipe-hint">Swipe to see more</p>
             </div>
         </section>
 
@@ -8409,8 +8394,8 @@
             strip.__pauseAutoScroll = pause;
             strip.__resumeAutoScroll = scheduleResume;
 
-            strip.addEventListener('mouseenter', pause);
-            strip.addEventListener('mouseleave', scheduleResume);
+            // Deliberately no mouseenter/mouseleave here, hovering to look at a
+            // card shouldn't stop the drift, only an actual drag or touch should.
             strip.addEventListener('pointerdown', pause);
             strip.addEventListener('pointerup', scheduleResume);
             strip.addEventListener('touchstart', pause, { passive: true });
