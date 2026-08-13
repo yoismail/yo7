@@ -33,7 +33,7 @@
             --chartreuse: #90B800;
             --chartreuse-soft: #A6CC2E;
             --chartreuse-rich: #729400;
-            --forest-deep: #031C00;
+            --obsidian: #14170F;
             --cream: #FAF9F2;
             --orange: #E1E100;
             --ink: #16210D;
@@ -60,8 +60,8 @@
            hero overlay) already use --aubergine/--cream directly and are left
            untouched on purpose — they stay the same dark green in both themes. */
         [data-theme="dark"] {
-            --page-bg: #0E1A08;
-            --card-bg: #17240E;
+            --page-bg: #14170F;
+            --card-bg: #1B2013;
             --ink: #E9E6DA;
             --heading: #F3F1E6;
             --heading-mid: #B9CC8E;
@@ -71,7 +71,7 @@
             --text-body: #E3DDD2;
             --thumb-grad-1: #2A2015;
             --thumb-grad-2: #201810;
-            --section-alt-bg: #14210D;
+            --section-alt-bg: #191D12;
             --border-rgb: 250, 249, 242;
             --warn-text: #E8B98A;
         }
@@ -190,7 +190,7 @@
                aubergine-deep, 135deg), instead of a single flat tone, so the
                nav reads as part of the same premium surface rather than a
                plain green bar bolted on top of it. */
-            background: linear-gradient(135deg, rgba(38, 98, 16, 0.92) 0%, rgba(6, 59, 0, 0.92) 40%, rgba(4, 37, 0, 0.92) 74%, rgba(3, 28, 0, 0.94) 100%);
+            background: linear-gradient(135deg, rgba(38, 98, 16, 0.92) 0%, rgba(6, 59, 0, 0.92) 28%, rgba(20, 23, 15, 0.96) 62%, rgba(20, 23, 15, 0.97) 100%);
             backdrop-filter: blur(14px) saturate(140%);
             -webkit-backdrop-filter: blur(14px) saturate(140%);
             border-bottom: 1px solid rgba(250, 249, 242, 0.08);
@@ -1007,7 +1007,7 @@
         /* ================= HERO ================= */
         .hero {
             position: relative;
-            background: radial-gradient(ellipse at 50% 34%, rgba(144, 184, 0, 0.16), transparent 60%), linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 40%, var(--aubergine-deep) 76%, var(--forest-deep) 100%);
+            background: radial-gradient(ellipse at 50% 34%, rgba(144, 184, 0, 0.16), transparent 60%), linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 30%, var(--obsidian) 65%);
             color: var(--cream);
             overflow: hidden;
             padding: 64px 0 96px;
@@ -2219,7 +2219,7 @@
                green slab. */
             background:
                 radial-gradient(ellipse at 50% 0%, rgba(144, 184, 0, 0.10), transparent 55%),
-                linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 45%, var(--aubergine-deep) 78%, var(--forest-deep) 100%);
+                linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 32%, var(--obsidian) 68%);
             color: #d9e0c8;
             padding: 56px 0 36px;
             overflow: hidden;
@@ -2607,7 +2607,7 @@
 
         /* ================= SHOP HEADER (category/search) ================= */
         .shop-header {
-            background: linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 60%, var(--aubergine-deep) 85%, var(--forest-deep) 100%);
+            background: linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 38%, var(--obsidian) 72%);
             color: var(--cream);
             padding: 52px 0 48px;
         }
