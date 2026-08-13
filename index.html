@@ -2457,6 +2457,8 @@
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
         }
         .footer-payment-badges { margin-top: 0; }
+        .footer-admin-link { color: #7f8f70; text-decoration: underline; text-underline-offset: 2px; }
+        .footer-admin-link:hover { color: var(--chartreuse); }
 
         /* ================= REVEAL ================= */
         .reveal {
@@ -5015,6 +5017,24 @@
         .order-status-badge.delivered { background: rgba(144,184,0,0.22); color: var(--aubergine); }
         .order-status-badge.cancelled { background: rgba(193,85,44,0.12); color: #C1552C; }
         .order-card-customer { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+        .admin-panel-section {
+            background: var(--card-bg, #fff);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 16px;
+            padding: 24px 26px;
+            margin-bottom: 22px;
+        }
+        .admin-panel-section h2 { font-family: var(--display); font-size: 19px; margin: 0 0 6px; }
+        .admin-panel-section .sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+        .admin-inline-form { display: flex; gap: 10px; flex-wrap: wrap; }
+        .admin-inline-form input {
+            flex: 1;
+            min-width: 220px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--border-rgb), 0.25);
+            font-size: 13.5px;
+        }
         .order-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(var(--border-rgb), 0.08); }
         .order-card-actions .btn { padding: 9px 16px; font-size: 12.5px; }
         .order-admin-btn-cancel { color: #C1552C; border-color: rgba(193,85,44,0.3); }
@@ -5244,23 +5264,6 @@
                             </svg>
                             Order history
                         </a>
-                        <a href="#/admin/orders" id="adminOrdersLink" style="display:none;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="16" rx="2" />
-                                <path d="M3 9h18M8 4v5" />
-                            </svg>
-                            Admin: Orders
-                            <span class="admin-order-badge" id="adminOrderBadge" style="display:none;">0</span>
-                        </a>
-                        <button type="button" id="editModeToggle">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                            </svg>
-                            <span id="editModeLabel">Enter edit mode</span>
-                        </button>
                         <button type="button" id="logoutBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -6881,7 +6884,6 @@
                             placeholder="Your name"></div>
                     <div class="field"><label>Email</label><input type="email" id="suEmail" required placeholder="you@example.com">
                     </div>
-                    <div class="field"><label>Phone number</label><input type="tel" id="suPhone" required placeholder="07123 456789"></div>
                     <div class="field"><label>Password</label><input type="password" id="suPassword" required minlength="6"
                             placeholder="At least 6 characters"></div>
                     <div class="auth-error" id="signupError" role="alert" style="display:none;"></div>
@@ -6911,18 +6913,70 @@
         </section>
     </div>
 
-    <!-- ================= ADMIN: ORDERS ================= -->
-    <div id="view-admin-orders" class="hidden-view">
+    <!-- ================= ADMIN ================= -->
+    <div id="view-admin" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Admin &rsaquo; Orders</div>
-                <h1>Manage orders</h1>
-                <p>Confirm new orders and move them through to delivery or pickup.</p>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Admin</div>
+                <h1>Admin</h1>
+                <p>Staff area: manage orders, edit pages, and manage admin access.</p>
             </div>
         </header>
         <section class="orders-section">
             <div class="wrap">
-                <div id="adminOrdersList" class="order-history-list"></div>
+                <div id="adminLoginSection" style="display:none;">
+                    <div class="auth-box" style="margin:0 auto;">
+                        <h1>Admin login</h1>
+                        <div class="sub">Restricted to Yo7 Foods staff.</div>
+                        <form id="adminLoginForm">
+                            <div class="field"><label>Admin username or email</label><input type="text" id="adminLoginId" required placeholder="yo7foods20" autocomplete="username"></div>
+                            <div class="field">
+                                <label>Password</label>
+                                <input type="password" id="adminLoginPassword" required placeholder="••••••••" autocomplete="current-password">
+                                <a href="#" id="adminForgotPasswordLink" class="auth-forgot-link">Forgot password?</a>
+                            </div>
+                            <div class="auth-error" id="adminLoginError" role="alert" style="display:none;"></div>
+                            <div class="auth-success" id="adminLoginSuccess" role="status" style="display:none;"></div>
+                            <button class="btn btn-primary btn-block btn-lg" type="submit">Log in</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="adminDeniedSection" style="display:none;">
+                    <div class="auth-box" style="margin:0 auto;">
+                        <h1>Not an admin account</h1>
+                        <div class="sub">You're logged in, but this account doesn't have admin access.</div>
+                        <button type="button" class="btn btn-outline-dark btn-block" id="adminDeniedLogoutBtn">Log out</button>
+                    </div>
+                </div>
+
+                <div id="adminDashboardSection" style="display:none;">
+                    <div class="admin-panel-section">
+                        <h2>Manage orders</h2>
+                        <div id="adminOrdersList" class="order-history-list"></div>
+                    </div>
+                    <div class="admin-panel-section">
+                        <h2>Edit pages</h2>
+                        <p class="sub">Turn on edit mode, then browse the site to tweak page content live (preview only, not saved permanently yet).</p>
+                        <button type="button" class="btn btn-outline-dark" id="editModeToggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px;">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                            <span id="editModeLabel">Enter edit mode</span>
+                        </button>
+                    </div>
+                    <div class="admin-panel-section">
+                        <h2>Add another admin</h2>
+                        <p class="sub">They need a registered, confirmed account already. Enter the email they signed up with.</p>
+                        <form id="addAdminForm" class="admin-inline-form">
+                            <input type="email" id="addAdminEmail" required placeholder="colleague@example.com">
+                            <button type="submit" class="btn btn-primary">Make admin</button>
+                        </form>
+                        <div class="auth-error" id="addAdminError" role="alert" style="display:none;"></div>
+                        <div class="auth-success" id="addAdminSuccess" role="status" style="display:none;"></div>
+                    </div>
+                </div>
             </div>
         </section>
     </div>
@@ -6996,7 +7050,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2026 Yo7 Foods Limited. All rights reserved.</span>
+                <span>© 2026 Yo7 Foods Limited. All rights reserved. &middot; <a href="#/admin" class="footer-admin-link">Admin</a></span>
                 <div class="payment-badges footer-payment-badges">
                     <span class="payment-badge payment-badge-visa">VISA</span>
                     <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
@@ -7685,6 +7739,7 @@
         let deliveryInfo = null;
         let lastOrder = null;
         let adminOrdersChannel = null; // realtime subscription for "new order placed" notifications, admins only
+        let postLoginRedirect = null; // where to send a customer after login when they were bounced here from checkout
 
         /* ================= SUPABASE ==================
            Fill these in with your own project's values (Project Settings ->
@@ -9346,7 +9401,19 @@
             order.forEach((s, i) => { if (i < idx) document.getElementById('cstep-' + s).classList.add('done'); });
         }
 
-        document.getElementById('toDeliveryBtn').addEventListener('click', () => { if (cart.length) { showCheckoutStep('delivery'); } });
+        // An order needs an owner to be trackable in Order History and to be
+        // manageable by admin, so checkout requires a logged-in account past
+        // this point, guests can still browse and build a basket freely.
+        document.getElementById('toDeliveryBtn').addEventListener('click', () => {
+            if (!cart.length) return;
+            if (supabaseClient && !currentSupabaseUser) {
+                postLoginRedirect = '#/checkout';
+                showToast('Please log in or create an account to complete your order, so you can track it.', 5500);
+                window.location.hash = '#/login';
+                return;
+            }
+            showCheckoutStep('delivery');
+        });
         document.getElementById('backToCartBtn').addEventListener('click', () => showCheckoutStep('cart'));
         document.getElementById('backToDeliveryBtn').addEventListener('click', () => showCheckoutStep('delivery'));
 
@@ -9608,15 +9675,10 @@
         }
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
-        // this query to return other people's rows at all). Visiting this
-        // page also clears the new-order notification badge, viewing counts
-        // as acknowledging it.
+        // this query to return other people's rows at all).
         async function renderAdminOrders() {
             const el = document.getElementById('adminOrdersList');
             if (!el) return;
-            adminNewOrderCount = 0;
-            const badge = document.getElementById('adminOrderBadge');
-            if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
             if (!supabaseClient) {
                 el.innerHTML = '<div class="order-history-empty">Admin orders need accounts connected first, this is preview mode right now.</div>';
                 return;
@@ -9658,6 +9720,117 @@
                 renderAdminOrders();
             });
         }
+
+        /* ================= ADMIN PAGE (login + dashboard) ================= */
+        // The one seed account can be typed as a short "username" instead of
+        // its real email, so staff don't need to remember/share an inbox
+        // address just to log in. Anything typed that isn't in this map is
+        // assumed to already be a real email (how every admin added later
+        // via "Add another admin" logs in, since they only ever have a real
+        // address on file, never a username).
+        const ADMIN_USERNAME_MAP = { 'yo7foods20': 'ismailyomi@gmail.com' };
+        function resolveAdminLoginEmail(input) {
+            const trimmed = input.trim();
+            return ADMIN_USERNAME_MAP[trimmed.toLowerCase()] || trimmed;
+        }
+        async function renderAdminPage() {
+            const loginSection = document.getElementById('adminLoginSection');
+            const deniedSection = document.getElementById('adminDeniedSection');
+            const dashSection = document.getElementById('adminDashboardSection');
+            [loginSection, deniedSection, dashSection].forEach(s => { if (s) s.style.display = 'none'; });
+            if (!supabaseClient) {
+                loginSection.style.display = 'block';
+                setAuthError('adminLoginError', 'Admin login needs accounts connected first, this is preview mode right now.');
+                return;
+            }
+            if (!currentSupabaseUser) {
+                loginSection.style.display = 'block';
+                return;
+            }
+            // Re-checked fresh here rather than trusting the cached
+            // currentIsAdmin, so this gate can't show stale/wrong content for
+            // a split second right after login.
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('is_admin')
+                .eq('id', currentSupabaseUser.id)
+                .single();
+            currentIsAdmin = !error && !!(data && data.is_admin);
+            if (!currentIsAdmin) {
+                deniedSection.style.display = 'block';
+                return;
+            }
+            dashSection.style.display = 'block';
+            renderAdminOrders();
+        }
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        if (adminLoginForm) {
+            adminLoginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const idVal = document.getElementById('adminLoginId').value.trim();
+                const password = document.getElementById('adminLoginPassword').value;
+                const email = resolveAdminLoginEmail(idVal);
+                setAuthError('adminLoginError', '');
+                setAuthSuccess('adminLoginSuccess', '');
+                if (!isValidEmail(email)) { setAuthError('adminLoginError', 'That username or email doesn\'t look right, double-check it and try again.'); return; }
+                if (!supabaseClient) return;
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.textContent = 'Logging in…';
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                btn.disabled = false;
+                btn.textContent = 'Log in';
+                if (error) { setAuthError('adminLoginError', error.message); return; }
+                const name = (data.user.user_metadata && data.user.user_metadata.full_name) || data.user.email.split('@')[0];
+                setUser(name, data.user);
+                renderAdminPage();
+            });
+        }
+        const adminForgotPasswordLink = document.getElementById('adminForgotPasswordLink');
+        if (adminForgotPasswordLink) {
+            adminForgotPasswordLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const idVal = document.getElementById('adminLoginId').value.trim();
+                setAuthError('adminLoginError', '');
+                setAuthSuccess('adminLoginSuccess', '');
+                const email = resolveAdminLoginEmail(idVal);
+                if (!idVal || !isValidEmail(email)) { setAuthError('adminLoginError', 'Enter your admin username or email above first, then click "Forgot password?".'); return; }
+                if (!supabaseClient) { setAuthError('adminLoginError', 'Password reset needs accounts connected first.'); return; }
+                await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+                setAuthSuccess('adminLoginSuccess', 'If that account exists, a reset link is on its way, check the inbox.');
+            });
+        }
+        const adminDeniedLogoutBtn = document.getElementById('adminDeniedLogoutBtn');
+        if (adminDeniedLogoutBtn) {
+            adminDeniedLogoutBtn.addEventListener('click', async () => {
+                if (supabaseClient) await supabaseClient.auth.signOut();
+                clearUser();
+                renderAdminPage();
+            });
+        }
+        const addAdminForm = document.getElementById('addAdminForm');
+        if (addAdminForm) {
+            addAdminForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('addAdminEmail').value.trim();
+                setAuthError('addAdminError', '');
+                setAuthSuccess('addAdminSuccess', '');
+                if (!isValidEmail(email)) { setAuthError('addAdminError', 'That email address doesn\'t look right, double-check it and try again.'); return; }
+                if (!supabaseClient) return;
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                const { data: profile, error: findError } = await supabaseClient
+                    .from('profiles').select('id, full_name').eq('email', email).maybeSingle();
+                if (findError) { setAuthError('addAdminError', 'Something went wrong looking that up, please try again.'); btn.disabled = false; return; }
+                if (!profile) { setAuthError('addAdminError', 'No account found with that email, they need to sign up first.'); btn.disabled = false; return; }
+                const { error: updateError } = await supabaseClient.from('profiles').update({ is_admin: true }).eq('id', profile.id);
+                btn.disabled = false;
+                if (updateError) { setAuthError('addAdminError', updateError.message); return; }
+                setAuthSuccess('addAdminSuccess', (profile.full_name || email) + ' is now an admin.');
+                e.target.reset();
+            });
+        }
+
         // Keeps a logged-in customer's Order History page in sync live when
         // an admin changes a status, no refresh needed. Subscribed for the
         // whole session (not just while the page is open) since it's cheap
@@ -10034,8 +10207,6 @@
             accountDropdown.classList.remove('open');
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
-            const adminLink = document.getElementById('adminOrdersLink');
-            if (adminLink) adminLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
             unsubscribeMyOrders();
             registerStoredLoyaltyCodes();
@@ -10045,11 +10216,10 @@
         // Checked fresh from the database on every login/session-restore
         // rather than trusted from anything client-side, the actual access
         // control lives in the RLS policies on orders/profiles, this just
-        // decides whether to show the admin UI at all.
+        // decides whether to subscribe to admin notifications.
         async function refreshAdminStatus() {
             currentIsAdmin = false;
-            const adminLink = document.getElementById('adminOrdersLink');
-            if (!supabaseClient || !currentSupabaseUser) { if (adminLink) adminLink.style.display = 'none'; unsubscribeAdminOrderNotifications(); return; }
+            if (!supabaseClient || !currentSupabaseUser) { unsubscribeAdminOrderNotifications(); return; }
             const { data, error } = await supabaseClient
                 .from('profiles')
                 .select('is_admin')
@@ -10057,10 +10227,8 @@
                 .single();
             if (error || !data) return;
             currentIsAdmin = !!data.is_admin;
-            if (adminLink) adminLink.style.display = currentIsAdmin ? 'flex' : 'none';
             if (currentIsAdmin) subscribeAdminOrderNotifications(); else unsubscribeAdminOrderNotifications();
         }
-        let adminNewOrderCount = 0;
         // Live "New order has been placed" notification for whoever's logged
         // in as admin with the site open, via Supabase Realtime on inserts
         // into orders. This is the in-app version, it only fires while an
@@ -10072,21 +10240,15 @@
             adminOrdersChannel = supabaseClient
                 .channel('admin-new-orders')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
-                    adminNewOrderCount++;
-                    const badge = document.getElementById('adminOrderBadge');
-                    if (badge) { badge.textContent = String(adminNewOrderCount); badge.style.display = 'flex'; }
                     const orderNumber = payload.new && payload.new.order_number;
                     showToast('🔔 New order has been placed' + (orderNumber ? ' — ' + orderNumber : ''), 6000);
-                    if (window.location.hash === '#/admin/orders') renderAdminOrders();
+                    if (window.location.hash === '#/admin' || window.location.hash === '#/admin/orders') renderAdminOrders();
                 })
                 .subscribe();
         }
         function unsubscribeAdminOrderNotifications() {
             if (adminOrdersChannel && supabaseClient) supabaseClient.removeChannel(adminOrdersChannel);
             adminOrdersChannel = null;
-            adminNewOrderCount = 0;
-            const badge = document.getElementById('adminOrderBadge');
-            if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
         }
 
         // Accounts only run in "preview mode" (nothing persists past a
@@ -10449,34 +10611,36 @@
             el.textContent = message;
             el.style.display = message ? 'block' : 'none';
         }
-        // Deliberately permissive on phone (accepts spaces/dashes/brackets and
-        // an optional leading +), the goal is catching real typos, not
-        // enforcing one country's format on every customer.
         function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-        function isValidPhone(v) { return /^\+?[\d\s().-]{7,20}$/.test(v) && (v.match(/\d/g) || []).length >= 7; }
 
+        // Sends a customer back to checkout after logging in if that's what
+        // bounced them to the login/signup page in the first place, home
+        // otherwise.
+        function redirectAfterAuth() {
+            const target = postLoginRedirect || '#/';
+            postLoginRedirect = null;
+            window.location.hash = target;
+        }
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('suName').value.trim() || 'Friend';
             const email = document.getElementById('suEmail').value.trim();
-            const phone = document.getElementById('suPhone').value.trim();
             const password = document.getElementById('suPassword').value;
             setAuthError('signupError', '');
             setAuthSuccess('signupSuccess', '');
             if (!isValidEmail(email)) { setAuthError('signupError', 'That email address doesn\'t look right, double-check it and try again.'); return; }
-            if (!isValidPhone(phone)) { setAuthError('signupError', 'That phone number doesn\'t look right, include the area code and try again.'); return; }
             if (!supabaseClient) {
                 // Not configured yet, same local-only preview the rest of the
                 // site already runs in.
                 setUser(name);
-                window.location.hash = '#/';
+                redirectAfterAuth();
                 return;
             }
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = 'Creating account…';
             const { data, error } = await supabaseClient.auth.signUp({
-                email, password, options: { data: { full_name: name, phone } }
+                email, password, options: { data: { full_name: name } }
             });
             btn.disabled = false;
             btn.textContent = 'Create account';
@@ -10491,7 +10655,7 @@
                 return;
             }
             setUser(name, data.user);
-            window.location.hash = '#/';
+            redirectAfterAuth();
         });
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -10500,7 +10664,7 @@
             setAuthError('loginError', '');
             if (!supabaseClient) {
                 setUser(email.split('@')[0] || 'Friend');
-                window.location.hash = '#/';
+                redirectAfterAuth();
                 return;
             }
             const btn = e.target.querySelector('button[type="submit"]');
@@ -10512,7 +10676,7 @@
             if (error) { setAuthError('loginError', error.message); return; }
             const name = (data.user.user_metadata && data.user.user_metadata.full_name) || email.split('@')[0];
             setUser(name, data.user);
-            window.location.hash = '#/';
+            redirectAfterAuth();
         });
         // Restores a real Supabase session across page refreshes (the client
         // library persists it in localStorage itself); without this, a
@@ -10688,7 +10852,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin-orders', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         function showView(id) {
@@ -10759,9 +10923,9 @@
             } else if (hash === '#/orders') {
                 showView('view-orders');
                 renderOrderHistory();
-            } else if (hash === '#/admin/orders') {
-                showView('view-admin-orders');
-                renderAdminOrders();
+            } else if (hash === '#/admin' || hash === '#/admin/orders') {
+                showView('view-admin');
+                renderAdminPage();
             } else if (hash === '#/contact') {
                 showView('view-contact');
                 renderContactPage();
