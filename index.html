@@ -165,36 +165,20 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: rgba(4, 37, 0, 0.32);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border-bottom: 1px solid transparent;
-            transition: background 0.25s ease, backdrop-filter 0.25s ease, border-color 0.25s ease;
+            background: #FAF2E3;
+            border-bottom: 1px solid rgba(44, 28, 16, 0.08);
+            transition: box-shadow 0.25s ease;
         }
         /* A genuinely see-through nav depends on whatever happens to be
            directly behind it, which at the very top of the page (before
            the hero visually fills the space) turned out to be the plain
-           light page background, not the dark hero, making the logo and
-           search bar unreadable. A light dark tint stays legible no matter
-           what's underneath, while still reading as far more open than
-           the fully solid nav used everywhere else. */
-        /* An open mobile menu gets the same solid treatment regardless of
-           scroll position: at the top of the homepage the nav is still in
-           its translucent state, which left menu links sitting directly
-           over the hero photo with barely any contrast behind them. A menu
-           being open is effectively a modal surface, not decoration, so it
-           always needs to be legible. */
+           light page background, not the dark hero, so the nav stays a flat
+           cream regardless of scroll position, just picking up a soft
+           shadow once there's page content underneath it (or the mobile
+           menu is open) to keep some separation from what's behind it. */
         #mainNav.nav-solid,
         #mainNav:has(.mobile-menu.open) {
-            /* Same gradient recipe as the hero (aubergine-mid to aubergine to
-               aubergine-deep, 135deg), instead of a single flat tone, so the
-               nav reads as part of the same premium surface rather than a
-               plain green bar bolted on top of it. */
-            background: linear-gradient(135deg, rgba(38, 98, 16, 0.92) 0%, rgba(6, 59, 0, 0.92) 45%, rgba(4, 37, 0, 0.92) 100%);
-            backdrop-filter: blur(14px) saturate(140%);
-            -webkit-backdrop-filter: blur(14px) saturate(140%);
-            border-bottom: 1px solid rgba(250, 249, 242, 0.08);
-            box-shadow: 0 10px 30px rgba(4, 37, 0, 0.18);
+            box-shadow: 0 10px 30px rgba(44, 28, 16, 0.10);
         }
 
         body { padding-top: 0; }
@@ -399,8 +383,7 @@
             line-height: 1;
             flex-shrink: 0;
             text-decoration: none;
-            color: var(--cream);
-            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+            color: #2C1C10;
         }
 
         .nav-mark svg {
@@ -445,7 +428,7 @@
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.28em;
-            color: var(--chartreuse-soft);
+            color: var(--chartreuse-rich);
             margin-top: 1px;
         }
 
@@ -456,8 +439,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(250, 249, 242, 0.06);
-            border: 1.5px solid rgba(250, 249, 242, 0.22);
+            background: rgba(44, 28, 16, 0.04);
+            border: 1.5px solid rgba(44, 28, 16, 0.16);
             border-radius: 999px;
             padding: 8px 15px;
             box-sizing: border-box;
@@ -470,7 +453,7 @@
            standing outline. */
         .nav-search:focus-within {
             border-color: var(--chartreuse);
-            background: rgba(250, 249, 242, 0.1);
+            background: rgba(44, 28, 16, 0.07);
             box-shadow: 0 0 0 3px rgba(144, 184, 0, 0.16);
         }
 
@@ -479,7 +462,7 @@
             height: 15px;
             opacity: 0.85;
             flex-shrink: 0;
-            color: #fff;
+            color: #2C1C10;
         }
 
         .nav-search input {
@@ -488,11 +471,11 @@
             min-width: 0;
             font-family: var(--body);
             font-size: 16px;
-            color: #fff;
+            color: #2C1C10;
         }
 
         .nav-search input::placeholder {
-            color: rgba(255, 255, 255, 0.65);
+            color: rgba(44, 28, 16, 0.5);
         }
 
         .search-wrap { position: relative; flex: 1; min-width: 0; max-width: 340px; }
@@ -554,7 +537,7 @@
             text-decoration: none;
             opacity: 0.82;
             transition: opacity 0.2s;
-            color: var(--cream);
+            color: #2C1C10;
             position: relative;
             padding-bottom: 4px;
         }
@@ -598,19 +581,19 @@
             width: 38px;
             height: 38px;
             border-radius: 11px;
-            border: 1px solid rgba(250, 249, 242, 0.18);
-            background: rgba(250, 249, 242, 0.06);
+            border: 1px solid rgba(44, 28, 16, 0.14);
+            background: rgba(44, 28, 16, 0.04);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--cream);
+            color: #2C1C10;
             transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
             text-decoration: none;
         }
 
         .icon-btn:hover {
-            background: rgba(250, 249, 242, 0.14);
-            border-color: rgba(250, 249, 242, 0.4);
+            background: rgba(44, 28, 16, 0.09);
+            border-color: rgba(44, 28, 16, 0.3);
             transform: translateY(-2px);
         }
 
@@ -660,21 +643,21 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(250, 249, 242, 0.08);
-            border: 1px solid rgba(250, 249, 242, 0.2);
+            background: rgba(44, 28, 16, 0.05);
+            border: 1px solid rgba(44, 28, 16, 0.16);
             border-radius: 999px;
             padding: 8px 16px 8px 12px;
             font-family: var(--display);
             font-weight: 700;
             font-size: 13px;
-            color: var(--cream);
+            color: #2C1C10;
             text-decoration: none;
             transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
         }
 
         .nav-account:hover {
-            border-color: rgba(250, 249, 242, 0.5);
-            background: rgba(250, 249, 242, 0.14);
+            border-color: rgba(44, 28, 16, 0.35);
+            background: rgba(44, 28, 16, 0.1);
             transform: translateY(-2px);
         }
 
@@ -790,11 +773,11 @@
             width: 38px;
             height: 38px;
             border-radius: 11px;
-            border: 1px solid rgba(250, 249, 242, 0.18);
-            background: rgba(250, 249, 242, 0.06);
+            border: 1px solid rgba(44, 28, 16, 0.14);
+            background: rgba(44, 28, 16, 0.04);
             align-items: center;
             justify-content: center;
-            color: var(--cream);
+            color: #2C1C10;
             flex-shrink: 0;
         }
 
@@ -830,13 +813,13 @@
         }
 
         .mobile-menu a {
-            color: var(--cream);
+            color: #2C1C10;
             text-decoration: none;
             font-family: var(--display);
             font-weight: 600;
             font-size: 15px;
             padding: 12px 4px;
-            border-bottom: 1px solid rgba(250, 249, 242, 0.08);
+            border-bottom: 1px solid rgba(44, 28, 16, 0.08);
         }
 
         .mobile-menu a:last-child {
@@ -2231,18 +2214,12 @@
             height: 40px;
         }
         .footer-curve path {
-            fill: var(--aubergine-deep);
+            fill: #FAF2E3;
         }
         footer {
             position: relative;
-            /* Same gradient plus soft highlight as the hero, rather than a
-               single flat aubergine-deep block, so the footer reads as the
-               same premium surface bookending the page instead of a plain
-               green slab. */
-            background:
-                radial-gradient(ellipse at 50% 0%, rgba(144, 184, 0, 0.10), transparent 55%),
-                linear-gradient(135deg, var(--aubergine-mid) 0%, var(--aubergine) 45%, var(--aubergine-deep) 100%);
-            color: #d9e0c8;
+            background: #FAF2E3;
+            color: #2C1C10;
             padding: 56px 0 36px;
             overflow: hidden;
         }
@@ -2269,10 +2246,10 @@
             gap: 20px;
             padding: 26px 28px;
             margin-bottom: 32px;
-            background: rgba(250, 249, 242, 0.05);
-            border: 1px solid rgba(250, 249, 242, 0.1);
+            background: #FFFFFF;
+            border: 1px solid rgba(44, 28, 16, 0.1);
             border-radius: 20px;
-            box-shadow: 0 24px 48px rgba(3, 26, 0, 0.22);
+            box-shadow: 0 24px 48px rgba(44, 28, 16, 0.08);
             overflow: hidden;
         }
         .footer-newsletter::before {
@@ -2288,23 +2265,23 @@
         }
         .footer-newsletter-icon {
             width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
-            background: rgba(144,184,0,0.16); color: var(--chartreuse-soft);
+            background: rgba(144,184,0,0.16); color: var(--chartreuse-rich);
             display: flex; align-items: center; justify-content: center;
         }
         .footer-newsletter-icon svg { width: 19px; height: 19px; }
         .footer-newsletter h4 {
-            font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--cream); margin-bottom: 4px;
+            font-family: var(--display); font-weight: 700; font-size: 16px; color: #2C1C10; margin-bottom: 4px;
         }
-        .footer-newsletter p { font-size: 13px; color: #c8d1ba; }
+        .footer-newsletter p { font-size: 13px; color: #6b5c4f; }
         .newsletter-form {
             display: flex; gap: 10px; flex-wrap: wrap;
         }
         .newsletter-form input {
-            padding: 11px 14px; border-radius: 10px; border: 1.5px solid rgba(250,249,242,0.18);
-            background: rgba(250,249,242,0.06); color: var(--cream); font-family: var(--body); font-size: 14px;
+            padding: 11px 14px; border-radius: 10px; border: 1.5px solid rgba(44, 28, 16, 0.16);
+            background: #FAF2E3; color: #2C1C10; font-family: var(--body); font-size: 14px;
             min-width: 220px;
         }
-        .newsletter-form input::placeholder { color: rgba(250,249,242,0.45); }
+        .newsletter-form input::placeholder { color: rgba(44, 28, 16, 0.45); }
         .newsletter-form button {
             background: var(--chartreuse); color: var(--aubergine-deep); border: none; border-radius: 10px;
             padding: 11px 20px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
@@ -2322,7 +2299,7 @@
             flex-wrap: wrap;
             gap: 32px;
             padding-bottom: 36px;
-            border-bottom: 1px solid rgba(250, 249, 242, 0.1);
+            border-bottom: 1px solid rgba(44, 28, 16, 0.1);
             margin-bottom: 24px;
         }
 
@@ -2333,7 +2310,7 @@
             font-family: var(--display);
             font-weight: 700;
             font-size: 19px;
-            color: var(--cream);
+            color: #2C1C10;
             text-decoration: none;
         }
 
@@ -2347,7 +2324,7 @@
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 0.28em;
-            color: var(--chartreuse-soft);
+            color: var(--chartreuse-rich);
         }
 
         .footer-mark svg {
@@ -2363,7 +2340,7 @@
 
         .footer-tag {
             font-size: 13.5px;
-            color: #9fb08a;
+            color: #6b5c4f;
             margin-top: 6px;
             max-width: 34ch;
         }
@@ -2380,9 +2357,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(250, 249, 242, 0.08);
-            border: 1px solid rgba(250, 249, 242, 0.18);
-            color: var(--cream);
+            background: rgba(44, 28, 16, 0.05);
+            border: 1px solid rgba(44, 28, 16, 0.16);
+            color: #2C1C10;
             transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
         .footer-social-row a:hover { background: var(--chartreuse); color: var(--aubergine-deep); transform: translateY(-2px); }
@@ -2400,7 +2377,7 @@
             font-size: 13px;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: var(--chartreuse-soft);
+            color: var(--chartreuse-rich);
             margin-bottom: 16px;
             position: relative;
             padding-bottom: 10px;
@@ -2420,16 +2397,16 @@
             align-items: center;
             gap: 8px;
             font-size: 14.5px;
-            color: #c8d1ba;
+            color: #2C1C10;
             text-decoration: none;
             margin-bottom: 8px;
-            opacity: 0.9;
+            opacity: 0.85;
             transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
 
         .footer-col a:hover {
             opacity: 1;
-            color: var(--cream);
+            color: var(--chartreuse-rich);
             transform: translateX(3px);
         }
 
@@ -2437,7 +2414,7 @@
             width: 15px;
             height: 15px;
             flex-shrink: 0;
-            color: var(--chartreuse-soft);
+            color: var(--chartreuse-rich);
         }
 
         .footer-addr {
@@ -2445,7 +2422,7 @@
             align-items: flex-start;
             gap: 8px;
             font-size: 13px;
-            color: #a3ad95;
+            color: #6b5c4f;
             margin-top: 4px;
             line-height: 1.5;
         }
@@ -2453,12 +2430,12 @@
 
         .footer-bottom {
             font-size: 12.5px;
-            color: #7f8f70;
+            color: #6b5c4f;
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
         }
         .footer-payment-badges { margin-top: 0; }
-        .footer-admin-link { color: #7f8f70; text-decoration: underline; text-underline-offset: 2px; }
-        .footer-admin-link:hover { color: var(--chartreuse); }
+        .footer-admin-link { color: #6b5c4f; text-decoration: underline; text-underline-offset: 2px; }
+        .footer-admin-link:hover { color: var(--chartreuse-rich); }
 
         /* ================= REVEAL ================= */
         .reveal {
