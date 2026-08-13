@@ -8374,6 +8374,66 @@
             const strip = document.getElementById('newCarousel');
             strip.innerHTML = cardHTML;
         }
+        /* ================= AMBIENT AUTO-SCROLL (Just landed / Special offer) =================
+           These two are real scrollable strips (native touch swipe, mouse-drag via
+           initDragScroll, arrow buttons), not the old CSS marquee. This layers a slow
+           ambient drift back on top: nudges scrollLeft forward each frame, bounces at
+           either end instead of jumping, and pauses the instant a real person touches,
+           drags, hovers, or clicks an arrow, only resuming after they've left it alone
+           for a bit, so it never fights a swipe in progress. */
+        function initCarouselAutoScroll(stripId, pxPerSecond) {
+            const strip = document.getElementById(stripId);
+            if (!strip) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            // The CSS scroll-behavior:smooth on this element is meant for the
+            // arrow buttons' one-shot jumps. Left in place, every per-frame
+            // scrollLeft nudge below would queue its own smooth-scroll
+            // animation and cancel the previous one before it moved anything,
+            // netting zero visible drift. Explicit {behavior:'smooth'} on the
+            // arrow buttons' scrollBy() calls overrides this inline value, so
+            // they stay smooth regardless.
+            strip.style.scrollBehavior = 'auto';
+            let paused = false;
+            let resumeTimer = null;
+            let dir = 1;
+            let lastTs = null;
+
+            function pause() {
+                paused = true;
+                clearTimeout(resumeTimer);
+            }
+            function scheduleResume() {
+                clearTimeout(resumeTimer);
+                resumeTimer = setTimeout(() => { paused = false; lastTs = null; }, 1800);
+            }
+            strip.__pauseAutoScroll = pause;
+            strip.__resumeAutoScroll = scheduleResume;
+
+            strip.addEventListener('mouseenter', pause);
+            strip.addEventListener('mouseleave', scheduleResume);
+            strip.addEventListener('pointerdown', pause);
+            strip.addEventListener('pointerup', scheduleResume);
+            strip.addEventListener('touchstart', pause, { passive: true });
+            strip.addEventListener('touchend', scheduleResume, { passive: true });
+
+            function frame(ts) {
+                if (!paused) {
+                    if (lastTs === null) lastTs = ts;
+                    const dt = (ts - lastTs) / 1000;
+                    lastTs = ts;
+                    const max = strip.scrollWidth - strip.clientWidth;
+                    if (max > 1) {
+                        strip.scrollLeft += dir * pxPerSecond * dt;
+                        if (strip.scrollLeft >= max) { strip.scrollLeft = max; dir = -1; }
+                        else if (strip.scrollLeft <= 0) { strip.scrollLeft = 0; dir = 1; }
+                    }
+                } else {
+                    lastTs = null;
+                }
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
         function renderBestSellersSpotlight() {
             const items = bestSellerItems();
             const el = document.getElementById('bestSellersSpotlight');
@@ -10553,16 +10613,24 @@
         const HOME_CAT_STEP = 320;
         if (homeCatNavPrev && homeCatGrid) homeCatNavPrev.addEventListener('click', () => homeCatGrid.scrollBy({ left: -HOME_CAT_STEP, behavior: 'smooth' }));
         if (homeCatNavNext && homeCatGrid) homeCatNavNext.addEventListener('click', () => homeCatGrid.scrollBy({ left: HOME_CAT_STEP, behavior: 'smooth' }));
+        function scrollCarouselStrip(strip, delta) {
+            if (!strip) return;
+            if (strip.__pauseAutoScroll) strip.__pauseAutoScroll();
+            strip.scrollBy({ left: delta, behavior: 'smooth' });
+            if (strip.__resumeAutoScroll) strip.__resumeAutoScroll();
+        }
         const newCarouselPrev = document.getElementById('newCarouselPrev');
         const newCarouselNext = document.getElementById('newCarouselNext');
         const newCarouselStrip = document.getElementById('newCarousel');
-        if (newCarouselPrev && newCarouselStrip) newCarouselPrev.addEventListener('click', () => newCarouselStrip.scrollBy({ left: -460, behavior: 'smooth' }));
-        if (newCarouselNext && newCarouselStrip) newCarouselNext.addEventListener('click', () => newCarouselStrip.scrollBy({ left: 460, behavior: 'smooth' }));
+        if (newCarouselPrev && newCarouselStrip) newCarouselPrev.addEventListener('click', () => scrollCarouselStrip(newCarouselStrip, -460));
+        if (newCarouselNext && newCarouselStrip) newCarouselNext.addEventListener('click', () => scrollCarouselStrip(newCarouselStrip, 460));
         const offerCarouselPrev = document.getElementById('offerCarouselPrev');
         const offerCarouselNext = document.getElementById('offerCarouselNext');
         const offerCarouselStrip = document.getElementById('offerCarousel');
-        if (offerCarouselPrev && offerCarouselStrip) offerCarouselPrev.addEventListener('click', () => offerCarouselStrip.scrollBy({ left: -460, behavior: 'smooth' }));
-        if (offerCarouselNext && offerCarouselStrip) offerCarouselNext.addEventListener('click', () => offerCarouselStrip.scrollBy({ left: 460, behavior: 'smooth' }));
+        if (offerCarouselPrev && offerCarouselStrip) offerCarouselPrev.addEventListener('click', () => scrollCarouselStrip(offerCarouselStrip, -460));
+        if (offerCarouselNext && offerCarouselStrip) offerCarouselNext.addEventListener('click', () => scrollCarouselStrip(offerCarouselStrip, 460));
+        initCarouselAutoScroll('newCarousel', 34);
+        initCarouselAutoScroll('offerCarousel', 34);
 
         /* ================= NEWSLETTER =================
            No backend exists to store emails, so this doesn't pretend to save
