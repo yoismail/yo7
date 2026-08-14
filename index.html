@@ -8943,7 +8943,7 @@
         // falls back to the Coming Soon placeholder if there's no image yet, or if it fails to load.
         function productPhotoHTML(p, altText) {
             if (p.image) {
-                return `<img src="${p.image}" alt="${altText}" loading="lazy" class="product-photo-img"
+                return `<img src="${p.image}" alt="${altText}" loading="lazy" decoding="async" class="product-photo-img"
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="thumb-placeholder" style="display:none;">${comingSoonThumbHTML(p)}</div>`;
             }
@@ -9206,6 +9206,7 @@
                 img.src = p.image;
                 img.alt = p.name;
                 img.loading = 'lazy';
+                img.decoding = 'async';
                 img.className = 'product-photo-img';
                 img.onerror = () => { img.style.display = 'none'; placeholder.style.display = 'flex'; };
                 placeholder.style.display = 'none';
@@ -10880,6 +10881,34 @@
         // upload rather than waiting for the panel's own "Save" button,
         // matching how it already behaved instantly in the preview before,
         // now for real and for every visitor rather than just this tab.
+        // Downscales and re-encodes an uploaded photo before it goes
+        // anywhere, a phone camera photo landing at 4-12MB direct from the
+        // gallery would otherwise get stored and served to every visitor at
+        // that full size. 1600px is comfortably larger than this photo is
+        // ever displayed at (the product page's own image is well under
+        // that), and JPEG at 0.82 quality is visually close to lossless
+        // while cutting most of that file size.
+        function compressImageFile(file, maxDim, quality) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const objectUrl = URL.createObjectURL(file);
+                img.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                    const w = Math.round(img.width * scale);
+                    const h = Math.round(img.height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality);
+                };
+                // If it fails to decode as an image for any reason, fall
+                // back to uploading the original file rather than blocking
+                // the upload entirely.
+                img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file); };
+                img.src = objectUrl;
+            });
+        }
         async function handleEditPhotoUpload(catSlug, idx, input) {
             const file = input.files && input.files[0];
             if (!file) return;
@@ -10887,9 +10916,18 @@
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+            const uploadFile = await compressImageFile(file, 1600, 0.82);
+            // compressImageFile only falls back to the original file if the
+            // browser couldn't decode it as an image at all, in which case
+            // its real type/extension has to be used instead of assuming jpg.
+            const isJpeg = uploadFile.type === 'image/jpeg';
+            const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
             const path = `${catSlug}-${idx}-${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, file, { upsert: true });
+            // A year-long cache: once a product photo's uploaded it almost
+            // never changes in place (a new photo gets a new timestamped
+            // path instead, see above), so there's nothing to gain from
+            // revisitors re-fetching it.
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) {
                 showToast('Could not upload that photo: ' + uploadError.message, 6000);
                 if (preview) preview.innerHTML = `<span>${(findCategory(catSlug).products[idx].emoji) || '🛒'}</span>`;
