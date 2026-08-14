@@ -1018,7 +1018,7 @@
             background: #FAF2E3;
             color: #2C1C10;
             overflow: hidden;
-            padding: 40px 0 64px;
+            padding: 64px 0 96px;
         }
 
         /* Unused now the hero no longer carries a photo carousel behind it
@@ -1075,113 +1075,109 @@
         }
 
 
-        .hero-badge-row {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            justify-content: center;
-            margin-bottom: 24px;
-        }
-
-        .hero-promo-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 9px;
-            background: #fff;
-            border: 1px solid rgba(6, 59, 0, 0.14);
-            border-radius: 999px;
-            padding: 9px 18px 9px 13px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #2C1C10;
-            box-shadow: 0 6px 18px rgba(6, 59, 0, 0.08);
-        }
-
-        .hero-promo-badge svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            color: var(--aubergine);
-        }
-
-        .hero-promo-badge strong {
-            color: var(--aubergine);
-        }
-
-        .hero-banner {
-            position: relative;
-            z-index: 2;
-            overflow: hidden;
-            border-radius: 28px;
-            padding: 60px 24px 76px;
-            text-align: center;
-            color: var(--cream);
-            background:
-                radial-gradient(ellipse 80% 60% at 85% -10%, rgba(144, 184, 0, 0.22) 0%, transparent 60%),
-                linear-gradient(150deg, var(--aubergine) 0%, var(--aubergine-deep) 100%);
-        }
-
-        .hero-banner-motif {
+        .hero-watermark {
             position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            padding: 0 4%;
-            opacity: 0.16;
+            top: -8%;
+            right: -6%;
+            width: min(60vw, 640px);
+            opacity: 0.10;
             pointer-events: none;
+            z-index: 1;
         }
 
-        .hero-banner-motif svg {
-            width: clamp(38px, 6vw, 84px);
-            height: auto;
-            color: var(--cream);
-        }
-
-        .hero-banner-inner {
+        .hero-inner {
             position: relative;
             z-index: 2;
-            max-width: 620px;
-            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
-        .hero-banner-inner .eyebrow {
+        .eyebrow {
             font-family: var(--display);
             font-weight: 500;
             font-size: 13px;
             letter-spacing: 0.24em;
             text-transform: uppercase;
-            color: var(--chartreuse);
-            margin-bottom: 18px;
+            color: var(--chartreuse-rich);
+            margin-bottom: 28px;
         }
 
-        .hero-banner-inner h1 {
+        .seal {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 8px;
+        }
+
+        .seal .sprout {
+            transform-origin: 133px 150px;
+            animation: sprout-grow 1.1s cubic-bezier(.34, 1.56, .64, 1) 0.3s both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .seal .sprout {
+                animation: none;
+            }
+        }
+
+        @keyframes sprout-grow {
+            0% {
+                transform: scaleY(0);
+                opacity: 0;
+            }
+
+            60% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        .hero h1 {
             font-family: var(--display);
             font-weight: 700;
-            font-size: clamp(32px, 5.4vw, 52px);
-            letter-spacing: -0.01em;
-            line-height: 1.12;
-            color: var(--cream);
-            margin: 0 0 18px;
+            font-size: clamp(44px, 8vw, 84px);
+            letter-spacing: -0.02em;
+            line-height: 1;
+            margin: 6px 0 20px;
         }
 
-        .hero-banner-inner h1 .accent {
+        .hero-badge {
+            width: clamp(280px, 40vw, 520px);
+            height: auto;
+            display: block;
+            margin: 6px 0 20px;
+        }
+
+        .hero h1 .dash {
             color: var(--chartreuse);
         }
 
-        .hero-banner-inner .hero-sub {
-            max-width: 480px;
-            font-size: clamp(15px, 2vw, 17px);
-            color: rgba(250, 249, 242, 0.8);
-            margin: 0 auto 32px;
+        .hero h1 .hero-foods {
+            display: block;
+            font-size: clamp(14px, 1.8vw, 20px);
+            font-weight: 700;
+            letter-spacing: 0.32em;
+            color: var(--chartreuse-rich);
+            margin-top: 6px;
         }
 
-        .hero-cta-pill {
-            border-radius: 999px;
-            padding: 16px 32px;
-            font-size: 15px;
+        .hero-sub {
+            max-width: 520px;
+            font-size: clamp(16px, 2.4vw, 19px);
+            color: #6b5c4f;
+            margin-bottom: 36px;
+        }
+
+        .cta-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .hero-social-link {
@@ -1189,7 +1185,7 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            margin-top: 20px;
+            margin-top: 18px;
             font-family: var(--display);
             font-weight: 600;
             font-size: 12.5px;
@@ -1197,27 +1193,6 @@
         }
         .hero-social-link svg { width: 15px; height: 15px; }
         .hero-social-link:hover { color: #2C1C10; }
-
-        .hero-banner-inner .hero-social-link {
-            color: rgba(250, 249, 242, 0.7);
-        }
-        .hero-banner-inner .hero-social-link:hover {
-            color: var(--cream);
-        }
-
-        @media (max-width: 640px) {
-            .hero-banner {
-                padding: 48px 20px 64px;
-                border-radius: 22px;
-            }
-            .hero-banner-motif svg {
-                width: clamp(28px, 10vw, 48px);
-            }
-            .hero-promo-badge {
-                font-size: 12px;
-                text-align: left;
-            }
-        }
 
         /* ================= STORY ================= */
         .story {
@@ -5405,41 +5380,34 @@
     <!-- ================= HOME ================= -->
     <div id="view-home">
         <header class="hero">
-            <div class="wrap">
-                <div class="hero-badge-row">
-                    <span class="hero-promo-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1"/><path d="M15 9h4l3 3.5V17h-2"/><circle cx="6.5" cy="18.5" r="1.8"/><circle cx="17.5" cy="18.5" r="1.8"/></svg>
-                        <span><strong>Free delivery</strong> on orders over &pound;50, UK&#8209;wide</span>
-                    </span>
+            <svg class="hero-watermark" viewBox="65 25 875 900">
+                <use href="#seal-mark" />
+            </svg>
+            <div class="wrap hero-inner">
+                <div class="eyebrow">African Food Store, Essex &amp; Suffolk</div>
+                <svg class="seal" viewBox="65 25 875 900">
+                    <use href="#seal-mark" />
+                </svg>
+                <h1>Yo<span class="dash">7</span><span class="hero-foods">Foods</span></h1>
+                <p class="hero-sub">Premium African and Caribbean groceries, fresh, authentic, and curated for quality.
+                    Thoughtfully sourced ingredients delivered across the UK with care and convenience.</p>
+                <div class="cta-row">
+                    <a class="btn btn-primary" href="#/shop">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round">
+                            <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
+                        </svg>
+                        Start shopping
+                    </a>
                 </div>
-                <div class="hero-banner">
-                    <div class="hero-banner-motif" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 9.5 17 9.5s-4.5 1.5-5.5 7A7 7 0 0 1 11 20z"/><path d="M11 20v-8"/></svg>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 0-3 19.5"/><path d="M12 2a10 10 0 0 1 3 19.5"/><path d="M12 2v19.5"/></svg>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/></svg>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 1-6 6 6 6 0 0 1-6-6 6 6 0 0 1 6-6v6z"/><path d="M12 14v7"/></svg>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                    </div>
-                    <div class="hero-banner-inner">
-                        <div class="eyebrow">African &amp; Caribbean Food Store</div>
-                        <h1>Your home for <span class="accent">authentic</span> African &amp; Caribbean groceries</h1>
-                        <p class="hero-sub">Fresh, thoughtfully sourced ingredients, delivered UK-wide, from our store to your door.</p>
-                        <a class="btn btn-primary hero-cta-pill" href="#/shop">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
-                            </svg>
-                            Shop now
-                        </a>
-                        <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                <rect x="3" y="3" width="18" height="18" rx="5" />
-                                <circle cx="12" cy="12" r="4" />
-                                <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
-                            </svg>
-                            Follow @yo7foods
-                        </a>
-                    </div>
-                </div>
+                <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <rect x="3" y="3" width="18" height="18" rx="5" />
+                        <circle cx="12" cy="12" r="4" />
+                        <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+                    </svg>
+                    Follow @yo7foods
+                </a>
             </div>
         </header>
 
