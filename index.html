@@ -1075,16 +1075,24 @@
         }
 
 
+        .hero-watermark {
+            position: absolute;
+            top: -8%;
+            right: -6%;
+            width: min(60vw, 640px);
+            opacity: 0.10;
+            pointer-events: none;
+            z-index: 1;
+        }
+
         .hero-inner {
             position: relative;
             z-index: 2;
-            display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 40px;
+            text-align: center;
         }
-
-        .hero-content { max-width: 560px; }
 
         .eyebrow {
             font-family: var(--display);
@@ -1093,51 +1101,13 @@
             letter-spacing: 0.24em;
             text-transform: uppercase;
             color: var(--chartreuse-rich);
-            margin-bottom: 20px;
+            margin-bottom: 28px;
         }
 
-        /* Right column: a bounded, self-contained brand graphic rather than
-           product photography (none exists yet) or the old corner watermark,
-           an intentional visual anchor instead of decoration bleeding off
-           the edge. Swap this whole block for a real photo in a rounded
-           panel once one exists, everything else in the hero stays as-is. */
-        .hero-visual {
-            position: relative;
-            aspect-ratio: 1/1;
-            max-width: 460px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .hero-visual-blob {
-            position: absolute;
-            inset: 4%;
-            border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
-            background:
-                radial-gradient(circle at 32% 28%, rgba(144, 184, 0, 0.16), transparent 55%),
-                linear-gradient(150deg, #F1F5EA 0%, #E4EDD6 100%);
-            border: 1px solid rgba(6, 59, 0, 0.08);
-            animation: heroBlobMorph 16s ease-in-out infinite alternate;
-        }
-        @keyframes heroBlobMorph {
-            from { border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; }
-            to { border-radius: 58% 42% 39% 61% / 55% 60% 40% 45%; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-visual-blob { animation: none; }
-        }
-        .hero-visual-seal {
-            position: relative;
-            width: 62%;
-            height: 62%;
-            filter: drop-shadow(0 18px 34px rgba(6, 59, 0, 0.16));
-        }
-        @media (max-width: 900px) {
-            .hero-inner { grid-template-columns: 1fr; text-align: center; gap: 32px; }
-            .hero-content { max-width: none; margin: 0 auto; }
-            .hero-visual { max-width: 300px; order: -1; }
-            .cta-row, .hero-trust-row, .hero-social-link { justify-content: center; }
+        .seal {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 8px;
         }
 
         .seal .sprout {
@@ -1197,46 +1167,25 @@
         }
 
         .hero-sub {
-            max-width: 480px;
+            max-width: 520px;
             font-size: clamp(16px, 2.4vw, 19px);
             color: #6b5c4f;
-            margin-bottom: 32px;
+            margin-bottom: 36px;
         }
 
         .cta-row {
             display: flex;
             gap: 16px;
             flex-wrap: wrap;
-            justify-content: flex-start;
+            justify-content: center;
         }
-
-        .hero-trust-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 22px;
-        }
-        .hero-trust-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 12px;
-            color: #2C1C10;
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(44, 28, 16, 0.1);
-            padding: 7px 13px;
-            border-radius: 999px;
-        }
-        .hero-trust-badge svg { width: 14px; height: 14px; color: var(--chartreuse-rich); flex-shrink: 0; }
 
         .hero-social-link {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
             gap: 6px;
-            margin-top: 20px;
+            margin-top: 18px;
             font-family: var(--display);
             font-weight: 600;
             font-size: 12.5px;
@@ -5431,46 +5380,34 @@
     <!-- ================= HOME ================= -->
     <div id="view-home">
         <header class="hero">
+            <svg class="hero-watermark" viewBox="65 25 875 900">
+                <use href="#seal-mark" />
+            </svg>
             <div class="wrap hero-inner">
-                <div class="hero-content">
-                    <div class="eyebrow">African Food Store, Essex &amp; Suffolk</div>
-                    <h1>Yo<span class="dash">7</span><span class="hero-foods">Foods</span></h1>
-                    <p class="hero-sub">Premium African and Caribbean groceries, fresh, authentic, and curated for quality.
-                        Thoughtfully sourced ingredients delivered across the UK with care and convenience.</p>
-                    <div class="cta-row">
-                        <a class="btn btn-primary" href="#/shop">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round">
-                                <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
-                            </svg>
-                            Start shopping
-                        </a>
-                    </div>
-                    <div class="hero-trust-row">
-                        <span class="hero-trust-badge">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                            Free delivery over &pound;50
-                        </span>
-                        <span class="hero-trust-badge">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                            UK-wide delivery
-                        </span>
-                    </div>
-                    <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <rect x="3" y="3" width="18" height="18" rx="5" />
-                            <circle cx="12" cy="12" r="4" />
-                            <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+                <div class="eyebrow">African Food Store, Essex &amp; Suffolk</div>
+                <svg class="seal" viewBox="65 25 875 900">
+                    <use href="#seal-mark" />
+                </svg>
+                <h1>Yo<span class="dash">7</span><span class="hero-foods">Foods</span></h1>
+                <p class="hero-sub">Premium African and Caribbean groceries, fresh, authentic, and curated for quality.
+                    Thoughtfully sourced ingredients delivered across the UK with care and convenience.</p>
+                <div class="cta-row">
+                    <a class="btn btn-primary" href="#/shop">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round">
+                            <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
                         </svg>
-                        Follow @yo7foods
+                        Start shopping
                     </a>
                 </div>
-                <div class="hero-visual" aria-hidden="true">
-                    <div class="hero-visual-blob"></div>
-                    <svg class="hero-visual-seal seal" viewBox="65 25 875 900">
-                        <use href="#seal-mark" />
+                <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <rect x="3" y="3" width="18" height="18" rx="5" />
+                        <circle cx="12" cy="12" r="4" />
+                        <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
                     </svg>
-                </div>
+                    Follow @yo7foods
+                </a>
             </div>
         </header>
 
