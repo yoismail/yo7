@@ -3059,6 +3059,14 @@
             font-family: var(--display); font-weight: 500; font-size: 0.78em;
             color: var(--text-faint); text-decoration: line-through; margin-left: 6px;
         }
+        .price-off {
+            display: inline-block;
+            font-family: var(--display); font-weight: 700; font-size: 0.7em;
+            color: #C1552C; background: rgba(193, 85, 44, 0.1);
+            padding: 1px 6px; border-radius: 999px; letter-spacing: 0.01em;
+            margin-left: 6px;
+            vertical-align: 2px;
+        }
         .sale-badge {
             position: absolute; top: 10px; right: 10px;
             background: var(--chartreuse); color: var(--aubergine);
@@ -5156,6 +5164,9 @@
                 grid-template-columns: 1fr;
             }
 
+            .product-grid {
+                gap: 14px;
+            }
             .product-grid .product-card {
                 flex: 0 0 220px;
                 max-width: 220px;
@@ -7858,7 +7869,8 @@
         function priceHTML(p, size) {
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             if (!onSale) return `<span class="price-now">${money(p.price)}</span>`;
-            return `<span class="price-now sale">${money(p.salePrice)}</span><span class="price-was">${money(p.price)}</span>`;
+            const pct = Math.round((1 - p.salePrice / p.price) * 100);
+            return `<span class="price-now sale">${money(p.salePrice)}</span><span class="price-was">${money(p.price)}</span><span class="price-off">&minus;${pct}%</span>`;
         }
         function findCategory(slug) { return CATEGORIES.find(c => c.slug === slug); }
         function allProducts() {
@@ -8726,15 +8738,26 @@
             strip.style.scrollBehavior = 'auto';
             let paused = false;
             let resumeTimer = null;
+            let safetyTimer = null;
             let dir = 1;
             let lastTs = null;
 
             function pause() {
                 paused = true;
                 clearTimeout(resumeTimer);
+                // Belt-and-braces on top of pointercancel/touchcancel: if
+                // literally no end-of-gesture event ever reaches this
+                // element (the actual observed freeze — something the
+                // browser swallowed the up/cancel event for entirely), this
+                // guarantees it can't stay paused forever, without getting
+                // in the way of a normal drag, which is always well under
+                // this long.
+                clearTimeout(safetyTimer);
+                safetyTimer = setTimeout(() => { paused = false; lastTs = null; }, 8000);
             }
             function scheduleResume() {
                 clearTimeout(resumeTimer);
+                clearTimeout(safetyTimer);
                 resumeTimer = setTimeout(() => { paused = false; lastTs = null; }, 1800);
             }
             strip.__pauseAutoScroll = pause;
@@ -8742,10 +8765,18 @@
 
             // Deliberately no mouseenter/mouseleave here, hovering to look at a
             // card shouldn't stop the drift, only an actual drag or touch should.
+            // pointercancel/touchcancel matter here as much as the up/end
+            // events: a browser can cancel a touch mid-gesture (an
+            // interruption, or its own scroll-direction heuristic taking
+            // over), and without a resume tied to that too, the strip was
+            // left permanently paused, the "freezes and never picks back up"
+            // symptom, since only a clean pointerup/touchend ever resumed it.
             strip.addEventListener('pointerdown', pause);
             strip.addEventListener('pointerup', scheduleResume);
+            strip.addEventListener('pointercancel', scheduleResume);
             strip.addEventListener('touchstart', pause, { passive: true });
             strip.addEventListener('touchend', scheduleResume, { passive: true });
+            strip.addEventListener('touchcancel', scheduleResume, { passive: true });
 
             function frame(ts) {
                 if (!paused) {
