@@ -3736,6 +3736,7 @@
             justify-content: center;
             font-size: 24px;
             flex-shrink: 0;
+            overflow: hidden;
         }
 
         .cart-info {
@@ -7795,7 +7796,7 @@
         ];
 
         /* ================= STATE ================= */
-        let cart = [];          // {id, name, unit, price, emoji, qty, catSlug}
+        let cart = loadCartFromStorage(); // {id, name, unit, price, emoji, qty, catSlug}, restored from localStorage so a refresh doesn't lose it
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         let currentUser = null;
         let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
@@ -7889,8 +7890,24 @@
         }
         window.sendCartViaWhatsApp = sendCartViaWhatsApp;
 
+        // Every place that mutates `cart` (add, quickAdd, changeQty,
+        // removeFromCart, clearing it after a placed order) already calls
+        // updateCartBadge() right after, so hooking persistence in here
+        // gives full coverage from one spot rather than needing a save call
+        // sprinkled after every mutation site.
+        function saveCartToStorage() {
+            try { localStorage.setItem('yo7-cart', JSON.stringify(cart)); }
+            catch (e) { /* localStorage unavailable, cart just won't survive a refresh this session */ }
+        }
+        function loadCartFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('yo7-cart') || '[]');
+                return Array.isArray(saved) ? saved : [];
+            } catch (e) { return []; }
+        }
         let lastKnownCartCount = 0;
         function updateCartBadge() {
+            saveCartToStorage();
             const badge = document.getElementById('cartBadge');
             const n = cartCount();
             badge.textContent = n;
@@ -9328,9 +9345,26 @@
         </button>
       </div>`;
                     }
+                    // Cart items only ever stored price/name/etc as a snapshot
+                    // from when they were added (correct for price, which
+                    // shouldn't drift after a customer's committed to it),
+                    // but the thumbnail was hardcoded to a generic icon
+                    // rather than looking up the product at all, so a photo
+                    // added after the fact never showed up here even when
+                    // it existed. Looking it up live (by the same catSlug::idx
+                    // every product id already encodes) fixes that without
+                    // needing to change what's stored in the cart itself.
+                    const liveProduct = getProduct(item.catSlug, Number(item.id.split('::')[1]));
+                    // A plain emoji rather than the full "Photo coming soon"
+                    // placeholder (label and all) used on product cards, this
+                    // thumb is 52px, there's no room for that label to sit
+                    // comfortably.
+                    const thumbHTML = (liveProduct && liveProduct.image)
+                        ? productPhotoHTML(liveProduct, item.name)
+                        : `<span style="font-size:24px;">${item.emoji || '🛒'}</span>`;
                     return `
       <div class="cart-row">
-        <div class="cart-thumb"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#b3a998;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <div class="cart-thumb">${thumbHTML}</div>
         <div class="cart-info">
           <h4>${item.name}</h4>
           <span>${item.unit}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
