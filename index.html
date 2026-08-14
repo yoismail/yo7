@@ -10198,8 +10198,12 @@
                     // same modal the rest of the admin UI uses for that.
                     if (!comment) { setAuthError('aodUpdateError', 'Add a comment with the reason before cancelling, it becomes the cancellation reason the customer sees.'); return; }
                     const orderNumber = currentAdminOrder ? (currentAdminOrder.order_number || currentAdminOrder.id.slice(0, 8).toUpperCase()) : '';
-                    openCancelOrderModal(currentAdminOrderId, orderNumber, () => {
-                        renderAdminOrderDetail(currentAdminOrderId);
+                    openCancelOrderModal(currentAdminOrderId, orderNumber, async () => {
+                        // renderAdminOrderDetail resets the success banner to hidden
+                        // as part of its own render, so it must finish first,
+                        // otherwise the banner flips to visible then immediately
+                        // back to hidden in the same tick and never actually shows.
+                        await renderAdminOrderDetail(currentAdminOrderId);
                         document.getElementById('aodUpdateSuccess').style.display = 'block';
                     });
                     document.getElementById('cancelOrderReason').value = comment;
@@ -10213,8 +10217,12 @@
                 aodUpdateBtn.disabled = false;
                 aodUpdateBtn.textContent = 'Update order & notify customer';
                 if (error) { setAuthError('aodUpdateError', 'Could not update that order: ' + error.message); return; }
+                // renderAdminOrderDetail resets the success banner to hidden as
+                // part of its own render, so it must finish first, otherwise the
+                // banner flips to visible then immediately back to hidden in the
+                // same tick and never actually shows.
+                await renderAdminOrderDetail(currentAdminOrderId);
                 document.getElementById('aodUpdateSuccess').style.display = 'block';
-                renderAdminOrderDetail(currentAdminOrderId);
             });
         }
 
