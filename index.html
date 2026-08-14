@@ -11165,6 +11165,16 @@
                 renderDishPicker();
             } else {
                 showView('view-home');
+                // These four sections used to only be rendered once at page
+                // boot and never again, so a product edit (or the overrides
+                // fetch resolving shortly after load) never showed up here
+                // until a hard refresh happened to win the race — visiting
+                // home (including navigating back to it) now always
+                // re-renders them with whatever's current in CATEGORIES.
+                renderHeroGlimpse();
+                renderOfferCarousel();
+                renderNewCarousel();
+                renderBestSellersSpotlight();
             }
         }
         window.addEventListener('hashchange', route);
