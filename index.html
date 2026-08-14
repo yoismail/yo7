@@ -10000,6 +10000,24 @@
         <td><a class="admin-orders-details-link" href="#/admin/order/${order.id}">Details</a></td>
     </tr>`;
         }
+        // orders.user_id references auth.users, not public.profiles, so
+        // there's no foreign key PostgREST can follow to embed profiles
+        // directly on a select('*, profiles(...)') from orders, that embed
+        // syntax just fails outright. Fetching the profiles admins need
+        // (name/email/phone) as a separate keyed lookup sidesteps that
+        // entirely, no schema change required.
+        async function fetchProfilesByIds(userIds) {
+            const ids = [...new Set(userIds.filter(Boolean))];
+            if (ids.length === 0) return {};
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('id, full_name, email, phone')
+                .in('id', ids);
+            if (error || !data) return {};
+            const byId = {};
+            data.forEach(p => { byId[p.id] = p; });
+            return byId;
+        }
         async function renderAdminOrders() {
             const el = document.getElementById('adminOrdersList');
             if (!el) return;
@@ -10018,7 +10036,7 @@
             el.innerHTML = '<div class="order-history-loading">Loading orders…</div>';
             const { data, error } = await supabaseClient
                 .from('orders')
-                .select('*, profiles(full_name, email, phone)')
+                .select('*')
                 .order('created_at', { ascending: false });
             if (error) {
                 el.innerHTML = '<div class="order-history-error">Couldn\'t load orders right now, please try again shortly.</div>';
@@ -10028,6 +10046,8 @@
                 el.innerHTML = '<div class="order-history-empty">No orders yet.</div>';
                 return;
             }
+            const profilesById = await fetchProfilesByIds(data.map(o => o.user_id));
+            data.forEach(o => { o.profiles = profilesById[o.user_id] || null; });
             el.innerHTML = `
     <div class="admin-orders-table-wrap">
         <table class="admin-orders-table">
@@ -10118,7 +10138,7 @@
             }
             const { data: order, error } = await supabaseClient
                 .from('orders')
-                .select('*, profiles(full_name, email, phone)')
+                .select('*')
                 .eq('id', orderId)
                 .single();
             if (error || !order) {
@@ -10126,6 +10146,8 @@
                 notFoundEl.style.display = 'block';
                 return;
             }
+            const profilesById = await fetchProfilesByIds([order.user_id]);
+            order.profiles = profilesById[order.user_id] || null;
             currentAdminOrder = order;
             const orderNumber = order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase());
             const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
