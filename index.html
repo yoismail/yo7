@@ -2278,7 +2278,7 @@
         }
         .newsletter-form input {
             padding: 11px 14px; border-radius: 10px; border: 1.5px solid rgba(44, 28, 16, 0.16);
-            background: #FAF2E3; color: #2C1C10; font-family: var(--body); font-size: 14px;
+            background: #FAF2E3; color: #2C1C10; font-family: var(--body); font-size: 16px;
             min-width: 220px;
         }
         .newsletter-form input::placeholder { color: rgba(44, 28, 16, 0.45); }
@@ -4009,7 +4009,11 @@
             border-radius: 8px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
             font-family: var(--body);
-            font-size: 13.5px;
+            /* 16px, not smaller: iOS Safari auto-zooms the whole page on
+               focus for any text input under 16px, which is the "accidental
+               zoom on mobile taps" bug — every text input on the site needs
+               to clear that line. */
+            font-size: 16px;
             background: var(--card-bg);
             color: var(--text-body);
         }
@@ -5010,7 +5014,51 @@
             padding: 11px 14px;
             border-radius: 10px;
             border: 1px solid rgba(var(--border-rgb), 0.25);
-            font-size: 13.5px;
+            font-size: 16px;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(22, 33, 13, 0.5);
+            z-index: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-box {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 28px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+        }
+        .modal-box h3 { font-family: var(--display); font-size: 19px; margin: 0 0 6px; }
+        .modal-box .sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+        .modal-box label { display: block; font-family: var(--display); font-weight: 600; font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 6px; }
+        .modal-box textarea {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--border-rgb), 0.25);
+            padding: 11px 14px;
+            font-family: var(--body);
+            font-size: 16px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+        .modal-actions .btn { padding: 10px 18px; font-size: 13px; }
+        .order-admin-btn-cancel-confirm { background: #C1552C; }
+        .order-admin-btn-cancel-confirm:hover { background: #a8471f; }
+        .order-cancellation-reason {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: rgba(193, 85, 44, 0.08);
+            border-left: 3px solid #C1552C;
+            border-radius: 6px;
+            font-size: 12.5px;
+            color: var(--text-body);
         }
         .order-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(var(--border-rgb), 0.08); }
         .order-card-actions .btn { padding: 9px 16px; font-size: 12.5px; }
@@ -6932,9 +6980,22 @@
                         <h2>Manage orders</h2>
                         <div id="adminOrdersList" class="order-history-list"></div>
                     </div>
+                    <div class="modal-overlay" id="cancelOrderModal" style="display:none;">
+                        <div class="modal-box">
+                            <h3>Cancel order <span id="cancelOrderNumber"></span></h3>
+                            <p class="sub">The customer will see this reason on their order. This can't be undone.</p>
+                            <label for="cancelOrderReason">Reason for cancellation</label>
+                            <textarea id="cancelOrderReason" rows="3" placeholder="e.g. Out of stock, customer requested, payment issue…" required></textarea>
+                            <div class="auth-error" id="cancelOrderError" role="alert" style="display:none;"></div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn btn-outline-dark" id="cancelOrderDismissBtn">Never mind</button>
+                                <button type="button" class="btn btn-primary order-admin-btn-cancel-confirm" id="cancelOrderConfirmBtn">Cancel this order</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="admin-panel-section">
                         <h2>Edit pages</h2>
-                        <p class="sub">Turn on edit mode, then browse the site to tweak page content live (preview only, not saved permanently yet).</p>
+                        <p class="sub">Turn on edit mode, then browse the site to tweak product photos, prices, stock, and descriptions, saved for real, visible to every visitor once you hit Save. Adding new products, bundles, combos, or dishes from here is still preview-only for now, that part resets on refresh.</p>
                         <button type="button" class="btn btn-outline-dark" id="editModeToggle">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px;">
                                 <path d="M12 20h9" />
@@ -7344,38 +7405,61 @@
         let loyaltySpendThreshold = 100;
         let loyaltyRewardPct = 10;
         // Loyalty spend and codes are scoped per identity within this browser,
-        // not one single shared bucket. Without this, a guest checkout and a
-        // later logged-in session (or two different logged-in emails on the
-        // same browser) would all read and write the exact same numbers,
-        // which is exactly the "seeing a previous user's loyalty info" bug.
-        // This is still a browser-local approximation, not a real account
-        // system with a server behind it, logging in as the same email
-        // later on a different device won't carry the history over, but it
-        // stops one identity's activity bleeding into another's on the same
-        // browser, which is the actual problem being fixed here.
+        // not one single shared bucket. Without this, two different logged-in
+        // emails on the same browser would read and write the exact same
+        // numbers. This is still a browser-local approximation, not a real
+        // account system with a server behind it, logging in as the same
+        // email later on a different device won't carry the history over.
+        //
+        // There is deliberately no "guest" bucket. Checkout requires a
+        // logged-in account (an order needs an owner to be trackable), so a
+        // signed-out visitor can never actually earn or redeem a reward —
+        // showing them a spend figure at all was always going to be either
+        // meaningless or, worse, another identity's leftover data from
+        // before login-gated checkout existed. Every function here is a
+        // deliberate no-op while logged out rather than falling back to a
+        // shared bucket.
         function loyaltyIdentityKey() {
-            if (!currentUser) return 'guest';
-            return String(currentUser).trim().toLowerCase().replace(/[^a-z0-9@.]/g, '') || 'guest';
+            if (!currentUser) return null;
+            return String(currentUser).trim().toLowerCase().replace(/[^a-z0-9@.]/g, '') || null;
         }
         function getLoyaltySpend() {
-            try { return parseFloat(localStorage.getItem('yo7-loyalty-spend-' + loyaltyIdentityKey()) || '0'); }
+            const key = loyaltyIdentityKey();
+            if (!key) return 0;
+            try { return parseFloat(localStorage.getItem('yo7-loyalty-spend-' + key) || '0'); }
             catch (e) { return 0; }
         }
         function addLoyaltySpend(amount) {
-            try { localStorage.setItem('yo7-loyalty-spend-' + loyaltyIdentityKey(), String(getLoyaltySpend() + amount)); }
+            const key = loyaltyIdentityKey();
+            if (!key) return;
+            try { localStorage.setItem('yo7-loyalty-spend-' + key, String(getLoyaltySpend() + amount)); }
             catch (e) { /* localStorage unavailable, spend just won't persist this session */ }
         }
         function getLoyaltyCodes() {
-            try { return JSON.parse(localStorage.getItem('yo7-loyalty-codes-' + loyaltyIdentityKey()) || '[]'); }
+            const key = loyaltyIdentityKey();
+            if (!key) return [];
+            try { return JSON.parse(localStorage.getItem('yo7-loyalty-codes-' + key) || '[]'); }
             catch (e) { return []; }
         }
         function saveLoyaltyCodes(codes) {
-            try { localStorage.setItem('yo7-loyalty-codes-' + loyaltyIdentityKey(), JSON.stringify(codes)); }
+            const key = loyaltyIdentityKey();
+            if (!key) return;
+            try { localStorage.setItem('yo7-loyalty-codes-' + key, JSON.stringify(codes)); }
             catch (e) { /* localStorage unavailable, code just won't persist this session */ }
         }
         function generateLoyaltyCodeString() {
             return 'THANKS' + Math.random().toString(36).slice(2, 7).toUpperCase();
         }
+        // One-time cleanup for browsers that already have a stale "guest"
+        // bucket left over from before checkout required login, when guest
+        // checkouts could still earn/spend against a shared identity. That
+        // bucket is permanently dead now (loyaltyIdentityKey() never returns
+        // 'guest' again), this just removes the leftover data so it can't
+        // resurface some other way later.
+        try {
+            localStorage.removeItem('yo7-loyalty-spend-guest');
+            localStorage.removeItem('yo7-loyalty-codes-guest');
+        } catch (e) { /* localStorage unavailable, nothing to clean up */ }
         // Re-registers any still-unused, previously-earned codes into the live
         // discounts array. Needed because `discounts` is in-memory only and
         // resets on refresh, but the codes themselves must keep working.
@@ -7416,6 +7500,9 @@
             return getLoyaltyCodes().find(c => !c.used) || null;
         }
         function loyaltyStatusHTML() {
+            if (!currentUser) {
+                return `<a href="#/login">Log in</a> to track your progress toward <strong>${loyaltyRewardPct}% off</strong> a future order.`;
+            }
             const pending = unusedLoyaltyCode();
             if (pending) {
                 return `You've earned <strong>${pending.pct}% off</strong>, use code <strong>${pending.code}</strong> at checkout.`;
@@ -9579,18 +9666,21 @@
             const isPickup = order.fulfilment_method === 'pickup';
             if (status === 'placed') {
                 return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="being_prepared">Confirm order</button>
-                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-next-status="cancelled">Cancel order</button>`;
+                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-order-number="${escapeHtml(order.order_number || order.id.slice(0, 8).toUpperCase())}" data-next-status="cancelled">Cancel order</button>`;
             }
             if (status === 'being_prepared') {
                 const nextStatus = isPickup ? 'ready_for_pickup' : 'out_for_delivery';
                 const label = isPickup ? 'Mark ready for pickup' : 'Mark out for delivery';
                 return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="${nextStatus}">${label}</button>
-                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-next-status="cancelled">Cancel order</button>`;
+                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-order-number="${escapeHtml(order.order_number || order.id.slice(0, 8).toUpperCase())}" data-next-status="cancelled">Cancel order</button>`;
             }
             if (status === 'out_for_delivery' || status === 'ready_for_pickup') {
                 return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="delivered">Mark delivered</button>`;
             }
             return ''; // delivered / cancelled: nothing further to do
+        }
+        function escapeHtml(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
         function orderHistoryRowHTML(order, isAdmin) {
             const status = order.status || 'placed';
@@ -9600,6 +9690,9 @@
                 ? `<div class="order-card-customer">${order.delivery_name || 'Unknown customer'} &middot; ${order.delivery_phone || 'no phone on file'} &middot; ${order.fulfilment_method === 'pickup' ? 'Pickup' : 'Delivery'}</div>`
                 : '';
             const actions = isAdmin ? `<div class="order-card-actions">${orderActionButtonsHTML(order)}</div>` : '';
+            const cancellationNote = (status === 'cancelled' && order.cancellation_reason)
+                ? `<div class="order-cancellation-reason"><strong>Cancelled:</strong> ${escapeHtml(order.cancellation_reason)}</div>`
+                : '';
             return `
     <div class="order-card">
         <div class="order-card-top">
@@ -9617,6 +9710,7 @@
             <span class="order-card-total-label">${items.length} item${items.length === 1 ? '' : 's'}</span>
             <span class="order-card-total">${money(order.total)}</span>
         </div>
+        ${cancellationNote}
         ${actions}
     </div>`;
         }
@@ -9690,10 +9784,53 @@
                 if (!btn || !supabaseClient) return;
                 const orderId = btn.getAttribute('data-order-id');
                 const nextStatus = btn.getAttribute('data-next-status');
-                if (nextStatus === 'cancelled' && !confirm('Cancel this order? This can\'t be undone.')) return;
+                if (nextStatus === 'cancelled') {
+                    openCancelOrderModal(orderId, btn.getAttribute('data-order-number'));
+                    return;
+                }
                 btn.disabled = true;
                 const { error } = await supabaseClient.from('orders').update({ status: nextStatus }).eq('id', orderId);
                 if (error) { alert('Could not update that order: ' + error.message); btn.disabled = false; return; }
+                renderAdminOrders();
+            });
+        }
+
+        // A reason is required before an admin can cancel an order, both so
+        // the customer sees why (shown on their order card) and so there's a
+        // record of it, rather than a silent status flip with no context.
+        let cancelOrderTargetId = null;
+        function openCancelOrderModal(orderId, orderNumber) {
+            cancelOrderTargetId = orderId;
+            document.getElementById('cancelOrderNumber').textContent = orderNumber || '';
+            document.getElementById('cancelOrderReason').value = '';
+            setAuthError('cancelOrderError', '');
+            document.getElementById('cancelOrderModal').style.display = 'flex';
+            document.getElementById('cancelOrderReason').focus();
+        }
+        function closeCancelOrderModal() {
+            cancelOrderTargetId = null;
+            document.getElementById('cancelOrderModal').style.display = 'none';
+        }
+        const cancelOrderDismissBtn = document.getElementById('cancelOrderDismissBtn');
+        if (cancelOrderDismissBtn) cancelOrderDismissBtn.addEventListener('click', closeCancelOrderModal);
+        const cancelOrderModalEl = document.getElementById('cancelOrderModal');
+        if (cancelOrderModalEl) cancelOrderModalEl.addEventListener('click', (e) => { if (e.target === cancelOrderModalEl) closeCancelOrderModal(); });
+        const cancelOrderConfirmBtn = document.getElementById('cancelOrderConfirmBtn');
+        if (cancelOrderConfirmBtn) {
+            cancelOrderConfirmBtn.addEventListener('click', async () => {
+                const reason = document.getElementById('cancelOrderReason').value.trim();
+                setAuthError('cancelOrderError', '');
+                if (!reason) { setAuthError('cancelOrderError', 'Add a reason before cancelling, the customer will see this.'); return; }
+                if (!cancelOrderTargetId || !supabaseClient) return;
+                cancelOrderConfirmBtn.disabled = true;
+                cancelOrderConfirmBtn.textContent = 'Cancelling…';
+                const { error } = await supabaseClient.from('orders')
+                    .update({ status: 'cancelled', cancellation_reason: reason })
+                    .eq('id', cancelOrderTargetId);
+                cancelOrderConfirmBtn.disabled = false;
+                cancelOrderConfirmBtn.textContent = 'Cancel this order';
+                if (error) { setAuthError('cancelOrderError', 'Could not cancel that order: ' + error.message); return; }
+                closeCancelOrderModal();
                 renderAdminOrders();
             });
         }
@@ -10186,6 +10323,12 @@
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
             unsubscribeMyOrders();
+            // The previous identity's loyalty reward codes were registered
+            // into this in-memory array on login; they don't belong to
+            // whoever's using this browser next, so they need to leave with
+            // the session that earned them, not just stop being displayed.
+            discounts = discounts.filter(d => !d.id.startsWith('loyalty-'));
+            if (appliedDiscount && appliedDiscount.id.startsWith('loyalty-')) appliedDiscount = null;
             registerStoredLoyaltyCodes();
             renderCartList();
             if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
@@ -10256,7 +10399,13 @@
             }
         });
 
-        /* ================= EDIT MODE (local preview only, not persisted) ================= */
+        /* ================= EDIT MODE =================
+           Editing an existing product's photo/price/stock/weight/unit
+           pricing/description now saves to product_overrides in Supabase
+           and is visible to every visitor, not just this browser tab.
+           Adding brand new products, bundles, combos, or dishes through
+           edit mode is still local-only (in-memory, resets on refresh),
+           that hasn't been wired up to persist yet. */
         let editModeOn = false;
         const editModeBanner = document.getElementById('editModeBanner');
         function setEditMode(on) {
@@ -10355,7 +10504,7 @@
             <p style="font-size:11px; color:var(--text-muted); margin:6px 0 0;">The weight here is what's actually used for the delivery fee once a customer picks this size, so it's worth getting right, a wrong delivery weight means charging (or undercharging) for the wrong postage.</p>
           </div>
           <div class="ep-actions">
-            <button class="ep-save" type="button" onclick="saveEditPanel('${catSlug}', ${idx}, this)">Save (this tab only)</button>
+            <button class="ep-save" type="button" onclick="saveEditPanel('${catSlug}', ${idx}, this)">Save</button>
             <button class="ep-cancel" type="button" onclick="this.closest('.edit-panel-slot').innerHTML='';">Cancel</button>
           </div>
         </div>`;
@@ -10407,7 +10556,7 @@
         }
         window.removeWeightVariant = removeWeightVariant;
 
-        function saveEditPanel(catSlug, idx, btn) {
+        async function saveEditPanel(catSlug, idx, btn) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             const priceVal = parseFloat(document.getElementById(`ep-price-${catSlug}-${idx}`).value);
@@ -10444,37 +10593,83 @@
                 else { product.description = descVal; }
             }
 
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('product_overrides').upsert({
+                    product_key: productKey(catSlug, idx),
+                    price: product.price,
+                    sale_price: product.salePrice != null ? product.salePrice : null,
+                    stock: product.stock,
+                    weight: typeof product.weight === 'number' ? product.weight : null,
+                    unit_override: product.unitOverride || null,
+                    description: product.description || null,
+                    updated_at: new Date().toISOString(),
+                });
+                if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000); }
+            }
             btn.closest('.edit-panel-slot').innerHTML = '';
             route(); // re-render the current view so the change is visible immediately everywhere it appears
         }
         window.saveEditPanel = saveEditPanel;
 
-        // Reads the chosen file straight into memory as a data URL, no server
-        // or storage needed for this to genuinely work. It lives only in this
-        // browser tab's session, same as every other edit-mode change on the
-        // site, and resets on refresh.
-        function handleEditPhotoUpload(catSlug, idx, input) {
+        // Uploads to the product-photos storage bucket and saves the public
+        // URL to product_overrides straight away, this one persists on
+        // upload rather than waiting for the panel's own "Save" button,
+        // matching how it already behaved instantly in the preview before,
+        // now for real and for every visitor rather than just this tab.
+        async function handleEditPhotoUpload(catSlug, idx, input) {
             const file = input.files && input.files[0];
             if (!file) return;
             if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const cat = findCategory(catSlug);
-                const product = cat.products[idx];
-                product.image = e.target.result;
-                // Update the preview in place rather than calling route(), a
-                // full re-render here would regenerate the product grid and
-                // close the very edit panel the person is still filling in.
-                const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
-                if (preview) preview.innerHTML = `<img src="${e.target.result}" alt="">`;
-            };
-            reader.readAsDataURL(file);
+            const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
+            if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
+            if (preview) preview.innerHTML = '<span>Uploading…</span>';
+            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+            const path = `${catSlug}-${idx}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, file, { upsert: true });
+            if (uploadError) {
+                showToast('Could not upload that photo: ' + uploadError.message, 6000);
+                if (preview) preview.innerHTML = `<span>${(findCategory(catSlug).products[idx].emoji) || '🛒'}</span>`;
+                return;
+            }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            product.image = publicUrl;
+            const { error: saveError } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(catSlug, idx),
+                image_url: publicUrl,
+                updated_at: new Date().toISOString(),
+            });
+            if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000);
+            // Update the preview in place rather than calling route(), a
+            // full re-render here would regenerate the product grid and
+            // close the very edit panel the person is still filling in.
+            if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="">`;
+            const row = preview ? preview.closest('.ep-photo-row') : null;
+            if (row && !row.querySelector('.ep-photo-remove')) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'ep-photo-remove';
+                removeBtn.textContent = 'Remove photo';
+                removeBtn.onclick = () => removeEditPhoto(catSlug, idx);
+                row.querySelector('div:last-child').appendChild(removeBtn);
+            }
         }
         window.handleEditPhotoUpload = handleEditPhotoUpload;
-        function removeEditPhoto(catSlug, idx) {
+        async function removeEditPhoto(catSlug, idx) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             delete product.image;
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('product_overrides').upsert({
+                    product_key: productKey(catSlug, idx),
+                    image_url: null,
+                    updated_at: new Date().toISOString(),
+                });
+                if (error) showToast('Could not remove that photo from the live site: ' + error.message, 6000);
+            }
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (preview) preview.innerHTML = `<span>${product.emoji || '🛒'}</span>`;
             const removeBtn = document.querySelector(`#ep-photo-preview-${catSlug}-${idx}`)?.closest('.ep-photo-row')?.querySelector('.ep-photo-remove');
@@ -10667,6 +10862,34 @@
             }
         }
         restoreSupabaseSession();
+
+        // Edit-mode changes (photo, price, stock, description, etc.) are
+        // saved to product_overrides keyed by "catSlug::index" and merged
+        // onto the built-in catalog here, for every visitor, not just
+        // whoever made the edit — that's what makes them actually persist
+        // and actually show up on the live site rather than resetting on
+        // refresh or only being visible in the editor's own browser tab.
+        function productKey(catSlug, idx) { return catSlug + '::' + idx; }
+        async function applyProductOverrides() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('product_overrides').select('*');
+            if (error || !data) return;
+            data.forEach(row => {
+                const [catSlug, idxStr] = String(row.product_key).split('::');
+                const cat = findCategory(catSlug);
+                const product = cat && cat.products[parseInt(idxStr, 10)];
+                if (!product) return;
+                if (row.image_url) product.image = row.image_url;
+                if (row.price != null) product.price = row.price;
+                if (row.sale_price != null) product.salePrice = row.sale_price; else delete product.salePrice;
+                if (row.stock) product.stock = row.stock;
+                if (row.weight != null) product.weight = row.weight;
+                if (row.unit_override) product.unitOverride = row.unit_override;
+                if (row.description) product.description = row.description;
+            });
+            route(); // re-render whatever's currently on screen with the real data now in hand
+        }
+        applyProductOverrides();
 
         document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
