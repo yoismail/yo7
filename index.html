@@ -447,6 +447,11 @@
             transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
         }
 
+        .nav-search:hover:not(:focus-within) {
+            border-color: rgba(44, 28, 16, 0.28);
+            background: rgba(44, 28, 16, 0.06);
+        }
+
         /* A solid, always-on chartreuse border read as a permanent glow
            sitting on top of an already-accented header. Kept restrained by
            default, chartreuse only shows up as a soft focus cue, not a
@@ -3465,6 +3470,58 @@
         }
         .pd-reviews-empty p { color: var(--text-muted); font-size: 14px; max-width: 46ch; margin: 0 auto; }
 
+        .pd-rating-summary {
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none; margin: 6px 0 4px;
+        }
+        .pd-rating-summary #pdRatingText { font-size: 13px; color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+        .pd-rating-summary:hover #pdRatingText { color: var(--heading-mid); }
+        .pd-stars { display: inline-flex; gap: 1px; color: var(--chartreuse-rich); }
+        .pd-stars svg { width: 15px; height: 15px; }
+        .pd-stars .star-empty { color: rgba(var(--border-rgb), 0.22); }
+
+        .pd-reviews-summary-row {
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+            margin-bottom: 24px; padding-bottom: 20px;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .pd-reviews-summary-avg { font-family: var(--display); font-weight: 700; font-size: 32px; color: var(--heading); }
+        .pd-reviews-summary-row .pd-stars svg { width: 18px; height: 18px; }
+        .pd-reviews-summary-count { font-size: 13px; color: var(--text-muted); }
+
+        .pd-review-card {
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .pd-review-card:last-child { border-bottom: none; }
+        .pd-review-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+        .pd-review-name { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); }
+        .pd-review-date { font-size: 12px; color: var(--text-faint); }
+        .pd-review-comment { font-size: 13.5px; color: var(--text-body); line-height: 1.55; }
+        .pd-review-delete { font-size: 12px; color: #C1552C; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 6px; }
+
+        .pd-review-form {
+            margin-top: 24px; padding: 20px;
+            background: var(--section-alt-bg); border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 16px;
+        }
+        .pd-review-form h3 { font-family: var(--display); font-size: 15px; margin: 0 0 12px; }
+        .star-input { display: inline-flex; gap: 3px; }
+        .star-input button {
+            background: none; border: none; padding: 2px; cursor: pointer;
+            color: rgba(var(--border-rgb), 0.25); transition: color 0.15s ease, transform 0.1s ease;
+        }
+        .star-input button svg { width: 24px; height: 24px; display: block; }
+        .star-input button.filled { color: var(--chartreuse-rich); }
+        .star-input button:hover { transform: scale(1.12); }
+        .pd-review-form textarea {
+            width: 100%; margin-top: 12px; padding: 11px 14px; border-radius: 10px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16); font-family: var(--body); font-size: 14px;
+            resize: vertical; box-sizing: border-box; background: var(--card-bg); color: var(--ink);
+        }
+        .pd-review-prompt { font-size: 13.5px; color: var(--text-muted); }
+        .pd-review-prompt a { color: var(--heading-mid); font-weight: 600; }
+
         .pd-detail-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
@@ -5754,6 +5811,10 @@
                     <div>
                         <div class="pd-cat-tag" id="pdCatTag"></div>
                         <h1 id="pdName"></h1>
+                        <a class="pd-rating-summary" id="pdRatingSummary" href="#pdReviewsSection" style="display:none;">
+                            <span class="pd-stars" id="pdRatingStars"></span>
+                            <span id="pdRatingText"></span>
+                        </a>
                         <div class="pd-unit" id="pdUnit"></div>
                         <div class="pd-price" id="pdPrice"></div>
                         <div class="pd-unit-price" id="pdUnitPrice"></div>
@@ -5840,8 +5901,11 @@
 
                 <div class="pd-reviews" id="pdReviewsSection">
                     <h2 class="pd-details-heading">Reviews</h2>
-                    <div class="pd-reviews-empty">
-                        <p>No reviews on this product yet, honestly. Bought it? Let us know what you thought, good or bad, and we'll add it here.</p>
+                    <div id="pdReviewsSummary"></div>
+                    <div id="pdReviewsList"></div>
+                    <div id="pdReviewFormWrap"></div>
+                    <div class="pd-reviews-empty" id="pdReviewsFallback" style="display:none;">
+                        <p>Reviews need accounts connected first, this is preview mode right now. In the meantime:</p>
                         <div class="reviews-cta" style="margin-top:16px;">
                             <a class="btn btn-outline-dark whatsapp-order-btn" id="pdReviewWhatsappBtn" href="https://wa.me/447398810052" target="_blank" rel="noopener">Review on WhatsApp</a>
                             <a class="btn btn-outline-dark" id="pdReviewEmailBtn" href="mailto:hello@yo7foods.co.uk">Email a review</a>
@@ -9162,7 +9226,140 @@
             const related = cat.products.map((rp, ri) => ({ ...rp, emoji: cat.emoji, catSlug, idx: ri })).filter(rp => rp.idx !== p.idx).slice(0, 4);
             renderGrid(related, 'relatedGrid');
             renderProductDetailsSection(p, catSlug);
+            renderProductReviews(catSlug, Number(idx));
         }
+
+        /* ================= REVIEWS & RATINGS ================= */
+        const STAR_SVG_FILLED = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+        const STAR_SVG_EMPTY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+        function starsHTML(rating) {
+            const rounded = Math.round(rating);
+            let html = '';
+            for (let i = 1; i <= 5; i++) html += i <= rounded ? STAR_SVG_FILLED : `<span class="star-empty">${STAR_SVG_EMPTY}</span>`;
+            return html;
+        }
+        async function renderProductReviews(catSlug, idx) {
+            const key = productKey(catSlug, idx);
+            const summaryEl = document.getElementById('pdReviewsSummary');
+            const listEl = document.getElementById('pdReviewsList');
+            const formWrapEl = document.getElementById('pdReviewFormWrap');
+            const fallbackEl = document.getElementById('pdReviewsFallback');
+            const ratingSummaryLink = document.getElementById('pdRatingSummary');
+            [summaryEl, listEl, formWrapEl].forEach(el => el.innerHTML = '');
+            ratingSummaryLink.style.display = 'none';
+            if (!supabaseClient) {
+                fallbackEl.style.display = 'block';
+                const reviewWaBtn = document.getElementById('pdReviewWhatsappBtn');
+                const reviewEmailBtn = document.getElementById('pdReviewEmailBtn');
+                const p = getProduct(catSlug, idx);
+                if (reviewWaBtn && p) reviewWaBtn.href = `https://wa.me/447398810052?text=${encodeURIComponent(`Hi Yo7 Foods! I'd like to leave a review for ${p.name}: `)}`;
+                if (reviewEmailBtn && p) reviewEmailBtn.href = `mailto:hello@yo7foods.co.uk?subject=${encodeURIComponent(`My review: ${p.name}`)}`;
+                return;
+            }
+            fallbackEl.style.display = 'none';
+            const { data, error } = await supabaseClient
+                .from('product_reviews')
+                .select('*, profiles(full_name)')
+                .eq('product_key', key)
+                .order('created_at', { ascending: false });
+            if (error) {
+                listEl.innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">Couldn\'t load reviews right now, please try again shortly.</p>';
+                return;
+            }
+            const reviews = data || [];
+            if (reviews.length > 0) {
+                const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+                ratingSummaryLink.style.display = 'inline-flex';
+                document.getElementById('pdRatingStars').innerHTML = starsHTML(avg);
+                document.getElementById('pdRatingText').textContent = `${avg.toFixed(1)} (${reviews.length} review${reviews.length === 1 ? '' : 's'})`;
+                summaryEl.innerHTML = `
+      <div class="pd-reviews-summary-row">
+        <span class="pd-reviews-summary-avg">${avg.toFixed(1)}</span>
+        <div>
+          <span class="pd-stars">${starsHTML(avg)}</span>
+          <div class="pd-reviews-summary-count">Based on ${reviews.length} review${reviews.length === 1 ? '' : 's'}</div>
+        </div>
+      </div>`;
+                listEl.innerHTML = reviews.map(r => {
+                    const name = (r.profiles && r.profiles.full_name) || 'Yo7 Foods customer';
+                    const dateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const isOwn = currentSupabaseUser && r.user_id === currentSupabaseUser.id;
+                    return `
+      <div class="pd-review-card">
+        <div class="pd-review-top">
+          <div>
+            <span class="pd-review-name">${escapeHtml(name)}</span>
+            <span class="pd-stars">${starsHTML(r.rating)}</span>
+          </div>
+          <span class="pd-review-date">${dateLabel}</span>
+        </div>
+        ${r.comment ? `<div class="pd-review-comment">${escapeHtml(r.comment)}</div>` : ''}
+        ${isOwn ? `<button type="button" class="pd-review-delete" onclick="deleteMyReview('${key}')">Delete my review</button>` : ''}
+      </div>`;
+                }).join('');
+            } else {
+                listEl.innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">No reviews on this product yet, be the first.</p>';
+            }
+            const myReview = currentSupabaseUser ? reviews.find(r => r.user_id === currentSupabaseUser.id) : null;
+            formWrapEl.innerHTML = reviewFormHTML(key, myReview);
+            wireReviewForm(key, myReview);
+        }
+        function reviewFormHTML(key, myReview) {
+            if (!currentSupabaseUser) {
+                return `<p class="pd-review-prompt"><a href="#/login">Log in</a> to write a review, so we know it's from someone who's actually shopped with us.</p>`;
+            }
+            const rating = myReview ? myReview.rating : 0;
+            return `
+    <div class="pd-review-form">
+        <h3>${myReview ? 'Edit your review' : 'Write a review'}</h3>
+        <div class="star-input" id="pdReviewStarInput">
+            ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="${n <= rating ? 'filled' : ''}" aria-label="${n} star${n === 1 ? '' : 's'}">${STAR_SVG_FILLED}</button>`).join('')}
+        </div>
+        <textarea id="pdReviewComment" rows="3" placeholder="What did you think? (optional)">${myReview && myReview.comment ? escapeHtml(myReview.comment) : ''}</textarea>
+        <div class="auth-error" id="pdReviewError" role="alert" style="display:none;"></div>
+        <button type="button" class="btn btn-primary" id="pdReviewSubmitBtn" style="margin-top:12px;">${myReview ? 'Update review' : 'Submit review'}</button>
+    </div>`;
+        }
+        function wireReviewForm(key, myReview) {
+            const starInput = document.getElementById('pdReviewStarInput');
+            if (!starInput) return;
+            let selectedRating = myReview ? myReview.rating : 0;
+            const buttons = Array.from(starInput.querySelectorAll('button'));
+            const paint = (n) => buttons.forEach(b => b.classList.toggle('filled', Number(b.dataset.star) <= n));
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', () => paint(Number(btn.dataset.star)));
+                btn.addEventListener('click', () => { selectedRating = Number(btn.dataset.star); paint(selectedRating); });
+            });
+            starInput.addEventListener('mouseleave', () => paint(selectedRating));
+            document.getElementById('pdReviewSubmitBtn').addEventListener('click', async () => {
+                const errEl = document.getElementById('pdReviewError');
+                errEl.style.display = 'none';
+                if (!selectedRating) { errEl.textContent = 'Pick a star rating first.'; errEl.style.display = 'block'; return; }
+                const btn = document.getElementById('pdReviewSubmitBtn');
+                btn.disabled = true;
+                const comment = document.getElementById('pdReviewComment').value.trim();
+                const { error } = await supabaseClient.from('product_reviews').upsert({
+                    product_key: key,
+                    user_id: currentSupabaseUser.id,
+                    rating: selectedRating,
+                    comment: comment || null,
+                }, { onConflict: 'product_key,user_id' });
+                btn.disabled = false;
+                if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
+                showToast(myReview ? 'Review updated.' : 'Thanks for the review!');
+                const [catSlug, idxStr] = key.split('::');
+                renderProductReviews(catSlug, Number(idxStr));
+            });
+        }
+        async function deleteMyReview(key) {
+            if (!confirm('Delete your review? This can\'t be undone.')) return;
+            const [catSlug, idxStr] = key.split('::');
+            const { error } = await supabaseClient.from('product_reviews')
+                .delete().eq('product_key', key).eq('user_id', currentSupabaseUser.id);
+            if (error) { alert('Could not delete that review: ' + error.message); return; }
+            renderProductReviews(catSlug, Number(idxStr));
+        }
+        window.deleteMyReview = deleteMyReview;
 
         /* ================= PRODUCT DETAILS SECTION ================= */
         const PD_DETAIL_ICONS = {
