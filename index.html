@@ -532,10 +532,9 @@
         .nav-links {
             display: flex;
             gap: 22px;
-            font-size: 13px;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            font-weight: 500;
+            font-size: 14px;
+            letter-spacing: 0.01em;
+            font-weight: 600;
         }
 
         .nav-links a {
@@ -1653,11 +1652,16 @@
 
         .group-card-photo.no-photo {
             display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(160deg, rgba(144,184,0,0.1), rgba(0,0,0,0.2));
+            background: linear-gradient(160deg, rgba(144,184,0,0.16), rgba(6,59,0,0.05));
+            color: var(--heading-mid);
         }
         .group-card-photo.no-photo span {
             font-family: var(--display); font-weight: 600; font-size: 10.5px;
             letter-spacing: 0.05em; text-transform: uppercase; color: #c9d4bd;
+        }
+        .group-card-photo.no-photo .glyph-icon {
+            width: 30%;
+            height: 30%;
         }
         .group-card-body {
             padding: 18px 18px 20px;
@@ -1728,81 +1732,6 @@
             letter-spacing: 0.05em; text-transform: uppercase; color: var(--chartreuse-soft); opacity: 1;
         }
 
-        .cat-card {
-            --accent: #90B800;
-            display: flex;
-            flex-direction: column;
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(160deg, rgba(250, 249, 242, 0.07), rgba(250, 249, 242, 0.02));
-            border: 1px solid rgba(250, 249, 242, 0.12);
-            border-radius: 20px;
-            padding: 0;
-            min-height: 300px;
-            transition: transform 0.3s cubic-bezier(.2, .8, .3, 1.1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
-            color: var(--cream);
-        }
-
-        .cat-card:hover {
-            transform: translateY(-7px);
-            border-color: color-mix(in srgb, var(--accent) 55%, rgba(250, 249, 242, 0.2));
-            background: linear-gradient(160deg, rgba(250, 249, 242, 0.11), rgba(250, 249, 242, 0.02));
-            box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .cat-card-top {
-            padding: 22px 22px 18px;
-            position: relative;
-            z-index: 2;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .cat-card-bottom {
-            padding: 14px 22px 18px;
-            border-top: 1px solid rgba(250, 249, 242, 0.1);
-            background: rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 2;
-        }
-
-        .cat-seal-mark {
-            position: absolute;
-            bottom: -22px;
-            right: -22px;
-            width: 100px;
-            height: 100px;
-            opacity: 0.07;
-            pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            z-index: 1;
-        }
-
-        .cat-card:hover .cat-seal-mark {
-            opacity: 0.13;
-            transform: scale(1.06) rotate(6deg);
-        }
-
-        .cat-icon-badge {
-            width: 42px;
-            height: 42px;
-            border-radius: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: var(--accent);
-            margin-bottom: 14px;
-            position: relative;
-            z-index: 2;
-            background: color-mix(in srgb, var(--accent) 24%, rgba(250, 249, 242, 0.06));
-            border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-            transition: transform 0.3s cubic-bezier(.2, .8, .3, 1.1), background 0.3s ease;
-        }
-
         /* Shared sizing for the inline category/group SVG icons that replaced
            emoji: sized to the surrounding font-size and colored via
            currentColor, so one definition adapts correctly to every context
@@ -1812,43 +1741,6 @@
             height: 1em;
             vertical-align: -0.125em;
             flex-shrink: 0;
-        }
-
-        .cat-card:hover .cat-icon-badge {
-            transform: scale(1.08) rotate(-3deg);
-            background: color-mix(in srgb, var(--accent) 38%, rgba(250, 249, 242, 0.08));
-        }
-
-        .cat-card h3 {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 0;
-            color: var(--cream);
-            position: relative;
-            z-index: 2;
-        }
-
-        .cat-card p {
-            font-size: 12.5px;
-            color: #cfc4d2;
-            line-height: 1.4;
-            margin: 0;
-        }
-
-        .cat-arrow {
-            position: absolute;
-            top: 22px;
-            right: 20px;
-            width: 16px;
-            height: 16px;
-            opacity: 0.35;
-            transition: transform 0.25s ease, opacity 0.25s ease;
-        }
-
-        .cat-card:hover .cat-arrow {
-            transform: translate(3px, -3px);
-            opacity: 0.9;
         }
 
         /* ================= DELIVERY / ORDER (home) ================= */
@@ -4913,7 +4805,7 @@
 
         /* ================= AUTH PAGES ================= */
         .auth-section {
-            background: #FAF2E3;
+            background: var(--page-bg);
             min-height: 78vh;
             display: flex;
             align-items: center;
@@ -5029,7 +4921,7 @@
         .order-status-badge.ready_for_pickup { background: rgba(38,98,16,0.14); color: var(--aubergine-mid); }
         .order-status-badge.delivered { background: rgba(144,184,0,0.22); color: var(--aubergine); }
         .order-status-badge.cancelled { background: rgba(193,85,44,0.12); color: #C1552C; }
-        .order-card-customer { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+        .order-status-badge.returned { background: rgba(157,107,17,0.14); color: #9D6B11; }
         .admin-panel-section {
             background: var(--card-bg, #fff);
             border: 1px solid rgba(var(--border-rgb), 0.1);
@@ -5092,9 +4984,6 @@
             font-size: 12.5px;
             color: var(--text-body);
         }
-        .order-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(var(--border-rgb), 0.08); }
-        .order-card-actions .btn { padding: 9px 16px; font-size: 12.5px; }
-        .order-admin-btn-cancel { color: #C1552C; border-color: rgba(193,85,44,0.3); }
         .order-card-items { font-size: 13px; color: var(--text-body); line-height: 1.7; margin-bottom: 4px; }
         .order-card-items .item-row { display: flex; justify-content: space-between; gap: 12px; }
         .order-card-items .item-row .qty { color: var(--text-muted); flex-shrink: 0; }
@@ -5104,6 +4993,89 @@
         }
         .order-card-total-label { font-size: 12.5px; color: var(--text-muted); }
         .order-card-total { font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--ink); }
+
+        /* ================= ADMIN ORDERS TABLE ================= */
+        .admin-orders-table-wrap {
+            overflow-x: auto;
+            border: 1px solid rgba(var(--border-rgb), 0.12);
+            border-radius: 14px;
+        }
+        .admin-orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .admin-orders-table th, .admin-orders-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
+        }
+        .admin-orders-table th {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 10.5px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: rgba(var(--border-rgb), 0.035);
+        }
+        .admin-orders-table tbody tr:last-child td { border-bottom: none; }
+        .admin-orders-table tbody tr:hover { background: rgba(var(--border-rgb), 0.03); }
+        .admin-orders-table td.admin-orders-total { font-family: var(--display); font-weight: 700; color: var(--ink); }
+        .admin-orders-details-link {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--heading-mid);
+            text-decoration: none;
+        }
+        .admin-orders-details-link:hover { text-decoration: underline; }
+
+        /* ================= ADMIN ORDER DETAIL ================= */
+        .admin-order-detail-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .admin-order-detail-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 16px;
+            padding: 22px 24px;
+            margin-bottom: 20px;
+        }
+        .admin-order-detail-card h3 {
+            font-family: var(--display);
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--heading);
+            margin: 0 0 14px;
+        }
+        .admin-order-detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            font-size: 13.5px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.07);
+        }
+        .admin-order-detail-row:last-child { border-bottom: none; }
+        .admin-order-detail-row dt { color: var(--text-muted); flex-shrink: 0; }
+        .admin-order-detail-row dd { margin: 0; text-align: right; color: var(--text-body); }
+        .admin-order-detail-note { font-size: 12.5px; color: var(--text-faint); margin-top: 4px; }
+        .admin-order-items-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+        .admin-order-items-table td { padding: 8px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.07); }
+        .admin-order-items-table tr:last-child td { border-bottom: none; }
+        .admin-order-items-table .qty { color: var(--text-muted); text-align: center; width: 50px; }
+        .admin-order-items-table .line-total { text-align: right; font-weight: 600; white-space: nowrap; }
+        .admin-order-totals-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); padding: 4px 0; }
+        .admin-order-totals-row.grand { font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--ink); padding-top: 10px; margin-top: 6px; border-top: 1px solid rgba(var(--border-rgb), 0.1); }
+        .admin-order-update-success { font-size: 13px; color: var(--chartreuse-rich); font-weight: 600; margin-top: 10px; display: none; }
+        @media (max-width: 900px) {
+            .admin-order-detail-grid { grid-template-columns: 1fr; }
+        }
 
         @media (max-width:900px) {
 
@@ -5163,23 +5135,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .cat-icon-badge {
-                width: 38px;
-                height: 38px;
-                font-size: 18px;
-                margin-bottom: 12px;
-            }
-
-            .cat-seal-mark {
-                width: 76px;
-                height: 76px;
-                bottom: -16px;
-                right: -16px;
-            }
-
-            .cat-card { min-height: 220px; }
-            .cat-card-top { padding: 18px 18px 14px; }
-            .cat-card-bottom { padding: 12px 18px 16px; }
         }
 
         @media (max-width:520px) {
@@ -5780,7 +5735,7 @@
                     <div>
                         <div class="pd-cat-tag" id="pdCatTag"></div>
                         <h1 id="pdName"></h1>
-                        <a class="pd-rating-summary" id="pdRatingSummary" href="#pdReviewsSection" style="display:none;">
+                        <a class="pd-rating-summary" id="pdRatingSummary" href="javascript:void(0)" onclick="document.getElementById('pdReviewsSection').scrollIntoView({behavior:'smooth', block:'start'})" style="display:none;">
                             <span class="pd-stars" id="pdRatingStars"></span>
                             <span id="pdRatingText"></span>
                         </a>
@@ -7023,7 +6978,7 @@
                 <div id="adminDashboardSection" style="display:none;">
                     <div class="admin-panel-section">
                         <h2>Manage orders</h2>
-                        <div id="adminOrdersList" class="order-history-list"></div>
+                        <div id="adminOrdersList"></div>
                     </div>
                     <div class="modal-overlay" id="cancelOrderModal" style="display:none;">
                         <div class="modal-box">
@@ -7060,6 +7015,79 @@
                         <div class="auth-success" id="addAdminSuccess" role="status" style="display:none;"></div>
                     </div>
                 </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= ADMIN ORDER DETAIL ================= -->
+    <div id="view-admin-order-detail" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; <a href="#/admin">Admin</a> &rsaquo; Order</div>
+                <h1 id="aodTitle">Order</h1>
+                <p id="aodSubtitle"></p>
+            </div>
+        </header>
+        <section class="orders-section">
+            <div class="wrap" id="aodContent">
+                <div class="order-history-loading" id="aodLoading">Loading order…</div>
+                <div id="aodBody" style="display:none;">
+                    <div class="admin-order-detail-grid">
+                        <div>
+                            <div class="admin-order-detail-card">
+                                <h3>Customer details</h3>
+                                <dl style="margin:0;">
+                                    <div class="admin-order-detail-row"><dt>Name</dt><dd id="aodCustomerName"></dd></div>
+                                    <div class="admin-order-detail-row"><dt>Email</dt><dd id="aodCustomerEmail"></dd></div>
+                                    <div class="admin-order-detail-row"><dt>Phone</dt><dd id="aodCustomerPhone"></dd></div>
+                                </dl>
+                            </div>
+                            <div class="admin-order-detail-card">
+                                <h3>Delivery</h3>
+                                <dl style="margin:0;">
+                                    <div class="admin-order-detail-row"><dt>Method</dt><dd id="aodMethod"></dd></div>
+                                    <div class="admin-order-detail-row"><dt>Address</dt><dd id="aodAddress"></dd></div>
+                                </dl>
+                                <div class="admin-order-detail-row"><dt>Delivery note</dt><dd id="aodNote"></dd></div>
+                            </div>
+                            <div class="admin-order-detail-card">
+                                <h3>Payment</h3>
+                                <dl style="margin:0;">
+                                    <div class="admin-order-detail-row"><dt>Payment method</dt><dd id="aodPaymentMethod"></dd></div>
+                                    <div class="admin-order-detail-row"><dt>Billing address</dt><dd id="aodBillingAddress"></dd></div>
+                                </dl>
+                                <p class="admin-order-detail-note">This checkout is currently preview-only, no real payment is taken or stored, and a separate billing address isn't collected, see the Payments Policy admin note for details.</p>
+                            </div>
+                            <div class="admin-order-detail-card">
+                                <h3>Items ordered</h3>
+                                <table class="admin-order-items-table" id="aodItemsTable"><tbody></tbody></table>
+                                <div style="margin-top:14px;">
+                                    <div class="admin-order-totals-row"><span>Subtotal</span><span id="aodSubtotal"></span></div>
+                                    <div class="admin-order-totals-row"><span>Delivery fee</span><span id="aodDeliveryFee"></span></div>
+                                    <div class="admin-order-totals-row" id="aodDiscountRow" style="display:none;"><span>Discount</span><span id="aodDiscount"></span></div>
+                                    <div class="admin-order-totals-row grand"><span>Total paid</span><span id="aodTotal"></span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="admin-order-detail-card">
+                                <h3>Update order</h3>
+                                <div class="field">
+                                    <label for="aodStatusSelect">Status</label>
+                                    <select id="aodStatusSelect"></select>
+                                </div>
+                                <div class="field">
+                                    <label for="aodCommentInput">Comment to include in the customer email</label>
+                                    <textarea id="aodCommentInput" rows="3" placeholder="Optional, shown to the customer alongside the status update…"></textarea>
+                                </div>
+                                <div class="auth-error" id="aodUpdateError" role="alert" style="display:none;"></div>
+                                <button type="button" class="btn btn-primary btn-block" id="aodUpdateBtn">Update order &amp; notify customer</button>
+                                <div class="admin-order-update-success" id="aodUpdateSuccess">Saved, the customer has been emailed.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-history-error" id="aodNotFound" style="display:none;">Order not found. <a href="#/admin">Back to admin orders</a>.</div>
             </div>
         </section>
     </div>
@@ -9040,15 +9068,12 @@
     </a>`;
                 }
                 return `
-    <a class="cat-card" style="--accent:${CAT_ACCENTS[i % CAT_ACCENTS.length]}" href="#/category/${c.slug}">
-      <svg class="cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
-      <svg class="cat-seal-mark" viewBox="65 25 875 900" style="--chartreuse:var(--accent); --aubergine-deep:transparent; --cream:var(--accent); --orange:var(--accent);"><use href="#seal-ring"/></svg>
-      <div class="cat-card-top">
-        <div class="cat-icon-badge">${c.emoji}</div>
+    <a class="group-card" href="#/category/${c.slug}">
+      <div class="group-card-photo no-photo">${c.emoji}</div>
+      <div class="group-card-body">
         <h3>${c.name}</h3>
-      </div>
-      <div class="cat-card-bottom">
         <p>${c.tagline}</p>
+        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
       </div>
     </a>`;
             }).join('');
@@ -9879,46 +9904,29 @@
         // on how the customer chose to get it -> delivered. cancelled is the
         // only off-ramp, available any time before delivered.
         const ORDER_STATUS_LABELS = {
-            placed: 'Order placed',
-            being_prepared: 'Being prepared',
-            out_for_delivery: 'Out for delivery',
+            placed: 'Received',
+            being_prepared: 'Processing',
+            out_for_delivery: 'Dispatched',
             ready_for_pickup: 'Ready for pickup',
             delivered: 'Delivered',
             cancelled: 'Cancelled',
+            returned: 'Returned',
         };
+        // Every status an admin can move an order to from the detail page,
+        // in lifecycle order (independent of the two auto-computed "next
+        // status" quick-action buttons on the orders table/history cards).
+        const ORDER_STATUS_OPTIONS = ['placed', 'being_prepared', 'out_for_delivery', 'ready_for_pickup', 'delivered', 'cancelled', 'returned'];
         // Only ever rendered inside the admin dashboard (isAdmin), customers
         // never see these buttons, and even if someone forged the markup the
         // update itself is still blocked server-side by the admin-only RLS
         // policy on orders, this is just the UI for it.
-        function orderActionButtonsHTML(order) {
-            const status = order.status || 'placed';
-            const isPickup = order.fulfilment_method === 'pickup';
-            if (status === 'placed') {
-                return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="being_prepared">Confirm order</button>
-                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-order-number="${escapeHtml(order.order_number || order.id.slice(0, 8).toUpperCase())}" data-next-status="cancelled">Cancel order</button>`;
-            }
-            if (status === 'being_prepared') {
-                const nextStatus = isPickup ? 'ready_for_pickup' : 'out_for_delivery';
-                const label = isPickup ? 'Mark ready for pickup' : 'Mark out for delivery';
-                return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="${nextStatus}">${label}</button>
-                <button type="button" class="btn btn-outline-dark order-admin-btn order-admin-btn-cancel" data-order-id="${order.id}" data-order-number="${escapeHtml(order.order_number || order.id.slice(0, 8).toUpperCase())}" data-next-status="cancelled">Cancel order</button>`;
-            }
-            if (status === 'out_for_delivery' || status === 'ready_for_pickup') {
-                return `<button type="button" class="btn btn-primary order-admin-btn" data-order-id="${order.id}" data-next-status="delivered">Mark delivered</button>`;
-            }
-            return ''; // delivered / cancelled: nothing further to do
-        }
         function escapeHtml(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
-        function orderHistoryRowHTML(order, isAdmin) {
+        function orderHistoryRowHTML(order) {
             const status = order.status || 'placed';
             const items = Array.isArray(order.items) ? order.items : [];
             const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-            const customerLine = isAdmin
-                ? `<div class="order-card-customer">${order.delivery_name || 'Unknown customer'} &middot; ${order.delivery_phone || 'no phone on file'} &middot; ${order.fulfilment_method === 'pickup' ? 'Pickup' : 'Delivery'}</div>`
-                : '';
-            const actions = isAdmin ? `<div class="order-card-actions">${orderActionButtonsHTML(order)}</div>` : '';
             const cancellationNote = (status === 'cancelled' && order.cancellation_reason)
                 ? `<div class="order-cancellation-reason"><strong>Cancelled:</strong> ${escapeHtml(order.cancellation_reason)}</div>`
                 : '';
@@ -9928,7 +9936,6 @@
             <div>
                 <div class="order-card-number">${order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase())}</div>
                 <div class="order-card-date">${dateLabel}</div>
-                ${customerLine}
             </div>
             <span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span>
         </div>
@@ -9940,7 +9947,6 @@
             <span class="order-card-total">${money(order.total)}</span>
         </div>
         ${cancellationNote}
-        ${actions}
     </div>`;
         }
         // Real order history, reads straight from Supabase (RLS restricts each
@@ -9971,11 +9977,29 @@
                 el.innerHTML = '<div class="order-history-empty">No orders yet. <a href="#/shop">Start shopping</a>.</div>';
                 return;
             }
-            el.innerHTML = data.map(o => orderHistoryRowHTML(o, false)).join('');
+            el.innerHTML = data.map(o => orderHistoryRowHTML(o)).join('');
         }
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
-        // this query to return other people's rows at all).
+        // this query to return other people's rows at all). Rendered as a
+        // table, one row per order, "Details" opens the full order detail
+        // page where status/comments/notification actually happen.
+        function adminOrderTableRowHTML(order) {
+            const status = order.status || 'placed';
+            const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const billingName = (order.profiles && order.profiles.full_name) || order.delivery_name || '—';
+            return `
+    <tr>
+        <td>${order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase())}</td>
+        <td>${dateLabel}</td>
+        <td><span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span></td>
+        <td class="admin-orders-total">${money(order.total)}</td>
+        <td>${escapeHtml(billingName)}</td>
+        <td>${escapeHtml(order.delivery_name || '—')}</td>
+        <td>${order.fulfilment_method === 'pickup' ? 'Pickup' : 'Standard Delivery'}</td>
+        <td><a class="admin-orders-details-link" href="#/admin/order/${order.id}">Details</a></td>
+    </tr>`;
+        }
         async function renderAdminOrders() {
             const el = document.getElementById('adminOrdersList');
             if (!el) return;
@@ -9994,7 +10018,7 @@
             el.innerHTML = '<div class="order-history-loading">Loading orders…</div>';
             const { data, error } = await supabaseClient
                 .from('orders')
-                .select('*')
+                .select('*, profiles(full_name, email, phone)')
                 .order('created_at', { ascending: false });
             if (error) {
                 el.innerHTML = '<div class="order-history-error">Couldn\'t load orders right now, please try again shortly.</div>';
@@ -10004,32 +10028,35 @@
                 el.innerHTML = '<div class="order-history-empty">No orders yet.</div>';
                 return;
             }
-            el.innerHTML = data.map(o => orderHistoryRowHTML(o, true)).join('');
-        }
-        const adminOrdersListEl = document.getElementById('adminOrdersList');
-        if (adminOrdersListEl) {
-            adminOrdersListEl.addEventListener('click', async (e) => {
-                const btn = e.target.closest('.order-admin-btn');
-                if (!btn || !supabaseClient) return;
-                const orderId = btn.getAttribute('data-order-id');
-                const nextStatus = btn.getAttribute('data-next-status');
-                if (nextStatus === 'cancelled') {
-                    openCancelOrderModal(orderId, btn.getAttribute('data-order-number'));
-                    return;
-                }
-                btn.disabled = true;
-                const { error } = await supabaseClient.from('orders').update({ status: nextStatus }).eq('id', orderId);
-                if (error) { alert('Could not update that order: ' + error.message); btn.disabled = false; return; }
-                renderAdminOrders();
-            });
+            el.innerHTML = `
+    <div class="admin-orders-table-wrap">
+        <table class="admin-orders-table">
+            <thead>
+                <tr>
+                    <th>Invoice</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Value</th>
+                    <th>Billing name</th>
+                    <th>Delivery name</th>
+                    <th>Delivery method</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>${data.map(adminOrderTableRowHTML).join('')}</tbody>
+        </table>
+    </div>`;
         }
 
         // A reason is required before an admin can cancel an order, both so
-        // the customer sees why (shown on their order card) and so there's a
-        // record of it, rather than a silent status flip with no context.
+        // the customer sees why (shown on their order card / detail page)
+        // and so there's a record of it, rather than a silent status flip
+        // with no context. Used both from the admin order detail page.
         let cancelOrderTargetId = null;
-        function openCancelOrderModal(orderId, orderNumber) {
+        let cancelOrderOnSuccess = null;
+        function openCancelOrderModal(orderId, orderNumber, onSuccess) {
             cancelOrderTargetId = orderId;
+            cancelOrderOnSuccess = onSuccess || null;
             document.getElementById('cancelOrderNumber').textContent = orderNumber || '';
             document.getElementById('cancelOrderReason').value = '';
             setAuthError('cancelOrderError', '');
@@ -10059,8 +10086,113 @@
                 cancelOrderConfirmBtn.disabled = false;
                 cancelOrderConfirmBtn.textContent = 'Cancel this order';
                 if (error) { setAuthError('cancelOrderError', 'Could not cancel that order: ' + error.message); return; }
+                const onSuccess = cancelOrderOnSuccess;
                 closeCancelOrderModal();
-                renderAdminOrders();
+                if (onSuccess) onSuccess(); else renderAdminOrders();
+            });
+        }
+
+        /* ================= ADMIN ORDER DETAIL ================= */
+        const YO7_STORE_ADDRESS = '7 Lancaster Road, Ipswich, IP4 2NY';
+        let currentAdminOrderId = null;
+        let currentAdminOrder = null;
+        function populateAdminOrderStatusSelect(selected) {
+            const sel = document.getElementById('aodStatusSelect');
+            sel.innerHTML = ORDER_STATUS_OPTIONS.map(s => `<option value="${s}" ${s === selected ? 'selected' : ''}>${ORDER_STATUS_LABELS[s]}</option>`).join('');
+        }
+        async function renderAdminOrderDetail(orderId) {
+            currentAdminOrderId = orderId;
+            const loadingEl = document.getElementById('aodLoading');
+            const bodyEl = document.getElementById('aodBody');
+            const notFoundEl = document.getElementById('aodNotFound');
+            bodyEl.style.display = 'none';
+            document.getElementById('aodUpdateSuccess').style.display = 'none';
+            setAuthError('aodUpdateError', '');
+            notFoundEl.style.display = 'none';
+            loadingEl.style.display = 'block';
+            loadingEl.textContent = 'Loading order…';
+            if (!supabaseClient || !currentSupabaseUser || !currentIsAdmin) {
+                loadingEl.style.display = 'none';
+                notFoundEl.style.display = 'block';
+                return;
+            }
+            const { data: order, error } = await supabaseClient
+                .from('orders')
+                .select('*, profiles(full_name, email, phone)')
+                .eq('id', orderId)
+                .single();
+            if (error || !order) {
+                loadingEl.style.display = 'none';
+                notFoundEl.style.display = 'block';
+                return;
+            }
+            currentAdminOrder = order;
+            const orderNumber = order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase());
+            const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('aodTitle').textContent = `Order ${orderNumber}`;
+            document.getElementById('aodSubtitle').textContent = `Placed ${dateLabel}`;
+            const profile = order.profiles || {};
+            document.getElementById('aodCustomerName').textContent = profile.full_name || order.delivery_name || 'Unknown customer';
+            document.getElementById('aodCustomerEmail').innerHTML = profile.email ? `<a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a>` : '—';
+            const phone = order.delivery_phone || profile.phone;
+            document.getElementById('aodCustomerPhone').innerHTML = phone ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : '—';
+            const isPickup = order.fulfilment_method === 'pickup';
+            document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : 'Standard delivery';
+            document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || '—');
+            document.getElementById('aodNote').textContent = order.notes || 'None left at checkout.';
+            document.getElementById('aodPaymentMethod').textContent = 'Card, entered at checkout (preview checkout, no real payment is taken or stored)';
+            document.getElementById('aodBillingAddress').textContent = 'Not collected separately in the current checkout, delivery address is the only address on file.';
+            const items = Array.isArray(order.items) ? order.items : [];
+            document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => `
+    <tr>
+        <td>${escapeHtml(i.name)}</td>
+        <td class="qty">&times;${i.qty}</td>
+        <td class="line-total">${money((i.price || 0) * i.qty)}</td>
+    </tr>`).join('');
+            document.getElementById('aodSubtotal').textContent = money(order.subtotal || 0);
+            document.getElementById('aodDeliveryFee').textContent = order.delivery_fee ? money(order.delivery_fee) : 'Free';
+            if (order.discount) {
+                document.getElementById('aodDiscountRow').style.display = 'flex';
+                document.getElementById('aodDiscount').textContent = '−' + money(order.discount);
+            } else {
+                document.getElementById('aodDiscountRow').style.display = 'none';
+            }
+            document.getElementById('aodTotal').textContent = money(order.total);
+            populateAdminOrderStatusSelect(order.status || 'placed');
+            document.getElementById('aodCommentInput').value = (order.status === 'cancelled' ? order.cancellation_reason : order.admin_note) || '';
+            loadingEl.style.display = 'none';
+            bodyEl.style.display = 'block';
+        }
+        const aodUpdateBtn = document.getElementById('aodUpdateBtn');
+        if (aodUpdateBtn) {
+            aodUpdateBtn.addEventListener('click', async () => {
+                if (!currentAdminOrderId || !supabaseClient) return;
+                const nextStatus = document.getElementById('aodStatusSelect').value;
+                const comment = document.getElementById('aodCommentInput').value.trim();
+                setAuthError('aodUpdateError', '');
+                document.getElementById('aodUpdateSuccess').style.display = 'none';
+                if (nextStatus === 'cancelled') {
+                    // Cancelling needs a reason (shown to the customer), reuse the
+                    // same modal the rest of the admin UI uses for that.
+                    if (!comment) { setAuthError('aodUpdateError', 'Add a comment with the reason before cancelling, it becomes the cancellation reason the customer sees.'); return; }
+                    const orderNumber = currentAdminOrder ? (currentAdminOrder.order_number || currentAdminOrder.id.slice(0, 8).toUpperCase()) : '';
+                    openCancelOrderModal(currentAdminOrderId, orderNumber, () => {
+                        renderAdminOrderDetail(currentAdminOrderId);
+                        document.getElementById('aodUpdateSuccess').style.display = 'block';
+                    });
+                    document.getElementById('cancelOrderReason').value = comment;
+                    return;
+                }
+                aodUpdateBtn.disabled = true;
+                aodUpdateBtn.textContent = 'Updating…';
+                const { error } = await supabaseClient.from('orders')
+                    .update({ status: nextStatus, admin_note: comment || null })
+                    .eq('id', currentAdminOrderId);
+                aodUpdateBtn.disabled = false;
+                aodUpdateBtn.textContent = 'Update order & notify customer';
+                if (error) { setAuthError('aodUpdateError', 'Could not update that order: ' + error.message); return; }
+                document.getElementById('aodUpdateSuccess').style.display = 'block';
+                renderAdminOrderDetail(currentAdminOrderId);
             });
         }
 
@@ -11318,7 +11450,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         function showView(id) {
@@ -11392,6 +11524,9 @@
             } else if (hash === '#/admin' || hash === '#/admin/orders') {
                 showView('view-admin');
                 renderAdminPage();
+            } else if (hash.startsWith('#/admin/order/')) {
+                showView('view-admin-order-detail');
+                renderAdminOrderDetail(hash.replace('#/admin/order/', ''));
             } else if (hash === '#/contact') {
                 showView('view-contact');
                 renderContactPage();
