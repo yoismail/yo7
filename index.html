@@ -1139,30 +1139,11 @@
         .hero h1 {
             font-family: var(--display);
             font-weight: 700;
-            font-size: clamp(44px, 8vw, 84px);
-            letter-spacing: -0.02em;
-            line-height: 1;
-            margin: 6px 0 20px;
-        }
-
-        .hero-badge {
-            width: clamp(280px, 40vw, 520px);
-            height: auto;
-            display: block;
-            margin: 6px 0 20px;
-        }
-
-        .hero h1 .dash {
-            color: var(--chartreuse);
-        }
-
-        .hero h1 .hero-foods {
-            display: block;
-            font-size: clamp(14px, 1.8vw, 20px);
-            font-weight: 700;
-            letter-spacing: 0.32em;
-            color: var(--chartreuse-rich);
-            margin-top: 6px;
+            font-size: clamp(32px, 5.4vw, 56px);
+            letter-spacing: -0.01em;
+            line-height: 1.12;
+            max-width: 700px;
+            margin: 6px auto 20px;
         }
 
         .hero-sub {
@@ -1334,10 +1315,79 @@
             display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
         }
 
+        .about-block { margin-bottom: 72px; }
+        .about-block-alt {
+            background: var(--section-alt-bg, var(--card-bg));
+            border-radius: 24px;
+            padding: 56px 40px;
+        }
+
+        .about-prose {
+            max-width: 68ch;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .about-prose h2 {
+            font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.2vw, 32px);
+            letter-spacing: -0.01em; line-height: 1.25; color: var(--heading); margin-bottom: 20px;
+        }
+        .about-prose p {
+            font-size: 15.5px; color: var(--text-body); line-height: 1.7; text-align: left;
+        }
+        .about-prose p + p { margin-top: 14px; }
+
+        .about-mission-tags {
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+            margin: 24px 0 20px;
+        }
+        .about-mission-tag {
+            font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.03em;
+            color: var(--aubergine-deep); background: var(--chartreuse);
+            padding: 8px 16px; border-radius: 999px;
+        }
+        .about-mission p.about-mission-note {
+            font-size: 15px; color: var(--text-body); max-width: 56ch; margin: 0 auto;
+        }
+
+        .about-promise-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            max-width: 800px;
+            margin: 28px auto 0;
+            padding: 0;
+        }
+        .about-promise-list li {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 14.5px; color: var(--text-body); line-height: 1.5;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 14px;
+            padding: 16px 18px;
+        }
+        .about-promise-list svg {
+            width: 18px; height: 18px; color: var(--chartreuse-rich); flex-shrink: 0; margin-top: 1px;
+        }
+
+        .about-thanks {
+            text-align: center;
+            max-width: 640px;
+            margin: 0 auto 40px;
+        }
+        .about-thanks h2 {
+            font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.4vw, 34px);
+            letter-spacing: -0.01em; color: var(--heading); margin: 10px 0 18px;
+        }
+        .about-thanks p { font-size: 15.5px; color: var(--text-body); line-height: 1.7; }
+        .about-thanks p + p { margin-top: 10px; }
+
         @media (max-width: 760px) {
             .about-story-grid { grid-template-columns: 1fr; text-align: center; gap: 28px; }
             .about-story-grid p { max-width: none; margin-left: auto; margin-right: auto; }
             .about-seal { margin: 0 auto; }
+            .about-prose p { text-align: left; }
+            .about-block-alt { padding: 40px 22px; border-radius: 18px; }
         }
 
         /* ================= SHOP / CATEGORY GRID ================= */
@@ -5234,7 +5284,7 @@
             <div class="nav-links">
                 <a href="#/" id="navLinkHome">Home</a>
                 <a href="#/shop" id="navLinkShop">Shop</a>
-                <a href="#/about" id="navLinkStory">Our Story</a>
+                <a href="#/about" id="navLinkStory">About Us</a>
                 <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
                 <a href="#/contact" id="navLinkContact">Contact</a>
                 <a href="#/guide" id="navLinkGuide">New Here?</a>
@@ -5300,7 +5350,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
-            <a href="#/about">Our Story</a>
+            <a href="#/about">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
@@ -5343,9 +5393,8 @@
                 <svg class="seal" viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <h1>Yo<span class="dash">7</span><span class="hero-foods">Foods</span></h1>
-                <p class="hero-sub">Premium African and Caribbean groceries, fresh, authentic, and curated for quality.
-                    Thoughtfully sourced ingredients delivered across the UK with care and convenience.</p>
+                <h1>Fresh African groceries, delivered with modern convenience.</h1>
+                <p class="hero-sub">Authentic flavours, premium quality, and a clean shopping experience designed for today's UK households.</p>
                 <div class="cta-row">
                     <a class="btn btn-primary" href="#/shop">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -6215,55 +6264,139 @@
         </section>
     </div>
 
-    <!-- ================= DELIVERY INFO ================= -->
+    <!-- ================= ABOUT US ================= -->
     <div id="view-about" class="hidden-view">
         <header class="shop-header shop-header-story">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Our Story</div>
-                <h1>Our Story</h1>
-                <p>Why Yo7 Foods exists, and the standard we're building for African groceries in the UK.</p>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; About Us</div>
+                <h1>About Us</h1>
+                <p>African groceries deserve a shopping experience that is fresh, modern, and world-class.</p>
             </div>
         </header>
         <section class="about-section">
             <div class="wrap">
-                <div class="about-story-grid">
+                <div class="about-story-grid about-block">
                     <svg class="about-seal" viewBox="65 25 875 900"
                         style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
                         <use href="#seal-mark" />
                     </svg>
                     <div>
-                        <h2>Built around a simple frustration</h2>
-                        <p>Yo7 Foods began with a simple truth: finding authentic African ingredients shouldn't take a special trip or a compromise. Rice should cook the way it's meant to. Spices should taste like home. Produce should be fresh because it matters, not just because it's available. So we built the shop we wished already existed: African and Caribbean staples, sourced properly and delivered across the UK, without the shortcuts.</p>
-                        <p>We're small on purpose, staying close to what we sell and who we sell it to. Quality comes first, growth comes after.</p>
+                        <h2>A fresh, modern take on African groceries</h2>
+                        <p>Yo7 Foods was created with a simple belief: African groceries deserve a shopping experience that is fresh, modern, and world-class.</p>
+                        <p>For years, customers searching for African and Nigerian foods in the UK have had to rely on stores that feel cluttered, outdated, or difficult to navigate. We built Yo7 Foods to change that: to bring the richness of African markets into a clean, premium, and beautifully organised environment.</p>
                     </div>
                 </div>
 
-                <div class="about-mission">
+                <div class="about-prose about-block">
+                    <div class="section-eyebrow" style="color:var(--heading-mid);">Our story</div>
+                    <h2>Freshness, completeness, everyday nourishment</h2>
+                    <p>The name Yo7 represents freshness, completeness, and everyday nourishment. Our logo, the apple, the leaf, and the number 7, reflects our commitment to quality, nature, and reliability.</p>
+                    <p>Yo7 Foods began as a passion project: a desire to make African groceries easier to access, easier to understand, and easier to enjoy. What started as a small idea has grown into a brand trusted by families, students, professionals, and food lovers across the UK.</p>
+                    <p>We are proud to serve both African communities who want a taste of home and new customers discovering African flavours for the first time.</p>
+                </div>
+
+                <div class="about-mission about-block">
                     <div class="section-eyebrow" style="color:var(--heading-mid);">Our mission</div>
-                    <h2>Make the ingredients that taste like home easy to find, and easy to trust.</h2>
+                    <h2>To elevate African groceries to a premium standard, with clarity, freshness, authenticity, and trust at the heart of everything we do.</h2>
+                    <div class="about-mission-tags">
+                        <span class="about-mission-tag">Easy to shop</span>
+                        <span class="about-mission-tag">Easy to understand</span>
+                        <span class="about-mission-tag">Easy to enjoy</span>
+                        <span class="about-mission-tag">Easy to trust</span>
+                    </div>
+                    <p class="about-mission-note">Whether you're buying garri, spices, palm oil, or fresh produce, Yo7 Foods ensures every product meets the highest quality standards.</p>
                 </div>
 
-                <div class="about-values-grid">
-                    <div class="about-value-card">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                        <h3>Quality over shortcuts</h3>
-                        <p>If it's not something we'd proudly cook with ourselves, it never makes it onto the shelf.</p>
+                <div class="about-block">
+                    <div class="about-mission" style="margin-bottom:32px;">
+                        <div class="section-eyebrow" style="color:var(--heading-mid);">What makes us different</div>
+                        <h2>Built to feel premium, from homepage to doorstep</h2>
                     </div>
-                    <div class="about-value-card">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        <h3>Rooted in community</h3>
-                        <p>We grew from the same community we serve, Ipswich and the towns around it, and we carry that responsibility with pride.</p>
+                    <div class="about-values-grid">
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                            <h3>Modern shopping experience</h3>
+                            <p>Clean design, organised categories, and easy navigation.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="m21 15-5-5L5 21"/></svg>
+                            <h3>Premium product presentation</h3>
+                            <p>Clear images, detailed descriptions, and consistent quality.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg>
+                            <h3>Authentic African sourcing</h3>
+                            <p>Trusted suppliers and culturally accurate products.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11" rx="1"/><path d="M15 9h4l3 3.5V17h-2"/><circle cx="6.5" cy="18.5" r="1.8"/><circle cx="17.5" cy="18.5" r="1.8"/></svg>
+                            <h3>Customer-first service</h3>
+                            <p>Fast delivery, responsive support, and reliable fulfilment.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <h3>A brand built for everyone</h3>
+                            <p>African customers feel at home, new customers feel welcomed.</p>
+                        </div>
                     </div>
-                    <div class="about-value-card">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                        <h3>Patience first</h3>
-                        <p>We'd rather perfect an aisle slowly than rush it and get it wrong. Patience protects quality.</p>
+                </div>
+
+                <div class="about-block about-block-alt">
+                    <div class="about-mission" style="margin-bottom:32px;">
+                        <div class="section-eyebrow" style="color:var(--heading-mid);">Our values</div>
+                        <h2>What we hold ourselves to, in every order</h2>
                     </div>
-                    <div class="about-value-card">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 17l-6.3 4.4L8 14 2 9.4h7.6z"/></svg>
-                        <h3>Honest, always</h3>
-                        <p>Clear pricing. Transparent sourcing. No shortcuts, no disguises, just honest, quality ingredients.</p>
+                    <div class="about-values-grid">
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 9.5 17 9.5s-4.5 1.5-5.5 7A7 7 0 0 1 11 20z"/><path d="M11 20v-8"/></svg>
+                            <h3>Freshness</h3>
+                            <p>Every product is handled with care.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <h3>Clarity</h3>
+                            <p>Simple pricing, clear packaging, honest information.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6v6c0 5 3.8 8.4 9 10 5.2-1.6 9-5 9-10V6l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg>
+                            <h3>Authenticity</h3>
+                            <p>Real African flavours, real cultural heritage.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
+                            <h3>Modernity</h3>
+                            <p>A premium experience from homepage to checkout.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                            <h3>Trust</h3>
+                            <p>Consistency, hygiene, and quality in every order.</p>
+                        </div>
                     </div>
+                </div>
+
+                <div class="about-prose about-block" style="max-width:56ch;">
+                    <div class="section-eyebrow" style="color:var(--heading-mid);">Our promise</div>
+                    <h2>We promise to deliver</h2>
+                    <ul class="about-promise-list">
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Products you can trust</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Service you can rely on</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>A shopping experience that feels premium</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>A brand that respects your culture and your time</li>
+                    </ul>
+                    <p style="text-align:center; margin-top:28px;">Yo7 Foods is here to make African groceries simple, modern, and accessible, without losing the soul of the food we love.</p>
+                </div>
+
+                <div class="about-mission about-block">
+                    <div class="section-eyebrow" style="color:var(--heading-mid);">Our vision</div>
+                    <h2>To become the UK's most trusted African grocery brand, a place where tradition meets innovation, and culture meets convenience.</h2>
+                </div>
+
+                <div class="about-thanks">
+                    <div class="section-eyebrow" style="color:var(--heading-mid);">Thank you</div>
+                    <h2>Thank you for choosing Yo7 Foods</h2>
+                    <p>Thank you for supporting a brand built with passion, pride, and purpose.</p>
+                    <p>We're here to serve you, your family, and your culture, today and always.</p>
                 </div>
 
                 <div class="about-cta">
@@ -7138,7 +7271,7 @@
                         <h4>Site</h4>
                         <a href="#/">Home</a>
                         <a href="#/shop">Shop</a>
-                        <a href="#/about">Our Story</a>
+                        <a href="#/about">About Us</a>
                         <a href="#/checkout">Basket</a>
                         <a href="#/delivery-info">Delivery Info</a>
                         <a href="#/guide">New Here?</a>
