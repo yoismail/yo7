@@ -1300,7 +1300,7 @@
         .about-value-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-radius: 16px;
+            border-radius: 0;
             padding: 24px 22px;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -1372,7 +1372,7 @@
             font-size: 14.5px; color: var(--text-body); line-height: 1.5;
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-radius: 14px;
+            border-radius: 0;
             padding: 16px 18px;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 8px 18px rgba(var(--border-rgb), 0.03);
             transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
@@ -1449,7 +1449,7 @@
         .bundle-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-radius: 18px;
+            border-radius: 0;
             padding: 24px 24px 22px;
             position: relative;
         }
@@ -1553,7 +1553,7 @@
         .combos-scroll { padding-bottom: 6px; }
         .combos-scroll .combo-card { flex: 0 0 265px; max-width: 265px; }
         .combo-card {
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
         }
         .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px; }
@@ -1681,7 +1681,7 @@
         .group-card {
             display: flex;
             flex-direction: column;
-            border-radius: 20px;
+            border-radius: 0;
             overflow: hidden;
             background: var(--page-bg);
             border: 1px solid rgba(var(--border-rgb), 0.1);
@@ -1850,13 +1850,13 @@
            just another product row. */
         .best-seller-carousel {
             display: flex; gap: 18px; padding: 4px 2px 10px;
-            overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+            overflow-x: auto; scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
         }
         .best-seller-carousel::-webkit-scrollbar { display: none; }
         .best-seller-card {
-            flex: 0 0 220px; max-width: 220px; scroll-snap-align: start;
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
+            flex: 0 0 220px; max-width: 220px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -1902,14 +1902,14 @@
         .new-carousel-wrap { position: relative; width: 100%; max-width: 100%; display: flex; align-items: center; gap: 8px; }
         .new-carousel {
             display: flex; gap: 18px; padding: 4px 2px 10px;
-            overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity;
+            overflow-x: auto; overflow-y: hidden;
             -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
         }
         .new-carousel::-webkit-scrollbar { display: none; }
         .new-carousel.dragging { cursor: grabbing; }
         .new-card {
-            flex: 0 0 220px; max-width: 220px; scroll-snap-align: start; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
+            flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -1963,14 +1963,14 @@
         .offer-carousel-wrap { position: relative; width: 100%; max-width: 100%; display: flex; align-items: center; gap: 8px; }
         .offer-carousel {
             display: flex; gap: 18px; padding: 4px 2px 10px;
-            overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity;
+            overflow-x: auto; overflow-y: hidden;
             -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
         }
         .offer-carousel::-webkit-scrollbar { display: none; }
         .offer-carousel.dragging { cursor: grabbing; }
         .offer-card {
-            flex: 0 0 220px; max-width: 220px; scroll-snap-align: start; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
+            flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -2750,10 +2750,10 @@
         #shopByGroup .cat-nav-arrow:hover,
         .new-carousel-wrap .cat-nav-arrow:hover,
         .offer-carousel-wrap .cat-nav-arrow:hover { background: var(--section-alt-bg); }
-        .cat-flat-scroll { gap: 18px; padding: 4px 2px 10px; scroll-snap-type: x proximity; }
+        .cat-flat-scroll { gap: 18px; padding: 4px 2px 10px; }
         .cat-flat-card {
-            flex: 0 0 220px; max-width: 220px; scroll-snap-align: start;
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 16px;
+            flex: 0 0 220px; max-width: 220px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -2924,7 +2924,7 @@
         .product-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-radius: 18px;
+            border-radius: 0;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
