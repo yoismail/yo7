@@ -2966,6 +2966,10 @@
             height: 100%;
             object-fit: cover;
             display: block;
+            transition: transform 0.5s cubic-bezier(.16,.84,.44,1);
+        }
+        .product-card:hover .product-photo-img {
+            transform: scale(1.06);
         }
 
         .thumb-placeholder {
@@ -2973,7 +2977,12 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
         }
 
-        .thumb-placeholder-emoji { font-size: 30px; line-height: 1; opacity: 0.85; }
+        .thumb-placeholder-emoji {
+            display: flex; align-items: center; justify-content: center;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: rgba(var(--border-rgb), 0.07);
+            font-size: 26px; line-height: 1; opacity: 0.85;
+        }
         .thumb-placeholder-label {
             font-family: var(--display); font-weight: 600; font-size: 10px;
             letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint);
@@ -3024,7 +3033,8 @@
         .product-price {
             font-family: var(--display);
             font-weight: 700;
-            font-size: 15.5px;
+            font-size: 17.5px;
+            letter-spacing: -0.01em;
             color: var(--ink);
         }
 
@@ -3137,6 +3147,7 @@
         }
         .card-add-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
         .card-add-btn:hover { background: var(--chartreuse-soft); }
+        .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: #e3ddc9; color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
 
@@ -3170,6 +3181,7 @@
             background: var(--aubergine);
             color: var(--cream);
         }
+        .view-details-btn:active { transform: scale(0.96); }
 
         .view-details-btn:hover svg {
             transform: translateX(2px);
@@ -9265,15 +9277,13 @@
             function pause() {
                 paused = true;
                 clearTimeout(resumeTimer);
-                // Belt-and-braces on top of pointercancel/touchcancel: if
-                // literally no end-of-gesture event ever reaches this
-                // element (the actual observed freeze — something the
-                // browser swallowed the up/cancel event for entirely), this
-                // guarantees it can't stay paused forever, without getting
-                // in the way of a normal drag, which is always well under
-                // this long.
+                // Belt-and-braces on top of the window-level up/cancel
+                // listeners below: if literally no end-of-gesture event
+                // ever reaches this page at all, this guarantees it can't
+                // stay paused forever, without getting in the way of a
+                // normal drag, which is always well under this long.
                 clearTimeout(safetyTimer);
-                safetyTimer = setTimeout(() => { paused = false; lastTs = null; }, 8000);
+                safetyTimer = setTimeout(() => { paused = false; lastTs = null; }, 2500);
             }
             function scheduleResume() {
                 clearTimeout(resumeTimer);
@@ -9285,18 +9295,20 @@
 
             // Deliberately no mouseenter/mouseleave here, hovering to look at a
             // card shouldn't stop the drift, only an actual drag or touch should.
-            // pointercancel/touchcancel matter here as much as the up/end
-            // events: a browser can cancel a touch mid-gesture (an
-            // interruption, or its own scroll-direction heuristic taking
-            // over), and without a resume tied to that too, the strip was
-            // left permanently paused, the "freezes and never picks back up"
-            // symptom, since only a clean pointerup/touchend ever resumed it.
+            // The up/cancel listeners are on window, not the strip: once a
+            // touch or drag starts on the strip, the finger (or the page's
+            // own scroll-direction heuristic taking over mid-gesture) very
+            // often ends up somewhere else by release time, and a listener
+            // scoped to the strip itself simply never sees that event. That
+            // was the actual freeze, every drag that didn't end exactly
+            // back over the strip left it paused until the safety timer
+            // above eventually rescued it.
             strip.addEventListener('pointerdown', pause);
-            strip.addEventListener('pointerup', scheduleResume);
-            strip.addEventListener('pointercancel', scheduleResume);
+            window.addEventListener('pointerup', scheduleResume);
+            window.addEventListener('pointercancel', scheduleResume);
             strip.addEventListener('touchstart', pause, { passive: true });
-            strip.addEventListener('touchend', scheduleResume, { passive: true });
-            strip.addEventListener('touchcancel', scheduleResume, { passive: true });
+            window.addEventListener('touchend', scheduleResume, { passive: true });
+            window.addEventListener('touchcancel', scheduleResume, { passive: true });
 
             // Constant-speed drift with an instant direction flip at each end
             // reads as mechanical, not premium. Easing the speed down on
