@@ -90,6 +90,10 @@
            typing into a field and checking. */
         input, select, textarea {
             color: var(--ink);
+            /* iOS Safari zooms the whole page in on focus for any form
+               field under 16px, this floor is what stops that; anything
+               more specific below still needs to stay at or above it. */
+            font-size: 16px;
         }
 
         html {
@@ -1546,7 +1550,7 @@
         .whatsapp-list-form textarea {
             width: 100%; padding: 12px 14px; border-radius: 12px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
-            font-family: var(--body); font-size: 14px; resize: vertical;
+            font-family: var(--body); font-size: 16px; resize: vertical;
             background: var(--card-bg); color: var(--text-body);
         }
 
@@ -3331,7 +3335,7 @@
             border-radius: 8px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
             font-family: var(--body);
-            font-size: 13px;
+            font-size: 16px;
             background: var(--card-bg);
             color: var(--text-body);
         }
@@ -3480,7 +3484,7 @@
         .star-input button:hover { transform: scale(1.12); }
         .pd-review-form textarea {
             width: 100%; margin-top: 12px; padding: 11px 14px; border-radius: 10px;
-            border: 1.5px solid rgba(var(--border-rgb), 0.16); font-family: var(--body); font-size: 14px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16); font-family: var(--body); font-size: 16px;
             resize: vertical; box-sizing: border-box; background: var(--card-bg); color: var(--ink);
         }
         .pd-review-prompt { font-size: 13.5px; color: var(--text-muted); }
@@ -4763,7 +4767,7 @@
         }
         .delivery-admin-form input, .delivery-admin-form select {
             padding: 9px 11px; border-radius: 8px; border: 1.5px solid rgba(var(--border-rgb), 0.16);
-            font-family: var(--body); font-size: 13.5px; background: var(--card-bg); color: var(--text-body);
+            font-family: var(--body); font-size: 16px; background: var(--card-bg); color: var(--text-body);
         }
         .delivery-admin-form button { grid-column: 1 / -1; justify-self: start; }
 
@@ -9790,7 +9794,7 @@
           <label class="allergen-check"><input type="checkbox" value="${a.key}" ${declared.includes(a.key) ? 'checked' : ''}> ${a.label}</label>`).join('')}
         </div>
         <label style="font-size:11px; color:var(--text-muted); display:block; margin:10px 0 4px;">May contain traces of (optional, free text)</label>
-        <textarea id="pdEdit-allergyNote" rows="2" style="width:100%; font-family:var(--body); font-size:13.5px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${pdCurrent.allergyNote || ''}</textarea>
+        <textarea id="pdEdit-allergyNote" rows="2" style="width:100%; font-family:var(--body); font-size:16px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${pdCurrent.allergyNote || ''}</textarea>
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="saveAllergenEdit()">Save</button>
           <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderProductDetailsSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
@@ -9818,7 +9822,7 @@
             const currentValue = pdCurrent[key] || '';
             card.querySelector('.body').outerHTML = `
       <div class="body">
-        <textarea id="pdEdit-${key}" rows="3" style="width:100%; font-family:var(--body); font-size:13.5px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${currentValue}</textarea>
+        <textarea id="pdEdit-${key}" rows="3" style="width:100%; font-family:var(--body); font-size:16px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${currentValue}</textarea>
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="savePdDetailEdit('${key}')">Save</button>
           <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderProductDetailsSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
