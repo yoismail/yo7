@@ -10628,10 +10628,12 @@
             if (!supabaseClient) {
                 loginSection.style.display = 'block';
                 setAuthError('adminLoginError', 'Admin login needs accounts connected first, this is preview mode right now.');
+                autoEnterEditMode = false;
                 return;
             }
             if (!currentSupabaseUser) {
                 loginSection.style.display = 'block';
+                autoEnterEditMode = false;
                 return;
             }
             // Re-checked fresh here rather than trusting the cached
@@ -10645,10 +10647,15 @@
             currentIsAdmin = !error && !!(data && data.is_admin);
             if (!currentIsAdmin) {
                 deniedSection.style.display = 'block';
+                autoEnterEditMode = false;
                 return;
             }
             dashSection.style.display = 'block';
             renderAdminOrders();
+            if (autoEnterEditMode) {
+                autoEnterEditMode = false;
+                setEditMode(true);
+            }
         }
         const adminLoginForm = document.getElementById('adminLoginForm');
         if (adminLoginForm) {
@@ -11188,6 +11195,11 @@
            edit mode is still local-only (in-memory, resets on refresh),
            that hasn't been wired up to persist yet. */
         let editModeOn = false;
+        // Set by the "#edit" URL shortcut so edit mode can turn itself on
+        // once admin status actually comes back confirmed, rather than
+        // racing the async check in renderAdminPage(). Consumed (and reset)
+        // there; never turns edit mode on by itself if that check fails.
+        let autoEnterEditMode = false;
         const editModeBanner = document.getElementById('editModeBanner');
         function setEditMode(on) {
             // Turning edit mode ON requires a verified admin session, checked
@@ -11916,11 +11928,13 @@
         }
         function route() {
             const hash = window.location.hash;
-            // Edit mode isn't its own route, it's a toggle on the admin
-            // dashboard, but "#edit" is a reasonable guess for it, so it's
-            // worth a redirect rather than silently falling through to the
-            // homepage like any other unrecognised hash.
-            if (hash === '#edit' || hash === '#/edit') { window.location.hash = '#/admin'; return; }
+            // "#edit" is a shortcut straight into edit mode for whoever's
+            // already logged in as admin, it still goes through the same
+            // admin dashboard route and the same currentIsAdmin check,
+            // renderAdminPage() just also flips edit mode on once that
+            // check actually confirms admin, instead of stopping short at
+            // the dashboard and requiring a second click.
+            if (hash === '#edit' || hash === '#/edit') { autoEnterEditMode = true; window.location.hash = '#/admin'; return; }
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
             updateActiveNavLink();
 
