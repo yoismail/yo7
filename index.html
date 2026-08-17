@@ -3202,6 +3202,13 @@
             margin-bottom: 12px;
         }
 
+        .pd-code {
+            font-family: var(--body);
+            font-size: 12.5px;
+            color: var(--text-faint);
+            margin: 4px 0 14px;
+        }
+
         .pd-grid h1 {
             font-family: var(--display);
             font-weight: 700;
@@ -4337,6 +4344,12 @@
             font-size: 11.5px;
             color: var(--text-muted);
             margin-top: 2px;
+        }
+        .inv-item-code {
+            font-family: var(--body);
+            font-weight: 400;
+            font-size: 11.5px;
+            color: var(--text-muted);
         }
         .inv-unit-price { white-space: nowrap; }
         .inv-was {
@@ -5827,6 +5840,7 @@
                     <div>
                         <div class="pd-cat-tag" id="pdCatTag"></div>
                         <h1 id="pdName"></h1>
+                        <div class="pd-code" id="pdCode"></div>
                         <a class="pd-rating-summary" id="pdRatingSummary" href="javascript:void(0)" onclick="document.getElementById('pdReviewsSection').scrollIntoView({behavior:'smooth', block:'start'})" style="display:none;">
                             <span class="pd-stars" id="pdRatingStars"></span>
                             <span id="pdRatingText"></span>
@@ -7454,6 +7468,21 @@
                 ]
             },
         ];
+        // Every product needs a stable, human-readable product code (e.g.
+        // "FLR-01"). Generated here instead of hand-typed on each of the
+        // ~19 categories' product literals, so it can't drift out of sync
+        // or collide as products are added/reordered.
+        const CATEGORY_CODE_PREFIX = {
+            flour: 'FLR', oils: 'OIL', noodles: 'NOO', seasoning: 'SSN', beverages: 'BEV',
+            'sea-foods': 'SEA', 'tropical-foods': 'TRO', 'fruits-vegetables': 'FNV', condiments: 'CON',
+            miscellaneous: 'MSC', 'hair-products': 'HAI', 'snacks-confectionary': 'SNK', rice: 'RIC',
+            meat: 'MEA', 'body-oral-products': 'BOP', poultry: 'POU', 'root-vegetables': 'ROV',
+            beans: 'BNS', drinks: 'DRK',
+        };
+        CATEGORIES.forEach(cat => {
+            const prefix = CATEGORY_CODE_PREFIX[cat.slug] || cat.slug.slice(0, 3).toUpperCase();
+            cat.products.forEach((p, i) => { p.code = `${prefix}-${String(i + 1).padStart(2, '0')}`; });
+        });
         const GROUPS = [
             { slug: 'staples', name: 'Staples &amp; Base Ingredients', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l.8 4H8.2L9 3.5Z"/><path d="M8.2 7.5 6.5 19a1.5 1.5 0 0 0 1.5 1.7h8a1.5 1.5 0 0 0 1.5-1.7L15.8 7.5"/></svg>', tagline: 'Rice, flour, beans, yam, the everyday foundations.', categories: ['flour', 'rice', 'root-vegetables', 'beans', 'noodles'] },
             { slug: 'seasoning-oils-flavours', name: 'Seasoning, Oils &amp; Flavours', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h5V6h-5z"/><path d="M8.3 6h7.4l1 13.2a1.5 1.5 0 0 1-1.5 1.6H8.8a1.5 1.5 0 0 1-1.5-1.6L8.3 6Z"/><circle cx="10.7" cy="9.5" r=".55"/><circle cx="13.3" cy="9.5" r=".55"/><circle cx="12" cy="11.6" r=".55"/></svg>', tagline: 'Everything that builds real flavour into a pot.', categories: ['oils', 'seasoning', 'condiments'] },
@@ -8283,7 +8312,7 @@
             const wasOnSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
             if (existing) { existing.qty += qty; }
             else {
-                const entry = { id: product.id, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
+                const entry = { id: product.id, code: product.code, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
                 if (product.isCombo) { entry.isCombo = true; entry.comboItems = product.comboItems; }
                 if (typeof product.weight === 'number') { entry.weight = product.weight; }
                 if (product.isSubscription) { entry.isSubscription = true; entry.subscriptionFrequency = product.subscriptionFrequency; }
@@ -9453,7 +9482,7 @@
             if (!p) {
                 document.getElementById('pdName').textContent = 'Product not found';
                 document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; Not found`;
-                ['pdCatTag', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
+                ['pdCatTag', 'pdCode', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
                 document.getElementById('relatedGrid').innerHTML = '';
                 return;
             }
@@ -9464,6 +9493,7 @@
                 : `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
             document.getElementById('pdName').textContent = p.name;
+            document.getElementById('pdCode').textContent = p.code ? `Product code: ${p.code}` : '';
             document.getElementById('pdUnit').textContent = p.unit;
             const reviewWaBtn = document.getElementById('pdReviewWhatsappBtn');
             const reviewEmailBtn = document.getElementById('pdReviewEmailBtn');
@@ -10469,7 +10499,7 @@
             const items = Array.isArray(order.items) ? order.items : [];
             document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => `
     <tr>
-        <td>${escapeHtml(i.name)}</td>
+        <td>${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}</td>
         <td class="qty">&times;${i.qty}</td>
         <td class="line-total">${money((i.price || 0) * i.qty)}</td>
     </tr>`).join('');
@@ -10691,7 +10721,7 @@
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
-      <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
+      <td class="inv-item-name">${i.name}${i.code ? ` <span class="inv-item-code">(${i.code})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
       <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
       <td class="inv-qty">${i.qty}</td>
       <td class="inv-line-total">${money(i.price * i.qty)}</td>
