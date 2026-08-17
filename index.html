@@ -2410,8 +2410,6 @@
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
         }
         .footer-payment-badges { margin-top: 0; }
-        .footer-admin-link { color: #6b5c4f; text-decoration: underline; text-underline-offset: 2px; }
-        .footer-admin-link:hover { color: var(--chartreuse-rich); }
 
         /* ================= REVEAL ================= */
         .reveal {
@@ -5723,14 +5721,7 @@
                     <a class="btn btn-outline-dark" href="mailto:hello@yo7foods.co.uk?subject=My%20Yo7%20Foods%20review">Email us instead</a>
                 </div>
                 <div class="platform-badges-row" id="platformBadgesRow"></div>
-                <div class="delivery-admin-panel" id="reviewPlatformAdmin">
-                    <h3>Review platforms <span class="admin-only-tag">Edit mode only</span></h3>
-                    <p class="delivery-admin-note">Leave these blank until you actually have a Trustpilot or Google Business profile, a badge only appears once there's somewhere real for it to link to.</p>
-                    <div class="field-row">
-                        <div class="field"><label>Trustpilot profile URL</label><input type="url" id="trustpilotUrlInput" placeholder="https://uk.trustpilot.com/review/yo7foods.co.uk"></div>
-                        <div class="field"><label>Google Business profile URL</label><input type="url" id="googleBusinessUrlInput" placeholder="https://g.page/..."></div>
-                    </div>
-                </div>
+                <div id="reviewPlatformAdmin"></div>
             </div>
         </section>
     </div>
@@ -6642,46 +6633,7 @@
                     <div class="areas-note">England, Scotland, Wales, and Northern Ireland, wherever you are, we'll get it to you. Type your postcode in below to double-check the format.</div>
                 </div>
 
-                <div class="delivery-admin-panel">
-                    <h3>Delivery rules <span class="admin-only-tag">Edit mode only</span></h3>
-                    <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh, same as other edit-mode changes on this site.</p>
-
-                    <div class="delivery-admin-block">
-                        <h4>Weight tiers</h4>
-                        <p style="font-size:11.5px; color:var(--text-muted); margin:-4px 0 10px;">Delivery is priced by total order weight. Only applies to products with a weight set (edit a product &rarr; Weight field).</p>
-                        <div id="deliveryWeightTiersList" class="delivery-rule-list"></div>
-                        <form id="addWeightTierForm" class="delivery-admin-form">
-                            <input type="text" id="newTierLabel" placeholder="Label (e.g. Up to 15kg)" required>
-                            <input type="number" id="newTierMaxWeight" placeholder="Max weight (kg), leave blank for &quot;above all others&quot;" step="0.1" min="0">
-                            <input type="number" id="newTierFee" placeholder="Fee (£)" step="0.01" min="0" required>
-                            <button type="submit" class="btn btn-primary">Add tier</button>
-                        </form>
-                    </div>
-
-                    <div class="delivery-admin-block">
-                        <h4>Threshold rules</h4>
-                        <div id="deliveryRulesList" class="delivery-rule-list"></div>
-                        <form id="addDeliveryRuleForm" class="delivery-admin-form">
-                            <input type="text" id="newRuleName" placeholder="Rule name (e.g. Free over 10 items)" required>
-                            <select id="newRuleCondition">
-                                <option value="price">Order price (£)</option>
-                                <option value="weight">Total weight (kg)</option>
-                                <option value="items">Number of items</option>
-                            </select>
-                            <select id="newRuleOperator">
-                                <option value="gte">At least</option>
-                                <option value="lte">At most</option>
-                            </select>
-                            <input type="number" id="newRuleValue" placeholder="Value" step="0.01" min="0" required>
-                            <select id="newRuleEffect">
-                                <option value="free">Make delivery free</option>
-                                <option value="fixed">Set a fixed fee instead</option>
-                            </select>
-                            <input type="number" id="newRuleFeeOverride" placeholder="Fixed fee (£)" step="0.01" min="0" style="display:none;">
-                            <button type="submit" class="btn btn-primary">Add rule</button>
-                        </form>
-                    </div>
-                </div>
+                <div id="deliveryRulesAdmin"></div>
             </div>
         </section>
 
@@ -6921,59 +6873,8 @@
         </section>
 
         <div class="wrap">
-            <div class="delivery-admin-panel">
-                <h3>Loyalty nudge <span class="admin-only-tag">Edit mode only</span></h3>
-                <p class="delivery-admin-note">Tracks cumulative spend in each customer's own browser storage, not a real account system, so it resets if they clear their browser or switch devices. Crossing the threshold mints a unique, single-use code, shown on their receipt and valid for their next order only.</p>
-                <div class="field-row">
-                    <div class="field"><label>Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="100"></div>
-                    <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="10"></div>
-                </div>
-                <p class="delivery-admin-note" id="loyaltySpendDisplay" style="margin-top:14px;"></p>
-                <button type="button" class="apf-cancel" id="loyaltyResetBtn" style="margin-top:4px;">Reset test spend &amp; codes (this browser only)</button>
-            </div>
-
-            <div class="delivery-admin-panel discount-admin-panel">
-                <h3>Discounts &amp; codes <span class="admin-only-tag">Edit mode only</span></h3>
-                <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh. "Max per customer" is tracked in this browser's storage only, it isn't a hard guarantee across devices.</p>
-
-                <div id="discountsList" class="delivery-rule-list"></div>
-
-                <form id="addDiscountForm" class="discount-admin-form">
-                    <div class="field"><label>Internal name</label><input type="text" id="newDiscName" placeholder="e.g. August welcome offer" required></div>
-                    <div class="field"><label>Code customers enter</label><input type="text" id="newDiscCode" placeholder="e.g. WELCOME10" required></div>
-                    <div class="field"><label>Type</label>
-                        <select id="newDiscType">
-                            <option value="percent">Percent off</option>
-                            <option value="fixed">Fixed amount off</option>
-                            <option value="freeDelivery">Free delivery</option>
-                            <option value="bogo">Buy X get Y free</option>
-                        </select>
-                    </div>
-                    <div class="field" id="newDiscValueField"><label>Value (% or £)</label><input type="number" step="0.01" min="0" id="newDiscValue"></div>
-                    <div class="field-row" id="newDiscBogoFields" style="display:none;">
-                        <div class="field"><label>Buy quantity</label><input type="number" min="1" id="newDiscBuyQty" value="1"></div>
-                        <div class="field"><label>Get free quantity</label><input type="number" min="1" id="newDiscGetQty" value="1"></div>
-                    </div>
-                    <div class="field-row">
-                        <div class="field"><label>Start date (optional)</label><input type="date" id="newDiscStart"></div>
-                        <div class="field"><label>End date (optional)</label><input type="date" id="newDiscEnd"></div>
-                    </div>
-                    <div class="field"><label>Applies to</label>
-                        <select id="newDiscScope">
-                            <option value="all">All items</option>
-                            <option value="category">One category</option>
-                            <option value="product">One specific product</option>
-                        </select>
-                    </div>
-                    <div class="field" id="newDiscCategoryField" style="display:none;"><label>Category</label><select id="newDiscCategory"></select></div>
-                    <div class="field" id="newDiscProductField" style="display:none;"><label>Product</label><select id="newDiscProduct"></select></div>
-                    <div class="field-row">
-                        <div class="field"><label>Minimum order £ (optional)</label><input type="number" step="0.01" min="0" id="newDiscMinOrder"></div>
-                        <div class="field"><label>Max uses per customer (optional)</label><input type="number" min="1" id="newDiscMaxPerCustomer"></div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create discount</button>
-                </form>
-            </div>
+            <div id="loyaltyAdmin"></div>
+            <div id="discountAdmin"></div>
         </div>
     </div>
 
@@ -7349,7 +7250,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2026 Yo7 Foods Limited. All rights reserved. &middot; <a href="#/admin" class="footer-admin-link">Admin</a></span>
+                <span>© 2026 Yo7 Foods Limited. All rights reserved.</span>
                 <div class="payment-badges footer-payment-badges">
                     <span class="payment-badge payment-badge-visa">VISA</span>
                     <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
@@ -7799,6 +7700,30 @@
             if (googleBusinessUrl) badges.push(`<a class="platform-badge platform-badge-google" href="${googleBusinessUrl}" target="_blank" rel="noopener">G Google</a>`);
             row.innerHTML = badges.join('');
         }
+        // This whole panel only ever exists in the DOM for a confirmed admin
+        // with edit mode on, built fresh each time rather than sitting in
+        // the page (even hidden) for every visitor.
+        function renderReviewPlatformAdmin() {
+            const el = document.getElementById('reviewPlatformAdmin');
+            if (!el) return;
+            if (!(currentIsAdmin && editModeOn)) { el.className = ''; el.innerHTML = ''; return; }
+            el.className = 'delivery-admin-panel';
+            el.innerHTML = `
+    <h3>Review platforms <span class="admin-only-tag">Edit mode only</span></h3>
+    <p class="delivery-admin-note">Leave these blank until you actually have a Trustpilot or Google Business profile, a badge only appears once there's somewhere real for it to link to.</p>
+    <div class="field-row">
+      <div class="field"><label>Trustpilot profile URL</label><input type="url" id="trustpilotUrlInput" placeholder="https://uk.trustpilot.com/review/yo7foods.co.uk" value="${escapeHtml(trustpilotUrl)}"></div>
+      <div class="field"><label>Google Business profile URL</label><input type="url" id="googleBusinessUrlInput" placeholder="https://g.page/..." value="${escapeHtml(googleBusinessUrl)}"></div>
+    </div>`;
+            document.getElementById('trustpilotUrlInput').addEventListener('change', (e) => {
+                trustpilotUrl = e.target.value.trim();
+                renderPlatformBadges();
+            });
+            document.getElementById('googleBusinessUrlInput').addEventListener('change', (e) => {
+                googleBusinessUrl = e.target.value.trim();
+                renderPlatformBadges();
+            });
+        }
 
         function findDiscountByCode(code) {
             const norm = (code || '').trim().toLowerCase();
@@ -7907,6 +7832,93 @@
         }
         function removeDiscount(i) { discounts.splice(i, 1); renderDiscountsAdmin(); }
         window.removeDiscount = removeDiscount;
+        // Same pattern as the other admin panels: only exists in the DOM
+        // for a confirmed admin with edit mode on.
+        function renderDiscountAdminPanel() {
+            const el = document.getElementById('discountAdmin');
+            if (!el) return;
+            if (!(currentIsAdmin && editModeOn)) { el.className = ''; el.innerHTML = ''; return; }
+            el.className = 'delivery-admin-panel discount-admin-panel';
+            el.innerHTML = `
+    <h3>Discounts &amp; codes <span class="admin-only-tag">Edit mode only</span></h3>
+    <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh. "Max per customer" is tracked in this browser's storage only, it isn't a hard guarantee across devices.</p>
+    <div id="discountsList" class="delivery-rule-list"></div>
+    <form id="addDiscountForm" class="discount-admin-form">
+      <div class="field"><label>Internal name</label><input type="text" id="newDiscName" placeholder="e.g. August welcome offer" required></div>
+      <div class="field"><label>Code customers enter</label><input type="text" id="newDiscCode" placeholder="e.g. WELCOME10" required></div>
+      <div class="field"><label>Type</label>
+        <select id="newDiscType">
+          <option value="percent">Percent off</option>
+          <option value="fixed">Fixed amount off</option>
+          <option value="freeDelivery">Free delivery</option>
+          <option value="bogo">Buy X get Y free</option>
+        </select>
+      </div>
+      <div class="field" id="newDiscValueField"><label>Value (% or £)</label><input type="number" step="0.01" min="0" id="newDiscValue"></div>
+      <div class="field-row" id="newDiscBogoFields" style="display:none;">
+        <div class="field"><label>Buy quantity</label><input type="number" min="1" id="newDiscBuyQty" value="1"></div>
+        <div class="field"><label>Get free quantity</label><input type="number" min="1" id="newDiscGetQty" value="1"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Start date (optional)</label><input type="date" id="newDiscStart"></div>
+        <div class="field"><label>End date (optional)</label><input type="date" id="newDiscEnd"></div>
+      </div>
+      <div class="field"><label>Applies to</label>
+        <select id="newDiscScope">
+          <option value="all">All items</option>
+          <option value="category">One category</option>
+          <option value="product">One specific product</option>
+        </select>
+      </div>
+      <div class="field" id="newDiscCategoryField" style="display:none;"><label>Category</label><select id="newDiscCategory"></select></div>
+      <div class="field" id="newDiscProductField" style="display:none;"><label>Product</label><select id="newDiscProduct"></select></div>
+      <div class="field-row">
+        <div class="field"><label>Minimum order £ (optional)</label><input type="number" step="0.01" min="0" id="newDiscMinOrder"></div>
+        <div class="field"><label>Max uses per customer (optional)</label><input type="number" min="1" id="newDiscMaxPerCustomer"></div>
+      </div>
+      <button type="submit" class="btn btn-primary">Create discount</button>
+    </form>`;
+            document.getElementById('newDiscType').addEventListener('change', (e) => {
+                const isBogo = e.target.value === 'bogo';
+                const needsValue = e.target.value === 'percent' || e.target.value === 'fixed';
+                document.getElementById('newDiscBogoFields').style.display = isBogo ? 'grid' : 'none';
+                document.getElementById('newDiscValueField').style.display = needsValue ? '' : 'none';
+            });
+            document.getElementById('newDiscScope').addEventListener('change', (e) => {
+                document.getElementById('newDiscCategoryField').style.display = e.target.value === 'category' ? '' : 'none';
+                document.getElementById('newDiscProductField').style.display = e.target.value === 'product' ? '' : 'none';
+            });
+            document.getElementById('addDiscountForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newDiscName').value.trim();
+                const code = document.getElementById('newDiscCode').value.trim();
+                if (!name || !code) return;
+                if (findDiscountByCode(code)) { showToast(`A discount with code "${code}" already exists.`); return; }
+                const type = document.getElementById('newDiscType').value;
+                const value = parseFloat(document.getElementById('newDiscValue').value) || 0;
+                const buyQty = parseInt(document.getElementById('newDiscBuyQty').value, 10) || 1;
+                const getQty = parseInt(document.getElementById('newDiscGetQty').value, 10) || 1;
+                const startDate = document.getElementById('newDiscStart').value || null;
+                const endDate = document.getElementById('newDiscEnd').value || null;
+                const scope = document.getElementById('newDiscScope').value;
+                const minOrderRaw = document.getElementById('newDiscMinOrder').value;
+                const maxPerCustomerRaw = document.getElementById('newDiscMaxPerCustomer').value;
+                const discount = {
+                    id: 'disc-' + Date.now(),
+                    name, code, type, value, buyQty, getQty, startDate, endDate,
+                    qualifyingScope: scope,
+                    qualifyingCategory: scope === 'category' ? document.getElementById('newDiscCategory').value : null,
+                    qualifyingProductId: scope === 'product' ? document.getElementById('newDiscProduct').value : null,
+                    minOrder: minOrderRaw ? parseFloat(minOrderRaw) : null,
+                    maxPerCustomer: maxPerCustomerRaw ? parseInt(maxPerCustomerRaw, 10) : null,
+                    active: true,
+                };
+                discounts.push(discount);
+                renderDiscountAdminPanel();
+                showToast(`Created discount code "${code}".`);
+            });
+            renderDiscountsAdmin();
+        }
 
         /* ================= DELIVERY RULES ADMIN PANEL (edit mode) ================= */
         function renderDeliveryFeeInfo() {
@@ -7957,6 +7969,86 @@
         window.removeWeightTier = removeWeightTier;
         function removeDeliveryRule(i) { deliveryThresholdRules.splice(i, 1); renderDeliveryAdmin(); updateSummaries(); }
         window.removeDeliveryRule = removeDeliveryRule;
+        // Same as renderReviewPlatformAdmin: this whole panel, including its
+        // two forms, only exists in the DOM for a confirmed admin with edit
+        // mode on. dinfoFeeText (the customer-facing fee summary) lives
+        // outside this panel and is populated separately by
+        // renderDeliveryFeeInfo(), unaffected by any of this.
+        function renderDeliveryRulesAdmin() {
+            const el = document.getElementById('deliveryRulesAdmin');
+            if (!el) return;
+            if (!(currentIsAdmin && editModeOn)) { el.className = ''; el.innerHTML = ''; return; }
+            el.className = 'delivery-admin-panel';
+            el.innerHTML = `
+    <h3>Delivery rules <span class="admin-only-tag">Edit mode only</span></h3>
+    <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh, same as other edit-mode changes on this site.</p>
+    <div class="delivery-admin-block">
+      <h4>Weight tiers</h4>
+      <p style="font-size:11.5px; color:var(--text-muted); margin:-4px 0 10px;">Delivery is priced by total order weight. Only applies to products with a weight set (edit a product &rarr; Weight field).</p>
+      <div id="deliveryWeightTiersList" class="delivery-rule-list"></div>
+      <form id="addWeightTierForm" class="delivery-admin-form">
+        <input type="text" id="newTierLabel" placeholder="Label (e.g. Up to 15kg)" required>
+        <input type="number" id="newTierMaxWeight" placeholder="Max weight (kg), leave blank for &quot;above all others&quot;" step="0.1" min="0">
+        <input type="number" id="newTierFee" placeholder="Fee (£)" step="0.01" min="0" required>
+        <button type="submit" class="btn btn-primary">Add tier</button>
+      </form>
+    </div>
+    <div class="delivery-admin-block">
+      <h4>Threshold rules</h4>
+      <div id="deliveryRulesList" class="delivery-rule-list"></div>
+      <form id="addDeliveryRuleForm" class="delivery-admin-form">
+        <input type="text" id="newRuleName" placeholder="Rule name (e.g. Free over 10 items)" required>
+        <select id="newRuleCondition">
+          <option value="price">Order price (£)</option>
+          <option value="weight">Total weight (kg)</option>
+          <option value="items">Number of items</option>
+        </select>
+        <select id="newRuleOperator">
+          <option value="gte">At least</option>
+          <option value="lte">At most</option>
+        </select>
+        <input type="number" id="newRuleValue" placeholder="Value" step="0.01" min="0" required>
+        <select id="newRuleEffect">
+          <option value="free">Make delivery free</option>
+          <option value="fixed">Set a fixed fee instead</option>
+        </select>
+        <input type="number" id="newRuleFeeOverride" placeholder="Fixed fee (£)" step="0.01" min="0" style="display:none;">
+        <button type="submit" class="btn btn-primary">Add rule</button>
+      </form>
+    </div>`;
+            document.getElementById('addWeightTierForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const label = document.getElementById('newTierLabel').value.trim();
+                const maxWeightRaw = document.getElementById('newTierMaxWeight').value;
+                const fee = parseFloat(document.getElementById('newTierFee').value);
+                if (!label || isNaN(fee) || fee < 0) return;
+                const maxWeight = maxWeightRaw ? parseFloat(maxWeightRaw) : Infinity;
+                deliveryWeightTiers.push({ id: 'tier-' + Date.now(), label, maxWeight, fee });
+                renderDeliveryRulesAdmin();
+                updateSummaries();
+                showToast(`Added weight tier "${label}".`);
+            });
+            document.getElementById('newRuleEffect').addEventListener('change', (e) => {
+                document.getElementById('newRuleFeeOverride').style.display = e.target.value === 'fixed' ? '' : 'none';
+            });
+            document.getElementById('addDeliveryRuleForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newRuleName').value.trim();
+                const conditionType = document.getElementById('newRuleCondition').value;
+                const operator = document.getElementById('newRuleOperator').value;
+                const value = parseFloat(document.getElementById('newRuleValue').value);
+                const effect = document.getElementById('newRuleEffect').value;
+                const feeOverrideRaw = document.getElementById('newRuleFeeOverride').value;
+                const feeOverride = feeOverrideRaw ? parseFloat(feeOverrideRaw) : undefined;
+                if (!name || isNaN(value) || value < 0) return;
+                if (effect === 'fixed' && (feeOverride === undefined || isNaN(feeOverride) || feeOverride < 0)) return;
+                deliveryThresholdRules.push({ id: 'rule-' + Date.now(), name, conditionType, operator, value, effect, feeOverride });
+                renderDeliveryRulesAdmin();
+                updateSummaries();
+                showToast(`Added delivery rule "${name}".`);
+            });
+            renderDeliveryAdmin();
+        }
 
         const OPENING_HOURS = [
             { day: 'Monday', open: '08:00', close: '21:00' },
@@ -10916,6 +11008,7 @@
             currentUser = null;
             currentSupabaseUser = null;
             currentIsAdmin = false;
+            if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             accountBtn.setAttribute('href', '#/login');
             accountCaret.style.display = 'none';
@@ -11010,10 +11103,22 @@
         let editModeOn = false;
         const editModeBanner = document.getElementById('editModeBanner');
         function setEditMode(on) {
+            // Turning edit mode ON requires a verified admin session, checked
+            // fresh here rather than trusting that whatever called this only
+            // does so from an already-gated surface. Turning it OFF is always
+            // allowed, there's no reason to block that.
+            if (on && !currentIsAdmin) return;
             editModeOn = on;
             document.body.classList.toggle('edit-mode-on', on);
             editModeBanner.classList.toggle('active', on);
             document.getElementById('editModeLabel').textContent = on ? 'Exit edit mode' : 'Enter edit mode';
+            // These panels aren't hidden with CSS, they don't exist in the
+            // DOM at all outside of edit mode, so they need to be built (or
+            // torn back down) explicitly on every toggle.
+            if (typeof renderReviewPlatformAdmin === 'function') renderReviewPlatformAdmin();
+            if (typeof renderDeliveryRulesAdmin === 'function') renderDeliveryRulesAdmin();
+            if (typeof renderLoyaltyAdminPanel === 'function') renderLoyaltyAdminPanel();
+            if (typeof renderDiscountAdminPanel === 'function') renderDiscountAdminPanel();
             syncNavSpacer();
         }
         document.getElementById('editModeToggle').addEventListener('click', () => {
@@ -11905,51 +12010,9 @@
             document.getElementById('postcodeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPostcode(); });
         }
 
-        /* ================= DELIVERY ADMIN FORMS (edit mode) ================= */
-        const addWeightTierForm = document.getElementById('addWeightTierForm');
-        if (addWeightTierForm) {
-            addWeightTierForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const label = document.getElementById('newTierLabel').value.trim();
-                const maxWeightRaw = document.getElementById('newTierMaxWeight').value;
-                const fee = parseFloat(document.getElementById('newTierFee').value);
-                if (!label || isNaN(fee) || fee < 0) return;
-                const maxWeight = maxWeightRaw ? parseFloat(maxWeightRaw) : Infinity;
-                deliveryWeightTiers.push({ id: 'tier-' + Date.now(), label, maxWeight, fee });
-                addWeightTierForm.reset();
-                renderDeliveryAdmin();
-                updateSummaries();
-                showToast(`Added weight tier "${label}".`);
-            });
-        }
-
-        const newRuleEffectSelect = document.getElementById('newRuleEffect');
-        if (newRuleEffectSelect) {
-            newRuleEffectSelect.addEventListener('change', () => {
-                document.getElementById('newRuleFeeOverride').style.display = newRuleEffectSelect.value === 'fixed' ? '' : 'none';
-            });
-        }
-        const addDeliveryRuleForm = document.getElementById('addDeliveryRuleForm');
-        if (addDeliveryRuleForm) {
-            addDeliveryRuleForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const name = document.getElementById('newRuleName').value.trim();
-                const conditionType = document.getElementById('newRuleCondition').value;
-                const operator = document.getElementById('newRuleOperator').value;
-                const value = parseFloat(document.getElementById('newRuleValue').value);
-                const effect = document.getElementById('newRuleEffect').value;
-                const feeOverrideRaw = document.getElementById('newRuleFeeOverride').value;
-                const feeOverride = feeOverrideRaw ? parseFloat(feeOverrideRaw) : undefined;
-                if (!name || isNaN(value) || value < 0) return;
-                if (effect === 'fixed' && (feeOverride === undefined || isNaN(feeOverride) || feeOverride < 0)) return;
-                deliveryThresholdRules.push({ id: 'rule-' + Date.now(), name, conditionType, operator, value, effect, feeOverride });
-                addDeliveryRuleForm.reset();
-                document.getElementById('newRuleFeeOverride').style.display = 'none';
-                renderDeliveryAdmin();
-                updateSummaries();
-                showToast(`Added delivery rule "${name}".`);
-            });
-        }
+        /* Delivery admin forms are wired up inside renderDeliveryRulesAdmin(),
+           called whenever edit mode is toggled, since the panel (and its
+           forms) don't exist in the DOM at all until then. */
 
         /* ================= DISCOUNT ADMIN FORM (edit mode) ================= */
         const newDiscTypeSelect = document.getElementById('newDiscType');
@@ -12121,22 +12184,6 @@
         renderDeliveryAdmin();
         populateDeliverySlots();
         registerStoredLoyaltyCodes();
-        const loyaltyThresholdInput = document.getElementById('loyaltyThresholdInput');
-        const loyaltyRewardInput = document.getElementById('loyaltyRewardInput');
-        if (loyaltyThresholdInput) {
-            loyaltyThresholdInput.addEventListener('change', () => {
-                const n = parseFloat(loyaltyThresholdInput.value);
-                loyaltySpendThreshold = (!isNaN(n) && n > 0) ? n : 100;
-                renderCartList();
-            });
-        }
-        if (loyaltyRewardInput) {
-            loyaltyRewardInput.addEventListener('change', () => {
-                const n = parseFloat(loyaltyRewardInput.value);
-                loyaltyRewardPct = isNaN(n) ? 10 : Math.max(0, Math.min(50, n));
-                renderCartList();
-            });
-        }
         function renderLoyaltySpendDisplay() {
             const el = document.getElementById('loyaltySpendDisplay');
             if (!el) return;
@@ -12144,10 +12191,33 @@
             el.innerHTML = `This browser has <strong>${money(getLoyaltySpend())}</strong> in recorded past spend`
                 + (pending ? `, and one unused code waiting: <strong>${pending.code}</strong>.` : '.');
         }
-        renderLoyaltySpendDisplay();
-        const loyaltyResetBtn = document.getElementById('loyaltyResetBtn');
-        if (loyaltyResetBtn) {
-            loyaltyResetBtn.addEventListener('click', () => {
+        // Same pattern as the other admin panels: only exists in the DOM
+        // for a confirmed admin with edit mode on.
+        function renderLoyaltyAdminPanel() {
+            const el = document.getElementById('loyaltyAdmin');
+            if (!el) return;
+            if (!(currentIsAdmin && editModeOn)) { el.className = ''; el.innerHTML = ''; return; }
+            el.className = 'delivery-admin-panel';
+            el.innerHTML = `
+    <h3>Loyalty nudge <span class="admin-only-tag">Edit mode only</span></h3>
+    <p class="delivery-admin-note">Tracks cumulative spend in each customer's own browser storage, not a real account system, so it resets if they clear their browser or switch devices. Crossing the threshold mints a unique, single-use code, shown on their receipt and valid for their next order only.</p>
+    <div class="field-row">
+      <div class="field"><label>Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="${loyaltySpendThreshold}"></div>
+      <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="${loyaltyRewardPct}"></div>
+    </div>
+    <p class="delivery-admin-note" id="loyaltySpendDisplay" style="margin-top:14px;"></p>
+    <button type="button" class="apf-cancel" id="loyaltyResetBtn" style="margin-top:4px;">Reset test spend &amp; codes (this browser only)</button>`;
+            document.getElementById('loyaltyThresholdInput').addEventListener('change', (e) => {
+                const n = parseFloat(e.target.value);
+                loyaltySpendThreshold = (!isNaN(n) && n > 0) ? n : 100;
+                renderCartList();
+            });
+            document.getElementById('loyaltyRewardInput').addEventListener('change', (e) => {
+                const n = parseFloat(e.target.value);
+                loyaltyRewardPct = isNaN(n) ? 10 : Math.max(0, Math.min(50, n));
+                renderCartList();
+            });
+            document.getElementById('loyaltyResetBtn').addEventListener('click', () => {
                 if (!confirm('Clear all recorded loyalty spend and codes for every identity on this browser (guest and any logged-in test accounts)? This only affects your own testing, real customers each have their own separate browser storage.')) return;
                 try {
                     const keysToRemove = [];
@@ -12162,8 +12232,8 @@
                 renderCartList();
                 showToast('Loyalty test data cleared for every identity on this browser.');
             });
+            renderLoyaltySpendDisplay();
         }
-        renderDiscountsAdmin();
         const addBundleBtn = document.getElementById('addBundleBtn');
         if (addBundleBtn) addBundleBtn.addEventListener('click', openAddBundleForm);
         renderCombos();
@@ -12266,20 +12336,6 @@
         renderNewCarousel();
         renderBestSellersSpotlight();
         renderPlatformBadges();
-        const trustpilotUrlInput = document.getElementById('trustpilotUrlInput');
-        const googleBusinessUrlInput = document.getElementById('googleBusinessUrlInput');
-        if (trustpilotUrlInput) {
-            trustpilotUrlInput.addEventListener('change', () => {
-                trustpilotUrl = trustpilotUrlInput.value.trim();
-                renderPlatformBadges();
-            });
-        }
-        if (googleBusinessUrlInput) {
-            googleBusinessUrlInput.addEventListener('change', () => {
-                googleBusinessUrl = googleBusinessUrlInput.value.trim();
-                renderPlatformBadges();
-            });
-        }
         renderOfferCarousel();
         initThemeToggle();
         initDragScroll();
