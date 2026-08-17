@@ -4780,6 +4780,7 @@
             background: none; border: none; color: #b34a4a; font-size: 12px; font-weight: 600; cursor: pointer;
             flex-shrink: 0; padding: 4px 8px;
         }
+        .delivery-rule-row .rule-edit-btn { color: var(--heading-mid); }
         .delivery-admin-form {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-items: center;
         }
@@ -6821,7 +6822,7 @@
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Best Sellers</div>
                 <h1>Best Sellers</h1>
-                <p>A curated starting selection, not live sales data yet, there's no order history to track that from. We'll swap this for genuine best-sellers as real orders come in.</p>
+                <p>Ranked by real sales from the last 30 days. Until there's enough order history to rank from, this shows a starting selection instead.</p>
                 <div class="result-count" id="bestSellersCount"></div>
             </div>
         </header>
@@ -6914,6 +6915,11 @@
         </header>
         <section class="products-section">
             <div class="wrap">
+                <button class="add-product-btn" id="addProductBtnOffers" type="button" onclick="openAddToOfferForm('addProductSlotOffers')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Add product to special offers
+                </button>
+                <div id="addProductSlotOffers"></div>
                 <div class="product-grid" id="specialOffersGrid"></div>
             </div>
         </section>
@@ -7613,6 +7619,7 @@
            It's honest to say so rather than imply it's a hard guarantee. */
         let discounts = [];
         let appliedDiscount = null; // the currently-applied discount object, or null
+        let editingDiscountId = null; // id of the discount the admin form is currently editing, or null when creating new
 
         /* ================= LOYALTY NUDGE =================
            Not a full account-based loyalty program, there's no real login
@@ -7875,7 +7882,10 @@
                 list.innerHTML = discounts.map((d, i) => `
       <div class="delivery-rule-row">
         <span>${discountDescribe(d)}</span>
-        <button type="button" class="rule-remove-btn" onclick="removeDiscount(${i})">Remove</button>
+        <span style="display:flex; gap:6px;">
+          <button type="button" class="rule-remove-btn rule-edit-btn" onclick="editDiscount('${d.id}')">Edit</button>
+          <button type="button" class="rule-remove-btn" onclick="removeDiscount(${i})">Remove</button>
+        </span>
       </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No discounts created yet.</p>';
             }
             const catSelect = document.getElementById('newDiscCategory');
@@ -7891,8 +7901,54 @@
                 prodSelect.dataset.populated = 'true';
             }
         }
-        function removeDiscount(i) { discounts.splice(i, 1); renderDiscountsAdmin(); }
+        function removeDiscount(i) {
+            if (discounts[i] && discounts[i].id === editingDiscountId) resetDiscountForm();
+            discounts.splice(i, 1);
+            renderDiscountsAdmin();
+        }
         window.removeDiscount = removeDiscount;
+        // Populates the (single, shared) discount form with an existing
+        // discount's values and flips it into "editing" mode, rather than
+        // building a separate edit form, submit then updates that discount
+        // in place instead of creating a new one.
+        function editDiscount(id) {
+            const d = discounts.find(x => x.id === id);
+            if (!d) return;
+            editingDiscountId = id;
+            document.getElementById('newDiscName').value = d.name || '';
+            document.getElementById('newDiscCode').value = d.code || '';
+            document.getElementById('newDiscType').value = d.type || 'percent';
+            document.getElementById('newDiscType').dispatchEvent(new Event('change'));
+            document.getElementById('newDiscValue').value = d.value ?? '';
+            document.getElementById('newDiscBuyQty').value = d.buyQty ?? 1;
+            document.getElementById('newDiscGetQty').value = d.getQty ?? 1;
+            document.getElementById('newDiscStart').value = d.startDate || '';
+            document.getElementById('newDiscEnd').value = d.endDate || '';
+            document.getElementById('newDiscScope').value = d.qualifyingScope || 'all';
+            document.getElementById('newDiscScope').dispatchEvent(new Event('change'));
+            if (d.qualifyingScope === 'category') document.getElementById('newDiscCategory').value = d.qualifyingCategory || '';
+            if (d.qualifyingScope === 'product') document.getElementById('newDiscProduct').value = d.qualifyingProductId || '';
+            document.getElementById('newDiscMinOrder').value = d.minOrder ?? '';
+            document.getElementById('newDiscMaxPerCustomer').value = d.maxPerCustomer ?? '';
+            document.getElementById('discFormSubmitBtn').textContent = 'Save changes';
+            document.getElementById('discFormCancelBtn').style.display = '';
+            document.getElementById('addDiscountForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        window.editDiscount = editDiscount;
+        function resetDiscountForm() {
+            editingDiscountId = null;
+            const form = document.getElementById('addDiscountForm');
+            if (form) form.reset();
+            const submitBtn = document.getElementById('discFormSubmitBtn');
+            if (submitBtn) submitBtn.textContent = 'Create discount';
+            const cancelBtn = document.getElementById('discFormCancelBtn');
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            document.getElementById('newDiscBogoFields').style.display = 'none';
+            document.getElementById('newDiscValueField').style.display = '';
+            document.getElementById('newDiscCategoryField').style.display = 'none';
+            document.getElementById('newDiscProductField').style.display = 'none';
+            renderDiscountsAdmin();
+        }
         // Same pattern as the other admin panels: only exists in the DOM
         // for a confirmed admin with edit mode on.
         function renderDiscountAdminPanel() {
@@ -7937,7 +7993,10 @@
         <div class="field"><label>Minimum order £ (optional)</label><input type="number" step="0.01" min="0" id="newDiscMinOrder"></div>
         <div class="field"><label>Max uses per customer (optional)</label><input type="number" min="1" id="newDiscMaxPerCustomer"></div>
       </div>
-      <button type="submit" class="btn btn-primary">Create discount</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button type="submit" class="btn btn-primary" id="discFormSubmitBtn">Create discount</button>
+        <button type="button" id="discFormCancelBtn" class="rule-remove-btn" style="display:none;">Cancel edit</button>
+      </div>
     </form>`;
             document.getElementById('newDiscType').addEventListener('change', (e) => {
                 const isBogo = e.target.value === 'bogo';
@@ -7949,12 +8008,17 @@
                 document.getElementById('newDiscCategoryField').style.display = e.target.value === 'category' ? '' : 'none';
                 document.getElementById('newDiscProductField').style.display = e.target.value === 'product' ? '' : 'none';
             });
+            document.getElementById('discFormCancelBtn').addEventListener('click', () => resetDiscountForm());
             document.getElementById('addDiscountForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const name = document.getElementById('newDiscName').value.trim();
                 const code = document.getElementById('newDiscCode').value.trim();
                 if (!name || !code) return;
-                if (findDiscountByCode(code)) { showToast(`A discount with code "${code}" already exists.`); return; }
+                // Editing a discount keeps its own code without tripping the
+                // "already exists" guard, that guard is only meant to catch a
+                // genuinely different discount claiming the same code.
+                const existing = findDiscountByCode(code);
+                if (existing && existing.id !== editingDiscountId) { showToast(`A discount with code "${code}" already exists.`); return; }
                 const type = document.getElementById('newDiscType').value;
                 const value = parseFloat(document.getElementById('newDiscValue').value) || 0;
                 const buyQty = parseInt(document.getElementById('newDiscBuyQty').value, 10) || 1;
@@ -7964,19 +8028,23 @@
                 const scope = document.getElementById('newDiscScope').value;
                 const minOrderRaw = document.getElementById('newDiscMinOrder').value;
                 const maxPerCustomerRaw = document.getElementById('newDiscMaxPerCustomer').value;
-                const discount = {
-                    id: 'disc-' + Date.now(),
+                const fields = {
                     name, code, type, value, buyQty, getQty, startDate, endDate,
                     qualifyingScope: scope,
                     qualifyingCategory: scope === 'category' ? document.getElementById('newDiscCategory').value : null,
                     qualifyingProductId: scope === 'product' ? document.getElementById('newDiscProduct').value : null,
                     minOrder: minOrderRaw ? parseFloat(minOrderRaw) : null,
                     maxPerCustomer: maxPerCustomerRaw ? parseInt(maxPerCustomerRaw, 10) : null,
-                    active: true,
                 };
-                discounts.push(discount);
-                renderDiscountAdminPanel();
-                showToast(`Created discount code "${code}".`);
+                if (editingDiscountId) {
+                    const target = discounts.find(d => d.id === editingDiscountId);
+                    if (target) Object.assign(target, fields);
+                    showToast(`Saved changes to "${code}".`);
+                } else {
+                    discounts.push({ id: 'disc-' + Date.now(), active: true, ...fields });
+                    showToast(`Created discount code "${code}".`);
+                }
+                resetDiscountForm();
             });
             renderDiscountsAdmin();
         }
@@ -9290,6 +9358,71 @@
             document.getElementById('specialOffersCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'specialOffersGrid');
         }
+        /* ================= ADD PRODUCT TO SPECIAL OFFERS (edit mode) =================
+           Special offers aren't a separate list, they're just any existing
+           product with a salePrice below its price (see offerItems()). This
+           form doesn't create a new product, it picks one from the real
+           catalog and sets that sale price, the same field the per-product
+           edit panel already exposes, just reachable straight from this
+           page instead of having to go find the product first. */
+        function openAddToOfferForm(slotId) {
+            const slot = document.getElementById(slotId);
+            if (!slot) return;
+            if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; return; }
+            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g, '&')}</option>`).join('');
+            slot.innerHTML = `
+        <div class="add-product-form">
+          <h3>Add a product to special offers</h3>
+          <div class="apf-row">
+            <div><label>Category</label><select id="ato-cat"></select></div>
+            <div><label>Product</label><select id="ato-product"></select></div>
+          </div>
+          <div class="apf-row">
+            <div><label>Sale price (£)</label><input type="number" step="0.01" min="0" id="ato-saleprice"></div>
+          </div>
+          <p id="ato-current-price" style="font-size:12px; color:var(--text-muted); margin:-6px 0 10px;"></p>
+          <div class="apf-actions">
+            <button class="apf-save" type="button" onclick="saveProductToOffer('${slotId}')">Add to special offers</button>
+            <button class="apf-cancel" type="button" onclick="document.getElementById('${slotId}').innerHTML='';">Cancel</button>
+          </div>
+        </div>`;
+            document.getElementById('ato-cat').innerHTML = catOptions;
+            populateAtoProductSelect();
+            document.getElementById('ato-cat').addEventListener('change', populateAtoProductSelect);
+            document.getElementById('ato-product').addEventListener('change', updateAtoCurrentPriceLabel);
+        }
+        window.openAddToOfferForm = openAddToOfferForm;
+        function populateAtoProductSelect() {
+            const catSlug = document.getElementById('ato-cat').value;
+            const cat = findCategory(catSlug);
+            document.getElementById('ato-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+            updateAtoCurrentPriceLabel();
+        }
+        function updateAtoCurrentPriceLabel() {
+            const catSlug = document.getElementById('ato-cat').value;
+            const idx = parseInt(document.getElementById('ato-product').value, 10);
+            const p = getProduct(catSlug, idx);
+            const label = document.getElementById('ato-current-price');
+            if (!label) return;
+            label.textContent = p
+                ? `Current price: ${money(p.price)}${typeof p.salePrice === 'number' ? `, already on offer at ${money(p.salePrice)}` : ''}`
+                : '';
+        }
+        function saveProductToOffer(slotId) {
+            const catSlug = document.getElementById('ato-cat').value;
+            const idx = parseInt(document.getElementById('ato-product').value, 10);
+            const salePrice = parseFloat(document.getElementById('ato-saleprice').value);
+            const cat = findCategory(catSlug);
+            const product = cat && cat.products[idx];
+            if (!product) return;
+            if (isNaN(salePrice) || salePrice <= 0) { showToast('Enter a valid sale price.'); return; }
+            if (salePrice >= product.price) { showToast(`Sale price needs to be lower than the current price (${money(product.price)}).`); return; }
+            product.salePrice = salePrice;
+            document.getElementById(slotId).innerHTML = '';
+            renderSpecialOffersPage();
+            showToast(`${product.name} added to special offers at ${money(salePrice)}.`);
+        }
+        window.saveProductToOffer = saveProductToOffer;
 
         (function initTrustBarPause() {
             const track = document.getElementById('trustBarTrack');
