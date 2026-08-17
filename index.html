@@ -9244,6 +9244,23 @@
             let safetyTimer = null;
             let dir = 1;
             let lastTs = null;
+            // Mutating scrollLeft forces a layout recalc on this element
+            // every single frame, forever, whether or not anyone can
+            // actually see it. With up to four of these running at once
+            // (new arrivals, offers, best sellers, categories) that adds up
+            // to real, constant main-thread cost competing with the page's
+            // own scrolling, especially noticeable once the user has
+            // scrolled past a strip and it's still animating off-screen.
+            // Skipping the move (not the rAF scheduling itself, so it can
+            // still resume the instant it's visible again) while outside
+            // the viewport or the tab is backgrounded removes that cost
+            // entirely without changing how the drift looks or behaves
+            // while it's actually on screen.
+            let inView = true;
+            const visibilityObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => { inView = entry.isIntersecting; });
+            }, { threshold: 0 });
+            visibilityObserver.observe(strip);
 
             function pause() {
                 paused = true;
@@ -9295,7 +9312,7 @@
                 return 0.12 + 0.88 * smooth;
             }
             function frame(ts) {
-                if (!paused) {
+                if (!paused && inView && !document.hidden) {
                     if (lastTs === null) lastTs = ts;
                     const dt = (ts - lastTs) / 1000;
                     lastTs = ts;
@@ -12339,12 +12356,25 @@
             let rafId = null;
             const SPEED = 0.45; // px per frame, gentle
 
+            // offsetParent only catches display:none, not "scrolled past
+            // it further down the page", which is the common case here
+            // (this strip sits near the top of the category page, so
+            // browsing the product grid below scrolls it out of view while
+            // it keeps nudging scrollLeft, forcing a layout recalc every
+            // frame for a strip nobody can see). IntersectionObserver
+            // catches that case too.
+            let inView = true;
+            const visibilityObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => { inView = entry.isIntersecting; });
+            }, { threshold: 0 });
+            visibilityObserver.observe(strip);
+
             let scrollPos = strip.scrollLeft; // float accumulator — strip.scrollLeft itself
                                                // rounds to an integer on every write, so a
                                                // sub-pixel SPEED would otherwise truncate back
                                                // to 0 every single frame and never move at all
             function tick() {
-                if (strip.offsetParent !== null) {
+                if (strip.offsetParent !== null && inView && !document.hidden) {
                     if (paused) {
                         // Don't touch scrollLeft at all while paused — this is what
                         // lets drag, arrow clicks, and native smooth-scroll actually
