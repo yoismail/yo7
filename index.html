@@ -8243,6 +8243,12 @@
             return `<span class="price-now sale">${money(p.salePrice)}</span><span class="price-was">${money(p.price)}</span><span class="price-off">&minus;${pct}%</span>`;
         }
         function findCategory(slug) { return CATEGORIES.find(c => c.slug === slug); }
+        // Generic fallbacks for whenever an item genuinely has no icon of its
+        // own (in practice, almost never: products inherit their category's
+        // SVG, and dishes/combos carry one directly). Kept as SVGs, matching
+        // every other icon on the site, rather than a platform emoji.
+        const DEFAULT_ITEM_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5h17l-1.6 9.3a2 2 0 0 1-2 1.7H7.1a2 2 0 0 1-2-1.7L3.5 9.5Z"/><path d="M7.5 9.5 9 4M16.5 9.5 15 4"/><path d="M8.5 13v5M12 13v5M15.5 13v5"/></svg>';
+        const DEFAULT_DISH_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>';
         function allProducts() {
             return CATEGORIES.flatMap(c => c.products.map((p, i) => ({ ...p, id: c.slug + '::' + i, catSlug: c.slug, catName: c.name, emoji: c.emoji })));
         }
@@ -8482,13 +8488,18 @@
            reference, nothing invented, dishes needing an ingredient you
            don't stock (eggs, egusi) were deliberately left off rather than
            built with a placeholder ingredient. */
+        // Icons here are inline SVGs in the same style as every category icon
+        // (CATEGORIES[].emoji), not platform emoji, so a dish pill doesn't look
+        // like it wandered in from a different app. Follow the same convention
+        // for any dish added later: a 24x24 viewBox, stroke="currentColor",
+        // stroke-width 1.7, round caps/joins, no raw emoji characters.
         let DISH_TEMPLATES = [
-            { name: 'Jollof Rice', emoji: '🍚', items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'seasoning', idx: 0 }] },
-            { name: 'Suya Night', emoji: '🍢', items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }, { catSlug: 'oils', idx: 1 }] },
-            { name: 'Pepper Soup', emoji: '🍲', items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'tropical-foods', idx: 1 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'sea-foods', idx: 1 }] },
-            { name: 'Fried Rice', emoji: '🍛', items: [{ catSlug: 'rice', idx: 2 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'poultry', idx: 1 }] },
-            { name: 'Ewa Agoyin', emoji: '🫘', items: [{ catSlug: 'beans', idx: 3 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'sea-foods', idx: 1 }] },
-            { name: 'Efo Riro', emoji: '🥬', items: [{ catSlug: 'fruits-vegetables', idx: 0 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'sea-foods', idx: 1 }, { catSlug: 'sea-foods', idx: 2 }, { catSlug: 'condiments', idx: 1 }] },
+            { name: 'Jollof Rice', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>', items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'seasoning', idx: 0 }] },
+            { name: 'Suya Night', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12h16.5"/><path d="M19 12l2.5-2.5M19 12l2.5 2.5"/><rect x="5.3" y="9.3" width="4.4" height="5.4" rx="1.4"/><rect x="11.3" y="9.3" width="4.4" height="5.4" rx="1.4"/></svg>', items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }, { catSlug: 'oils', idx: 1 }] },
+            { name: 'Pepper Soup', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><path d="M9.3 3c-.9.9-.9 1.8 0 2.7M14.7 3c-.9.9-.9 1.8 0 2.7"/></svg>', items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'tropical-foods', idx: 1 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'sea-foods', idx: 1 }] },
+            { name: 'Fried Rice', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="12" r="7.5"/><path d="M18 9.5 22 6"/><ellipse cx="8.7" cy="11" rx=".9" ry="1.3" transform="rotate(-20 8.7 11)"/><ellipse cx="12.3" cy="13" rx=".9" ry="1.3" transform="rotate(15 12.3 13)"/></svg>', items: [{ catSlug: 'rice', idx: 2 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'poultry', idx: 1 }] },
+            { name: 'Ewa Agoyin', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15c-2-3-1.5-8 2-11 3.5 3 8 3 11-1-1 5-1 10-4.5 13.5S9 18 6 15Z"/><ellipse cx="9.3" cy="12.5" rx="1.1" ry="1.7" transform="rotate(35 9.3 12.5)"/><ellipse cx="12.7" cy="9.3" rx="1.1" ry="1.7" transform="rotate(35 12.7 9.3)"/></svg>', items: [{ catSlug: 'beans', idx: 3 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'sea-foods', idx: 1 }] },
+            { name: 'Efo Riro', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20c-2.5-4-2-9 1-13 2 4 1.5 9-1 13Z"/><path d="M12 20c-2.5-5-1.5-11 2-15 2.3 5 1.3 11-2 15Z"/><path d="M18 20c-2-3.5-1.5-7.5.5-11 1.8 3.5 1.3 7.5-.5 11Z"/></svg>', items: [{ catSlug: 'fruits-vegetables', idx: 0 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'sea-foods', idx: 1 }, { catSlug: 'sea-foods', idx: 2 }, { catSlug: 'condiments', idx: 1 }] },
         ];
         let activeDishIndex = null;
         let dishSelectedItems = new Set(); // indices into the active dish's items array
@@ -8627,7 +8638,7 @@
         window.addItemToNewDish = addItemToNewDish;
         function saveNewDish() {
             const name = document.getElementById('adf-name').value.trim();
-            const emoji = document.getElementById('adf-emoji').value.trim() || '🍽️';
+            const emoji = document.getElementById('adf-emoji').value.trim() || DEFAULT_DISH_ICON_SVG;
             if (!name) { showToast('Give the dish a name.'); return; }
             if (newDishItems.length < 1) { showToast('Add at least one ingredient.'); return; }
             DISH_TEMPLATES.push({ name, emoji, items: [...newDishItems] });
@@ -8693,7 +8704,7 @@
                 unit: `Combo, ${added.length} items${discountPct > 0 ? `, ${discountPct}% off` : ''}`,
                 price: discountedTotal,
                 catSlug: null,
-                emoji: '🍽️',
+                emoji: DEFAULT_DISH_ICON_SVG,
                 isCombo: true,
                 comboItems: added.map(p => p.name),
                 weight: totalWeight,
@@ -8898,7 +8909,7 @@
                 unit: `Combo, ${added.length} items${discountPct > 0 ? `, ${discountPct}% off` : ''}`,
                 price: discountedTotal,
                 catSlug: null,
-                emoji: '🍽️',
+                emoji: DEFAULT_DISH_ICON_SVG,
                 isCombo: true,
                 comboItems: added.map(p => p.name),
                 weight: totalWeight,
@@ -9277,7 +9288,7 @@
             return 'In stock';
         }
         function comingSoonThumbHTML(p) {
-            const emoji = (p && p.emoji) ? p.emoji : '🛒';
+            const emoji = (p && p.emoji) ? p.emoji : DEFAULT_ITEM_ICON_SVG;
             return `<span class="thumb-placeholder-emoji">${emoji}</span><span class="thumb-placeholder-label">Photo coming soon</span>`;
         }
         // Renders a real photo when a product has one, cropped consistently via object-fit;
@@ -9539,7 +9550,7 @@
             const existingImg = pdImageEl.querySelector('.product-photo-img');
             if (existingImg) existingImg.remove();
             const placeholder = document.getElementById('pdPlaceholder');
-            placeholder.innerHTML = `<span class="pd-placeholder-emoji">${p.emoji || '🛒'}</span><span>Photo coming soon</span>`;
+            placeholder.innerHTML = `<span class="pd-placeholder-emoji">${p.emoji || DEFAULT_ITEM_ICON_SVG}</span><span>Photo coming soon</span>`;
             if (p.image) {
                 const img = document.createElement('img');
                 img.src = p.image;
@@ -9900,7 +9911,7 @@
                     if (item.isCombo) {
                         return `
       <div class="cart-row cart-row-combo">
-        <div class="cart-thumb">${item.emoji || '🍽️'}</div>
+        <div class="cart-thumb">${item.emoji || DEFAULT_DISH_ICON_SVG}</div>
         <div class="cart-info">
           <h4>${item.name}</h4>
           <span>${item.unit}</span>
@@ -9929,7 +9940,7 @@
                     // comfortably.
                     const thumbHTML = (liveProduct && liveProduct.image)
                         ? productPhotoHTML(liveProduct, item.name)
-                        : `<span style="font-size:24px;">${item.emoji || '🛒'}</span>`;
+                        : `<span style="font-size:24px;">${item.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
                     return `
       <div class="cart-row">
         <div class="cart-thumb">${thumbHTML}</div>
@@ -11192,7 +11203,7 @@
             <div>
               <label>Product photo</label>
               <div class="ep-photo-row">
-                <div class="ep-photo-preview" id="ep-photo-preview-${catSlug}-${idx}">${product.image ? `<img src="${product.image}" alt="">` : `<span>${product.emoji || '🛒'}</span>`}</div>
+                <div class="ep-photo-preview" id="ep-photo-preview-${catSlug}-${idx}">${product.image ? `<img src="${product.image}" alt="">` : `<span>${product.emoji || DEFAULT_ITEM_ICON_SVG}</span>`}</div>
                 <div>
                   <input type="file" accept="image/*" id="ep-photo-${catSlug}-${idx}" onchange="handleEditPhotoUpload('${catSlug}', ${idx}, this)">
                   ${product.image ? `<button type="button" class="ep-photo-remove" onclick="removeEditPhoto('${catSlug}', ${idx})">Remove photo</button>` : ''}
@@ -11425,7 +11436,7 @@
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) {
                 showToast('Could not upload that photo: ' + uploadError.message, 6000);
-                if (preview) preview.innerHTML = `<span>${(findCategory(catSlug).products[idx].emoji) || '🛒'}</span>`;
+                if (preview) preview.innerHTML = `<span>${(findCategory(catSlug).products[idx].emoji) || DEFAULT_ITEM_ICON_SVG}</span>`;
                 return;
             }
             const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
@@ -11466,7 +11477,7 @@
                 if (error) showToast('Could not remove that photo from the live site: ' + error.message, 6000);
             }
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
-            if (preview) preview.innerHTML = `<span>${product.emoji || '🛒'}</span>`;
+            if (preview) preview.innerHTML = `<span>${product.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
             const removeBtn = document.querySelector(`#ep-photo-preview-${catSlug}-${idx}`)?.closest('.ep-photo-row')?.querySelector('.ep-photo-remove');
             if (removeBtn) removeBtn.remove();
         }
@@ -11487,7 +11498,7 @@
           <div>
             <label>Product photo (optional)</label>
             <div class="ep-photo-row">
-              <div class="ep-photo-preview" id="apf-photo-preview-${uid}"><span>🛒</span></div>
+              <div class="ep-photo-preview" id="apf-photo-preview-${uid}"><span>${DEFAULT_ITEM_ICON_SVG}</span></div>
               <input type="file" accept="image/*" id="apf-photo-${uid}" onchange="handleNewProductPhotoUpload('${uid}', this)">
             </div>
           </div>
