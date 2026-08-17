@@ -2798,8 +2798,8 @@
             font-size: 12px;
             padding: 7px 14px;
             border-radius: 999px;
-            border: 1px solid rgba(var(--border-rgb), 0.16);
-            color: var(--ink);
+            border: 1px solid rgba(44, 28, 16, 0.16);
+            color: #2C1C10;
             text-decoration: none;
             transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
             white-space: nowrap;
@@ -3200,6 +3200,13 @@
             text-transform: uppercase;
             color: var(--heading-mid);
             margin-bottom: 12px;
+        }
+
+        .pd-code {
+            font-family: var(--body);
+            font-size: 12.5px;
+            color: var(--text-faint);
+            margin: 4px 0 14px;
         }
 
         .pd-grid h1 {
@@ -4337,6 +4344,12 @@
             font-size: 11.5px;
             color: var(--text-muted);
             margin-top: 2px;
+        }
+        .inv-item-code {
+            font-family: var(--body);
+            font-weight: 400;
+            font-size: 11.5px;
+            color: var(--text-muted);
         }
         .inv-unit-price { white-space: nowrap; }
         .inv-was {
@@ -5827,6 +5840,7 @@
                     <div>
                         <div class="pd-cat-tag" id="pdCatTag"></div>
                         <h1 id="pdName"></h1>
+                        <div class="pd-code" id="pdCode"></div>
                         <a class="pd-rating-summary" id="pdRatingSummary" href="javascript:void(0)" onclick="document.getElementById('pdReviewsSection').scrollIntoView({behavior:'smooth', block:'start'})" style="display:none;">
                             <span class="pd-stars" id="pdRatingStars"></span>
                             <span id="pdRatingText"></span>
@@ -6585,7 +6599,7 @@
                     <p>We deliver to every UK postcode. Delivery is priced by the total weight of your order, not a flat rate, you can see the exact fee before you check out. Pickup from our Ipswich address is always free.</p>
 
                     <h2>Delivery timing</h2>
-                    <p>Orders placed before 12pm are usually out the same or next day. Orders placed after 12pm are treated as next-day at the earliest, this gives us time to actually prepare the order properly rather than rush it. Timings are estimates, not guarantees, actual delivery is carried out by a third-party courier and can be affected by things outside our control (weather, courier delays, and so on).</p>
+                    <p>Orders placed before 10am are usually out the same or next day. Orders placed after 10am are treated as next-day at the earliest, this gives us time to actually prepare the order properly rather than rush it. Timings are estimates, not guarantees, actual delivery is carried out by a third-party courier and can be affected by things outside our control (weather, courier delays, and so on).</p>
 
                     <h2>If you're not in when we deliver</h2>
                     <p>You can leave delivery notes at checkout (a gate code, a safe place, a preferred time) and the courier will follow them where possible. If nobody's available and there's no safe place to leave the order, the courier will typically attempt redelivery or leave a card with next steps. For perishable items, please try to make sure someone can take the delivery in reasonably promptly.</p>
@@ -6699,7 +6713,7 @@
                                 stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 6 9 17l-5-5" />
                             </svg>
-                            Orders placed before 12pm are usually delivered the same day or next day, depending on your
+                            Orders placed before 10am are usually delivered the same day or next day, depending on your
                             area.
                         </li>
                         <li>
@@ -7454,6 +7468,21 @@
                 ]
             },
         ];
+        // Every product needs a stable, human-readable product code (e.g.
+        // "FLR-01"). Generated here instead of hand-typed on each of the
+        // ~19 categories' product literals, so it can't drift out of sync
+        // or collide as products are added/reordered.
+        const CATEGORY_CODE_PREFIX = {
+            flour: 'FLR', oils: 'OIL', noodles: 'NOO', seasoning: 'SSN', beverages: 'BEV',
+            'sea-foods': 'SEA', 'tropical-foods': 'TRO', 'fruits-vegetables': 'FNV', condiments: 'CON',
+            miscellaneous: 'MSC', 'hair-products': 'HAI', 'snacks-confectionary': 'SNK', rice: 'RIC',
+            meat: 'MEA', 'body-oral-products': 'BOP', poultry: 'POU', 'root-vegetables': 'ROV',
+            beans: 'BNS', drinks: 'DRK',
+        };
+        CATEGORIES.forEach(cat => {
+            const prefix = CATEGORY_CODE_PREFIX[cat.slug] || cat.slug.slice(0, 3).toUpperCase();
+            cat.products.forEach((p, i) => { p.code = `${prefix}-${String(i + 1).padStart(2, '0')}`; });
+        });
         const GROUPS = [
             { slug: 'staples', name: 'Staples &amp; Base Ingredients', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l.8 4H8.2L9 3.5Z"/><path d="M8.2 7.5 6.5 19a1.5 1.5 0 0 0 1.5 1.7h8a1.5 1.5 0 0 0 1.5-1.7L15.8 7.5"/></svg>', tagline: 'Rice, flour, beans, yam, the everyday foundations.', categories: ['flour', 'rice', 'root-vegetables', 'beans', 'noodles'] },
             { slug: 'seasoning-oils-flavours', name: 'Seasoning, Oils &amp; Flavours', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h5V6h-5z"/><path d="M8.3 6h7.4l1 13.2a1.5 1.5 0 0 1-1.5 1.6H8.8a1.5 1.5 0 0 1-1.5-1.6L8.3 6Z"/><circle cx="10.7" cy="9.5" r=".55"/><circle cx="13.3" cy="9.5" r=".55"/><circle cx="12" cy="11.6" r=".55"/></svg>', tagline: 'Everything that builds real flavour into a pot.', categories: ['oils', 'seasoning', 'condiments'] },
@@ -8283,7 +8312,7 @@
             const wasOnSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
             if (existing) { existing.qty += qty; }
             else {
-                const entry = { id: product.id, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
+                const entry = { id: product.id, code: product.code, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
                 if (product.isCombo) { entry.isCombo = true; entry.comboItems = product.comboItems; }
                 if (typeof product.weight === 'number') { entry.weight = product.weight; }
                 if (product.isSubscription) { entry.isSubscription = true; entry.subscriptionFrequency = product.subscriptionFrequency; }
@@ -8898,15 +8927,37 @@
             return allProducts().filter(p => p.isNew).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
         }
         const BEST_SELLER_SLUGS = ['flour', 'root-vegetables', 'noodles', 'seasoning', 'beverages', 'tropical-foods', 'hair-products', 'body-oral-products'];
-        // Same honest caveat as "New": a curated starting selection, not real sales
-        // data, there's no backend tracking actual orders yet. Driven by data so
-        // it's easy to swap for genuine best-sellers once real sales history exists.
+        // Cold-start fallback only. Once real orders exist, genuine sales
+        // frequency (see realBestSellers / loadRealBestSellers below) takes
+        // over entirely, this curated list only shows while there's no
+        // real sales history yet to compute from.
         BEST_SELLER_SLUGS.forEach(slug => {
             const cat = findCategory(slug);
             if (cat && cat.products[0]) cat.products[0].isBestSeller = true;
         });
+        // Populated by loadRealBestSellers() from actual order data (last 30
+        // days, by units sold). Null until that resolves (or if it finds no
+        // real sales yet), in which case bestSellerItems() falls back to the
+        // curated isBestSeller flags above rather than showing nothing.
+        let realBestSellers = null;
         function bestSellerItems() {
+            if (realBestSellers && realBestSellers.length > 0) return realBestSellers;
             return allProducts().filter(p => p.isBestSeller).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+        }
+        async function loadRealBestSellers() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.rpc('get_best_sellers', { p_days: 30, p_limit: 12 });
+            if (error || !Array.isArray(data) || data.length === 0) return;
+            const items = data
+                .map(row => {
+                    const [catSlug, idxStr] = String(row.product_id).split('::');
+                    return getProduct(catSlug, Number(idxStr));
+                })
+                .filter(Boolean);
+            if (items.length === 0) return;
+            realBestSellers = items;
+            renderBestSellersSpotlight();
+            renderBestSellersPage();
         }
         function offerItems() {
             return allProducts()
@@ -9453,7 +9504,7 @@
             if (!p) {
                 document.getElementById('pdName').textContent = 'Product not found';
                 document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; Not found`;
-                ['pdCatTag', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
+                ['pdCatTag', 'pdCode', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
                 document.getElementById('relatedGrid').innerHTML = '';
                 return;
             }
@@ -9464,6 +9515,7 @@
                 : `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
             document.getElementById('pdName').textContent = p.name;
+            document.getElementById('pdCode').textContent = p.code ? `Product code: ${p.code}` : '';
             document.getElementById('pdUnit').textContent = p.unit;
             const reviewWaBtn = document.getElementById('pdReviewWhatsappBtn');
             const reviewEmailBtn = document.getElementById('pdReviewEmailBtn');
@@ -10096,13 +10148,13 @@
         /* ================= DELIVERY SLOTS =================
            Real upcoming days, not a vague "next-day" promise. Today is only
            offered before the same cutoff already stated in the FAQ (orders
-           before 12pm go out same/next day) — after that it's not genuinely
+           before 10am go out same/next day) — after that it's not genuinely
            available, so it isn't offered as a false option. */
         function populateDeliverySlots() {
             const select = document.getElementById('dSlotDay');
             if (!select) return;
             const now = new Date();
-            const pastCutoff = now.getHours() >= 12;
+            const pastCutoff = now.getHours() >= 10;
             const days = [];
             const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -10469,7 +10521,7 @@
             const items = Array.isArray(order.items) ? order.items : [];
             document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => `
     <tr>
-        <td>${escapeHtml(i.name)}</td>
+        <td>${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}</td>
         <td class="qty">&times;${i.qty}</td>
         <td class="line-total">${money((i.price || 0) * i.qty)}</td>
     </tr>`).join('');
@@ -10691,7 +10743,7 @@
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
-      <td class="inv-item-name">${i.name}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
+      <td class="inv-item-name">${i.name}${i.code ? ` <span class="inv-item-code">(${i.code})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
       <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
       <td class="inv-qty">${i.qty}</td>
       <td class="inv-line-total">${money(i.price * i.qty)}</td>
@@ -11751,7 +11803,7 @@
         const FAQS = [
             { q: 'What areas do you deliver to?', a: 'We deliver to every UK postcode. Use the postcode checker on the Delivery Information page to double-check the format of yours.' },
             { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is priced by the total weight of your order rather than a flat rate, up to 10kg is £7.99, up to 20kg is £11.99, and above that is £15.99, and it\'s free once your order reaches £50. There\'s no minimum order for delivery or pickup.' },
-            { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 12pm are usually out the same or next day.' },
+            { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 10am are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
             { q: 'Is payment on the site secure?', a: 'The checkout you see now is a preview, it doesn\'t process real payments yet. Once live payment is switched on, it\'ll run through a proper secure processor, not through this site directly.' },
@@ -12335,6 +12387,7 @@
         }
         renderNewCarousel();
         renderBestSellersSpotlight();
+        loadRealBestSellers();
         renderPlatformBadges();
         renderOfferCarousel();
         initThemeToggle();
