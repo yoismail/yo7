@@ -9425,7 +9425,7 @@
                 ? `Current price: ${money(p.price)}${typeof p.salePrice === 'number' ? `, already on offer at ${money(p.salePrice)}` : ''}`
                 : '';
         }
-        function saveProductToOffer(slotId) {
+        async function saveProductToOffer(slotId) {
             const catSlug = document.getElementById('ato-cat').value;
             const idx = parseInt(document.getElementById('ato-product').value, 10);
             const salePrice = parseFloat(document.getElementById('ato-saleprice').value);
@@ -9435,6 +9435,18 @@
             if (isNaN(salePrice) || salePrice <= 0) { showToast('Enter a valid sale price.'); return; }
             if (salePrice >= product.price) { showToast(`Sale price needs to be lower than the current price (${money(product.price)}).`); return; }
             product.salePrice = salePrice;
+            // Same product_overrides table every other product edit (price,
+            // stock, description, photo) already saves to, keyed the same
+            // way, so this survives a refresh and shows up for every
+            // visitor instead of only lasting until this tab reloads.
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('product_overrides').upsert({
+                    product_key: productKey(catSlug, idx),
+                    sale_price: salePrice,
+                    updated_at: new Date().toISOString(),
+                });
+                if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000);
+            }
             document.getElementById(slotId).innerHTML = '';
             renderSpecialOffersPage();
             showToast(`${product.name} added to special offers at ${money(salePrice)}.`);
