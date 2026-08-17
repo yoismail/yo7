@@ -6585,7 +6585,7 @@
                     <p>We deliver to every UK postcode. Delivery is priced by the total weight of your order, not a flat rate, you can see the exact fee before you check out. Pickup from our Ipswich address is always free.</p>
 
                     <h2>Delivery timing</h2>
-                    <p>Orders placed before 12pm are usually out the same or next day. Orders placed after 12pm are treated as next-day at the earliest, this gives us time to actually prepare the order properly rather than rush it. Timings are estimates, not guarantees, actual delivery is carried out by a third-party courier and can be affected by things outside our control (weather, courier delays, and so on).</p>
+                    <p>Orders placed before 10am are usually out the same or next day. Orders placed after 10am are treated as next-day at the earliest, this gives us time to actually prepare the order properly rather than rush it. Timings are estimates, not guarantees, actual delivery is carried out by a third-party courier and can be affected by things outside our control (weather, courier delays, and so on).</p>
 
                     <h2>If you're not in when we deliver</h2>
                     <p>You can leave delivery notes at checkout (a gate code, a safe place, a preferred time) and the courier will follow them where possible. If nobody's available and there's no safe place to leave the order, the courier will typically attempt redelivery or leave a card with next steps. For perishable items, please try to make sure someone can take the delivery in reasonably promptly.</p>
@@ -6699,7 +6699,7 @@
                                 stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 6 9 17l-5-5" />
                             </svg>
-                            Orders placed before 12pm are usually delivered the same day or next day, depending on your
+                            Orders placed before 10am are usually delivered the same day or next day, depending on your
                             area.
                         </li>
                         <li>
@@ -10096,13 +10096,13 @@
         /* ================= DELIVERY SLOTS =================
            Real upcoming days, not a vague "next-day" promise. Today is only
            offered before the same cutoff already stated in the FAQ (orders
-           before 12pm go out same/next day) — after that it's not genuinely
+           before 10am go out same/next day) — after that it's not genuinely
            available, so it isn't offered as a false option. */
         function populateDeliverySlots() {
             const select = document.getElementById('dSlotDay');
             if (!select) return;
             const now = new Date();
-            const pastCutoff = now.getHours() >= 12;
+            const pastCutoff = now.getHours() >= 10;
             const days = [];
             const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -11751,7 +11751,7 @@
         const FAQS = [
             { q: 'What areas do you deliver to?', a: 'We deliver to every UK postcode. Use the postcode checker on the Delivery Information page to double-check the format of yours.' },
             { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is priced by the total weight of your order rather than a flat rate, up to 10kg is £7.99, up to 20kg is £11.99, and above that is £15.99, and it\'s free once your order reaches £50. There\'s no minimum order for delivery or pickup.' },
-            { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 12pm are usually out the same or next day.' },
+            { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 10am are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
             { q: 'Is payment on the site secure?', a: 'The checkout you see now is a preview, it doesn\'t process real payments yet. Once live payment is switched on, it\'ll run through a proper secure processor, not through this site directly.' },
