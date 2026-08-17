@@ -8927,15 +8927,37 @@
             return allProducts().filter(p => p.isNew).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
         }
         const BEST_SELLER_SLUGS = ['flour', 'root-vegetables', 'noodles', 'seasoning', 'beverages', 'tropical-foods', 'hair-products', 'body-oral-products'];
-        // Same honest caveat as "New": a curated starting selection, not real sales
-        // data, there's no backend tracking actual orders yet. Driven by data so
-        // it's easy to swap for genuine best-sellers once real sales history exists.
+        // Cold-start fallback only. Once real orders exist, genuine sales
+        // frequency (see realBestSellers / loadRealBestSellers below) takes
+        // over entirely, this curated list only shows while there's no
+        // real sales history yet to compute from.
         BEST_SELLER_SLUGS.forEach(slug => {
             const cat = findCategory(slug);
             if (cat && cat.products[0]) cat.products[0].isBestSeller = true;
         });
+        // Populated by loadRealBestSellers() from actual order data (last 30
+        // days, by units sold). Null until that resolves (or if it finds no
+        // real sales yet), in which case bestSellerItems() falls back to the
+        // curated isBestSeller flags above rather than showing nothing.
+        let realBestSellers = null;
         function bestSellerItems() {
+            if (realBestSellers && realBestSellers.length > 0) return realBestSellers;
             return allProducts().filter(p => p.isBestSeller).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+        }
+        async function loadRealBestSellers() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.rpc('get_best_sellers', { p_days: 30, p_limit: 12 });
+            if (error || !Array.isArray(data) || data.length === 0) return;
+            const items = data
+                .map(row => {
+                    const [catSlug, idxStr] = String(row.product_id).split('::');
+                    return getProduct(catSlug, Number(idxStr));
+                })
+                .filter(Boolean);
+            if (items.length === 0) return;
+            realBestSellers = items;
+            renderBestSellersSpotlight();
+            renderBestSellersPage();
         }
         function offerItems() {
             return allProducts()
@@ -12365,6 +12387,7 @@
         }
         renderNewCarousel();
         renderBestSellersSpotlight();
+        loadRealBestSellers();
         renderPlatformBadges();
         renderOfferCarousel();
         initThemeToggle();
