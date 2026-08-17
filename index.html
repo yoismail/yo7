@@ -90,6 +90,10 @@
            typing into a field and checking. */
         input, select, textarea {
             color: var(--ink);
+            /* iOS Safari zooms the whole page in on focus for any form
+               field under 16px, this floor is what stops that; anything
+               more specific below still needs to stay at or above it. */
+            font-size: 16px;
         }
 
         html {
@@ -1546,7 +1550,7 @@
         .whatsapp-list-form textarea {
             width: 100%; padding: 12px 14px; border-radius: 12px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
-            font-family: var(--body); font-size: 14px; resize: vertical;
+            font-family: var(--body); font-size: 16px; resize: vertical;
             background: var(--card-bg); color: var(--text-body);
         }
 
@@ -2582,7 +2586,10 @@
 
         /* ================= SHOP HEADER (category/search) ================= */
         .shop-header {
+            position: relative;
+            overflow: hidden;
             background: #FAF2E3;
+            background-image: radial-gradient(circle at 88% -20%, rgba(144, 184, 0, 0.14), transparent 55%);
             color: #2C1C10;
             padding: 52px 0 48px;
             border-bottom: 1px solid rgba(44, 28, 16, 0.08);
@@ -2838,19 +2845,25 @@
             border-radius: 999px; border: 1.5px solid var(--chartreuse);
             font-family: var(--body); font-size: 15px;
             background: var(--card-bg); color: var(--ink);
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
         }
-        .shop-all-search-wrap input:focus { outline: none; border-color: var(--orange); }
+        .shop-all-search-wrap input:focus {
+            outline: none; border-color: var(--orange);
+            box-shadow: 0 2px 6px rgba(var(--border-rgb), 0.06), 0 14px 30px rgba(var(--border-rgb), 0.08);
+        }
         .cat-pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
         .cat-pill {
             font-family: var(--display); font-weight: 600; font-size: 13px;
             padding: 10px 18px; border-radius: 999px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
             background: none; color: var(--ink); cursor: pointer;
-            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
         }
-        .cat-pill:hover { border-color: var(--chartreuse); }
+        .cat-pill:hover { border-color: var(--chartreuse); box-shadow: 0 4px 12px rgba(var(--border-rgb), 0.08); }
         .cat-pill.active {
             background: var(--aubergine); border-color: var(--aubergine); color: var(--cream);
+            box-shadow: 0 4px 14px rgba(var(--border-rgb), 0.22);
         }
         /* On a narrow phone, 20-odd wrapping pills push products several
            screens down before anything is visible. A single swipeable row
@@ -3072,7 +3085,16 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #7a6f68;
+            color: var(--text-muted);
+            border: 1.5px solid rgba(var(--border-rgb), 0.14);
+            background: var(--card-bg);
+        }
+
+        .empty-state-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 16px;
+            color: var(--text-faint);
         }
 
         .empty-state h3 {
@@ -3331,7 +3353,7 @@
             border-radius: 8px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
             font-family: var(--body);
-            font-size: 13px;
+            font-size: 16px;
             background: var(--card-bg);
             color: var(--text-body);
         }
@@ -3480,7 +3502,7 @@
         .star-input button:hover { transform: scale(1.12); }
         .pd-review-form textarea {
             width: 100%; margin-top: 12px; padding: 11px 14px; border-radius: 10px;
-            border: 1.5px solid rgba(var(--border-rgb), 0.16); font-family: var(--body); font-size: 14px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16); font-family: var(--body); font-size: 16px;
             resize: vertical; box-sizing: border-box; background: var(--card-bg); color: var(--ink);
         }
         .pd-review-prompt { font-size: 13.5px; color: var(--text-muted); }
@@ -4763,7 +4785,7 @@
         }
         .delivery-admin-form input, .delivery-admin-form select {
             padding: 9px 11px; border-radius: 8px; border: 1.5px solid rgba(var(--border-rgb), 0.16);
-            font-family: var(--body); font-size: 13.5px; background: var(--card-bg); color: var(--text-body);
+            font-family: var(--body); font-size: 16px; background: var(--card-bg); color: var(--text-body);
         }
         .delivery-admin-form button { grid-column: 1 / -1; justify-self: start; }
 
@@ -5797,6 +5819,7 @@
                 <div id="addProductSlotShop"></div>
                 <div class="product-grid" id="productGrid"></div>
                 <div class="empty-state" id="emptyState" style="display:none;">
+                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <h3>Nothing matches that yet</h3>
                     <p>Try another word, or message us directly, we're adding stock every week.</p>
                 </div>
@@ -5823,6 +5846,7 @@
                 <div class="shop-all-result-count" id="shopAllResultCount"></div>
                 <div class="shop-all-grid" id="shopAllGrid"></div>
                 <div class="empty-state" id="shopAllEmptyState" style="display:none;">
+                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <h3>Nothing matches that yet</h3>
                     <p>Try another word, or message us directly, we're adding stock every week.</p>
                 </div>
@@ -9790,7 +9814,7 @@
           <label class="allergen-check"><input type="checkbox" value="${a.key}" ${declared.includes(a.key) ? 'checked' : ''}> ${a.label}</label>`).join('')}
         </div>
         <label style="font-size:11px; color:var(--text-muted); display:block; margin:10px 0 4px;">May contain traces of (optional, free text)</label>
-        <textarea id="pdEdit-allergyNote" rows="2" style="width:100%; font-family:var(--body); font-size:13.5px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${pdCurrent.allergyNote || ''}</textarea>
+        <textarea id="pdEdit-allergyNote" rows="2" style="width:100%; font-family:var(--body); font-size:16px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${pdCurrent.allergyNote || ''}</textarea>
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="saveAllergenEdit()">Save</button>
           <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderProductDetailsSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
@@ -9818,7 +9842,7 @@
             const currentValue = pdCurrent[key] || '';
             card.querySelector('.body').outerHTML = `
       <div class="body">
-        <textarea id="pdEdit-${key}" rows="3" style="width:100%; font-family:var(--body); font-size:13.5px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${currentValue}</textarea>
+        <textarea id="pdEdit-${key}" rows="3" style="width:100%; font-family:var(--body); font-size:16px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${currentValue}</textarea>
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="savePdDetailEdit('${key}')">Save</button>
           <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderProductDetailsSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
