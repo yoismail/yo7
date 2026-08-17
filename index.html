@@ -7725,8 +7725,8 @@
             const row = document.getElementById('platformBadgesRow');
             if (!row) return;
             const badges = [];
-            if (trustpilotUrl) badges.push(`<a class="platform-badge platform-badge-trustpilot" href="${trustpilotUrl}" target="_blank" rel="noopener">★ Trustpilot</a>`);
-            if (googleBusinessUrl) badges.push(`<a class="platform-badge platform-badge-google" href="${googleBusinessUrl}" target="_blank" rel="noopener">G Google</a>`);
+            if (isHttpUrl(trustpilotUrl)) badges.push(`<a class="platform-badge platform-badge-trustpilot" href="${escapeHtml(trustpilotUrl)}" target="_blank" rel="noopener">★ Trustpilot</a>`);
+            if (isHttpUrl(googleBusinessUrl)) badges.push(`<a class="platform-badge platform-badge-google" href="${escapeHtml(googleBusinessUrl)}" target="_blank" rel="noopener">G Google</a>`);
             row.innerHTML = badges.join('');
         }
         // This whole panel only ever exists in the DOM for a confirmed admin
@@ -8274,7 +8274,7 @@
                 return `${i.qty}x ${i.name}${note} - ${money(i.price * i.qty)}`;
             });
             const message = `Hi Yo7 Foods! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${money(cartSubtotal())}\n\n(Sent from yo7foods.co.uk, delivery/pickup and payment to confirm with you.)`;
-            window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank');
+            window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
         }
         window.sendCartViaWhatsApp = sendCartViaWhatsApp;
 
@@ -10288,6 +10288,15 @@
         function escapeHtml(s) {
             return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
+        // Guards against a "javascript:" (or other non-http) URL ending up in
+        // an href, e.g. from an admin-editable link field, an <a> with that
+        // as its target runs arbitrary script on click, not just a broken
+        // link, so it's worth rejecting outright rather than only escaping.
+        function isHttpUrl(url) {
+            if (!url) return false;
+            try { return ['http:', 'https:'].includes(new URL(url).protocol); }
+            catch (e) { return false; }
+        }
         function orderHistoryRowHTML(order) {
             const status = order.status || 'placed';
             const items = Array.isArray(order.items) ? order.items : [];
@@ -10299,13 +10308,13 @@
     <div class="order-card">
         <div class="order-card-top">
             <div>
-                <div class="order-card-number">${order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase())}</div>
+                <div class="order-card-number">${escapeHtml(order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()))}</div>
                 <div class="order-card-date">${dateLabel}</div>
             </div>
             <span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span>
         </div>
         <div class="order-card-items">
-            ${items.map(i => `<div class="item-row"><span>${i.name}</span><span class="qty">&times;${i.qty}</span></div>`).join('')}
+            ${items.map(i => `<div class="item-row"><span>${escapeHtml(i.name)}</span><span class="qty">&times;${i.qty}</span></div>`).join('')}
         </div>
         <div class="order-card-bottom">
             <span class="order-card-total-label">${items.length} item${items.length === 1 ? '' : 's'}</span>
@@ -10355,7 +10364,7 @@
             const billingName = (order.profiles && order.profiles.full_name) || order.delivery_name || '—';
             return `
     <tr>
-        <td>${order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase())}</td>
+        <td>${escapeHtml(order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()))}</td>
         <td>${dateLabel}</td>
         <td><span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span></td>
         <td class="admin-orders-total">${money(order.total)}</td>
@@ -12312,7 +12321,7 @@
                 const text = input.value.trim();
                 if (!text) { showToast('Type your list first.'); return; }
                 const message = `Hi Yo7 Foods! Here's what I'd like to order:\n\n${text}\n\n(Sent from yo7foods.co.uk)`;
-                window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank');
+                window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
                 input.value = '';
             });
         }
