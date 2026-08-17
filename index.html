@@ -9265,15 +9265,13 @@
             function pause() {
                 paused = true;
                 clearTimeout(resumeTimer);
-                // Belt-and-braces on top of pointercancel/touchcancel: if
-                // literally no end-of-gesture event ever reaches this
-                // element (the actual observed freeze — something the
-                // browser swallowed the up/cancel event for entirely), this
-                // guarantees it can't stay paused forever, without getting
-                // in the way of a normal drag, which is always well under
-                // this long.
+                // Belt-and-braces on top of the window-level up/cancel
+                // listeners below: if literally no end-of-gesture event
+                // ever reaches this page at all, this guarantees it can't
+                // stay paused forever, without getting in the way of a
+                // normal drag, which is always well under this long.
                 clearTimeout(safetyTimer);
-                safetyTimer = setTimeout(() => { paused = false; lastTs = null; }, 8000);
+                safetyTimer = setTimeout(() => { paused = false; lastTs = null; }, 2500);
             }
             function scheduleResume() {
                 clearTimeout(resumeTimer);
@@ -9285,18 +9283,20 @@
 
             // Deliberately no mouseenter/mouseleave here, hovering to look at a
             // card shouldn't stop the drift, only an actual drag or touch should.
-            // pointercancel/touchcancel matter here as much as the up/end
-            // events: a browser can cancel a touch mid-gesture (an
-            // interruption, or its own scroll-direction heuristic taking
-            // over), and without a resume tied to that too, the strip was
-            // left permanently paused, the "freezes and never picks back up"
-            // symptom, since only a clean pointerup/touchend ever resumed it.
+            // The up/cancel listeners are on window, not the strip: once a
+            // touch or drag starts on the strip, the finger (or the page's
+            // own scroll-direction heuristic taking over mid-gesture) very
+            // often ends up somewhere else by release time, and a listener
+            // scoped to the strip itself simply never sees that event. That
+            // was the actual freeze, every drag that didn't end exactly
+            // back over the strip left it paused until the safety timer
+            // above eventually rescued it.
             strip.addEventListener('pointerdown', pause);
-            strip.addEventListener('pointerup', scheduleResume);
-            strip.addEventListener('pointercancel', scheduleResume);
+            window.addEventListener('pointerup', scheduleResume);
+            window.addEventListener('pointercancel', scheduleResume);
             strip.addEventListener('touchstart', pause, { passive: true });
-            strip.addEventListener('touchend', scheduleResume, { passive: true });
-            strip.addEventListener('touchcancel', scheduleResume, { passive: true });
+            window.addEventListener('touchend', scheduleResume, { passive: true });
+            window.addEventListener('touchcancel', scheduleResume, { passive: true });
 
             // Constant-speed drift with an instant direction flip at each end
             // reads as mechanical, not premium. Easing the speed down on
