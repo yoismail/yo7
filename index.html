@@ -169,17 +169,23 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: #FAF2E3;
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid rgba(44, 28, 16, 0.08);
             transition: box-shadow 0.25s ease;
         }
-        /* A genuinely see-through nav depends on whatever happens to be
-           directly behind it, which at the very top of the page (before
-           the hero visually fills the space) turned out to be the plain
-           light page background, not the dark hero, so the nav stays a flat
-           cream regardless of scroll position, just picking up a soft
-           shadow once there's page content underneath it (or the mobile
-           menu is open) to keep some separation from what's behind it. */
+        /* iOS-style frosted glass: translucent white + blur, same in both
+           themes (this bar has never changed with theme, see .shop-header/
+           .hero for the same "always light chrome" convention). 78% opacity
+           is high enough that dark ink nav text stays fully legible over
+           anything scrolling underneath, while still reading as glass
+           rather than a flat opaque fill. Browsers without backdrop-filter
+           support (very old Safari/Firefox) just see the translucent white,
+           still readable, just without the blur. */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            #mainNav { background: #FAF2E3; }
+        }
         #mainNav.nav-solid,
         #mainNav:has(.mobile-menu.open) {
             box-shadow: 0 1px 2px rgba(44, 28, 16, 0.05), 0 16px 32px rgba(44, 28, 16, 0.09);
@@ -2182,14 +2188,28 @@
             height: 40px;
         }
         .footer-curve path {
-            fill: #FAF2E3;
+            fill: #fff;
         }
         footer {
             position: relative;
-            background: #FAF2E3;
+            /* Higher opacity than the nav's glass: the nav is fixed over
+               moving page content, so a lower opacity still reads as
+               crisp white with a hint of what's scrolling beneath it.
+               The footer sits in normal document flow with nothing
+               behind it but the flat page background, which in dark
+               mode is near-black, so the same lower opacity picked up a
+               muddy grey-green tint instead of glass, just page colour
+               bleeding through a flat translucent layer. Higher opacity
+               keeps it reading as white glass in both themes. */
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             color: #2C1C10;
             padding: 56px 0 36px;
             overflow: hidden;
+        }
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            footer { background: #FAF2E3; }
         }
         .footer-watermark {
             position: absolute;
