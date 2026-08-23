@@ -1466,6 +1466,12 @@
             border-radius: 0;
             padding: 24px 24px 22px;
             position: relative;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+        }
+        .bundle-card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
         }
         .bundle-remove-btn {
             display: none;
@@ -1569,6 +1575,12 @@
         .combo-card {
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+        }
+        .combo-card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
         }
         .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px; }
         .combo-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
