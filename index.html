@@ -211,6 +211,11 @@
             background: rgba(var(--border-rgb), 0.14); color: var(--heading); border: none; border-radius: 8px; padding: 7px 12px;
         }
         .emb-inner button:hover { background: rgba(var(--border-rgb), 0.24); }
+        .emb-version {
+            flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 11px;
+            letter-spacing: 0.02em; color: var(--heading); opacity: 0.65;
+            background: rgba(var(--border-rgb), 0.1); border-radius: 999px; padding: 4px 10px;
+        }
 
         .trust-bar {
             position: fixed;
@@ -5503,6 +5508,7 @@
         <div class="wrap emb-inner">
             <span class="emb-dot"></span>
             <span><strong>Edit mode is on.</strong> Price, discount, and stock changes apply live in this browser tab only, they are not saved to a server and will reset on refresh.</span>
+            <span class="emb-version" id="editModeBannerVersion"></span>
             <button type="button" id="editModeBannerClose">Exit edit mode</button>
         </div>
     </div>
@@ -8331,6 +8337,14 @@
         const supabaseClient = (SUPABASE_URL.startsWith('https://') && window.supabase)
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
             : null;
+
+        // Bumped by hand on every delivered change, shown in the edit-mode
+        // banner so whoever's looking at the live site can tell which
+        // round of updates it's actually running, since deploys here are
+        // a manual file upload rather than something that leaves its own
+        // trace (no CI, no commit hash reaching the live site while the
+        // GitHub push stays blocked).
+        const BUILD_VERSION = '2026-08-23.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12520,6 +12534,8 @@
         renderDeliveryAdmin();
         populateDeliverySlots();
         registerStoredLoyaltyCodes();
+        const editModeBannerVersionEl = document.getElementById('editModeBannerVersion');
+        if (editModeBannerVersionEl) editModeBannerVersionEl.textContent = `v${BUILD_VERSION}`;
         function renderLoyaltySpendDisplay() {
             const el = document.getElementById('loyaltySpendDisplay');
             if (!el) return;
