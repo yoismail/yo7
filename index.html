@@ -184,7 +184,7 @@
            support (very old Safari/Firefox) just see the translucent white,
            still readable, just without the blur. */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-            #mainNav { background: #FAF2E3; }
+            #mainNav { background: #FFFFFF; }
         }
         #mainNav.nav-solid,
         #mainNav:has(.mobile-menu.open) {
@@ -211,6 +211,11 @@
             background: rgba(var(--border-rgb), 0.14); color: var(--heading); border: none; border-radius: 8px; padding: 7px 12px;
         }
         .emb-inner button:hover { background: rgba(var(--border-rgb), 0.24); }
+        .emb-version {
+            flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 11px;
+            letter-spacing: 0.02em; color: var(--heading); opacity: 0.65;
+            background: rgba(var(--border-rgb), 0.1); border-radius: 999px; padding: 4px 10px;
+        }
 
         .trust-bar {
             position: fixed;
@@ -1023,7 +1028,7 @@
         /* ================= HERO ================= */
         .hero {
             position: relative;
-            background: #FAF2E3;
+            background: #FFFFFF;
             color: #2C1C10;
             overflow: hidden;
             padding: 64px 0 96px;
@@ -1461,6 +1466,12 @@
             border-radius: 0;
             padding: 24px 24px 22px;
             position: relative;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+        }
+        .bundle-card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
         }
         .bundle-remove-btn {
             display: none;
@@ -1564,6 +1575,12 @@
         .combo-card {
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+        }
+        .combo-card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
         }
         .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px; }
         .combo-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
@@ -2209,7 +2226,7 @@
             overflow: hidden;
         }
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-            footer { background: #FAF2E3; }
+            footer { background: #FFFFFF; }
         }
         .footer-watermark {
             position: absolute;
@@ -2607,7 +2624,7 @@
         .shop-header {
             position: relative;
             overflow: hidden;
-            background: #FAF2E3;
+            background: #FFFFFF;
             background-image: radial-gradient(circle at 88% -20%, rgba(144, 184, 0, 0.14), transparent 55%);
             color: #2C1C10;
             padding: 52px 0 48px;
@@ -2616,7 +2633,7 @@
 
         .shop-header-contact,
         .shop-header-story {
-            background: #FAF2E3;
+            background: #FFFFFF;
         }
 
         .breadcrumb {
@@ -5503,6 +5520,7 @@
         <div class="wrap emb-inner">
             <span class="emb-dot"></span>
             <span><strong>Edit mode is on.</strong> Price, discount, and stock changes apply live in this browser tab only, they are not saved to a server and will reset on refresh.</span>
+            <span class="emb-version" id="editModeBannerVersion"></span>
             <button type="button" id="editModeBannerClose">Exit edit mode</button>
         </div>
     </div>
@@ -8331,6 +8349,14 @@
         const supabaseClient = (SUPABASE_URL.startsWith('https://') && window.supabase)
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
             : null;
+
+        // Bumped by hand on every delivered change, shown in the edit-mode
+        // banner so whoever's looking at the live site can tell which
+        // round of updates it's actually running, since deploys here are
+        // a manual file upload rather than something that leaves its own
+        // trace (no CI, no commit hash reaching the live site while the
+        // GitHub push stays blocked).
+        const BUILD_VERSION = '2026-08-23.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12520,6 +12546,8 @@
         renderDeliveryAdmin();
         populateDeliverySlots();
         registerStoredLoyaltyCodes();
+        const editModeBannerVersionEl = document.getElementById('editModeBannerVersion');
+        if (editModeBannerVersionEl) editModeBannerVersionEl.textContent = `v${BUILD_VERSION}`;
         function renderLoyaltySpendDisplay() {
             const el = document.getElementById('loyaltySpendDisplay');
             if (!el) return;
