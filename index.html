@@ -8482,7 +8482,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-24.4';
+        const BUILD_VERSION = '2026-08-24.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10582,7 +10582,7 @@
             // broken rather than fast, so this brief delay gives the spinner
             // something to justify and matches what a real payment call
             // would feel like.
-            setTimeout(() => {
+            setTimeout(async () => {
                 const orderSubtotal = cartSubtotal();
                 const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
                 const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
@@ -10594,7 +10594,10 @@
                 }
                 const loyaltyCodeEarned = issueLoyaltyRewardIfEarned(orderTotal);
                 lastOrder = {
-                    number: 'YO7-' + Math.floor(100000 + Math.random() * 899999),
+                    number: null, // assigned below, either the real sequential
+                                   // YO7-0001-style number the database hands
+                                   // back, or a one-off fallback if that save
+                                   // fails or there's no backend (preview mode)
                     date: new Date(),
                     items: cart.map(i => ({ ...i })),
                     subtotal: orderSubtotal,
@@ -10608,14 +10611,17 @@
                     loyaltyCodeEarned,
                 };
                 // Saves the order for account holders so it shows up in Order
-                // History. Deliberately fire-and-forget: a failed save here
-                // shouldn't block the confirmation page the customer is about
-                // to see, or make a real purchase look like it didn't go
-                // through when it did.
+                // History, and is also where the real order number comes
+                // from now (assigned atomically by a database sequence, see
+                // supabase-migration-11-sequential-order-numbers.sql), so
+                // this is awaited rather than fire-and-forget like before.
+                // A failed save still shouldn't block the confirmation page
+                // the customer is about to see, or make a real purchase look
+                // like it didn't go through when it did, it just falls back
+                // to a one-off number in that case.
                 if (supabaseClient && currentSupabaseUser) {
-                    supabaseClient.from('orders').insert({
+                    const { data, error } = await supabaseClient.from('orders').insert({
                         user_id: currentSupabaseUser.id,
-                        order_number: lastOrder.number,
                         status: 'placed',
                         fulfilment_method: fulfilmentMethod,
                         items: lastOrder.items,
@@ -10627,10 +10633,11 @@
                         delivery_address: deliveryInfo ? `${deliveryInfo.address}, ${deliveryInfo.town} ${deliveryInfo.postcode}` : null,
                         delivery_phone: deliveryInfo ? deliveryInfo.phone : null,
                         notes: deliveryInfo ? deliveryInfo.notes : null,
-                    }).then(({ error }) => {
-                        if (error) console.error('Order history save failed:', error.message);
-                    });
+                    }).select('order_number').single();
+                    if (error) console.error('Order history save failed:', error.message);
+                    else lastOrder.number = data.order_number;
                 }
+                if (!lastOrder.number) lastOrder.number = 'YO7-' + Math.floor(100000 + Math.random() * 899999);
                 cart = [];
                 appliedDiscount = null;
                 updateCartBadge();
