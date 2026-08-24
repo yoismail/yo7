@@ -5277,6 +5277,22 @@
         }
         .order-card-total-label { font-size: 12.5px; color: var(--text-muted); }
         .order-card-total { font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--ink); }
+        .order-invoice-btn {
+            margin-top: 12px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--border-rgb), 0.16);
+            background: transparent;
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .order-invoice-btn:hover { background: rgba(var(--border-rgb), 0.05); border-color: rgba(var(--border-rgb), 0.28); }
+        .order-invoice-btn:disabled { opacity: 0.6; cursor: default; }
 
         /* ================= ADMIN ORDERS TABLE ================= */
         .admin-orders-table-wrap {
@@ -5357,6 +5373,7 @@
         .admin-order-totals-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); padding: 4px 0; }
         .admin-order-totals-row.grand { font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--ink); padding-top: 10px; margin-top: 6px; border-top: 1px solid rgba(var(--border-rgb), 0.1); }
         .admin-order-update-success { font-size: 13px; color: var(--chartreuse-rich); font-weight: 600; margin-top: 10px; display: none; }
+        .admin-order-update-note { font-size: 12.5px; color: var(--text-muted); margin-top: 8px; display: none; }
         @media (max-width: 900px) {
             .admin-order-detail-grid { grid-template-columns: 1fr; }
         }
@@ -7377,8 +7394,11 @@
                                     <textarea id="aodCommentInput" rows="3" placeholder="Optional, shown to the customer alongside the status update…"></textarea>
                                 </div>
                                 <div class="auth-error" id="aodUpdateError" role="alert" style="display:none;"></div>
-                                <button type="button" class="btn btn-primary btn-block" id="aodUpdateBtn">Update order &amp; notify customer</button>
-                                <div class="admin-order-update-success" id="aodUpdateSuccess">Saved, the customer has been emailed.</div>
+                                <button type="button" class="btn btn-primary btn-block" id="aodSaveBtn">Save changes</button>
+                                <button type="button" class="btn btn-outline btn-block" id="aodSendEmailBtn" style="margin-top:10px;">Send email to customer</button>
+                                <div class="admin-order-update-note" id="aodSendEmailNote" style="display:none;">Save your changes first, then send the email so it reflects the saved status.</div>
+                                <div class="admin-order-update-success" id="aodUpdateSuccess">Saved.</div>
+                                <div class="admin-order-update-success" id="aodEmailSuccess">Email sent to the customer.</div>
                             </div>
                         </div>
                     </div>
@@ -8462,7 +8482,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-24.1';
+        const BUILD_VERSION = '2026-08-24.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10678,6 +10698,7 @@
             <span class="order-card-total">${money(order.total)}</span>
         </div>
         ${cancellationNote}
+        <button type="button" class="order-invoice-btn" onclick="viewOrderInvoice('${order.id}', this)">View invoice</button>
     </div>`;
         }
         // Real order history, reads straight from Supabase (RLS restricts each
@@ -10708,6 +10729,8 @@
                 el.innerHTML = '<div class="order-history-empty">No orders yet. <a href="#/shop">Start shopping</a>.</div>';
                 return;
             }
+            orderHistoryCache = {};
+            data.forEach(o => { orderHistoryCache[o.id] = o; });
             el.innerHTML = data.map(o => orderHistoryRowHTML(o)).join('');
         }
         // Admin-only dashboard: every order, not just the admin's own (the
@@ -10858,6 +10881,8 @@
             const notFoundEl = document.getElementById('aodNotFound');
             bodyEl.style.display = 'none';
             document.getElementById('aodUpdateSuccess').style.display = 'none';
+            document.getElementById('aodEmailSuccess').style.display = 'none';
+            document.getElementById('aodSendEmailNote').style.display = 'none';
             setAuthError('aodUpdateError', '');
             notFoundEl.style.display = 'none';
             loadingEl.style.display = 'block';
@@ -10913,17 +10938,32 @@
             document.getElementById('aodTotal').textContent = money(order.total);
             populateAdminOrderStatusSelect(order.status || 'placed');
             document.getElementById('aodCommentInput').value = (order.status === 'cancelled' ? order.cancellation_reason : order.admin_note) || '';
+            updateAodSendEmailNote();
             loadingEl.style.display = 'none';
             bodyEl.style.display = 'block';
         }
-        const aodUpdateBtn = document.getElementById('aodUpdateBtn');
-        if (aodUpdateBtn) {
-            aodUpdateBtn.addEventListener('click', async () => {
+        // Saving a status/comment change no longer emails the customer by
+        // itself, that's now a separate explicit action (aodSendEmailBtn),
+        // so this just warns when the status dropdown has an unsaved change,
+        // since sending in that state would email the customer about the
+        // still-saved status, not the one showing on screen.
+        function updateAodSendEmailNote() {
+            const noteEl = document.getElementById('aodSendEmailNote');
+            if (!noteEl || !currentAdminOrder) return;
+            const unsaved = document.getElementById('aodStatusSelect').value !== (currentAdminOrder.status || 'placed');
+            noteEl.style.display = unsaved ? 'block' : 'none';
+        }
+        const aodStatusSelectEl = document.getElementById('aodStatusSelect');
+        if (aodStatusSelectEl) aodStatusSelectEl.addEventListener('change', updateAodSendEmailNote);
+        const aodSaveBtn = document.getElementById('aodSaveBtn');
+        if (aodSaveBtn) {
+            aodSaveBtn.addEventListener('click', async () => {
                 if (!currentAdminOrderId || !supabaseClient) return;
                 const nextStatus = document.getElementById('aodStatusSelect').value;
                 const comment = document.getElementById('aodCommentInput').value.trim();
                 setAuthError('aodUpdateError', '');
                 document.getElementById('aodUpdateSuccess').style.display = 'none';
+                document.getElementById('aodEmailSuccess').style.display = 'none';
                 if (nextStatus === 'cancelled') {
                     // Cancelling needs a reason (shown to the customer), reuse the
                     // same modal the rest of the admin UI uses for that.
@@ -10940,13 +10980,13 @@
                     document.getElementById('cancelOrderReason').value = comment;
                     return;
                 }
-                aodUpdateBtn.disabled = true;
-                aodUpdateBtn.textContent = 'Updating…';
+                aodSaveBtn.disabled = true;
+                aodSaveBtn.textContent = 'Saving…';
                 const { error } = await supabaseClient.from('orders')
                     .update({ status: nextStatus, admin_note: comment || null })
                     .eq('id', currentAdminOrderId);
-                aodUpdateBtn.disabled = false;
-                aodUpdateBtn.textContent = 'Update order & notify customer';
+                aodSaveBtn.disabled = false;
+                aodSaveBtn.textContent = 'Save changes';
                 if (error) { setAuthError('aodUpdateError', 'Could not update that order: ' + error.message); return; }
                 // renderAdminOrderDetail resets the success banner to hidden as
                 // part of its own render, so it must finish first, otherwise the
@@ -10954,6 +10994,22 @@
                 // same tick and never actually shows.
                 await renderAdminOrderDetail(currentAdminOrderId);
                 document.getElementById('aodUpdateSuccess').style.display = 'block';
+            });
+        }
+        const aodSendEmailBtn = document.getElementById('aodSendEmailBtn');
+        if (aodSendEmailBtn) {
+            aodSendEmailBtn.addEventListener('click', async () => {
+                if (!currentAdminOrderId || !supabaseClient) return;
+                setAuthError('aodUpdateError', '');
+                document.getElementById('aodUpdateSuccess').style.display = 'none';
+                document.getElementById('aodEmailSuccess').style.display = 'none';
+                aodSendEmailBtn.disabled = true;
+                aodSendEmailBtn.textContent = 'Sending…';
+                const { error } = await supabaseClient.rpc('send_order_status_email', { p_order_id: currentAdminOrderId });
+                aodSendEmailBtn.disabled = false;
+                aodSendEmailBtn.textContent = 'Send email to customer';
+                if (error) { setAuthError('aodUpdateError', 'Could not send that email: ' + error.message); return; }
+                document.getElementById('aodEmailSuccess').style.display = 'block';
             });
         }
 
@@ -11192,7 +11248,7 @@
            much content there is, so small and medium orders reliably land
            on one page and only a genuinely long item list spills to a
            second, with the column headers repeated there for clarity. */
-        async function buildInvoicePdfBlob() {
+        async function buildInvoicePdfBlob(order = lastOrder) {
             await ensurePdfLibsLoaded();
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
@@ -11246,9 +11302,9 @@
             pdf.text('African Food Store, Ipswich', margin + sealR * 2 + 10, y + 32);
 
             setText(11, 'bold', ink);
-            pdf.text(`Invoice ${lastOrder.number}`, pageWidth - margin, y + 18, { align: 'right' });
+            pdf.text(`Invoice ${order.number}`, pageWidth - margin, y + 18, { align: 'right' });
             setText(9, 'normal', muted);
-            const dateStr = new Date(lastOrder.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const dateStr = new Date(order.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             pdf.text(dateStr, pageWidth - margin, y + 32, { align: 'right' });
 
             y += 48;
@@ -11256,16 +11312,16 @@
             y += 22;
 
             // ---- Delivered to / Collecting ----
-            const di = lastOrder.delivery_info || {};
+            const di = order.delivery_info || {};
             setText(8.5, 'bold', muted);
-            pdf.text(lastOrder.fulfilment === 'pickup' ? 'COLLECTING IN STORE' : 'DELIVERED TO', margin, y);
+            pdf.text(order.fulfilment === 'pickup' ? 'COLLECTING IN STORE' : 'DELIVERED TO', margin, y);
             y += 14;
             setText(10, 'normal', ink);
-            const addrLines = lastOrder.fulfilment === 'pickup'
+            const addrLines = order.fulfilment === 'pickup'
                 ? [di.name || '', 'Yo7 Foods, 7 Lancaster Road', 'Ipswich, IP4 2NY', di.phone || '']
                 : [di.name || '', di.address || '', `${di.town || ''}${di.postcode ? ', ' + di.postcode : ''}`, di.phone || ''];
             addrLines.filter(Boolean).forEach(line => { pdf.text(line, margin, y); y += 13; });
-            if (lastOrder.fulfilment !== 'pickup' && di.substitutionPref) {
+            if (order.fulfilment !== 'pickup' && di.substitutionPref) {
                 setText(9, 'italic', muted);
                 pdf.text(di.substitutionPref === 'remove' ? 'No substitutions' : 'Substitutions OK if something\'s out of stock', margin, y);
                 y += 13;
@@ -11288,7 +11344,7 @@
             drawTableHeader();
 
             setText(10, 'normal', ink);
-            lastOrder.items.forEach(item => {
+            order.items.forEach(item => {
                 const nameLines = pdf.splitTextToSize(item.name, colItemWidth);
                 const subLine = item.isCombo && item.comboItems ? `Includes: ${item.comboItems.join(', ')}`
                     : item.isSubscription ? `Subscription, every ${item.subscriptionFrequency} weeks`
@@ -11333,23 +11389,23 @@
                 pdf.text(value, totalsX, y, { align: 'right' });
                 y += opts.gap || 16;
             };
-            totalRow('Subtotal', money(lastOrder.subtotal));
-            totalRow(lastOrder.fulfilment === 'pickup' ? 'Pickup' : 'Delivery', lastOrder.delivery === 0 ? 'Free' : money(lastOrder.delivery));
-            if (lastOrder.discount > 0) {
-                totalRow(`Discount${lastOrder.discountCode ? ' (' + lastOrder.discountCode + ')' : ''}`, '-' + money(lastOrder.discount), { color: accent });
+            totalRow('Subtotal', money(order.subtotal));
+            totalRow(order.fulfilment === 'pickup' ? 'Pickup' : 'Delivery', order.delivery === 0 ? 'Free' : money(order.delivery));
+            if (order.discount > 0) {
+                totalRow(`Discount${order.discountCode ? ' (' + order.discountCode + ')' : ''}`, '-' + money(order.discount), { color: accent });
             }
             y += 4;
             hr(y);
             y += 16;
-            totalRow('Total paid', money(lastOrder.total), { size: 13, bold: true, gap: 20 });
+            totalRow('Total paid', money(order.total), { size: 13, bold: true, gap: 20 });
 
             // ---- Loyalty reward ----
-            if (lastOrder.loyaltyCodeEarned) {
+            if (order.loyaltyCodeEarned) {
                 ensureRoom(40);
                 pdf.setFillColor(...orange);
                 pdf.roundedRect(margin, y - 12, contentWidth, 30, 4, 4, 'F');
                 setText(9.5, 'bold', ink);
-                pdf.text(`Reward earned: ${loyaltyRewardPct}% off your next order with code ${lastOrder.loyaltyCodeEarned}. One-time use.`, margin + 10, y + 6);
+                pdf.text(`Reward earned: ${loyaltyRewardPct}% off your next order with code ${order.loyaltyCodeEarned}. One-time use.`, margin + 10, y + 6);
                 y += 34;
             }
 
@@ -11366,9 +11422,61 @@
             return pdf.output('blob');
         }
 
+        function invoiceFileNameFor(orderNumber) {
+            return `Yo7-Foods-Invoice-${orderNumber || 'order'}.pdf`;
+        }
         function invoiceFileName() {
             const num = (document.getElementById('invNumber').textContent || 'order').trim();
-            return `Yo7-Foods-Invoice-${num}.pdf`;
+            return invoiceFileNameFor(num);
+        }
+        // Adapts a raw Supabase orders row (order history / admin) into the
+        // shape buildInvoicePdfBlob() expects, the same shape lastOrder has
+        // right after checkout. delivery_address is already one combined
+        // string on the DB row (not separate address/town/postcode like
+        // checkout's live deliveryInfo), so it's passed through as-is with
+        // town/postcode left blank rather than duplicated.
+        function invoiceOrderFromDbRow(order) {
+            return {
+                number: order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()),
+                date: new Date(order.created_at),
+                items: Array.isArray(order.items) ? order.items : [],
+                subtotal: order.subtotal || 0,
+                delivery: order.delivery_fee || 0,
+                discount: order.discount || 0,
+                discountCode: null,
+                total: order.total || 0,
+                delivery_info: {
+                    name: order.delivery_name || '',
+                    address: order.delivery_address || '',
+                    town: '',
+                    postcode: '',
+                    phone: order.delivery_phone || '',
+                },
+                fulfilment: order.fulfilment_method,
+                loyaltyCodeEarned: null,
+            };
+        }
+        // Order history cards keep a lightweight lookup here so the "View
+        // invoice" button doesn't need to re-fetch the order it already has.
+        let orderHistoryCache = {};
+        async function viewOrderInvoice(orderId, btnEl) {
+            const order = orderHistoryCache[orderId];
+            if (!order || !btnEl) return;
+            await withButtonBusyState(btnEl, 'Preparing…', async () => {
+                try {
+                    const invoiceOrder = invoiceOrderFromDbRow(order);
+                    // Open the tab synchronously on click, then point it at the
+                    // PDF once it's built, opening it only after the (async) PDF
+                    // is ready gets blocked as a popup by most browsers.
+                    const tab = window.open('', '_blank');
+                    const blob = await buildInvoicePdfBlob(invoiceOrder);
+                    const url = URL.createObjectURL(blob);
+                    if (tab) tab.location = url;
+                    else window.open(url, '_blank');
+                } catch (e) {
+                    alert('Could not generate the invoice right now, please try again.');
+                }
+            });
         }
 
         function withButtonBusyState(btn, busyLabel, fn) {
@@ -12050,6 +12158,17 @@
             if (session && session.user) {
                 const name = (session.user.user_metadata && session.user.user_metadata.full_name) || session.user.email.split('@')[0];
                 setUser(name, session.user);
+                // A hard refresh landing straight on an admin route runs the
+                // very first route() at boot before this session (and
+                // currentIsAdmin, resolved inside setUser's refreshAdminStatus
+                // call) is known, so that first paint can get stuck showing
+                // "not found" / the login form even for an already-logged-in
+                // admin, since nothing else re-renders it afterward. Re-running
+                // route() once admin status has actually settled corrects
+                // that. Scoped to #/admin routes only, so it doesn't touch
+                // any other page's render (e.g. re-triggering carousel setup).
+                await refreshAdminStatus();
+                if (window.location.hash.startsWith('#/admin')) route();
             }
         }
         restoreSupabaseSession();
