@@ -208,13 +208,13 @@
         @keyframes embPulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
         .emb-inner button {
             margin-left: auto; flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 12px;
-            background: rgba(var(--border-rgb), 0.14); color: var(--heading); border: none; border-radius: 8px; padding: 7px 12px;
+            background: rgba(6, 59, 0, 0.14); color: var(--aubergine); border: none; border-radius: 8px; padding: 7px 12px;
         }
-        .emb-inner button:hover { background: rgba(var(--border-rgb), 0.24); }
+        .emb-inner button:hover { background: rgba(6, 59, 0, 0.24); }
         .emb-version {
             flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 11px;
-            letter-spacing: 0.02em; color: var(--heading); opacity: 0.65;
-            background: rgba(var(--border-rgb), 0.1); border-radius: 999px; padding: 4px 10px;
+            letter-spacing: 0.02em; color: var(--aubergine); opacity: 0.65;
+            background: rgba(6, 59, 0, 0.1); border-radius: 999px; padding: 4px 10px;
         }
 
         .trust-bar {
@@ -8482,7 +8482,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-24.5';
+        const BUILD_VERSION = '2026-08-24.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
