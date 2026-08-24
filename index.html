@@ -8482,7 +8482,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-24.3';
+        const BUILD_VERSION = '2026-08-24.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11157,9 +11157,14 @@
             if (confirmLoyaltyEl) {
                 const justEarnedCode = lastOrder.loyaltyCodeEarned;
                 confirmLoyaltyEl.classList.toggle('loyalty-note-earned', !!justEarnedCode);
+                // getLoyaltySpend() here already includes this just-placed order
+                // (issueLoyaltyRewardIfEarned() added it before this renders), so
+                // the "remaining" figure reflects real carried-over progress, not
+                // a flat "spend the whole threshold again" that ignores it.
+                const remaining = loyaltySpendThreshold - (getLoyaltySpend() % loyaltySpendThreshold);
                 confirmLoyaltyEl.innerHTML = justEarnedCode
                     ? `🎉 Thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${justEarnedCode}</strong> at checkout. It's yours alone, valid for one order only.`
-                    : `Thank you! Spend <strong>${money(loyaltySpendThreshold)}</strong> on your next order to earn <strong>${loyaltyRewardPct}% off</strong> the one after that.`;
+                    : `Thank you! Spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> a future order.`;
                 if (justEarnedCode) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off, code ${justEarnedCode}`, 5000);
             }
             document.getElementById('invNumber').textContent = lastOrder.number;
