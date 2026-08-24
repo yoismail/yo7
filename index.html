@@ -1031,7 +1031,85 @@
             background: #FFFFFF;
             color: #2C1C10;
             overflow: hidden;
-            padding: 64px 0 96px;
+            padding: 88px 0 116px;
+        }
+
+        /* Soft, slowly drifting colour blobs, a layered gradient-mesh feel
+           in the brand's own palette rather than a flat single watermark,
+           done entirely in CSS since there's no real hero photography to
+           lean on yet. blur() is genuinely expensive on some phones, so
+           this stays capped to a handful of large, simple shapes rather
+           than many small ones. */
+        .hero-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero-blob-1 {
+            width: 420px; height: 420px;
+            top: -140px; left: -120px;
+            background: radial-gradient(circle, rgba(144, 184, 0, 0.20), transparent 70%);
+            animation: heroBlobDriftA 19s ease-in-out infinite alternate;
+        }
+        .hero-blob-2 {
+            width: 480px; height: 480px;
+            bottom: -200px; right: -140px;
+            background: radial-gradient(circle, rgba(6, 59, 0, 0.10), transparent 70%);
+            animation: heroBlobDriftB 23s ease-in-out infinite alternate;
+        }
+        .hero-blob-3 {
+            width: 280px; height: 280px;
+            top: 36%; left: 58%;
+            background: radial-gradient(circle, rgba(225, 225, 0, 0.16), transparent 70%);
+            animation: heroBlobDriftA 16s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes heroBlobDriftA {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(30px, 22px) scale(1.08); }
+        }
+        @keyframes heroBlobDriftB {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(-26px, -16px) scale(1.05); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-blob-1, .hero-blob-2, .hero-blob-3 { animation: none; }
+        }
+        @media (max-width: 640px) {
+            /* Full blur on three large shapes at once is a lot of paint
+               work for a phone GPU on a section that's the very first
+               thing rendered; simplifying rather than cutting entirely
+               keeps the depth without the cost. */
+            .hero-blob-3 { display: none; }
+            .hero-blob-1, .hero-blob-2 { filter: blur(40px); }
+        }
+
+        .hero-accent {
+            color: var(--chartreuse-rich);
+        }
+
+        .hero-scroll-cue {
+            position: absolute;
+            left: 50%;
+            bottom: 26px;
+            transform: translateX(-50%);
+            width: 28px; height: 28px;
+            color: rgba(44, 28, 16, 0.32);
+            z-index: 2;
+            pointer-events: none;
+            animation: heroScrollCue 2s ease-in-out infinite;
+        }
+        .hero-scroll-cue svg { width: 100%; height: 100%; }
+        @keyframes heroScrollCue {
+            0%, 100% { transform: translate(-50%, 0); opacity: 0.5; }
+            50% { transform: translate(-50%, 8px); opacity: 1; }
+        }
+        @media (max-width: 640px) {
+            .hero-scroll-cue { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-scroll-cue { animation: none; }
         }
 
         /* Unused now the hero no longer carries a photo carousel behind it
@@ -1153,10 +1231,10 @@
         .hero h1 {
             font-family: var(--display);
             font-weight: 700;
-            font-size: clamp(32px, 5.4vw, 56px);
-            letter-spacing: -0.01em;
-            line-height: 1.12;
-            max-width: 700px;
+            font-size: clamp(34px, 6vw, 64px);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            max-width: 760px;
             margin: 6px auto 20px;
         }
 
@@ -1172,6 +1250,28 @@
             gap: 16px;
             flex-wrap: wrap;
             justify-content: center;
+        }
+        /* Scoped to the hero's own button rather than .btn-primary itself,
+           this is a signature flourish for the hero specifically, not a
+           change to every primary button site-wide (checkout, add to
+           basket, etc.). */
+        .cta-row .btn-primary {
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-row .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -60%;
+            width: 40%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+            transform: skewX(-20deg);
+            transition: left 0.6s ease;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .cta-row .btn-primary:hover::after {
+                left: 130%;
+            }
         }
 
         .hero-social-link {
@@ -5528,6 +5628,9 @@
     <!-- ================= HOME ================= -->
     <div id="view-home">
         <header class="hero">
+            <div class="hero-blob hero-blob-1" aria-hidden="true"></div>
+            <div class="hero-blob hero-blob-2" aria-hidden="true"></div>
+            <div class="hero-blob hero-blob-3" aria-hidden="true"></div>
             <svg class="hero-watermark" viewBox="65 25 875 900">
                 <use href="#seal-mark" />
             </svg>
@@ -5536,7 +5639,7 @@
                 <svg class="seal" viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <h1>Fresh African groceries, delivered with modern convenience.</h1>
+                <h1><span class="hero-accent">Fresh</span> African groceries, delivered with <span class="hero-accent">modern convenience</span>.</h1>
                 <p class="hero-sub">Authentic flavours, premium quality, and a clean shopping experience designed for today's UK households.</p>
                 <div class="cta-row">
                     <a class="btn btn-primary" href="#/shop">
@@ -5555,6 +5658,9 @@
                     </svg>
                     Follow @yo7foods
                 </a>
+            </div>
+            <div class="hero-scroll-cue" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             </div>
         </header>
 
@@ -8356,7 +8462,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-23.1';
+        const BUILD_VERSION = '2026-08-24.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
