@@ -7890,7 +7890,7 @@
             const before = loyaltyCachedSpend;
             const projected = before + cartSubtotal();
             if (cartSubtotal() > 0 && Math.floor(projected / loyaltySpendThreshold) > Math.floor(before / loyaltySpendThreshold)) {
-                return `This order earns you <strong>${loyaltyRewardPct}% off</strong> your next one!`;
+                return `Complete this order and you'll unlock <strong>${loyaltyRewardPct}% off</strong> your next one, a single-use code you'll see on your confirmation page. You've spent <strong>${money(before)}</strong> so far, this order takes you to <strong>${money(projected)}</strong>, past the <strong>${money(loyaltySpendThreshold)}</strong> mark.`;
             }
             const progress = projected % loyaltySpendThreshold;
             const remaining = loyaltySpendThreshold - progress;
@@ -8457,7 +8457,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-25.3';
+        const BUILD_VERSION = '2026-08-25.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
