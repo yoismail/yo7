@@ -8430,7 +8430,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-25.6';
+        const BUILD_VERSION = '2026-08-25.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -8549,9 +8549,15 @@
         function scheduleCartSync() {
             if (!supabaseClient || !currentSupabaseUser) return;
             clearTimeout(cartSyncTimer);
+            // Captures the account and basket contents right now, not
+            // whatever they are 600ms from now, so a fast account switch
+            // during the debounce window can't write this basket under a
+            // different (newer) user id.
+            const userId = currentSupabaseUser.id;
+            const items = cart;
             cartSyncTimer = setTimeout(() => {
                 supabaseClient.from('carts')
-                    .upsert({ user_id: currentSupabaseUser.id, items: cart, updated_at: new Date().toISOString() })
+                    .upsert({ user_id: userId, items, updated_at: new Date().toISOString() })
                     .then(({ error }) => { if (error) console.error('Cart sync failed:', error.message); });
             }, 600);
         }
@@ -11618,6 +11624,19 @@
             currentUser = null;
             currentSupabaseUser = null;
             currentIsAdmin = false;
+            // The basket in memory/localStorage right now belongs to the
+            // account that's signing out, not to whoever uses this browser
+            // next. It's already saved server-side against that account, so
+            // nothing is lost, but it must not survive as a "guest" cart or
+            // it gets merged into the next account that logs in here (the
+            // actual bug reported: logging into a second account showed the
+            // first account's basket). Cancelling any pending debounced
+            // sync stops a write that was still in flight for the old
+            // account from landing under the new one after a fast switch.
+            clearTimeout(cartSyncTimer);
+            cart = [];
+            saveCartToStorage();
+            updateCartBadge();
             if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             accountBtn.setAttribute('href', '#/login');
