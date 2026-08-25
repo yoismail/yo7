@@ -8457,7 +8457,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-25.4';
+        const BUILD_VERSION = '2026-08-25.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -8582,18 +8582,39 @@
                     .then(({ error }) => { if (error) console.error('Cart sync failed:', error.message); });
             }, 600);
         }
-        // Called on login/session-restore. Merges whatever's already in
-        // this browser's basket with whatever's saved for this account on
-        // the server, so switching devices mid-basket combines them
-        // instead of one silently overwriting the other.
-        async function syncCartFromSupabase() {
-            if (!supabaseClient || !currentSupabaseUser) return;
+        async function fetchAccountCartItems() {
             const { data, error } = await supabaseClient.from('carts').select('items').eq('user_id', currentSupabaseUser.id).single();
-            if (error && error.code !== 'PGRST116') { console.error('Cart load failed:', error.message); return; } // PGRST116 = no saved cart yet, not a real error
-            const serverItems = (data && Array.isArray(data.items)) ? data.items : [];
-            if (serverItems.length > 0) cart = mergeCartItems(cart, serverItems);
+            if (error && error.code !== 'PGRST116') { console.error('Cart load failed:', error.message); return null; } // PGRST116 = no saved cart yet, not a real error
+            return (data && Array.isArray(data.items)) ? data.items : [];
+        }
+        // Called exactly once, right after a genuine sign-in or sign-up (not
+        // a session restore on an ordinary page load, see loadAccountCart
+        // below for that). Merges whatever was already in this browser's
+        // basket as a guest into the account's saved one, so items added
+        // before logging in aren't lost. After this the account's basket is
+        // the single source of truth, same as any standard grocery site
+        // (Tesco, Sainsbury's, etc.) — merging again on every later visit
+        // would double quantities each time, which was the actual bug.
+        async function mergeGuestCartIntoAccount() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const serverItems = await fetchAccountCartItems();
+            if (serverItems === null) return;
+            if (serverItems.length > 0) cart = mergeCartItems(serverItems, cart);
             renderCartList();
-            updateCartBadge(); // also persists the merged result back to both localStorage and the server
+            updateCartBadge(); // persists the merged result back to Supabase + localStorage
+        }
+        // Called on every ordinary page load/refresh while already signed
+        // in (session restore). The account's basket is authoritative, this
+        // just loads and displays it, it does not merge with whatever's
+        // sitting in localStorage from last time, that's what was silently
+        // doubling quantities on every refresh.
+        async function loadAccountCart() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const serverItems = await fetchAccountCartItems();
+            if (serverItems === null) return;
+            cart = serverItems;
+            renderCartList();
+            updateCartBadge();
         }
         let lastKnownCartCount = 0;
         function updateCartBadge() {
@@ -11589,7 +11610,14 @@
         const accountDropdown = document.getElementById('accountDropdown');
         const accountCaret = document.querySelector('.account-caret');
 
-        function setUser(name, supabaseUser) {
+        // freshSignIn defaults to true (a real login/signup/password-reset
+        // just happened) so those call sites don't need to say so
+        // explicitly; restoreSupabaseSession() below is the one place that
+        // passes false, since resuming an already-open session on an
+        // ordinary page load must not re-merge the basket, see
+        // mergeGuestCartIntoAccount/loadAccountCart above for why that
+        // distinction matters.
+        function setUser(name, supabaseUser, { freshSignIn = true } = {}) {
             currentUser = name;
             currentSupabaseUser = supabaseUser || null;
             document.getElementById('accountLabel').textContent = 'Hi, ' + name.split(' ')[0];
@@ -11599,7 +11627,7 @@
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             renderCartList();
             syncLoyaltyState().then(renderCartList);
-            syncCartFromSupabase();
+            if (freshSignIn) mergeGuestCartIntoAccount(); else loadAccountCart();
             refreshAdminStatus();
             subscribeMyOrders();
         }
@@ -12212,7 +12240,7 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session && session.user) {
                 const name = (session.user.user_metadata && session.user.user_metadata.full_name) || session.user.email.split('@')[0];
-                setUser(name, session.user);
+                setUser(name, session.user, { freshSignIn: false });
                 // A hard refresh landing straight on an admin route runs the
                 // very first route() at boot before this session (and
                 // currentIsAdmin, resolved inside setUser's refreshAdminStatus
