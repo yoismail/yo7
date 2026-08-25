@@ -6195,6 +6195,7 @@
                             <div class="summary-row"><span id="sumDeliveryLabel">Delivery</span><span id="sumDelivery">£3.50</span></div>
                             <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
                             <div class="summary-row discount-row" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Discount</span><span id="sumDiscount">-£0.00</span></div>
+                            <div class="summary-row discount-row" id="sumLoyaltyRow" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal">£0.00</span></div>
                             <button class="btn btn-primary btn-block" id="toDeliveryBtn" style="margin-top:20px;"
                                 type="button">Continue to delivery</button>
@@ -6292,6 +6293,7 @@
                             <div class="summary-row"><span id="sumDeliveryLabel2">Delivery</span><span id="sumDelivery2">£3.50</span></div>
                             <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
                             <div class="summary-row discount-row" id="sumDiscountRow2" style="display:none;"><span id="sumDiscountLabel2">Discount</span><span id="sumDiscount2">-£0.00</span></div>
+                            <div class="summary-row discount-row" id="sumLoyaltyRow2" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty2">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal2">£0.00</span></div>
                         </div>
                     </div>
@@ -6347,6 +6349,7 @@
                             <div class="summary-row"><span id="sumDeliveryLabel3">Delivery</span><span id="sumDelivery3">£3.50</span></div>
                             <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
                             <div class="summary-row discount-row" id="sumDiscountRow3" style="display:none;"><span id="sumDiscountLabel3">Discount</span><span id="sumDiscount3">-£0.00</span></div>
+                            <div class="summary-row discount-row" id="sumLoyaltyRow3" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty3">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal3">£0.00</span></div>
                             <div class="cart-trust-strip">
                                 <div class="trust-pill">
@@ -7798,22 +7801,21 @@
         let editingDiscountId = null; // id of the discount the admin form is currently editing, or null when creating new
 
         /* ================= LOYALTY NUDGE =================
-           Real, account-backed loyalty tracking (see
-           supabase-migration-13-loyalty-rewards.sql): cumulative spend is
-           computed from the customer's actual order history in Supabase
-           rather than a separately-tracked counter that could drift, and
-           reward codes live in a loyalty_rewards table keyed to their
-           account, so a reward earned on one device is visible and usable
-           on every device signed into that account, unlike the previous
-           localStorage-only version. Everything here reads from a small
-           local cache (loyaltyCachedSpend / loyaltyCachedRewards) kept
-           fresh by syncLoyaltyState(), so the rest of the site (cart
-           display, etc.) can keep reading it synchronously without every
-           call site needing to become async. */
+           Simple, account-backed loyalty reward (see
+           supabase-migration-15-simplify-loyalty.sql): any single order
+           of loyaltySpendThreshold or more qualifies the account for
+           loyaltyRewardPct off their next order, applied automatically
+           at checkout, no code to copy or type. An account only ever
+           holds one unused reward at a time, another qualifying order
+           placed while one's already unused doesn't stack a second one.
+           Everything here reads from a small local cache
+           (loyaltyCachedReward) kept fresh by syncLoyaltyState(), so the
+           rest of the site (cart display, checkout totals, etc.) can keep
+           reading it synchronously without every call site needing to
+           become async. */
         let loyaltySpendThreshold = 100;
         let loyaltyRewardPct = 10;
-        let loyaltyCachedSpend = 0;
-        let loyaltyCachedRewards = []; // [{code, pct, used}], this account's rewards
+        let loyaltyCachedReward = null; // {pct} if this account has an unused reward right now, else null
         async function loadLoyaltySettings() {
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.from('loyalty_settings').select('spend_threshold, reward_pct').limit(1).single();
@@ -7821,87 +7823,58 @@
             loyaltySpendThreshold = data.spend_threshold;
             loyaltyRewardPct = data.reward_pct;
         }
-        // Refreshes the local cache from Supabase: real cumulative spend
-        // from this account's own orders, and their loyalty reward codes.
-        // Call after anything that could change either (login, checkout,
-        // logout), the rest of the loyalty UI just reads the cache.
+        // Refreshes the local cache from Supabase. Call after anything
+        // that could change it (login, checkout, logout), the rest of the
+        // loyalty UI just reads the cache.
         async function syncLoyaltyState() {
             if (!supabaseClient || !currentSupabaseUser) {
-                loyaltyCachedSpend = 0;
-                loyaltyCachedRewards = [];
-                registerLoyaltyRewardsAsDiscounts();
+                loyaltyCachedReward = null;
                 return;
             }
-            const [{ data: orders }, { data: rewards }] = await Promise.all([
-                supabaseClient.from('orders').select('total').eq('user_id', currentSupabaseUser.id).not('status', 'in', '(cancelled,returned)'),
-                supabaseClient.from('loyalty_rewards').select('code, pct, used').eq('user_id', currentSupabaseUser.id),
-            ]);
-            loyaltyCachedSpend = (orders || []).reduce((sum, o) => sum + (o.total || 0), 0);
-            loyaltyCachedRewards = rewards || [];
-            registerLoyaltyRewardsAsDiscounts();
-        }
-        // Mirrors this account's unused rewards into the live discounts
-        // array so they actually work at checkout, the same mechanism
-        // admin-created discount codes use.
-        function registerLoyaltyRewardsAsDiscounts() {
-            discounts = discounts.filter(d => !d.id.startsWith('loyalty-'));
-            loyaltyCachedRewards.filter(r => !r.used).forEach(r => {
-                discounts.push({
-                    id: 'loyalty-' + r.code, name: 'Loyalty reward', code: r.code,
-                    type: 'percent', value: r.pct,
-                    qualifyingScope: 'all', minOrder: null, maxPerCustomer: 1, active: true,
-                });
-            });
+            const { data, error } = await supabaseClient.from('loyalty_rewards').select('pct').eq('user_id', currentSupabaseUser.id).eq('used', false).limit(1).single();
+            loyaltyCachedReward = (!error && data) ? data : null;
         }
         // Call once per completed order, once it's actually saved (needs a
-        // real order id). The database does the real crossing check
-        // against actual order history and mints the code if earned; this
-        // just relays the result and refreshes the cache. Returns null if
-        // nothing was earned this time, or there's no backend to check
-        // against.
+        // real order id). The database checks whether this one order met
+        // the threshold and mints a reward if so (and the account doesn't
+        // already have one unused); this just relays the result and
+        // refreshes the cache. Returns the reward % if one was newly
+        // earned, or null.
         async function issueLoyaltyRewardIfEarned(orderId) {
             if (!supabaseClient || !currentSupabaseUser) return null;
             const { data, error } = await supabaseClient.rpc('issue_loyalty_reward_if_earned', { p_order_id: orderId });
             if (error) { console.error('Loyalty reward check failed:', error.message); return null; }
             await syncLoyaltyState();
-            return (data && data[0]) ? data[0].code : null;
+            return (data && data[0]) ? data[0].pct : null;
         }
-        // Flags a code as permanently spent once an order using it goes
-        // through. maxPerCustomer:1 + recordDiscountUsage() already block
-        // reuse in this browser; this additionally stops it working on any
-        // other device signed into the same account.
-        async function markLoyaltyCodeUsed(code) {
+        // Flags this account's unused reward as spent once an order that
+        // auto-applied it goes through, on every device signed into that
+        // account, not just this one.
+        async function markLoyaltyRewardUsed() {
             if (!supabaseClient) return;
-            const { error } = await supabaseClient.rpc('mark_loyalty_reward_used', { p_code: code });
-            if (error) console.error('Could not mark loyalty code used:', error.message);
+            const { error } = await supabaseClient.rpc('mark_loyalty_reward_used');
+            if (error) console.error('Could not mark loyalty reward used:', error.message);
             await syncLoyaltyState();
         }
-        function unusedLoyaltyCode() {
-            return loyaltyCachedRewards.find(r => !r.used) || null;
+        function pendingLoyaltyReward() {
+            return loyaltyCachedReward;
         }
         function loyaltyStatusHTML() {
             if (!currentUser) {
-                return `<a href="#/login">Log in</a> to track your progress toward <strong>${loyaltyRewardPct}% off</strong> a future order.`;
+                return `<a href="#/login">Log in</a> to unlock <strong>${loyaltyRewardPct}% off</strong> your next order whenever a single order reaches <strong>${money(loyaltySpendThreshold)}</strong>.`;
             }
-            const pending = unusedLoyaltyCode();
+            const pending = pendingLoyaltyReward();
             if (pending) {
-                return `You've earned <strong>${pending.pct}% off</strong>, use code <strong>${pending.code}</strong> at checkout.`;
+                return `You've got <strong>${pending.pct}% off</strong> your next order, it applies automatically at checkout.`;
             }
-            const before = loyaltyCachedSpend;
-            const projected = before + cartSubtotal();
-            if (cartSubtotal() > 0 && Math.floor(projected / loyaltySpendThreshold) > Math.floor(before / loyaltySpendThreshold)) {
-                return `Complete this order and you'll unlock <strong>${loyaltyRewardPct}% off</strong> your next one, a single-use code you'll see on your confirmation page. You've spent <strong>${money(before)}</strong> so far, this order takes you to <strong>${money(projected)}</strong>, past the <strong>${money(loyaltySpendThreshold)}</strong> mark.`;
+            const sub = cartSubtotal();
+            if (sub >= loyaltySpendThreshold) {
+                return `This order qualifies! Complete checkout and <strong>${loyaltyRewardPct}% off</strong> your next order unlocks automatically.`;
             }
-            const progress = projected % loyaltySpendThreshold;
-            const remaining = loyaltySpendThreshold - progress;
-            // Progress carries over between orders (it's tracked per customer, not
-            // per basket), so an empty cart can still show real progress from past
-            // orders. Naming that progress explicitly here stops it from reading
-            // like a bug when the current basket is empty but the number isn't £100.
-            if (progress > 0) {
-                return `You've spent <strong>${money(progress)}</strong> toward your next reward, spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> your next order.`;
+            if (sub > 0) {
+                return `Add <strong>${money(loyaltySpendThreshold - sub)}</strong> more to this order to unlock <strong>${loyaltyRewardPct}% off</strong> your next one.`;
             }
-            return `Spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> your next order.`;
+            return `Spend <strong>${money(loyaltySpendThreshold)}</strong> or more in one order to unlock <strong>${loyaltyRewardPct}% off</strong> your next order.`;
         }
 
         /* ================= REVIEW PLATFORM BADGES =================
@@ -8457,7 +8430,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-25.5';
+        const BUILD_VERSION = '2026-08-25.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10403,7 +10376,7 @@
             renderCheckoutUpsell();
             const loyaltyNoteEl = document.getElementById('loyaltyNote');
             if (loyaltyNoteEl) {
-                loyaltyNoteEl.classList.toggle('loyalty-note-earned', !!unusedLoyaltyCode());
+                loyaltyNoteEl.classList.toggle('loyalty-note-earned', !!pendingLoyaltyReward());
                 loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
             }
             updateSummaries();
@@ -10480,7 +10453,9 @@
             const { fee: resolvedFee } = resolveDeliveryFee(postcode);
             const delivery = (cart.length && fulfilmentMethod === 'delivery') ? resolvedFee : 0;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
-            const total = Math.max(0, sub + delivery - discountAmount);
+            const pendingReward = pendingLoyaltyReward();
+            const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
+            const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
             const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
             const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && resolvedFee === 0);
             const totalWeight = cartTotalWeight();
@@ -10500,6 +10475,14 @@
                     document.getElementById(labelId).textContent = `Discount (${appliedDiscount.code})`;
                     document.getElementById(amountId).textContent = `-${money(discountAmount)}`;
                 }
+            });
+
+            const showLoyalty = loyaltyDiscountAmount > 0;
+            [['sumLoyaltyRow', 'sumLoyalty'], ['sumLoyaltyRow2', 'sumLoyalty2'], ['sumLoyaltyRow3', 'sumLoyalty3']].forEach(([rowId, amountId]) => {
+                const row = document.getElementById(rowId);
+                if (!row) return;
+                row.style.display = showLoyalty ? 'flex' : 'none';
+                if (showLoyalty) document.getElementById(amountId).textContent = `-${money(loyaltyDiscountAmount)}`;
             });
         }
 
@@ -10647,11 +10630,10 @@
                 const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
                 const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
                 const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
-                const orderTotal = Math.max(0, orderSubtotal + deliveryCharge - discountAmount);
-                if (appliedDiscount) {
-                    recordDiscountUsage(appliedDiscount.id);
-                    if (appliedDiscount.id.startsWith('loyalty-')) await markLoyaltyCodeUsed(appliedDiscount.code);
-                }
+                const pendingReward = pendingLoyaltyReward();
+                const loyaltyDiscountAmount = pendingReward ? Math.min(orderSubtotal * pendingReward.pct / 100, orderSubtotal - discountAmount) : 0;
+                const orderTotal = Math.max(0, orderSubtotal + deliveryCharge - discountAmount - loyaltyDiscountAmount);
+                if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
                 lastOrder = {
                     number: null, // assigned below, either the real sequential
                                    // YO7-0001-style number the database hands
@@ -10663,11 +10645,12 @@
                     delivery: deliveryCharge,
                     discount: discountAmount,
                     discountCode: appliedDiscount ? appliedDiscount.code : null,
+                    loyaltyDiscount: loyaltyDiscountAmount,
                     total: orderTotal,
                     delivery_info: deliveryInfo,
                     fulfilment: fulfilmentMethod,
                     deliveryWeight: cartTotalWeight(),
-                    loyaltyCodeEarned: null, // filled in below once the order is saved and has a real id to check against
+                    loyaltyRewardEarned: false, // filled in below once the order is saved and has a real id to check against
                 };
                 // Saves the order for account holders so it shows up in Order
                 // History, and is also where the real order number comes
@@ -10687,7 +10670,7 @@
                         items: lastOrder.items,
                         subtotal: lastOrder.subtotal,
                         delivery_fee: lastOrder.delivery,
-                        discount: lastOrder.discount,
+                        discount: lastOrder.discount + lastOrder.loyaltyDiscount,
                         total: lastOrder.total,
                         delivery_name: deliveryInfo ? deliveryInfo.name : null,
                         delivery_address: deliveryInfo ? `${deliveryInfo.address}, ${deliveryInfo.town} ${deliveryInfo.postcode}` : null,
@@ -10698,7 +10681,8 @@
                         console.error('Order history save failed:', error.message);
                     } else {
                         lastOrder.number = data.order_number;
-                        lastOrder.loyaltyCodeEarned = await issueLoyaltyRewardIfEarned(data.id);
+                        if (loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
+                        lastOrder.loyaltyRewardEarned = !!(await issueLoyaltyRewardIfEarned(data.id));
                     }
                 }
                 if (!lastOrder.number) lastOrder.number = 'YO7-' + Math.floor(100000 + Math.random() * 899999);
@@ -11226,24 +11210,19 @@
             }
             const confirmLoyaltyEl = document.getElementById('confirmLoyaltyNote');
             if (confirmLoyaltyEl) {
-                const justEarnedCode = lastOrder.loyaltyCodeEarned;
-                confirmLoyaltyEl.classList.toggle('loyalty-note-earned', !!justEarnedCode);
-                // loyaltyCachedSpend here already includes this just-placed order
-                // (issueLoyaltyRewardIfEarned() refreshed it before this renders),
-                // so the "remaining" figure reflects real carried-over progress,
-                // not a flat "spend the whole threshold again" that ignores it.
-                const remaining = loyaltySpendThreshold - (loyaltyCachedSpend % loyaltySpendThreshold);
-                confirmLoyaltyEl.innerHTML = justEarnedCode
-                    ? `🎉 Thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${justEarnedCode}</strong> at checkout. It's yours alone, valid for one order only.`
-                    : `Thank you! Spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> a future order.`;
-                if (justEarnedCode) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off, code ${justEarnedCode}`, 5000);
+                const justEarned = lastOrder.loyaltyRewardEarned;
+                confirmLoyaltyEl.classList.toggle('loyalty-note-earned', !!justEarned);
+                confirmLoyaltyEl.innerHTML = justEarned
+                    ? `🎉 Thank you! This order unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, it'll apply automatically at checkout.`
+                    : `Thank you! Spend <strong>${money(loyaltySpendThreshold)}</strong> or more in one order to unlock <strong>${loyaltyRewardPct}% off</strong> a future order.`;
+                if (justEarned) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off your next order`, 5000);
             }
             document.getElementById('invNumber').textContent = lastOrder.number;
             const invLoyaltyEl = document.getElementById('invLoyaltyNote');
             if (invLoyaltyEl) {
-                if (lastOrder.loyaltyCodeEarned) {
+                if (lastOrder.loyaltyRewardEarned) {
                     invLoyaltyEl.style.display = 'block';
-                    invLoyaltyEl.innerHTML = `<strong>Reward earned:</strong> ${loyaltyRewardPct}% off your next order with code <strong>${lastOrder.loyaltyCodeEarned}</strong>. One-time use, keep this for reference.`;
+                    invLoyaltyEl.innerHTML = `<strong>Reward earned:</strong> ${loyaltyRewardPct}% off your next order. Applies automatically at checkout, no code needed.`;
                 } else {
                     invLoyaltyEl.style.display = 'none';
                 }
@@ -11470,18 +11449,21 @@
             if (order.discount > 0) {
                 totalRow(`Discount${order.discountCode ? ' (' + order.discountCode + ')' : ''}`, '-' + money(order.discount), { color: accent });
             }
+            if (order.loyaltyDiscount > 0) {
+                totalRow('Loyalty reward', '-' + money(order.loyaltyDiscount), { color: accent });
+            }
             y += 4;
             hr(y);
             y += 16;
             totalRow('Total paid', money(order.total), { size: 13, bold: true, gap: 20 });
 
             // ---- Loyalty reward ----
-            if (order.loyaltyCodeEarned) {
+            if (order.loyaltyRewardEarned) {
                 ensureRoom(40);
                 pdf.setFillColor(...orange);
                 pdf.roundedRect(margin, y - 12, contentWidth, 30, 4, 4, 'F');
                 setText(9.5, 'bold', ink);
-                pdf.text(`Reward earned: ${loyaltyRewardPct}% off your next order with code ${order.loyaltyCodeEarned}. One-time use.`, margin + 10, y + 6);
+                pdf.text(`Reward earned: ${loyaltyRewardPct}% off your next order. Applies automatically, no code needed.`, margin + 10, y + 6);
                 y += 34;
             }
 
@@ -11520,6 +11502,7 @@
                 delivery: order.delivery_fee || 0,
                 discount: order.discount || 0,
                 discountCode: null,
+                loyaltyDiscount: 0,
                 total: order.total || 0,
                 delivery_info: {
                     name: order.delivery_name || '',
@@ -11529,7 +11512,7 @@
                     phone: order.delivery_phone || '',
                 },
                 fulfilment: order.fulfilment_method,
-                loyaltyCodeEarned: null,
+                loyaltyRewardEarned: false,
             };
         }
         // Order history cards keep a lightweight lookup here so the "View
@@ -11646,13 +11629,8 @@
             if (adminNavLink) adminNavLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
             unsubscribeMyOrders();
-            // The previous identity's loyalty reward codes were registered
-            // into this in-memory array on login; they don't belong to
-            // whoever's using this browser next, so they need to leave with
-            // the session that earned them, not just stop being displayed.
-            // syncLoyaltyState() resets the cache and re-filters discounts
-            // for the (now signed-out) empty identity synchronously.
-            if (appliedDiscount && appliedDiscount.id.startsWith('loyalty-')) appliedDiscount = null;
+            // The previous identity's cached reward doesn't belong to
+            // whoever's using this browser next.
             syncLoyaltyState();
             renderCartList();
         }
@@ -12864,7 +12842,7 @@
             el.className = 'delivery-admin-panel';
             el.innerHTML = `
     <h3>Loyalty nudge <span class="admin-only-tag">Edit mode only</span></h3>
-    <p class="delivery-admin-note">Tracks real cumulative spend from each customer's order history, and crossing the threshold mints a unique, single-use reward code tied to their account, usable from any device they're signed into. Changes below apply to every customer immediately.</p>
+    <p class="delivery-admin-note">Any single order at or above the threshold unlocks the reward on the customer's account, no code to generate or type, it applies automatically at checkout on their next order. An account only ever holds one unused reward at a time. Changes below apply to every customer immediately.</p>
     <div class="field-row">
       <div class="field"><label>Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="${loyaltySpendThreshold}"></div>
       <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="${loyaltyRewardPct}"></div>
