@@ -6034,6 +6034,9 @@
                 <div class="cat-pill-row" id="shopAllPillRow"></div>
                 <div class="shop-all-result-count" id="shopAllResultCount"></div>
                 <div class="shop-all-grid" id="shopAllGrid"></div>
+                <div class="grid-load-more" id="shopAllLoadMore" style="display:none;">
+                    <button type="button" class="see-more-btn" id="shopAllLoadMoreBtn">See more</button>
+                </div>
                 <div class="empty-state" id="shopAllEmptyState" style="display:none;">
                     <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <h3>Nothing matches that yet</h3>
@@ -8446,7 +8449,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-25.8';
+        const BUILD_VERSION = '2026-08-25.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9793,41 +9796,44 @@
             }
         }
 
-        // The aisle (category) and search results pages share one grid, and
-        // an aisle can now hold far more products than fit on one screen
-        // once an admin's been adding to it for a while, showing them all
-        // at once meant an endlessly long page. This paints only a page's
-        // worth at a time with a "See more" button to reveal the next
-        // batch, instead of an infinite-scroll or a horizontal carousel
-        // (which is what full aisle browsing used to be, before this).
-        const PRODUCT_GRID_PAGE_SIZE = 12;
-        let productGridState = { items: [], visible: 0 };
-        function renderProductGridPage() {
-            const { items, visible } = productGridState;
-            const grid = document.getElementById('productGrid');
-            const empty = document.getElementById('emptyState');
-            if (items.length === 0) {
-                grid.innerHTML = '';
-                empty.style.display = 'block';
-            } else {
-                empty.style.display = 'none';
-                grid.innerHTML = items.slice(0, visible).map(productCardHTML).join('');
+        // Any full product listing (a whole aisle, search results, or the
+        // "Shop every aisle" flat catalogue) can now hold far more products
+        // than fit on one screen once an admin's been adding to it for a
+        // while, showing them all at once meant an endlessly long page.
+        // This factory paints only a page's worth at a time per grid, with
+        // a "See more" button to reveal the next batch.
+        const GRID_PAGE_SIZE = 12;
+        function createPaginatedGrid(gridId, emptyId, loadMoreId, loadMoreBtnId) {
+            const state = { items: [], visible: 0 };
+            function paint() {
+                const grid = document.getElementById(gridId);
+                const empty = document.getElementById(emptyId);
+                if (state.items.length === 0) {
+                    grid.innerHTML = '';
+                    empty.style.display = 'block';
+                } else {
+                    empty.style.display = 'none';
+                    grid.innerHTML = state.items.slice(0, state.visible).map(productCardHTML).join('');
+                }
+                const loadMoreWrap = document.getElementById(loadMoreId);
+                const remaining = state.items.length - state.visible;
+                loadMoreWrap.style.display = remaining > 0 ? 'flex' : 'none';
+                if (remaining > 0) {
+                    document.getElementById(loadMoreBtnId).textContent = `See more (${remaining} more item${remaining === 1 ? '' : 's'})`;
+                }
             }
-            const loadMoreWrap = document.getElementById('productGridLoadMore');
-            const remaining = items.length - visible;
-            loadMoreWrap.style.display = remaining > 0 ? 'flex' : 'none';
-            if (remaining > 0) {
-                document.getElementById('productGridLoadMoreBtn').textContent = `See more (${remaining} more item${remaining === 1 ? '' : 's'})`;
-            }
+            document.getElementById(loadMoreBtnId).addEventListener('click', () => {
+                state.visible = Math.min(state.visible + GRID_PAGE_SIZE, state.items.length);
+                paint();
+            });
+            return function render(items) {
+                state.items = items;
+                state.visible = Math.min(GRID_PAGE_SIZE, items.length);
+                paint();
+            };
         }
-        function renderProductGridPaginated(items) {
-            productGridState = { items, visible: Math.min(PRODUCT_GRID_PAGE_SIZE, items.length) };
-            renderProductGridPage();
-        }
-        document.getElementById('productGridLoadMoreBtn').addEventListener('click', () => {
-            productGridState.visible = Math.min(productGridState.visible + PRODUCT_GRID_PAGE_SIZE, productGridState.items.length);
-            renderProductGridPage();
-        });
+        const renderProductGridPaginated = createPaginatedGrid('productGrid', 'emptyState', 'productGridLoadMore', 'productGridLoadMoreBtn');
+        const renderShopAllGridPaginated = createPaginatedGrid('shopAllGrid', 'shopAllEmptyState', 'shopAllLoadMore', 'shopAllLoadMoreBtn');
 
         /* ================= RENDER: CATEGORY / SEARCH PAGE ================= */
         let currentCategorySlug = null;
@@ -9961,7 +9967,7 @@
             if (q) items = items.filter(p => matchesQuery(p, q));
             items = items.map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
             document.getElementById('shopAllResultCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
-            renderGrid(items, 'shopAllGrid', 'shopAllEmptyState');
+            renderShopAllGridPaginated(items);
         }
 
         /* ================= RENDER: PRODUCT DETAIL ================= */
