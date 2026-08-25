@@ -8457,7 +8457,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-25.2';
+        const BUILD_VERSION = '2026-08-25.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -8551,9 +8551,54 @@
                 return Array.isArray(saved) ? saved : [];
             } catch (e) { return []; }
         }
+        // Combines two item lists without ever dropping anything: matching
+        // ids have their quantities added together, anything only on one
+        // side is kept as-is. Used both directions (local into server,
+        // server into local) so logging in on a second device never
+        // silently loses whatever was already in either basket.
+        function mergeCartItems(base, incoming) {
+            const merged = base.map(i => ({ ...i }));
+            incoming.forEach(item => {
+                const existing = merged.find(i => i.id === item.id);
+                if (existing) existing.qty += item.qty;
+                else merged.push({ ...item });
+            });
+            return merged;
+        }
+        // The basket used to live only in this browser's localStorage
+        // (see saveCartToStorage/loadCartFromStorage above), which is why
+        // logging into the same account on a different device showed a
+        // completely different basket, see
+        // supabase-migration-14-cart-sync.sql. This keeps that local copy
+        // as the always-on instant cache/guest fallback, and layers real
+        // cross-device sync on top for signed-in accounts.
+        let cartSyncTimer = null;
+        function scheduleCartSync() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            clearTimeout(cartSyncTimer);
+            cartSyncTimer = setTimeout(() => {
+                supabaseClient.from('carts')
+                    .upsert({ user_id: currentSupabaseUser.id, items: cart, updated_at: new Date().toISOString() })
+                    .then(({ error }) => { if (error) console.error('Cart sync failed:', error.message); });
+            }, 600);
+        }
+        // Called on login/session-restore. Merges whatever's already in
+        // this browser's basket with whatever's saved for this account on
+        // the server, so switching devices mid-basket combines them
+        // instead of one silently overwriting the other.
+        async function syncCartFromSupabase() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const { data, error } = await supabaseClient.from('carts').select('items').eq('user_id', currentSupabaseUser.id).single();
+            if (error && error.code !== 'PGRST116') { console.error('Cart load failed:', error.message); return; } // PGRST116 = no saved cart yet, not a real error
+            const serverItems = (data && Array.isArray(data.items)) ? data.items : [];
+            if (serverItems.length > 0) cart = mergeCartItems(cart, serverItems);
+            renderCartList();
+            updateCartBadge(); // also persists the merged result back to both localStorage and the server
+        }
         let lastKnownCartCount = 0;
         function updateCartBadge() {
             saveCartToStorage();
+            scheduleCartSync();
             const badge = document.getElementById('cartBadge');
             const n = cartCount();
             badge.textContent = n;
@@ -11554,6 +11599,7 @@
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             renderCartList();
             syncLoyaltyState().then(renderCartList);
+            syncCartFromSupabase();
             refreshAdminStatus();
             subscribeMyOrders();
         }
