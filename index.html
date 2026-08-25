@@ -7798,112 +7798,86 @@
         let editingDiscountId = null; // id of the discount the admin form is currently editing, or null when creating new
 
         /* ================= LOYALTY NUDGE =================
-           Not a full account-based loyalty program, there's no real login
-           system to hang one off. This tracks cumulative spend in this
-           browser's local storage (same honest caveat as discount-code
-           usage limits: it resets if storage is cleared or a different
-           device is used). Crossing every £loyaltySpendThreshold mints a
-           genuine, unique, single-use discount code, registered as a real
-           entry in the discounts array so it actually works at checkout,
-           valid for the next order only, then automatically invalidated
-           once it's been used (maxPerCustomer: 1 plus the existing usage
-           tracker already does this correctly). */
+           Real, account-backed loyalty tracking (see
+           supabase-migration-13-loyalty-rewards.sql): cumulative spend is
+           computed from the customer's actual order history in Supabase
+           rather than a separately-tracked counter that could drift, and
+           reward codes live in a loyalty_rewards table keyed to their
+           account, so a reward earned on one device is visible and usable
+           on every device signed into that account, unlike the previous
+           localStorage-only version. Everything here reads from a small
+           local cache (loyaltyCachedSpend / loyaltyCachedRewards) kept
+           fresh by syncLoyaltyState(), so the rest of the site (cart
+           display, etc.) can keep reading it synchronously without every
+           call site needing to become async. */
         let loyaltySpendThreshold = 100;
         let loyaltyRewardPct = 10;
-        // Loyalty spend and codes are scoped per identity within this browser,
-        // not one single shared bucket. Without this, two different logged-in
-        // emails on the same browser would read and write the exact same
-        // numbers. This is still a browser-local approximation, not a real
-        // account system with a server behind it, logging in as the same
-        // email later on a different device won't carry the history over.
-        //
-        // There is deliberately no "guest" bucket. Checkout requires a
-        // logged-in account (an order needs an owner to be trackable), so a
-        // signed-out visitor can never actually earn or redeem a reward —
-        // showing them a spend figure at all was always going to be either
-        // meaningless or, worse, another identity's leftover data from
-        // before login-gated checkout existed. Every function here is a
-        // deliberate no-op while logged out rather than falling back to a
-        // shared bucket.
-        function loyaltyIdentityKey() {
-            if (!currentUser) return null;
-            return String(currentUser).trim().toLowerCase().replace(/[^a-z0-9@.]/g, '') || null;
+        let loyaltyCachedSpend = 0;
+        let loyaltyCachedRewards = []; // [{code, pct, used}], this account's rewards
+        async function loadLoyaltySettings() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('loyalty_settings').select('spend_threshold, reward_pct').limit(1).single();
+            if (error || !data) return;
+            loyaltySpendThreshold = data.spend_threshold;
+            loyaltyRewardPct = data.reward_pct;
         }
-        function getLoyaltySpend() {
-            const key = loyaltyIdentityKey();
-            if (!key) return 0;
-            try { return parseFloat(localStorage.getItem('yo7-loyalty-spend-' + key) || '0'); }
-            catch (e) { return 0; }
+        // Refreshes the local cache from Supabase: real cumulative spend
+        // from this account's own orders, and their loyalty reward codes.
+        // Call after anything that could change either (login, checkout,
+        // logout), the rest of the loyalty UI just reads the cache.
+        async function syncLoyaltyState() {
+            if (!supabaseClient || !currentSupabaseUser) {
+                loyaltyCachedSpend = 0;
+                loyaltyCachedRewards = [];
+                registerLoyaltyRewardsAsDiscounts();
+                return;
+            }
+            const [{ data: orders }, { data: rewards }] = await Promise.all([
+                supabaseClient.from('orders').select('total').eq('user_id', currentSupabaseUser.id).not('status', 'in', '(cancelled,returned)'),
+                supabaseClient.from('loyalty_rewards').select('code, pct, used').eq('user_id', currentSupabaseUser.id),
+            ]);
+            loyaltyCachedSpend = (orders || []).reduce((sum, o) => sum + (o.total || 0), 0);
+            loyaltyCachedRewards = rewards || [];
+            registerLoyaltyRewardsAsDiscounts();
         }
-        function addLoyaltySpend(amount) {
-            const key = loyaltyIdentityKey();
-            if (!key) return;
-            try { localStorage.setItem('yo7-loyalty-spend-' + key, String(getLoyaltySpend() + amount)); }
-            catch (e) { /* localStorage unavailable, spend just won't persist this session */ }
-        }
-        function getLoyaltyCodes() {
-            const key = loyaltyIdentityKey();
-            if (!key) return [];
-            try { return JSON.parse(localStorage.getItem('yo7-loyalty-codes-' + key) || '[]'); }
-            catch (e) { return []; }
-        }
-        function saveLoyaltyCodes(codes) {
-            const key = loyaltyIdentityKey();
-            if (!key) return;
-            try { localStorage.setItem('yo7-loyalty-codes-' + key, JSON.stringify(codes)); }
-            catch (e) { /* localStorage unavailable, code just won't persist this session */ }
-        }
-        function generateLoyaltyCodeString() {
-            return 'THANKS' + Math.random().toString(36).slice(2, 7).toUpperCase();
-        }
-        // One-time cleanup for browsers that already have a stale "guest"
-        // bucket left over from before checkout required login, when guest
-        // checkouts could still earn/spend against a shared identity. That
-        // bucket is permanently dead now (loyaltyIdentityKey() never returns
-        // 'guest' again), this just removes the leftover data so it can't
-        // resurface some other way later.
-        try {
-            localStorage.removeItem('yo7-loyalty-spend-guest');
-            localStorage.removeItem('yo7-loyalty-codes-guest');
-        } catch (e) { /* localStorage unavailable, nothing to clean up */ }
-        // Re-registers any still-unused, previously-earned codes into the live
-        // discounts array. Needed because `discounts` is in-memory only and
-        // resets on refresh, but the codes themselves must keep working.
-        function registerStoredLoyaltyCodes() {
-            getLoyaltyCodes().filter(c => !c.used).forEach(c => {
-                if (findDiscountByCode(c.code)) return;
+        // Mirrors this account's unused rewards into the live discounts
+        // array so they actually work at checkout, the same mechanism
+        // admin-created discount codes use.
+        function registerLoyaltyRewardsAsDiscounts() {
+            discounts = discounts.filter(d => !d.id.startsWith('loyalty-'));
+            loyaltyCachedRewards.filter(r => !r.used).forEach(r => {
                 discounts.push({
-                    id: 'loyalty-' + c.code, name: 'Loyalty reward', code: c.code,
-                    type: 'percent', value: c.pct,
+                    id: 'loyalty-' + r.code, name: 'Loyalty reward', code: r.code,
+                    type: 'percent', value: r.pct,
                     qualifyingScope: 'all', minOrder: null, maxPerCustomer: 1, active: true,
                 });
             });
         }
-        // Call once per completed order. Adds this order's total to cumulative
-        // spend and, if that crossed a new £threshold, mints and returns a
-        // fresh unique code. Returns null if nothing was earned this time.
-        function issueLoyaltyRewardIfEarned(orderTotal) {
-            const before = getLoyaltySpend();
-            addLoyaltySpend(orderTotal);
-            const after = before + orderTotal;
-            if (Math.floor(after / loyaltySpendThreshold) <= Math.floor(before / loyaltySpendThreshold)) return null;
-            const code = generateLoyaltyCodeString();
-            const codes = getLoyaltyCodes();
-            codes.push({ code, pct: loyaltyRewardPct, used: false, earnedAt: new Date().toISOString() });
-            saveLoyaltyCodes(codes);
-            registerStoredLoyaltyCodes();
-            return code;
+        // Call once per completed order, once it's actually saved (needs a
+        // real order id). The database does the real crossing check
+        // against actual order history and mints the code if earned; this
+        // just relays the result and refreshes the cache. Returns null if
+        // nothing was earned this time, or there's no backend to check
+        // against.
+        async function issueLoyaltyRewardIfEarned(orderId) {
+            if (!supabaseClient || !currentSupabaseUser) return null;
+            const { data, error } = await supabaseClient.rpc('issue_loyalty_reward_if_earned', { p_order_id: orderId });
+            if (error) { console.error('Loyalty reward check failed:', error.message); return null; }
+            await syncLoyaltyState();
+            return (data && data[0]) ? data[0].code : null;
         }
-        // Flags a code as permanently spent once an order using it goes through.
-        // maxPerCustomer:1 + recordDiscountUsage() already block reuse in this
-        // browser; this additionally stops the "you have a reward" UI mentioning it.
-        function markLoyaltyCodeUsed(code) {
-            const codes = getLoyaltyCodes();
-            const entry = codes.find(c => c.code.toLowerCase() === (code || '').toLowerCase());
-            if (entry) { entry.used = true; saveLoyaltyCodes(codes); }
+        // Flags a code as permanently spent once an order using it goes
+        // through. maxPerCustomer:1 + recordDiscountUsage() already block
+        // reuse in this browser; this additionally stops it working on any
+        // other device signed into the same account.
+        async function markLoyaltyCodeUsed(code) {
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.rpc('mark_loyalty_reward_used', { p_code: code });
+            if (error) console.error('Could not mark loyalty code used:', error.message);
+            await syncLoyaltyState();
         }
         function unusedLoyaltyCode() {
-            return getLoyaltyCodes().find(c => !c.used) || null;
+            return loyaltyCachedRewards.find(r => !r.used) || null;
         }
         function loyaltyStatusHTML() {
             if (!currentUser) {
@@ -7913,7 +7887,7 @@
             if (pending) {
                 return `You've earned <strong>${pending.pct}% off</strong>, use code <strong>${pending.code}</strong> at checkout.`;
             }
-            const before = getLoyaltySpend();
+            const before = loyaltyCachedSpend;
             const projected = before + cartSubtotal();
             if (cartSubtotal() > 0 && Math.floor(projected / loyaltySpendThreshold) > Math.floor(before / loyaltySpendThreshold)) {
                 return `This order earns you <strong>${loyaltyRewardPct}% off</strong> your next one!`;
@@ -8483,7 +8457,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-24.8';
+        const BUILD_VERSION = '2026-08-24.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10598,9 +10572,8 @@
                 const orderTotal = Math.max(0, orderSubtotal + deliveryCharge - discountAmount);
                 if (appliedDiscount) {
                     recordDiscountUsage(appliedDiscount.id);
-                    if (appliedDiscount.id.startsWith('loyalty-')) markLoyaltyCodeUsed(appliedDiscount.code);
+                    if (appliedDiscount.id.startsWith('loyalty-')) await markLoyaltyCodeUsed(appliedDiscount.code);
                 }
-                const loyaltyCodeEarned = issueLoyaltyRewardIfEarned(orderTotal);
                 lastOrder = {
                     number: null, // assigned below, either the real sequential
                                    // YO7-0001-style number the database hands
@@ -10616,7 +10589,7 @@
                     delivery_info: deliveryInfo,
                     fulfilment: fulfilmentMethod,
                     deliveryWeight: cartTotalWeight(),
-                    loyaltyCodeEarned,
+                    loyaltyCodeEarned: null, // filled in below once the order is saved and has a real id to check against
                 };
                 // Saves the order for account holders so it shows up in Order
                 // History, and is also where the real order number comes
@@ -10626,7 +10599,8 @@
                 // A failed save still shouldn't block the confirmation page
                 // the customer is about to see, or make a real purchase look
                 // like it didn't go through when it did, it just falls back
-                // to a one-off number in that case.
+                // to a one-off number in that case (and no loyalty reward can
+                // be checked without a real saved order to check against).
                 if (supabaseClient && currentSupabaseUser) {
                     const { data, error } = await supabaseClient.from('orders').insert({
                         user_id: currentSupabaseUser.id,
@@ -10641,9 +10615,13 @@
                         delivery_address: deliveryInfo ? `${deliveryInfo.address}, ${deliveryInfo.town} ${deliveryInfo.postcode}` : null,
                         delivery_phone: deliveryInfo ? deliveryInfo.phone : null,
                         notes: deliveryInfo ? deliveryInfo.notes : null,
-                    }).select('order_number').single();
-                    if (error) console.error('Order history save failed:', error.message);
-                    else lastOrder.number = data.order_number;
+                    }).select('id, order_number').single();
+                    if (error) {
+                        console.error('Order history save failed:', error.message);
+                    } else {
+                        lastOrder.number = data.order_number;
+                        lastOrder.loyaltyCodeEarned = await issueLoyaltyRewardIfEarned(data.id);
+                    }
                 }
                 if (!lastOrder.number) lastOrder.number = 'YO7-' + Math.floor(100000 + Math.random() * 899999);
                 cart = [];
@@ -11172,11 +11150,11 @@
             if (confirmLoyaltyEl) {
                 const justEarnedCode = lastOrder.loyaltyCodeEarned;
                 confirmLoyaltyEl.classList.toggle('loyalty-note-earned', !!justEarnedCode);
-                // getLoyaltySpend() here already includes this just-placed order
-                // (issueLoyaltyRewardIfEarned() added it before this renders), so
-                // the "remaining" figure reflects real carried-over progress, not
-                // a flat "spend the whole threshold again" that ignores it.
-                const remaining = loyaltySpendThreshold - (getLoyaltySpend() % loyaltySpendThreshold);
+                // loyaltyCachedSpend here already includes this just-placed order
+                // (issueLoyaltyRewardIfEarned() refreshed it before this renders),
+                // so the "remaining" figure reflects real carried-over progress,
+                // not a flat "spend the whole threshold again" that ignores it.
+                const remaining = loyaltySpendThreshold - (loyaltyCachedSpend % loyaltySpendThreshold);
                 confirmLoyaltyEl.innerHTML = justEarnedCode
                     ? `🎉 Thank you! You've unlocked <strong>${loyaltyRewardPct}% off</strong> your next order, use code <strong>${justEarnedCode}</strong> at checkout. It's yours alone, valid for one order only.`
                     : `Thank you! Spend <strong>${money(remaining)}</strong> more to earn <strong>${loyaltyRewardPct}% off</strong> a future order.`;
@@ -11562,9 +11540,8 @@
             accountCaret.style.display = 'inline-block';
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
-            registerStoredLoyaltyCodes();
             renderCartList();
-            if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
+            syncLoyaltyState().then(renderCartList);
             refreshAdminStatus();
             subscribeMyOrders();
         }
@@ -11587,11 +11564,11 @@
             // into this in-memory array on login; they don't belong to
             // whoever's using this browser next, so they need to leave with
             // the session that earned them, not just stop being displayed.
-            discounts = discounts.filter(d => !d.id.startsWith('loyalty-'));
+            // syncLoyaltyState() resets the cache and re-filters discounts
+            // for the (now signed-out) empty identity synchronously.
             if (appliedDiscount && appliedDiscount.id.startsWith('loyalty-')) appliedDiscount = null;
-            registerStoredLoyaltyCodes();
+            syncLoyaltyState();
             renderCartList();
-            if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
         }
         // Checked fresh from the database on every login/session-restore
         // rather than trusted from anything client-side, the actual access
@@ -12485,7 +12462,6 @@
             } else if (hash === '#/special-offers') {
                 showView('view-special-offers');
                 renderSpecialOffersPage();
-                if (typeof renderLoyaltySpendDisplay === 'function') renderLoyaltySpendDisplay();
             } else if (hash === '#/bundles') {
                 showView('view-bundles');
                 renderBundlesViewAllPage();
@@ -12790,16 +12766,9 @@
         renderBundles();
         renderDeliveryAdmin();
         populateDeliverySlots();
-        registerStoredLoyaltyCodes();
+        loadLoyaltySettings().then(syncLoyaltyState);
         const editModeBannerVersionEl = document.getElementById('editModeBannerVersion');
         if (editModeBannerVersionEl) editModeBannerVersionEl.textContent = `v${BUILD_VERSION}`;
-        function renderLoyaltySpendDisplay() {
-            const el = document.getElementById('loyaltySpendDisplay');
-            if (!el) return;
-            const pending = unusedLoyaltyCode();
-            el.innerHTML = `This browser has <strong>${money(getLoyaltySpend())}</strong> in recorded past spend`
-                + (pending ? `, and one unused code waiting: <strong>${pending.code}</strong>.` : '.');
-        }
         // Same pattern as the other admin panels: only exists in the DOM
         // for a confirmed admin with edit mode on.
         function renderLoyaltyAdminPanel() {
@@ -12809,39 +12778,23 @@
             el.className = 'delivery-admin-panel';
             el.innerHTML = `
     <h3>Loyalty nudge <span class="admin-only-tag">Edit mode only</span></h3>
-    <p class="delivery-admin-note">Tracks cumulative spend in each customer's own browser storage, not a real account system, so it resets if they clear their browser or switch devices. Crossing the threshold mints a unique, single-use code, shown on their receipt and valid for their next order only.</p>
+    <p class="delivery-admin-note">Tracks real cumulative spend from each customer's order history, and crossing the threshold mints a unique, single-use reward code tied to their account, usable from any device they're signed into. Changes below apply to every customer immediately.</p>
     <div class="field-row">
       <div class="field"><label>Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="${loyaltySpendThreshold}"></div>
       <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="${loyaltyRewardPct}"></div>
-    </div>
-    <p class="delivery-admin-note" id="loyaltySpendDisplay" style="margin-top:14px;"></p>
-    <button type="button" class="apf-cancel" id="loyaltyResetBtn" style="margin-top:4px;">Reset test spend &amp; codes (this browser only)</button>`;
-            document.getElementById('loyaltyThresholdInput').addEventListener('change', (e) => {
+    </div>`;
+            document.getElementById('loyaltyThresholdInput').addEventListener('change', async (e) => {
                 const n = parseFloat(e.target.value);
                 loyaltySpendThreshold = (!isNaN(n) && n > 0) ? n : 100;
+                if (supabaseClient) await supabaseClient.from('loyalty_settings').update({ spend_threshold: loyaltySpendThreshold }).eq('id', true);
                 renderCartList();
             });
-            document.getElementById('loyaltyRewardInput').addEventListener('change', (e) => {
+            document.getElementById('loyaltyRewardInput').addEventListener('change', async (e) => {
                 const n = parseFloat(e.target.value);
                 loyaltyRewardPct = isNaN(n) ? 10 : Math.max(0, Math.min(50, n));
+                if (supabaseClient) await supabaseClient.from('loyalty_settings').update({ reward_pct: loyaltyRewardPct }).eq('id', true);
                 renderCartList();
             });
-            document.getElementById('loyaltyResetBtn').addEventListener('click', () => {
-                if (!confirm('Clear all recorded loyalty spend and codes for every identity on this browser (guest and any logged-in test accounts)? This only affects your own testing, real customers each have their own separate browser storage.')) return;
-                try {
-                    const keysToRemove = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key && (key.startsWith('yo7-loyalty-spend-') || key.startsWith('yo7-loyalty-codes-'))) keysToRemove.push(key);
-                    }
-                    keysToRemove.forEach(key => localStorage.removeItem(key));
-                } catch (e) { /* localStorage unavailable */ }
-                discounts = discounts.filter(d => !d.id.startsWith('loyalty-'));
-                renderLoyaltySpendDisplay();
-                renderCartList();
-                showToast('Loyalty test data cleared for every identity on this browser.');
-            });
-            renderLoyaltySpendDisplay();
         }
         const addBundleBtn = document.getElementById('addBundleBtn');
         if (addBundleBtn) addBundleBtn.addEventListener('click', openAddBundleForm);
