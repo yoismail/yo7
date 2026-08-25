@@ -8457,7 +8457,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-25.1';
+        const BUILD_VERSION = '2026-08-25.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9462,6 +9462,18 @@
             strip.addEventListener('touchstart', pause, { passive: true });
             window.addEventListener('touchend', scheduleResume, { passive: true });
             window.addEventListener('touchcancel', scheduleResume, { passive: true });
+            // Trackpad/mouse-wheel horizontal scrolling never fires any
+            // pointer or touch event at all, so without this the drift loop
+            // kept nudging scrollLeft every frame *while* someone was
+            // actively wheel-scrolling the strip themselves, the two
+            // fighting over the same property every frame. That's what
+            // read as freezing/unresponsive, not literal freezing, the
+            // user's own scroll was being fought and mostly overwritten.
+            // pause() arms the safety-net timer and scheduleResume()
+            // immediately re-arms its own shorter timer on every wheel
+            // event, so as long as the gesture continues the resume never
+            // actually fires, only once wheel events stop for a beat.
+            strip.addEventListener('wheel', () => { pause(); scheduleResume(); }, { passive: true });
 
             // Constant-speed drift with an instant direction flip at each end
             // reads as mechanical, not premium. Easing the speed down on
