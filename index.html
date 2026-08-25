@@ -6092,6 +6092,7 @@
                             </button>
                             <button class="btn btn-primary" id="pdBuyNow" type="button">Buy now</button>
                         </div>
+                        <a href="#/checkout" class="continue-shopping-link" id="pdContinueCheckoutLink" style="display:none;">Continue to checkout &rarr;</a>
                         <div class="pd-meta">
                             <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     stroke-linecap="round">
@@ -8482,7 +8483,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-24.7';
+        const BUILD_VERSION = '2026-08-24.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -8583,6 +8584,13 @@
             const n = cartCount();
             badge.textContent = n;
             badge.classList.toggle('zero', n === 0);
+            // Lets someone already carrying items in their basket jump
+            // straight to checkout from a product page they're just
+            // browsing, without adding this product or hunting for the
+            // cart icon. Hidden on an empty basket, there'd be nothing to
+            // continue to.
+            const pdContinueCheckoutLink = document.getElementById('pdContinueCheckoutLink');
+            if (pdContinueCheckoutLink) pdContinueCheckoutLink.style.display = n > 0 ? 'block' : 'none';
             const floatBadge = document.getElementById('floatCartBadge');
             if (floatBadge) {
                 floatBadge.textContent = n;
