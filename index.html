@@ -26,6 +26,7 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         :root {
             --aubergine: #063B00;
@@ -4303,6 +4304,20 @@
             color: var(--heading-mid);
         }
 
+        #stripePaymentElement {
+            margin-bottom: 4px;
+        }
+        .payment-error {
+            background: rgba(193, 85, 44, 0.1);
+            border: 1px solid rgba(193, 85, 44, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #C1552C;
+            margin-top: 14px;
+            line-height: 1.5;
+        }
+
         .card-visual {
             background: linear-gradient(135deg, var(--aubergine-mid), var(--aubergine-deep));
             border-radius: 16px;
@@ -6294,33 +6309,15 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
                                 Secure checkout
                             </div>
-                            <div class="payment-note">
-                                <strong>Preview mode:</strong> this checkout is not connected to a live payment
-                                processor yet. No card details are sent anywhere or charged. Real payment needs a small
-                                backend step, ask me when you're ready to wire up actual Stripe checkout.
-                            </div>
-                            <div class="card-visual">
-                                <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <rect x="2" y="5" width="20" height="14" rx="2.5" />
-                                    <path d="M2 10h20" />
-                                </svg>
-                                <div class="num" id="cardPreviewNum">•••• •••• •••• ••••</div>
-                                <div class="row"><span id="cardPreviewName">Card holder</span><span
-                                        id="cardPreviewExp">MM/YY</span></div>
+                            <div class="payment-note" id="paymentNotConfiguredNote" style="display:none;">
+                                <strong>Payment isn't set up yet:</strong> a Stripe publishable key needs adding to
+                                the site before checkout can take a real card. No payment method is being shown below
+                                until that's done.
                             </div>
                             <form id="paymentForm">
-                                <div class="field"><label>Card number</label><input type="text" id="cNumber" required
-                                        placeholder="4242 4242 4242 4242" maxlength="19"></div>
-                                <div class="field-row">
-                                    <div class="field"><label>Expiry</label><input type="text" id="cExpiry" required
-                                            placeholder="MM/YY" maxlength="5"></div>
-                                    <div class="field"><label>CVC</label><input type="text" id="cCvc" required
-                                            placeholder="123" maxlength="3"></div>
-                                </div>
-                                <div class="field"><label>Name on card</label><input type="text" id="cName" required
-                                        placeholder="As it appears on the card"></div>
-                                <div style="display:flex; gap:12px; margin-top:10px;">
+                                <div id="stripePaymentElement"></div>
+                                <div class="payment-error" id="stripePaymentError" style="display:none;"></div>
+                                <div style="display:flex; gap:12px; margin-top:16px;">
                                     <button class="btn btn-outline-dark" type="button"
                                         id="backToDeliveryBtn">Back</button>
                                     <button class="btn btn-primary btn-block" id="placeOrderBtn" type="submit"><span class="place-order-label">Place order &middot; <span
@@ -6404,13 +6401,15 @@
                     <div class="invoice-totals">
                         <div class="summary-row"><span>Subtotal</span><span id="invSubtotal"></span></div>
                         <div class="summary-row"><span id="invDeliveryLabel">Delivery</span><span id="invDelivery"></span></div>
+                        <div class="summary-row discount-row" id="invDiscountRow" style="display:none;"><span id="invDiscountLabel">Discount</span><span id="invDiscount"></span></div>
+                        <div class="summary-row discount-row" id="invLoyaltyDiscountRow" style="display:none;"><span>Loyalty reward</span><span id="invLoyaltyDiscount"></span></div>
                         <div class="summary-row total"><span>Total paid</span><span id="invTotal"></span></div>
+                        <div class="summary-row" id="invPaymentMethodRow" style="display:none;"><span>Paid with</span><span id="invPaymentMethod"></span></div>
                     </div>
 
                     <div class="invoice-loyalty-note" id="invLoyaltyNote" style="display:none;"></div>
 
-                    <div class="invoice-footer-note">Yo7 Foods Limited &middot; hello@yo7foods.co.uk &middot; This is a
-                        preview invoice generated for demonstration.</div>
+                    <div class="invoice-footer-note">Yo7 Foods Limited &middot; hello@yo7foods.co.uk</div>
                 </div>
 
                 <div class="confirm-actions">
@@ -8408,13 +8407,24 @@
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
             : null;
 
+        /* ================= STRIPE ==================
+           Publishable key only — safe to ship in client-side code, same
+           as the Supabase anon key above. The secret key that actually
+           creates/confirms charges lives only in the create-payment-intent
+           Supabase Edge Function's own secrets, never here.
+           See supabase-payment-setup-guide.md for where to get this. */
+        const STRIPE_PUBLISHABLE_KEY = '';
+        const stripe = (STRIPE_PUBLISHABLE_KEY.startsWith('pk_') && window.Stripe)
+            ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
+            : null;
+
         // Bumped by hand on every delivered change, shown in the edit-mode
         // banner so whoever's looking at the live site can tell which
         // round of updates it's actually running, since deploys here are
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.1';
+        const BUILD_VERSION = '2026-08-26.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10599,7 +10609,82 @@
                 substitutionPref: subPrefEl ? subPrefEl.value : 'substitute',
             };
             showCheckoutStep('payment');
+            initStripePayment();
         });
+
+        // A fresh PaymentIntent every time this step is entered, so the
+        // amount Stripe actually charges always matches what's on screen
+        // right now (weight-based delivery fee, any discount code, any
+        // loyalty reward) — not something computed a step or two ago that
+        // could be stale if the customer went back and changed something.
+        let stripeElements = null;
+        async function initStripePayment() {
+            const mountEl = document.getElementById('stripePaymentElement');
+            const noteEl = document.getElementById('paymentNotConfiguredNote');
+            const errorEl = document.getElementById('stripePaymentError');
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
+            errorEl.style.display = 'none';
+            stripeElements = null;
+
+            if (!stripe || !supabaseClient) {
+                noteEl.style.display = 'block';
+                mountEl.innerHTML = '';
+                placeOrderBtn.disabled = true;
+                return;
+            }
+            noteEl.style.display = 'none';
+            placeOrderBtn.disabled = true; // re-enabled once the Payment Element is actually ready to submit
+            mountEl.innerHTML = '<div class="payment-element-loading">Loading payment options…</div>';
+
+            const sub = cartSubtotal();
+            const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
+            const delivery = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
+            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
+            const pendingReward = pendingLoyaltyReward();
+            const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
+            const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
+            const amountPence = Math.round(total * 100);
+
+            let data, error;
+            try {
+                ({ data, error } = await supabaseClient.functions.invoke('create-payment-intent', {
+                    body: {
+                        amount: amountPence,
+                        currency: 'gbp',
+                        customerEmail: currentSupabaseUser ? currentSupabaseUser.email : undefined,
+                        orderDescription: `Yo7 Foods order — ${cart.length} item${cart.length === 1 ? '' : 's'}`,
+                    },
+                }));
+            } catch (err) {
+                error = err;
+            }
+            if (error || !data || !data.client_secret) {
+                mountEl.innerHTML = '';
+                errorEl.textContent = "Couldn't start payment right now. Please try again in a moment.";
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            stripeElements = stripe.elements({
+                clientSecret: data.client_secret,
+                appearance: {
+                    theme: isDark ? 'night' : 'stripe',
+                    variables: {
+                        colorPrimary: '#90B800',
+                        colorBackground: isDark ? '#17240E' : '#FFFFFF',
+                        colorText: isDark ? '#E9E6DA' : '#16210D',
+                        colorDanger: '#C1552C',
+                        fontFamily: "'Work Sans', sans-serif",
+                        borderRadius: '10px',
+                    },
+                },
+            });
+            mountEl.innerHTML = '';
+            const paymentElement = stripeElements.create('payment');
+            paymentElement.mount('#stripePaymentElement');
+            paymentElement.on('ready', () => { placeOrderBtn.disabled = false; });
+        }
 
         /* ================= DELIVERY SLOTS =================
            Real upcoming days, not a vague "next-day" promise. Today is only
@@ -10623,101 +10708,133 @@
             select.innerHTML = days.map(d => `<option value="${d.value}">${d.label}</option>`).join('');
         }
 
-        const cNumberInput = document.getElementById('cNumber');
-        cNumberInput.addEventListener('input', () => {
-            let v = cNumberInput.value.replace(/\D/g, '').slice(0, 16);
-            cNumberInput.value = v.replace(/(.{4})/g, '$1 ').trim();
-            document.getElementById('cardPreviewNum').textContent = v.length ? cNumberInput.value.padEnd(19, '•').replace(/(.{4})(?=.)/g, '$1 ').trim() : '•••• •••• •••• ••••';
-        });
-        document.getElementById('cExpiry').addEventListener('input', (e) => {
-            let v = e.target.value.replace(/\D/g, '').slice(0, 4);
-            if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
-            e.target.value = v;
-            document.getElementById('cardPreviewExp').textContent = v || 'MM/YY';
-        });
-        document.getElementById('cName').addEventListener('input', (e) => {
-            document.getElementById('cardPreviewName').textContent = e.target.value || 'Card holder';
-        });
-
-        document.getElementById('paymentForm').addEventListener('submit', (e) => {
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const placeOrderBtn = document.getElementById('placeOrderBtn');
+            const errorEl = document.getElementById('stripePaymentError');
             if (placeOrderBtn.classList.contains('is-loading')) return; // already placing, ignore repeat submits
+            errorEl.style.display = 'none';
+
+            if (!stripe || !stripeElements) {
+                errorEl.textContent = "Payment isn't set up yet on this site, so an order can't be placed.";
+                errorEl.style.display = 'block';
+                return;
+            }
+
             placeOrderBtn.classList.add('is-loading');
             placeOrderBtn.disabled = true;
-            // Checkout here is entirely client-side and technically instant,
-            // but placing an order with literally zero feedback reads as
-            // broken rather than fast, so this brief delay gives the spinner
-            // something to justify and matches what a real payment call
-            // would feel like.
-            setTimeout(async () => {
-                const orderSubtotal = cartSubtotal();
-                const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
-                const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
-                const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
-                const pendingReward = pendingLoyaltyReward();
-                const loyaltyDiscountAmount = pendingReward ? Math.min(orderSubtotal * pendingReward.pct / 100, orderSubtotal - discountAmount) : 0;
-                const orderTotal = Math.max(0, orderSubtotal + deliveryCharge - discountAmount - loyaltyDiscountAmount);
-                if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
-                lastOrder = {
-                    number: null, // assigned below, either the real sequential
-                                   // YO7-0001-style number the database hands
-                                   // back, or a one-off fallback if that save
-                                   // fails or there's no backend (preview mode)
-                    date: new Date(),
-                    items: cart.map(i => ({ ...i })),
-                    subtotal: orderSubtotal,
-                    delivery: deliveryCharge,
-                    discount: discountAmount,
-                    discountCode: appliedDiscount ? appliedDiscount.code : null,
-                    loyaltyDiscount: loyaltyDiscountAmount,
-                    total: orderTotal,
-                    delivery_info: deliveryInfo,
-                    fulfilment: fulfilmentMethod,
-                    deliveryWeight: cartTotalWeight(),
-                    loyaltyRewardEarned: false, // filled in below once the order is saved and has a real id to check against
-                };
-                // Saves the order for account holders so it shows up in Order
-                // History, and is also where the real order number comes
-                // from now (assigned atomically by a database sequence, see
-                // supabase-migration-11-sequential-order-numbers.sql), so
-                // this is awaited rather than fire-and-forget like before.
-                // A failed save still shouldn't block the confirmation page
-                // the customer is about to see, or make a real purchase look
-                // like it didn't go through when it did, it just falls back
-                // to a one-off number in that case (and no loyalty reward can
-                // be checked without a real saved order to check against).
-                if (supabaseClient && currentSupabaseUser) {
-                    const { data, error } = await supabaseClient.from('orders').insert({
-                        user_id: currentSupabaseUser.id,
-                        status: 'placed',
-                        fulfilment_method: fulfilmentMethod,
-                        items: lastOrder.items,
-                        subtotal: lastOrder.subtotal,
-                        delivery_fee: lastOrder.delivery,
-                        discount: lastOrder.discount + lastOrder.loyaltyDiscount,
-                        total: lastOrder.total,
-                        delivery_name: deliveryInfo ? deliveryInfo.name : null,
-                        delivery_address: deliveryInfo ? `${deliveryInfo.address}, ${deliveryInfo.town} ${deliveryInfo.postcode}` : null,
-                        delivery_phone: deliveryInfo ? deliveryInfo.phone : null,
-                        notes: deliveryInfo ? deliveryInfo.notes : null,
-                    }).select('id, order_number').single();
-                    if (error) {
-                        console.error('Order history save failed:', error.message);
-                    } else {
-                        lastOrder.number = data.order_number;
-                        if (loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
-                        lastOrder.loyaltyRewardEarned = !!(await issueLoyaltyRewardIfEarned(data.id));
-                    }
-                }
-                if (!lastOrder.number) lastOrder.number = 'YO7-' + Math.floor(100000 + Math.random() * 899999);
-                cart = [];
-                appliedDiscount = null;
-                updateCartBadge();
+
+            // This actually charges the card/wallet right here — Stripe
+            // confirms directly against its own servers using the
+            // PaymentIntent created when this step loaded, so nothing
+            // below runs (no order, no loyalty reward, no admin email)
+            // unless a real payment genuinely went through.
+            const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+                elements: stripeElements,
+                redirect: 'if_required',
+                confirmParams: {
+                    payment_method_data: {
+                        billing_details: {
+                            name: deliveryInfo ? deliveryInfo.name : undefined,
+                            phone: deliveryInfo ? deliveryInfo.phone : undefined,
+                        },
+                    },
+                },
+            });
+
+            if (confirmError) {
+                errorEl.textContent = confirmError.message || 'That payment could not be completed. Please check your details and try again.';
+                errorEl.style.display = 'block';
                 placeOrderBtn.classList.remove('is-loading');
                 placeOrderBtn.disabled = false;
-                window.location.hash = '#/order-confirmation';
-            }, 700);
+                return;
+            }
+            if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+                errorEl.textContent = "That payment didn't complete. Please try again, or use a different card.";
+                errorEl.style.display = 'block';
+                placeOrderBtn.classList.remove('is-loading');
+                placeOrderBtn.disabled = false;
+                return;
+            }
+
+            const orderSubtotal = cartSubtotal();
+            const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
+            const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
+            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
+            const pendingReward = pendingLoyaltyReward();
+            const loyaltyDiscountAmount = pendingReward ? Math.min(orderSubtotal * pendingReward.pct / 100, orderSubtotal - discountAmount) : 0;
+            const orderTotal = Math.max(0, orderSubtotal + deliveryCharge - discountAmount - loyaltyDiscountAmount);
+            if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
+
+            let paymentMethodSummary = 'Paid online';
+            try {
+                const { data: summaryData } = await supabaseClient.functions.invoke('create-payment-intent', {
+                    body: { action: 'summarize', paymentIntentId: paymentIntent.id },
+                });
+                if (summaryData && summaryData.summary) paymentMethodSummary = summaryData.summary;
+            } catch (err) { /* cosmetic only, the payment already succeeded either way */ }
+
+            lastOrder = {
+                number: null, // assigned below from the real sequential
+                               // YO7-0001-style number the database hands
+                               // back
+                date: new Date(),
+                items: cart.map(i => ({ ...i })),
+                subtotal: orderSubtotal,
+                delivery: deliveryCharge,
+                discount: discountAmount,
+                discountCode: appliedDiscount ? appliedDiscount.code : null,
+                loyaltyDiscount: loyaltyDiscountAmount,
+                total: orderTotal,
+                delivery_info: deliveryInfo,
+                fulfilment: fulfilmentMethod,
+                deliveryWeight: cartTotalWeight(),
+                loyaltyRewardEarned: false, // filled in below once the order is saved and has a real id to check against
+                paymentMethodSummary,
+                stripePaymentIntentId: paymentIntent.id,
+            };
+            const { data, error } = await supabaseClient.from('orders').insert({
+                user_id: currentSupabaseUser.id,
+                status: 'placed',
+                fulfilment_method: fulfilmentMethod,
+                items: lastOrder.items,
+                subtotal: lastOrder.subtotal,
+                delivery_fee: lastOrder.delivery,
+                discount: lastOrder.discount + lastOrder.loyaltyDiscount,
+                total: lastOrder.total,
+                delivery_name: deliveryInfo ? deliveryInfo.name : null,
+                delivery_address: deliveryInfo ? `${deliveryInfo.address}, ${deliveryInfo.town} ${deliveryInfo.postcode}` : null,
+                delivery_phone: deliveryInfo ? deliveryInfo.phone : null,
+                notes: deliveryInfo ? deliveryInfo.notes : null,
+                stripe_payment_intent_id: paymentIntent.id,
+                payment_method_summary: paymentMethodSummary,
+            }).select('id, order_number').single();
+
+            if (error) {
+                // The card WAS genuinely charged at this point — this branch
+                // is "payment succeeded but saving the order record failed",
+                // which must never be treated the same as an ordinary
+                // failed payment (no silent fallback order number, no
+                // pretending it went through cleanly). The customer needs
+                // to know their payment reference so support can find it.
+                console.error('Order save failed after successful payment:', error.message);
+                placeOrderBtn.classList.remove('is-loading');
+                placeOrderBtn.disabled = false;
+                errorEl.innerHTML = `Your payment went through, but saving the order hit a problem on our end. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>`;
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            lastOrder.number = data.order_number;
+            if (loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
+            lastOrder.loyaltyRewardEarned = !!(await issueLoyaltyRewardIfEarned(data.id));
+
+            cart = [];
+            appliedDiscount = null;
+            updateCartBadge();
+            placeOrderBtn.classList.remove('is-loading');
+            placeOrderBtn.disabled = false;
+            window.location.hash = '#/order-confirmation';
         });
 
         /* ================= RENDER: CONFIRMATION / INVOICE ================= */
@@ -10998,7 +11115,9 @@
             document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : 'Standard delivery';
             document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || '—');
             document.getElementById('aodNote').textContent = order.notes || 'None left at checkout.';
-            document.getElementById('aodPaymentMethod').textContent = 'Card, entered at checkout (preview checkout, no real payment is taken or stored)';
+            document.getElementById('aodPaymentMethod').innerHTML = order.stripe_payment_intent_id
+                ? `${escapeHtml(order.payment_method_summary || 'Paid online')}<br><span style="font-size:11.5px; color:var(--text-muted);">Stripe reference: ${escapeHtml(order.stripe_payment_intent_id)}</span>`
+                : 'No payment reference on file for this order.';
             document.getElementById('aodBillingAddress').textContent = 'Not collected separately in the current checkout, delivery address is the only address on file.';
             const items = Array.isArray(order.items) ? order.items : [];
             document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => `
@@ -11271,6 +11390,28 @@
             document.getElementById('invSubtotal').textContent = money(lastOrder.subtotal);
             document.getElementById('invDelivery').textContent = lastOrder.delivery === 0 ? 'Free' : money(lastOrder.delivery);
             document.getElementById('invTotal').textContent = money(lastOrder.total);
+            const invDiscountRow = document.getElementById('invDiscountRow');
+            if (lastOrder.discount > 0) {
+                invDiscountRow.style.display = 'flex';
+                document.getElementById('invDiscountLabel').textContent = lastOrder.discountCode ? `Discount (${lastOrder.discountCode})` : 'Discount';
+                document.getElementById('invDiscount').textContent = '-' + money(lastOrder.discount);
+            } else {
+                invDiscountRow.style.display = 'none';
+            }
+            const invLoyaltyDiscountRow = document.getElementById('invLoyaltyDiscountRow');
+            if (lastOrder.loyaltyDiscount > 0) {
+                invLoyaltyDiscountRow.style.display = 'flex';
+                document.getElementById('invLoyaltyDiscount').textContent = '-' + money(lastOrder.loyaltyDiscount);
+            } else {
+                invLoyaltyDiscountRow.style.display = 'none';
+            }
+            const invPaymentMethodRow = document.getElementById('invPaymentMethodRow');
+            if (lastOrder.paymentMethodSummary) {
+                invPaymentMethodRow.style.display = 'flex';
+                document.getElementById('invPaymentMethod').textContent = lastOrder.paymentMethodSummary;
+            } else {
+                invPaymentMethodRow.style.display = 'none';
+            }
 
             // Build the real PDF right away, in the background, rather than
             // waiting for the person to click Save or Email. By the time
@@ -11481,6 +11622,11 @@
             hr(y);
             y += 16;
             totalRow('Total paid', money(order.total), { size: 13, bold: true, gap: 20 });
+            if (order.paymentMethodSummary) {
+                setText(9.5, 'normal', muted);
+                pdf.text(order.paymentMethodSummary, totalsX, y - 6, { align: 'right' });
+                y += 10;
+            }
 
             // ---- Loyalty reward ----
             if (order.loyaltyRewardEarned) {
@@ -11538,6 +11684,7 @@
                 },
                 fulfilment: order.fulfilment_method,
                 loyaltyRewardEarned: false,
+                paymentMethodSummary: order.payment_method_summary || 'Paid online',
             };
         }
         // Order history cards keep a lightweight lookup here so the "View
