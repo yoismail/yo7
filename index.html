@@ -6294,6 +6294,7 @@
                                     </div>
                                     <div class="field"><label>Delivery day</label>
                                         <select id="dSlotDay"></select>
+                                        <div class="delivery-fee-note">Orders placed before 10am are usually delivered the same day or next day, depending on your area.</div>
                                     </div>
                                     <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
@@ -8460,7 +8461,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.7';
+        const BUILD_VERSION = '2026-08-26.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10379,32 +10380,7 @@
         });
 
         /* ================= CHECKOUT ================= */
-        // Stock can change after something's already sitting in someone's
-        // basket — an admin marking it out, or the basket simply persisting
-        // across sessions/days. Pruning it right here, where the basket is
-        // actually displayed (so on every add/remove/qty-change and on
-        // entering checkout), means an out-of-stock item can never reach
-        // payment: there's no separate "recheck before charging" step to
-        // remember, because there's nothing left in the basket to charge for.
-        function pruneOutOfStockFromCart() {
-            const removedNames = [];
-            cart = cart.filter(item => {
-                if (item.isCombo) return true; // combo stock isn't tracked per-line here
-                const liveProduct = getProduct(item.catSlug, Number(item.id.split('::')[1]));
-                if (liveProduct && liveProduct.stock === 'out') {
-                    removedNames.push(item.name);
-                    return false;
-                }
-                return true;
-            });
-            if (removedNames.length) {
-                updateCartBadge();
-                const label = removedNames.length === 1 ? `"${removedNames[0]}" is` : `${removedNames.length} items are`;
-                showToast(`${label} now out of stock and ${removedNames.length === 1 ? 'was' : 'were'} removed from your basket.`, 6000);
-            }
-        }
         function renderCartList() {
-            pruneOutOfStockFromCart();
             const list = document.getElementById('cartList');
             const empty = document.getElementById('cartEmpty');
             if (cart.length === 0) {
@@ -11852,7 +11828,7 @@
             y += 16;
             hr(y - 10);
             setText(8, 'normal', faint);
-            pdf.text('Yo7 Foods Limited  \u00b7  hello@yo7foods.co.uk  \u00b7  This is a preview invoice generated for demonstration.', pageWidth / 2, y, { align: 'center' });
+            pdf.text('Yo7 Foods Limited  \u00b7  hello@yo7foods.co.uk', pageWidth / 2, y, { align: 'center' });
 
             return pdf.output('blob');
         }
