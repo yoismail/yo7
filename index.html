@@ -2196,6 +2196,14 @@
             padding: 0 0 96px;
         }
 
+        .why-choose-section {
+            padding: 72px 0 8px;
+        }
+        .why-choose-section .about-values-grid {
+            max-width: 1080px;
+            margin-left: auto;
+            margin-right: auto;
+        }
         .reviews-section {
             background: var(--section-alt-bg);
             padding: 72px 0 80px;
@@ -5704,6 +5712,9 @@
                         </svg>
                         Start shopping
                     </a>
+                    <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">
+                        Browse categories
+                    </a>
                 </div>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -5927,7 +5938,7 @@
                 <div class="reveal" style="transition-delay:0.1s">
                     <h2>Delivering wherever you are</h2>
                     <p>We deliver to every UK postcode, priced fairly by weight, whether you're
-                        five minutes away or five hours. Pickup from Ipswich is always free.</p>
+                        five minutes away or five hours. Orders placed before 10am are usually out the same or next day. Pickup from Ipswich is always free.</p>
                 </div>
             </div>
         </section>
@@ -5958,6 +5969,46 @@
                         <h3>Delivery or pickup</h3>
                         <p>We deliver nationwide, or you can collect from Ipswich.</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="why-choose-section">
+            <div class="wrap">
+                <div class="section-head reveal" style="text-align:center;">
+                    <div class="section-eyebrow" style="color: var(--heading-mid);">Why choose Yo7 Foods</div>
+                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
+                        What we hold ourselves to, in every order</h2>
+                </div>
+                <div class="about-values-grid">
+                    <div class="about-value-card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 9.5 17 9.5s-4.5 1.5-5.5 7A7 7 0 0 1 11 20z"/><path d="M11 20v-8"/></svg>
+                        <h3>Freshness</h3>
+                        <p>Every product is handled with care.</p>
+                    </div>
+                    <div class="about-value-card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <h3>Clarity</h3>
+                        <p>Simple pricing, clear packaging, honest information.</p>
+                    </div>
+                    <div class="about-value-card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6v6c0 5 3.8 8.4 9 10 5.2-1.6 9-5 9-10V6l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg>
+                        <h3>Authenticity</h3>
+                        <p>Real African flavours, real cultural heritage.</p>
+                    </div>
+                    <div class="about-value-card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
+                        <h3>Modernity</h3>
+                        <p>A premium experience from homepage to checkout.</p>
+                    </div>
+                    <div class="about-value-card">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                        <h3>Trust</h3>
+                        <p>Consistency, hygiene, and quality in every order.</p>
+                    </div>
+                </div>
+                <div class="about-cta reveal">
+                    <a class="btn btn-outline-dark" href="#/about">Read our story</a>
                 </div>
             </div>
         </section>
@@ -8464,7 +8515,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-27.2';
+        const BUILD_VERSION = '2026-08-27.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
