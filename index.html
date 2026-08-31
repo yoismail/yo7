@@ -4061,6 +4061,13 @@
             transition: border-color 0.2s ease;
         }
 
+        .field-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
         .field input:focus,
         .field select:focus,
         .field textarea:focus {
@@ -6294,17 +6301,10 @@
                                     </div>
                                     <div class="field"><label>Delivery day</label>
                                         <select id="dSlotDay"></select>
-                                        <div class="delivery-fee-note">Orders placed before 10am are usually delivered the same day or next day, depending on your area.</div>
+                                        <div class="field-note">Orders placed before 10am are usually delivered the same day or next day, depending on your area.</div>
                                     </div>
                                     <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
-                                </div>
-                                <div class="field substitution-field">
-                                    <label>If something's out of stock</label>
-                                    <div class="sub-pref-toggle">
-                                        <label class="sub-pref-option"><input type="radio" name="subPref" value="substitute" checked> Substitute with something similar</label>
-                                        <label class="sub-pref-option"><input type="radio" name="subPref" value="remove"> Just leave it out, don't substitute</label>
-                                    </div>
                                 </div>
                                 <div id="pickupInfoBlock" class="pickup-info hidden-view">
                                     <div class="pickup-info-row">
@@ -8461,7 +8461,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.8';
+        const BUILD_VERSION = '2026-08-26.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10380,7 +10380,32 @@
         });
 
         /* ================= CHECKOUT ================= */
+        // Stock can change after something's already sitting in someone's
+        // basket — an admin marking it out, or the basket simply persisting
+        // across sessions/days. Pruning it right here, where the basket is
+        // actually displayed (so on every add/remove/qty-change and on
+        // entering checkout), means the customer sees it happen (the toast
+        // below) rather than it silently vanishing at payment time, and an
+        // out-of-stock item can never reach checkout in the first place.
+        function pruneOutOfStockFromCart() {
+            const removedNames = [];
+            cart = cart.filter(item => {
+                if (item.isCombo) return true; // combo stock isn't tracked per-line here
+                const liveProduct = getProduct(item.catSlug, Number(item.id.split('::')[1]));
+                if (liveProduct && liveProduct.stock === 'out') {
+                    removedNames.push(item.name);
+                    return false;
+                }
+                return true;
+            });
+            if (removedNames.length) {
+                updateCartBadge();
+                const label = removedNames.length === 1 ? `"${removedNames[0]}" is` : `${removedNames.length} items are`;
+                showToast(`${label} now out of stock and ${removedNames.length === 1 ? 'was' : 'were'} removed from your basket.`, 6000);
+            }
+        }
         function renderCartList() {
+            pruneOutOfStockFromCart();
             const list = document.getElementById('cartList');
             const empty = document.getElementById('cartEmpty');
             if (cart.length === 0) {
@@ -10633,7 +10658,6 @@
 
         document.getElementById('deliveryForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const subPrefEl = document.querySelector('input[name="subPref"]:checked');
             deliveryInfo = {
                 method: fulfilmentMethod,
                 name: document.getElementById('dName').value.trim(),
@@ -10643,7 +10667,6 @@
                 postcode: fulfilmentMethod === 'pickup' ? 'IP4 2NY' : document.getElementById('dPostcode').value.trim(),
                 notes: fulfilmentMethod === 'pickup' ? 'Collecting in store' : document.getElementById('dNotes').value.trim(),
                 slotDay: fulfilmentMethod === 'delivery' ? document.getElementById('dSlotDay').value : null,
-                substitutionPref: subPrefEl ? subPrefEl.value : 'substitute',
             };
             showCheckoutStep('payment');
             initStripePayment();
@@ -11536,10 +11559,9 @@
             const di = lastOrder.delivery_info || {};
             const isPickup = lastOrder.fulfilment === 'pickup';
             const slotLine = (!isPickup && di.slotDay) ? `<br>${new Date(di.slotDay).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}` : '';
-            const subLine = di.substitutionPref === 'remove' ? '<br>No substitutions, out-of-stock items left out' : '<br>Substitutions OK if something\'s out of stock';
             document.getElementById('invAddress').innerHTML = isPickup
-                ? `${di.name || ''}<br>Collecting in store: 7 Lancaster Road<br>Ipswich, IP4 2NY<br>${di.phone || ''}${subLine}`
-                : `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}${slotLine}${subLine}`;
+                ? `${di.name || ''}<br>Collecting in store: 7 Lancaster Road<br>Ipswich, IP4 2NY<br>${di.phone || ''}`
+                : `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}${slotLine}`;
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
@@ -11724,11 +11746,6 @@
                 ? [di.name || '', 'Yo7 Foods, 7 Lancaster Road', 'Ipswich, IP4 2NY', di.phone || '']
                 : [di.name || '', di.address || '', `${di.town || ''}${di.postcode ? ', ' + di.postcode : ''}`, di.phone || ''];
             addrLines.filter(Boolean).forEach(line => { pdf.text(line, margin, y); y += 13; });
-            if (order.fulfilment !== 'pickup' && di.substitutionPref) {
-                setText(9, 'italic', muted);
-                pdf.text(di.substitutionPref === 'remove' ? 'No substitutions' : 'Substitutions OK if something\'s out of stock', margin, y);
-                y += 13;
-            }
             y += 6;
             hr(y);
             y += 20;
