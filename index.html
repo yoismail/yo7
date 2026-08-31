@@ -8461,7 +8461,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.9';
+        const BUILD_VERSION = '2026-08-27.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13328,19 +13328,41 @@
         initCarouselAutoScroll('catGrid', 34);
 
         /* ================= NEWSLETTER =================
-           No backend exists to store emails, so this doesn't pretend to save
-           anything, it opens a real, pre-filled email to hello@yo7foods.co.uk
-           instead. Genuinely functional rather than a form that silently
-           goes nowhere. */
+           Actually saves the address now (see
+           supabase-migration-18-newsletter-signup.sql) instead of just
+           opening a pre-filled email — that was a reasonable stand-in
+           before a real backend existed, but meant nobody was ever
+           genuinely added to a list. Falls back to the old mailto:
+           behaviour if Supabase isn't connected, so it's never worse
+           than what was there before. */
         const newsletterForm = document.getElementById('newsletterForm');
         if (newsletterForm) {
-            newsletterForm.addEventListener('submit', (e) => {
+            newsletterForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = document.getElementById('newsletterEmail').value.trim();
+                const emailInput = document.getElementById('newsletterEmail');
+                const email = emailInput.value.trim();
                 if (!email) return;
-                const body = encodeURIComponent(`Please add ${email} to the Yo7 Foods mailing list.`);
-                window.location.href = `mailto:hello@yo7foods.co.uk?subject=Newsletter%20signup&body=${body}`;
-                document.getElementById('newsletterEmail').value = '';
+                const submitBtn = newsletterForm.querySelector('button[type="submit"]');
+                const originalLabel = submitBtn.textContent;
+
+                if (!supabaseClient) {
+                    const body = encodeURIComponent(`Please add ${email} to the Yo7 Foods mailing list.`);
+                    window.location.href = `mailto:hello@yo7foods.co.uk?subject=Newsletter%20signup&body=${body}`;
+                    emailInput.value = '';
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Joining…';
+                const { error } = await supabaseClient.rpc('subscribe_to_newsletter', { p_email: email, p_source: 'footer' });
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
+                if (error) {
+                    showToast(error.message || "Couldn't sign you up right now, please try again.", 5000);
+                    return;
+                }
+                emailInput.value = '';
+                showToast("You're on the list! Check your inbox for a welcome email.", 5000);
             });
         }
         renderNewCarousel();
