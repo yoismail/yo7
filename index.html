@@ -8424,7 +8424,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.4';
+        const BUILD_VERSION = '2026-08-26.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10612,12 +10612,36 @@
             initStripePayment();
         });
 
+        // Card, Apple Pay, and Google Pay confirm right here on the page,
+        // but Klarna/Revolut Pay/Amazon Pay (and anything else enabled in
+        // the Stripe Dashboard) send the customer to their own site and
+        // back — a full page navigation that wipes every JS variable this
+        // checkout was relying on (cart, deliveryInfo, applied discount,
+        // the loyalty reward). This is the one place that survives that
+        // round trip: a snapshot of everything finishOrderAfterPayment()
+        // needs, saved right when the PaymentIntent is created (the total
+        // is locked in at that point anyway) so it's still there no
+        // matter how the customer gets back to this page.
+        const PENDING_ORDER_KEY = 'yo7-pending-order';
+        function savePendingOrderContext(ctx) {
+            try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(ctx)); }
+            catch (e) { /* localStorage unavailable — redirect-based methods just won't survive the round trip */ }
+        }
+        function loadPendingOrderContext() {
+            try { return JSON.parse(localStorage.getItem(PENDING_ORDER_KEY) || 'null'); }
+            catch (e) { return null; }
+        }
+        function clearPendingOrderContext() {
+            try { localStorage.removeItem(PENDING_ORDER_KEY); } catch (e) { /* nothing to do */ }
+        }
+
         // A fresh PaymentIntent every time this step is entered, so the
         // amount Stripe actually charges always matches what's on screen
         // right now (weight-based delivery fee, any discount code, any
         // loyalty reward) — not something computed a step or two ago that
         // could be stale if the customer went back and changed something.
         let stripeElements = null;
+        let pendingOrderContext = null;
         async function initStripePayment() {
             const mountEl = document.getElementById('stripePaymentElement');
             const noteEl = document.getElementById('paymentNotConfiguredNote');
@@ -10644,6 +10668,22 @@
             const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
             const amountPence = Math.round(total * 100);
+
+            pendingOrderContext = {
+                items: cart.map(i => ({ ...i })),
+                subtotal: sub,
+                delivery,
+                discountAmount,
+                discountId: appliedDiscount ? appliedDiscount.id : null,
+                discountCode: appliedDiscount ? appliedDiscount.code : null,
+                loyaltyDiscountAmount,
+                total,
+                deliveryInfo,
+                fulfilmentMethod,
+                deliveryWeight: cartTotalWeight(),
+                userId: currentSupabaseUser ? currentSupabaseUser.id : null,
+            };
+            savePendingOrderContext(pendingOrderContext);
 
             let data, error;
             try {
@@ -10741,6 +10781,12 @@
                             phone: deliveryInfo ? deliveryInfo.phone : undefined,
                         },
                     },
+                    // Only reached for methods that redirect (Klarna, Revolut
+                    // Pay, Amazon Pay) — card/Apple Pay/Google Pay confirm
+                    // without ever navigating away, this URL is never
+                    // visited for those. handleStripeRedirectReturn() is
+                    // what actually picks things back up on return.
+                    return_url: window.location.origin + window.location.pathname + '#/checkout',
                 },
             });
 
@@ -10751,22 +10797,44 @@
                 placeOrderBtn.disabled = false;
                 return;
             }
-            if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+            if (!paymentIntent || (paymentIntent.status !== 'succeeded' && paymentIntent.status !== 'processing')) {
                 errorEl.textContent = "That payment didn't complete. Please try again, or use a different card.";
                 errorEl.style.display = 'block';
                 placeOrderBtn.classList.remove('is-loading');
                 placeOrderBtn.disabled = false;
                 return;
             }
+            // A redirect-based method (Klarna, Revolut Pay, Amazon Pay) sent
+            // the customer away and back — by the time confirmPayment's
+            // promise resolves here, the browser never actually left this
+            // page (redirect: 'if_required' only redirects when the method
+            // itself demands it), so a 'processing' status at this point
+            // just means Stripe hasn't finished settling it yet, not that
+            // anything went wrong.
+            const result = await finishOrderAfterPayment(paymentIntent, pendingOrderContext);
+            if (!result.ok) {
+                errorEl.innerHTML = result.message;
+                errorEl.style.display = 'block';
+                placeOrderBtn.classList.remove('is-loading');
+                placeOrderBtn.disabled = false;
+                return;
+            }
+            placeOrderBtn.classList.remove('is-loading');
+            placeOrderBtn.disabled = false;
+        });
 
-            const orderSubtotal = cartSubtotal();
-            const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
-            const deliveryCharge = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
-            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), orderSubtotal) : 0;
-            const pendingReward = pendingLoyaltyReward();
-            const loyaltyDiscountAmount = pendingReward ? Math.min(orderSubtotal * pendingReward.pct / 100, orderSubtotal - discountAmount) : 0;
-            const orderTotal = Math.max(0, orderSubtotal + deliveryCharge - discountAmount - loyaltyDiscountAmount);
-            if (appliedDiscount) recordDiscountUsage(appliedDiscount.id);
+        // Shared by both ways a payment can finish: synchronously right
+        // here on the page (card, Apple Pay, Google Pay), or after a full
+        // round trip to a redirect-based method's own site and back
+        // (Klarna, Revolut Pay, Amazon Pay) — see handleStripeRedirectReturn
+        // below for that second path. Never runs unless Stripe itself has
+        // already confirmed the charge; ctx is the snapshot saved in
+        // initStripePayment, since live cart/deliveryInfo may not exist
+        // any more by the time a redirect brings the customer back.
+        async function finishOrderAfterPayment(paymentIntent, ctx) {
+            if (!ctx) {
+                return { ok: false, message: `Your payment went through, but we lost track of the order details (this can happen after being sent to a payment provider and back). Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
+            }
 
             let paymentMethodSummary = 'Paid online';
             try {
@@ -10781,38 +10849,56 @@
                                // YO7-0001-style number the database hands
                                // back
                 date: new Date(),
-                items: cart.map(i => ({ ...i })),
-                subtotal: orderSubtotal,
-                delivery: deliveryCharge,
-                discount: discountAmount,
-                discountCode: appliedDiscount ? appliedDiscount.code : null,
-                loyaltyDiscount: loyaltyDiscountAmount,
-                total: orderTotal,
-                delivery_info: deliveryInfo,
-                fulfilment: fulfilmentMethod,
-                deliveryWeight: cartTotalWeight(),
+                items: ctx.items,
+                subtotal: ctx.subtotal,
+                delivery: ctx.delivery,
+                discount: ctx.discountAmount,
+                discountCode: ctx.discountCode,
+                loyaltyDiscount: ctx.loyaltyDiscountAmount,
+                total: ctx.total,
+                delivery_info: ctx.deliveryInfo,
+                fulfilment: ctx.fulfilmentMethod,
+                deliveryWeight: ctx.deliveryWeight,
                 loyaltyRewardEarned: false, // filled in below once the order is saved and has a real id to check against
                 paymentMethodSummary,
                 stripePaymentIntentId: paymentIntent.id,
             };
+            const di = ctx.deliveryInfo;
             const { data, error } = await supabaseClient.from('orders').insert({
-                user_id: currentSupabaseUser.id,
+                user_id: ctx.userId,
                 status: 'placed',
-                fulfilment_method: fulfilmentMethod,
+                fulfilment_method: ctx.fulfilmentMethod,
                 items: lastOrder.items,
                 subtotal: lastOrder.subtotal,
                 delivery_fee: lastOrder.delivery,
                 discount: lastOrder.discount + lastOrder.loyaltyDiscount,
                 total: lastOrder.total,
-                delivery_name: deliveryInfo ? deliveryInfo.name : null,
-                delivery_address: deliveryInfo ? `${deliveryInfo.address}, ${deliveryInfo.town} ${deliveryInfo.postcode}` : null,
-                delivery_phone: deliveryInfo ? deliveryInfo.phone : null,
-                notes: deliveryInfo ? deliveryInfo.notes : null,
+                delivery_name: di ? di.name : null,
+                delivery_address: di ? `${di.address}, ${di.town} ${di.postcode}` : null,
+                delivery_phone: di ? di.phone : null,
+                notes: di ? di.notes : null,
                 stripe_payment_intent_id: paymentIntent.id,
                 payment_method_summary: paymentMethodSummary,
             }).select('id, order_number').single();
 
             if (error) {
+                // A unique_violation here means this exact PaymentIntent has
+                // already been turned into an order (e.g. the redirect-return
+                // handler ran twice) — that's not a failure, just re-find it
+                // and carry on rather than telling a customer who's already
+                // been charged and already has an order that something's wrong.
+                if (error.code === '23505') {
+                    const { data: existing } = await supabaseClient.from('orders').select('id, order_number').eq('stripe_payment_intent_id', paymentIntent.id).single();
+                    if (existing) {
+                        lastOrder.number = existing.order_number;
+                        clearPendingOrderContext();
+                        cart = [];
+                        appliedDiscount = null;
+                        updateCartBadge();
+                        window.location.hash = '#/order-confirmation';
+                        return { ok: true };
+                    }
+                }
                 // The card WAS genuinely charged at this point — this branch
                 // is "payment succeeded but saving the order record failed",
                 // which must never be treated the same as an ordinary
@@ -10820,24 +10906,60 @@
                 // pretending it went through cleanly). The customer needs
                 // to know their payment reference so support can find it.
                 console.error('Order save failed after successful payment:', error.message);
-                placeOrderBtn.classList.remove('is-loading');
-                placeOrderBtn.disabled = false;
-                errorEl.innerHTML = `Your payment went through, but saving the order hit a problem on our end. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>`;
-                errorEl.style.display = 'block';
-                return;
+                return { ok: false, message: `Your payment went through, but saving the order hit a problem on our end. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
             }
 
+            if (ctx.discountId) recordDiscountUsage(ctx.discountId);
             lastOrder.number = data.order_number;
-            if (loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
+            if (ctx.loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
             lastOrder.loyaltyRewardEarned = !!(await issueLoyaltyRewardIfEarned(data.id));
 
+            clearPendingOrderContext();
             cart = [];
             appliedDiscount = null;
             updateCartBadge();
-            placeOrderBtn.classList.remove('is-loading');
-            placeOrderBtn.disabled = false;
             window.location.hash = '#/order-confirmation';
-        });
+            return { ok: true };
+        }
+
+        // The other half of a redirect-based payment (Klarna, Revolut Pay,
+        // Amazon Pay): Stripe sends the customer back here with its own
+        // query params appended to whatever return_url was given at
+        // confirm time, since the page that started the payment is long
+        // gone (full navigation to the provider's own site happened in
+        // between). Runs once at page load; a no-op on any ordinary visit.
+        async function handleStripeRedirectReturn() {
+            const params = new URLSearchParams(window.location.search);
+            const clientSecret = params.get('payment_intent_client_secret');
+            if (!clientSecret || !stripe) return;
+
+            // Strip Stripe's params immediately so refreshing this page
+            // later doesn't re-run any of this against a now-stale intent.
+            history.replaceState(null, '', window.location.pathname + window.location.hash);
+
+            const { paymentIntent, error } = await stripe.retrievePaymentIntent(clientSecret);
+            if (error || !paymentIntent) {
+                showToast("Couldn't confirm that payment. If you were charged, please contact us and we'll sort it out.", 8000);
+                window.location.hash = '#/checkout';
+                return;
+            }
+
+            const ctx = loadPendingOrderContext();
+            if (paymentIntent.status === 'succeeded') {
+                const result = await finishOrderAfterPayment(paymentIntent, ctx);
+                if (!result.ok) showToast(result.message.replace(/<[^>]+>/g, ''), 9000);
+            } else if (paymentIntent.status === 'processing') {
+                // No webhook is wired up yet to catch this settling later in
+                // the background — see supabase-payment-setup-guide.md — so
+                // for now this is an honest "we don't know yet" rather than
+                // an order that might not actually be paid for.
+                showToast("Your payment is still being confirmed. We'll be in touch as soon as it clears — no need to try again.", 9000);
+                window.location.hash = '#/';
+            } else {
+                showToast("That payment didn't go through. Please try again.", 7000);
+                window.location.hash = '#/checkout';
+            }
+        }
 
         /* ================= RENDER: CONFIRMATION / INVOICE ================= */
         // The exact lifecycle: placed -> (admin confirms) being_prepared ->
@@ -13155,6 +13277,7 @@
         initDragScroll();
         observeReveals();
         updateCartBadge();
+        handleStripeRedirectReturn();
         route();
         syncNavSpacer();
         startHeroCarousel();
