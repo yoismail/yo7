@@ -8424,7 +8424,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.3';
+        const BUILD_VERSION = '2026-08-26.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10660,7 +10660,9 @@
             }
             if (error || !data || !data.client_secret) {
                 mountEl.innerHTML = '';
-                errorEl.textContent = "Couldn't start payment right now. Please try again in a moment.";
+                const reason = (data && data.error) || (error && error.message) || 'unknown error';
+                console.error('create-payment-intent failed:', reason);
+                errorEl.textContent = `Couldn't start payment right now (${reason}). Please try again in a moment.`;
                 errorEl.style.display = 'block';
                 return;
             }
