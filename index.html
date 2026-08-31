@@ -2323,7 +2323,12 @@
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             color: #2C1C10;
-            padding: 56px 0 36px;
+            /* Extra bottom padding clears the floating WhatsApp/basket
+               buttons (fixed, bottom:24px, 56px tall) — without it, the
+               payment badges row (right-aligned, same side as the
+               WhatsApp button) ends up sitting directly underneath them
+               once someone actually scrolls to the true bottom of the page. */
+            padding: 56px 0 100px;
             overflow: hidden;
         }
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -4251,12 +4256,13 @@
 
         .secure-badge {
             display: inline-flex; align-items: center; gap: 7px;
-            font-family: var(--display); font-weight: 700; font-size: 12px;
-            color: var(--heading); background: rgba(144,184,0,0.12);
-            border: 1px solid rgba(144,184,0,0.35); border-radius: 999px;
-            padding: 6px 13px; margin-bottom: 16px;
+            font-family: var(--display); font-weight: 700; font-size: 12.5px;
+            color: var(--aubergine-deep); background: var(--chartreuse);
+            border: none; border-radius: 999px;
+            padding: 7px 15px; margin-bottom: 16px;
+            box-shadow: 0 3px 10px rgba(144,184,0,0.28);
         }
-        .secure-badge svg { width: 14px; height: 14px; color: var(--chartreuse); flex-shrink: 0; }
+        .secure-badge svg { width: 14px; height: 14px; color: var(--aubergine-deep); flex-shrink: 0; }
 
         .cart-trust-strip {
             display: flex;
@@ -4283,11 +4289,19 @@
             font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.02em;
         }
         .payment-badge-visa { color: #1A1F71; }
-        .payment-badge-stripe { color: #635BFF; }
         .payment-badge-mastercard { gap: 0; padding: 0 10px; position: relative; width: 44px; }
         .mc-circle { width: 16px; height: 16px; border-radius: 50%; position: absolute; }
         .mc-circle-1 { background: #EB001B; left: 10px; }
         .mc-circle-2 { background: #F79E1B; left: 18px; mix-blend-mode: multiply; }
+        .payment-badge-applepay {
+            background: #000; border-color: #000; color: #fff;
+            gap: 5px; font-size: 12.5px; letter-spacing: 0.01em;
+        }
+        .payment-badge-applepay svg { width: 13px; height: 13px; flex-shrink: 0; }
+        .payment-badge-googlepay { gap: 4px; color: #3C4043; font-size: 12.5px; }
+        .payment-badge-googlepay .gpay-g {
+            font-family: var(--display); font-weight: 700; color: #4285F4;
+        }
 
         .payment-note {
             background: rgba(225, 225, 0, 0.1);
@@ -4306,6 +4320,27 @@
 
         #stripePaymentElement {
             margin-bottom: 4px;
+        }
+        .payment-element-loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 22px 4px;
+            color: var(--text-muted);
+            font-size: 13.5px;
+        }
+        .payment-spinner {
+            display: block;
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            border: 2.5px solid rgba(var(--border-rgb), 0.18);
+            border-top-color: var(--chartreuse);
+            animation: btnSpin 0.7s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .payment-spinner { animation-duration: 1.4s; }
         }
         .payment-error {
             background: rgba(193, 85, 44, 0.1);
@@ -6122,7 +6157,8 @@
                         <div class="payment-badges">
                             <span class="payment-badge payment-badge-visa">VISA</span>
                             <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
-                            <span class="payment-badge payment-badge-stripe">Stripe</span>
+                            <span class="payment-badge payment-badge-applepay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.7 1.3c-1 .06-2.2.7-2.9 1.5-.6.7-1.1 1.8-1 2.9 1.1.1 2.3-.6 3-1.4.6-.8 1-1.8.9-3zM19.6 8.3c-1.6-.1-3 .9-3.7.9s-1.9-.9-3.2-.9c-1.6 0-3.1.9-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.6-1-2.6-3.8 0-2.4 1.9-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.9z"/></svg>Pay</span>
+                            <span class="payment-badge payment-badge-googlepay"><span class="gpay-g">G</span>Pay</span>
                         </div>
                         <div class="related-strip">
                             <h3>More from this aisle</h3>
@@ -6222,7 +6258,8 @@
                             <div class="payment-badges">
                                 <span class="payment-badge payment-badge-visa">VISA</span>
                                 <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
-                                <span class="payment-badge payment-badge-stripe">Stripe</span>
+                                <span class="payment-badge payment-badge-applepay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.7 1.3c-1 .06-2.2.7-2.9 1.5-.6.7-1.1 1.8-1 2.9 1.1.1 2.3-.6 3-1.4.6-.8 1-1.8.9-3zM19.6 8.3c-1.6-.1-3 .9-3.7.9s-1.9-.9-3.2-.9c-1.6 0-3.1.9-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.6-1-2.6-3.8 0-2.4 1.9-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.9z"/></svg>Pay</span>
+                            <span class="payment-badge payment-badge-googlepay"><span class="gpay-g">G</span>Pay</span>
                             </div>
                         </div>
                     </div>
@@ -7468,7 +7505,8 @@
                 <div class="payment-badges footer-payment-badges">
                     <span class="payment-badge payment-badge-visa">VISA</span>
                     <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
-                    <span class="payment-badge payment-badge-stripe">Stripe</span>
+                    <span class="payment-badge payment-badge-applepay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.7 1.3c-1 .06-2.2.7-2.9 1.5-.6.7-1.1 1.8-1 2.9 1.1.1 2.3-.6 3-1.4.6-.8 1-1.8.9-3zM19.6 8.3c-1.6-.1-3 .9-3.7.9s-1.9-.9-3.2-.9c-1.6 0-3.1.9-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7-.1 0-2.6-1-2.6-3.8 0-2.4 1.9-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.9z"/></svg>Pay</span>
+                            <span class="payment-badge payment-badge-googlepay"><span class="gpay-g">G</span>Pay</span>
                 </div>
             </div>
         </div>
@@ -8424,7 +8462,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.5';
+        const BUILD_VERSION = '2026-08-26.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10343,7 +10381,32 @@
         });
 
         /* ================= CHECKOUT ================= */
+        // Stock can change after something's already sitting in someone's
+        // basket — an admin marking it out, or the basket simply persisting
+        // across sessions/days. Pruning it right here, where the basket is
+        // actually displayed (so on every add/remove/qty-change and on
+        // entering checkout), means an out-of-stock item can never reach
+        // payment: there's no separate "recheck before charging" step to
+        // remember, because there's nothing left in the basket to charge for.
+        function pruneOutOfStockFromCart() {
+            const removedNames = [];
+            cart = cart.filter(item => {
+                if (item.isCombo) return true; // combo stock isn't tracked per-line here
+                const liveProduct = getProduct(item.catSlug, Number(item.id.split('::')[1]));
+                if (liveProduct && liveProduct.stock === 'out') {
+                    removedNames.push(item.name);
+                    return false;
+                }
+                return true;
+            });
+            if (removedNames.length) {
+                updateCartBadge();
+                const label = removedNames.length === 1 ? `"${removedNames[0]}" is` : `${removedNames.length} items are`;
+                showToast(`${label} now out of stock and ${removedNames.length === 1 ? 'was' : 'were'} removed from your basket.`, 6000);
+            }
+        }
         function renderCartList() {
+            pruneOutOfStockFromCart();
             const list = document.getElementById('cartList');
             const empty = document.getElementById('cartEmpty');
             if (cart.length === 0) {
@@ -10658,7 +10721,7 @@
             }
             noteEl.style.display = 'none';
             placeOrderBtn.disabled = true; // re-enabled once the Payment Element is actually ready to submit
-            mountEl.innerHTML = '<div class="payment-element-loading">Loading payment options…</div>';
+            mountEl.innerHTML = '<div class="payment-element-loading"><span class="payment-spinner" aria-hidden="true"></span>Loading payment options…</div>';
 
             const sub = cartSubtotal();
             const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
@@ -11034,7 +11097,7 @@
                 return;
             }
             if (!currentSupabaseUser) {
-                el.innerHTML = '<div class="order-history-empty">Log in to see your orders. <a href="#/login">Log in</a></div>';
+                el.innerHTML = '<div class="order-history-empty">Log in to see your orders. <a href="#/login" onclick="postLoginRedirect=\'#/orders\'">Log in</a></div>';
                 return;
             }
             el.innerHTML = '<div class="order-history-loading">Loading your orders…</div>';
@@ -11631,8 +11694,22 @@
                 if (y + needed <= pageHeight - margin) return;
                 pdf.addPage();
                 y = margin;
+                // Keeps the same chartreuse top strip on every page, not
+                // just the first, so a longer order that spills over
+                // doesn't have a plain, unbranded page 2.
+                pdf.setFillColor(...chartreuse);
+                pdf.rect(0, 0, pageWidth, 6, 'F');
+                y += 6;
                 if (onNewPage) onNewPage();
             };
+
+            // ---- Chartreuse top strip, the same signature accent the
+            // on-screen invoice card uses (border-top: 5px solid
+            // var(--chartreuse)) — ties the PDF back to the same brand
+            // treatment rather than starting as a plain white page. ----
+            pdf.setFillColor(...chartreuse);
+            pdf.rect(0, 0, pageWidth, 6, 'F');
+            y += 6;
 
             // ---- Header, with the real Yo7 Foods seal (see SEAL_MARK_PNG
             // above) placed at the same size/position the old hand-drawn
@@ -11653,7 +11730,14 @@
             pdf.text(dateStr, pageWidth - margin, y + 32, { align: 'right' });
 
             y += 48;
-            hr(y);
+            // Bold ink divider here specifically, matching the on-screen
+            // invoice's own header treatment (border-bottom: 2px solid
+            // var(--ink)) — every other section below still uses the
+            // lighter hr() rule, so this one keeps its visual weight as
+            // the header's own dividing line, not just another section break.
+            pdf.setDrawColor(...ink);
+            pdf.setLineWidth(1.4);
+            pdf.line(margin, y, pageWidth - margin, y);
             y += 22;
 
             // ---- Delivered to / Collecting ----
