@@ -8413,7 +8413,7 @@
            creates/confirms charges lives only in the create-payment-intent
            Supabase Edge Function's own secrets, never here.
            See supabase-payment-setup-guide.md for where to get this. */
-        const STRIPE_PUBLISHABLE_KEY = '';
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_51TzyoTJ223ML9UT0U2ZBk84I8z8594kF9Oh4DTcULkBYeXlpJz5i30rPxbdN0jJXtH4gKiA0k6gD3EHOYhHD0NG900GMQPYErP';
         const stripe = (STRIPE_PUBLISHABLE_KEY.startsWith('pk_') && window.Stripe)
             ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
             : null;
@@ -8424,7 +8424,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-26.2';
+        const BUILD_VERSION = '2026-08-26.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
