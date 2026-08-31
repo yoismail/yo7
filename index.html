@@ -27,6 +27,9 @@
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
+    <!-- Cloudflare Web Analytics -->
+    <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
+    <!-- End Cloudflare Web Analytics -->
     <style>
         :root {
             --aubergine: #063B00;
@@ -6713,11 +6716,11 @@
                     <p>Yo7 Foods Limited ("Yo7", "we", "us"), 7 Lancaster Road, Ipswich, IP4 2NY. You can reach us at hello@yo7foods.co.uk or via WhatsApp.</p>
 
                     <h2>What we collect</h2>
-                    <p>When you place an order, we ask for your name, phone number, and (for delivery orders) your address and postcode. If you sign up for an account, we ask for your name and email. If you use the newsletter link in our footer, it opens your own email client to send us your email directly, we don't capture it automatically.</p>
-                    <p>We don't currently use cookies or analytics tracking. The site does store a small amount of information in your browser's local storage, your dark/light mode preference, and a record of which discount codes you've used, so a one-per-customer code can't simply be reapplied after a page refresh.</p>
+                    <p>When you place an order, we ask for your name, phone number, and (for delivery orders) your address and postcode. If you sign up for an account, we ask for your name and email. If you sign up to our newsletter, we store the email address you give us so we can send you updates, you can unsubscribe at any time.</p>
+                    <p>We don't use cookies. We use Cloudflare Web Analytics to understand overall site traffic, this is a privacy-friendly, cookie-free service that doesn't track you individually or store any personal data in your browser. The site does store a small amount of information in your browser's local storage, your dark/light mode preference, and a record of which discount codes you've used, so a one-per-customer code can't simply be reapplied after a page refresh.</p>
 
                     <h2>Payment information</h2>
-                    <p>The checkout on this site is currently a preview and does not process real payments. No card details are transmitted to us or stored anywhere. Once real payment processing is switched on, this policy will be updated to reflect exactly how that's handled, and by which payment provider.</p>
+                    <p>Card and digital wallet payments (including Apple Pay and Google Pay) are processed securely by Stripe. We never see or store your full card details, they're sent directly to Stripe over an encrypted connection. Stripe is a PCI-DSS Level 1 certified payment processor.</p>
 
                     <h2>What we do with it</h2>
                     <ul>
@@ -8461,7 +8464,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-27.1';
+        const BUILD_VERSION = '2026-08-27.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
