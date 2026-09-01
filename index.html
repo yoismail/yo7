@@ -435,6 +435,11 @@
             gap: 18px;
             padding-top: 14px;
             padding-bottom: 14px;
+            transition: padding 0.25s ease;
+        }
+        #mainNav.nav-solid .wrap {
+            padding-top: 9px;
+            padding-bottom: 9px;
         }
 
         .nav-mark {
@@ -2685,6 +2690,28 @@
                 transform: none;
                 transition: none;
             }
+        }
+
+        /* Section headings get a more deliberate per-word cascade instead of
+           just fading in as one flat block with everything else. The h2
+           itself opts out of the block-level fade above (stays opaque as a
+           container) so only its individual words carry the motion. */
+        .section-head.reveal h2, .new-section-head.reveal h2 {
+            opacity: 1;
+        }
+        .word-reveal {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(0.4em);
+            transition: opacity 0.5s cubic-bezier(.16,.84,.44,1), transform 0.5s cubic-bezier(.16,.84,.44,1);
+        }
+        .section-head.is-visible .word-reveal,
+        .new-section-head.is-visible .word-reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .word-reveal { opacity: 1; transform: none; transition: none; }
         }
 
         /* ================= FLOATING ORDER BUTTON ================= */
@@ -8727,7 +8754,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.7';
+        const BUILD_VERSION = '2026-09-01.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9818,6 +9845,61 @@
                 requestAnimationFrame(frame);
             }
             requestAnimationFrame(frame);
+        }
+
+        // A slower, more deliberate cousin of initCarouselAutoAdvance above:
+        // instead of an ambient continuous drift, this waits, then glides
+        // exactly one card over using the browser's own smooth scroll (so it
+        // settles cleanly on each card's scroll-snap point) and wraps back to
+        // the start once it runs out of room. Pause/resume/visibility
+        // handling mirrors the continuous version so both feel consistent
+        // when a visitor interacts with either kind of strip.
+        function initCarouselPeriodicJump(stripId, intervalMs = 3800) {
+            const strip = document.getElementById(stripId);
+            if (!strip) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            let active = true;
+            let inView = true;
+            let pointerDownHere = false;
+            let resumeTimer = null;
+
+            function scheduleResume(delay) {
+                clearTimeout(resumeTimer);
+                resumeTimer = setTimeout(() => { active = true; }, delay);
+            }
+            function halt(delay) {
+                active = false;
+                scheduleResume(delay);
+            }
+
+            strip.addEventListener('pointerdown', () => { pointerDownHere = true; halt(intervalMs + 3000); });
+            strip.addEventListener('touchstart', () => { pointerDownHere = true; halt(intervalMs + 3000); }, { passive: true });
+            strip.addEventListener('wheel', () => halt(intervalMs + 1500), { passive: true });
+            const onRelease = () => { if (pointerDownHere) { pointerDownHere = false; halt(intervalMs); } };
+            window.addEventListener('pointerup', onRelease);
+            window.addEventListener('pointercancel', onRelease);
+            window.addEventListener('touchend', onRelease, { passive: true });
+            window.addEventListener('touchcancel', onRelease, { passive: true });
+
+            const visibilityObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => { inView = entry.isIntersecting; });
+            }, { threshold: 0 });
+            visibilityObserver.observe(strip);
+
+            setInterval(() => {
+                if (!active || !inView || document.hidden) return;
+                const max = strip.scrollWidth - strip.clientWidth;
+                if (max <= 1) return;
+                if (strip.scrollLeft >= max - 4) {
+                    strip.scrollTo({ left: 0, behavior: 'smooth' });
+                    return;
+                }
+                const firstCard = strip.firstElementChild;
+                const gap = parseFloat(getComputedStyle(strip).columnGap) || 18;
+                const step = firstCard ? firstCard.getBoundingClientRect().width + gap : strip.clientWidth * 0.8;
+                strip.scrollBy({ left: step, behavior: 'smooth' });
+            }, intervalMs);
         }
         const BEST_SELLER_STAR_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
         function renderBestSellersSpotlight() {
@@ -13298,6 +13380,20 @@
         window.addEventListener('hashchange', onScroll);
         onScroll();
 
+        // Wraps each word of a heading in its own span so .word-reveal's CSS
+        // transition can stagger them via transition-delay, run once at init
+        // since these headings are static markup, not re-rendered per route.
+        function splitHeadingWords() {
+            document.querySelectorAll('.section-head h2, .new-section-head h2').forEach(h2 => {
+                if (h2.dataset.wordsSplit) return;
+                h2.dataset.wordsSplit = 'true';
+                const words = h2.textContent.trim().split(/\s+/);
+                h2.innerHTML = words.map((word, i) =>
+                    `<span class="word-reveal" style="transition-delay:${(i * 0.05).toFixed(2)}s">${word}</span>`
+                ).join(' ');
+            });
+        }
+
         function observeReveals() {
             const io = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -13599,12 +13695,12 @@
         const bestSellerCarouselStrip = document.getElementById('bestSellerCarousel');
         if (bestSellerCarouselPrev && bestSellerCarouselStrip) bestSellerCarouselPrev.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, -460));
         if (bestSellerCarouselNext && bestSellerCarouselStrip) bestSellerCarouselNext.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, 460));
-        initCarouselAutoAdvance('newCarousel', 34);
-        initCarouselAutoAdvance('offerCarousel', 34);
+        initCarouselPeriodicJump('newCarousel');
+        initCarouselPeriodicJump('offerCarousel');
         initCarouselAutoAdvance('bestSellerCarousel', 34);
         initCarouselAutoAdvance('catGrid', 34);
-        initCarouselAutoAdvance('bundlesGrid', 30);
-        initCarouselAutoAdvance('combosGrid', 30);
+        // Bundles and Shop-by-meal (combos) are intentionally left without
+        // auto-scroll, manual swipe/drag/arrows only.
         /* ================= NEWSLETTER =================
            Actually saves the address now (see
            supabase-migration-18-newsletter-signup.sql) instead of just
@@ -13650,6 +13746,7 @@
         renderOfferCarousel();
         initThemeToggle();
         initDragScroll();
+        splitHeadingWords();
         observeReveals();
         updateCartBadge();
         handleStripeRedirectReturn();
