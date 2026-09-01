@@ -24,7 +24,7 @@
          malicious external dependency, but it does not stop an XSS payload
          injected into the page's own inline code from running. Treat this
          as one layer, not a substitute for careful escaping. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -8840,7 +8840,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.21';
+        const BUILD_VERSION = '2026-09-01.22';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12889,7 +12889,7 @@
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const uploadFile = await compressImageFile(file, 1600, 0.82);
+            const uploadFile = await compressImageFile(file, 1000, 0.82);
             // compressImageFile only falls back to the original file if the
             // browser couldn't decode it as an image at all, in which case
             // its real type/extension has to be used instead of assuming jpg.
@@ -12998,17 +12998,33 @@
         window.openAddProductForm = openAddProductForm;
 
         const newProductPhotoData = {};
-        function handleNewProductPhotoUpload(uid, input) {
+        // Same compress-then-upload-to-Storage path as handleEditPhotoUpload,
+        // not a raw base64 data URI, this product record may only live in
+        // this tab for now ("Add product (this tab only)"), but the photo
+        // itself still shouldn't be an uncompressed multi-megabyte string
+        // sitting in the DOM/memory for the rest of the session, and it
+        // means the URL is already correct/reusable the moment new-product
+        // creation gets wired to persist for real.
+        async function handleNewProductPhotoUpload(uid, input) {
             const file = input.files && input.files[0];
             if (!file) return;
             if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                newProductPhotoData[uid] = e.target.result;
-                const preview = document.getElementById(`apf-photo-preview-${uid}`);
-                if (preview) preview.innerHTML = `<img src="${e.target.result}" alt="">`;
-            };
-            reader.readAsDataURL(file);
+            const preview = document.getElementById(`apf-photo-preview-${uid}`);
+            if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
+            if (preview) preview.innerHTML = '<span>Uploading…</span>';
+            const uploadFile = await compressImageFile(file, 1000, 0.82);
+            const isJpeg = uploadFile.type === 'image/jpeg';
+            const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+            const path = `new-${uid}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) {
+                showToast('Could not upload that photo: ' + uploadError.message, 6000);
+                if (preview) preview.innerHTML = `<span>${DEFAULT_ITEM_ICON_SVG}</span>`;
+                return;
+            }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            newProductPhotoData[uid] = publicUrl;
+            if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="">`;
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
 
