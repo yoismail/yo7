@@ -1705,6 +1705,7 @@
             font-size: 12px; font-family: inherit; background: var(--card-bg); color: var(--text-body);
         }
         .bundle-item-weight-edit span { font-size: 11px; color: var(--text-muted); }
+        .bundle-item-weight { flex-shrink: 0; font-size: 11.5px; color: var(--text-muted); }
         .bundle-weight-total {
             display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);
             margin: -6px 0 12px;
@@ -9163,7 +9164,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.34';
+        const BUILD_VERSION = '2026-09-01.35';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9395,28 +9396,39 @@
         // it's always the sum of what its real underlying products weigh
         // (see addBundleToCart/addComboToCart), so admin edits happen right
         // on the product this row represents, same as editing it from that
-        // product's own page would.
+        // product's own page would. Every visitor sees the weight as plain
+        // text (it's what their delivery fee is actually based on); admins
+        // in edit mode get the editable input in its place instead.
+        function fmtWeight(w) { return w.toFixed(w % 1 === 0 ? 0 : 2) + 'kg'; }
         function bundleItemRowHTML(p, outOfStock) {
             const weightVal = typeof p.weight === 'number' ? p.weight : '';
-            const weightEdit = (currentIsAdmin && editModeOn) ? `
+            const weightDisplay = (currentIsAdmin && editModeOn) ? `
       <span class="bundle-item-weight-edit" title="Weight (kg) — used for delivery pricing">
         <input type="number" step="0.01" min="0" value="${weightVal}" placeholder="kg" onchange="saveBundleItemWeight('${p.catSlug}', ${p.idx}, this)">
         <span>kg</span>
-      </span>` : '';
+      </span>` : (typeof p.weight === 'number' ? `<span class="bundle-item-weight">${fmtWeight(p.weight)}</span>` : '');
             return `
       <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}">
         <span>${p.name}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
-        ${weightEdit}
+        ${weightDisplay}
         <span>${outOfStock ? '' : money(effectivePrice(p))}</span>
       </div>`;
         }
-        function bundleWeightTotalHTML(items) {
-            if (!(currentIsAdmin && editModeOn) || !items.length) return '';
-            const total = items.reduce((s, p) => s + (typeof p.weight === 'number' ? p.weight : 0), 0);
+        // Takes only the in-stock items a customer would actually receive —
+        // same filter addBundleToCart/addComboToCart apply when computing
+        // the weight that lands on the cart line item, so this total always
+        // matches what cartTotalWeight() (and so the delivery fee) uses.
+        // Passing every item here (including an out-of-stock one no basket
+        // will ever contain) would show a heavier total than what's charged.
+        function bundleWeightTotalHTML(inStockItems) {
+            if (!inStockItems.length) return '';
+            const total = inStockItems.reduce((s, p) => s + (typeof p.weight === 'number' ? p.weight : 0), 0);
+            const adminEdit = currentIsAdmin && editModeOn;
+            if (total === 0 && !adminEdit) return '';
             return `
       <div class="bundle-weight-total${total === 0 ? ' zero-weight' : ''}">
-        <span>Total weight (drives delivery fee)</span>
-        <strong>${total === 0 ? 'Not set yet' : total.toFixed(total % 1 === 0 ? 0 : 2) + 'kg'}</strong>
+        <span>Total weight${adminEdit ? ' (drives delivery fee)' : ''}</span>
+        <strong>${total === 0 ? 'Not set yet' : fmtWeight(total)}</strong>
       </div>`;
         }
         // Same product_overrides row every other single-field admin edit on
@@ -9466,7 +9478,7 @@
       <div class="bundle-tagline">${bundle.tagline}</div>
       <div class="bundle-items">${itemRows}</div>
       ${totalRow}
-      ${bundleWeightTotalHTML(items)}
+      ${bundleWeightTotalHTML(inStockItems)}
       <div class="bundle-discount-edit">
         <label>Combo discount %</label>
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setBundleDiscount(${bi}, this.value)">
@@ -9766,7 +9778,7 @@
       <div class="bundle-tagline">${combo.description || ''}</div>
       <div class="bundle-items">${itemRows}</div>
       ${totalRow}
-      ${bundleWeightTotalHTML(items)}
+      ${bundleWeightTotalHTML(inStockItems)}
       ${items.length ? `<div class="bundle-discount-edit">
         <label>Combo discount %</label>
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setComboDiscount(${ci}, this.value)">
@@ -12190,9 +12202,15 @@
                 cancelOrderConfirmBtn.textContent = 'Cancel this order';
                 if (error) { setAuthError('cancelOrderError', 'Could not cancel that order: ' + error.message); return; }
                 logAdminAction('order_cancelled', 'order', document.getElementById('cancelOrderNumber').textContent, { reason });
+                // A cancellation is a status change like any other, the
+                // customer should hear about it without an admin having to
+                // remember a separate "send email" step for this one case too.
+                const cancelledOrderId = cancelOrderTargetId;
                 const onSuccess = cancelOrderOnSuccess;
                 closeCancelOrderModal();
                 if (onSuccess) onSuccess(); else renderAdminOrders();
+                const { error: emailError } = await supabaseClient.rpc('send_order_status_email', { p_order_id: cancelledOrderId });
+                if (emailError) showToast('Order cancelled, but the customer email could not be sent: ' + emailError.message, 6000);
             });
         }
 
@@ -12312,6 +12330,10 @@
                     document.getElementById('cancelOrderReason').value = comment;
                     return;
                 }
+                // Captured before the update lands, so this reflects what was
+                // actually saved a moment ago, not the freshly-updated value
+                // renderAdminOrderDetail is about to overwrite it with below.
+                const statusChanged = !!currentAdminOrder && nextStatus !== (currentAdminOrder.status || 'placed');
                 aodSaveBtn.disabled = true;
                 aodSaveBtn.textContent = 'Saving…';
                 const { error } = await supabaseClient.from('orders')
@@ -12328,6 +12350,16 @@
                 // same tick and never actually shows.
                 await renderAdminOrderDetail(currentAdminOrderId);
                 document.getElementById('aodUpdateSuccess').style.display = 'block';
+                // A changed status emails the customer automatically now,
+                // same as it did before the two actions were ever split
+                // apart — the explicit "Send email to customer" button below
+                // stays for resending or for a comment-only save that didn't
+                // change status (nothing new to tell the customer there).
+                if (statusChanged) {
+                    const { error: emailError } = await supabaseClient.rpc('send_order_status_email', { p_order_id: currentAdminOrderId });
+                    if (emailError) showToast('Order updated, but the customer email could not be sent: ' + emailError.message, 6000);
+                    else document.getElementById('aodEmailSuccess').style.display = 'block';
+                }
             });
         }
         const aodSendEmailBtn = document.getElementById('aodSendEmailBtn');
@@ -13266,7 +13298,19 @@
                 .single();
             if (error || !data) { syncAdminNavLink(); return; }
             currentIsAdmin = !!data.is_admin;
-            if (currentIsAdmin) subscribeAdminOrderNotifications(); else unsubscribeAdminOrderNotifications();
+            if (currentIsAdmin) {
+                subscribeAdminOrderNotifications();
+                // Restores edit mode after a refresh — it's an in-memory flag
+                // that would otherwise reset to off on every reload, kicking
+                // an admin back out of the thing they were actively doing.
+                // Only auto-resumes it, never auto-enters it for an admin who
+                // hadn't turned it on.
+                if (!editModeOn) {
+                    let wantEdit = false;
+                    try { wantEdit = localStorage.getItem('yo7-edit-mode') === '1'; } catch (e) {}
+                    if (wantEdit) setEditMode(true);
+                }
+            } else unsubscribeAdminOrderNotifications();
             syncAdminNavLink();
         }
         // Live "New order has been placed" notification for whoever's logged
@@ -13340,6 +13384,7 @@
             // allowed, there's no reason to block that.
             if (on && !currentIsAdmin) return;
             editModeOn = on;
+            try { localStorage.setItem('yo7-edit-mode', on ? '1' : '0'); } catch (e) {}
             document.body.classList.toggle('edit-mode-on', on);
             editModeBanner.classList.toggle('active', on);
             document.getElementById('editModeLabel').textContent = on ? 'Exit edit mode' : 'Enter edit mode';
@@ -13351,6 +13396,13 @@
             if (typeof renderDeliveryRulesAdmin === 'function') renderDeliveryRulesAdmin();
             if (typeof renderLoyaltyAdminPanel === 'function') renderLoyaltyAdminPanel();
             if (typeof renderDiscountAdminPanel === 'function') renderDiscountAdminPanel();
+            // Bundle/combo cards build their per-item weight editor into the
+            // markup at render time (not a CSS-only toggle), so they need a
+            // fresh render too whenever edit mode flips while one of those
+            // cards is already on screen — including right after a refresh
+            // restores edit mode automatically, on whatever page loads first.
+            if (typeof renderBundles === 'function') renderBundles();
+            if (typeof renderCombos === 'function') renderCombos();
             syncNavSpacer();
         }
         document.getElementById('editModeToggle').addEventListener('click', async () => {
