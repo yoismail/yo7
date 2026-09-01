@@ -1258,27 +1258,42 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-        /* Scoped to the hero's own button rather than .btn-primary itself,
-           this is a signature flourish for the hero specifically, not a
-           change to every primary button site-wide (checkout, add to
-           basket, etc.). */
-        .cta-row .btn-primary {
+        /* Scoped to the hero's own buttons rather than .btn-primary/
+           .btn-outline-dark themselves, this is a signature flourish for
+           the hero specifically, not a change to every button site-wide
+           (checkout, add to basket, etc.). Runs on its own timer rather
+           than waiting for a hover, a first-time visitor who never
+           touches the button should still notice it. Each sweep is quick,
+           then holds off-screen for several seconds before repeating, a
+           single occasional glint reads as premium, a constant loop would
+           just be distracting. The two buttons run on slightly offset
+           timings so they don't flash in lockstep. */
+        .cta-row .btn-primary, .cta-row .btn-outline-dark {
             position: relative;
             overflow: hidden;
         }
-        .cta-row .btn-primary::after {
+        .cta-row .btn-primary::after, .cta-row .btn-outline-dark::after {
             content: '';
             position: absolute;
             top: 0; left: -60%;
             width: 40%; height: 100%;
-            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
             transform: skewX(-20deg);
-            transition: left 0.6s ease;
+            animation: heroBtnSheen 4.5s ease-in-out infinite;
         }
-        @media (hover: hover) and (pointer: fine) {
-            .cta-row .btn-primary:hover::after {
-                left: 130%;
-            }
+        .cta-row .btn-primary::after {
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+        }
+        .cta-row .btn-outline-dark::after {
+            background: linear-gradient(120deg, transparent, rgba(var(--border-rgb), 0.14), transparent);
+            animation-delay: 1.3s;
+        }
+        @keyframes heroBtnSheen {
+            0% { left: -60%; }
+            18% { left: 130%; }
+            100% { left: 130%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .cta-row .btn-primary::after, .cta-row .btn-outline-dark::after { animation: none; }
         }
 
         .hero-social-link {
@@ -2113,6 +2128,8 @@
             gap: 10px;
         }
         .hero-glimpse-pill {
+            position: relative;
+            overflow: hidden;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -2128,6 +2145,22 @@
         }
         .hero-glimpse-pill span.emoji { font-size: 16px; }
         .hero-glimpse-pill:hover { border-color: var(--heading-mid); }
+        /* Same occasional-glint idea as the hero buttons above, staggered
+           per pill via --pill-delay so the row catches the eye as a subtle
+           cascade rather than every pill flashing in sync. */
+        .hero-glimpse-pill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -60%;
+            width: 40%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(var(--border-rgb), 0.16), transparent);
+            transform: skewX(-20deg);
+            animation: heroBtnSheen 5.5s ease-in-out infinite;
+            animation-delay: var(--pill-delay, 0s);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-glimpse-pill::after { animation: none; }
+        }
 
         .offer-section { background: var(--section-alt-bg); padding: 56px 0 60px; border-top: 1px solid rgba(var(--border-rgb), 0.06); border-bottom: 1px solid rgba(var(--border-rgb), 0.06); }
         .offer-carousel-wrap { position: relative; width: 100%; max-width: 100%; display: flex; align-items: center; gap: 8px; }
@@ -7875,8 +7908,8 @@
         function renderHeroGlimpse() {
             const row = document.getElementById('heroGlimpseRow');
             if (!row) return;
-            row.innerHTML = GROUPS.map(g => `
-      <a class="hero-glimpse-pill" href="#/group/${g.slug}"><span class="emoji">${g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+            row.innerHTML = GROUPS.map((g, i) => `
+      <a class="hero-glimpse-pill" href="#/group/${g.slug}" style="--pill-delay:${(i * 0.5).toFixed(2)}s"><span class="emoji">${g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
         }
 
         /* ================= DELIVERY FEE (weight-based) =================
@@ -8687,7 +8720,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.17';
+        const BUILD_VERSION = '2026-09-01.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
