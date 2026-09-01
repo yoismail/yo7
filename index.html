@@ -2152,6 +2152,16 @@
 
         /* ================= SPECIAL OFFER SECTION ================= */
         .hero-glimpse-strip { background: var(--page-bg); padding: 22px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
+        .hero-glimpse-title {
+            text-align: center;
+            font-family: var(--display);
+            font-weight: 500;
+            font-size: 12px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--heading-mid);
+            margin-bottom: 12px;
+        }
         .hero-glimpse-row {
             display: flex;
             justify-content: center;
@@ -5840,6 +5850,7 @@
 
         <div class="hero-glimpse-strip">
             <div class="wrap">
+                <div class="hero-glimpse-title">Shop by department</div>
                 <div class="hero-glimpse-row" id="heroGlimpseRow"></div>
             </div>
         </div>
@@ -8719,7 +8730,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.15';
+        const BUILD_VERSION = '2026-09-01.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
