@@ -14,6 +14,17 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Yo7 Foods | Fresh African &amp; Caribbean Groceries, Essex &amp; Suffolk">
     <meta name="twitter:description" content="Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Authentic flavours, premium quality.">
+    <link rel="canonical" href="https://yo7foods.co.uk/" id="canonicalLink">
+    <!-- unsafe-inline is required for both script-src and style-src: this
+         site ships as a single static HTML file with no build step, so
+         there's no way to generate per-request nonces or hash every inline
+         <script>/<style> block the way a CSP normally expects. That means
+         this policy restricts which THIRD-PARTY hosts can load a script,
+         connect out, or frame in, real protection against a compromised or
+         malicious external dependency, but it does not stop an XSS payload
+         injected into the page's own inline code from running. Treat this
+         as one layer, not a substitute for careful escaping. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -7957,11 +7968,29 @@
            Codes are matched case-insensitively. Each discount can restrict
            itself to a date range, a minimum order, and specific qualifying
            items (all products, one category, or one specific product).
-           "Max per customer" is tracked via localStorage as a best-effort
-           limit — there's no real backend or accounts yet, so this can be
-           bypassed by clearing browser storage or using a different device.
-           It's honest to say so rather than imply it's a hard guarantee. */
+           This list itself now lives in the discount_codes table (see
+           supabase-migration-20-discount-codes.sql) — the admin panel
+           below loads it on open and every create/edit/remove writes
+           straight through to Supabase, so a code an admin creates
+           actually survives a refresh and reaches real customers, and
+           "max per customer" is enforced against real redemption rows
+           (discount_redemptions) rather than the browser's own
+           localStorage, which could always just be cleared. */
         let discounts = [];
+        let discountsLoadedForAdmin = false;
+        async function loadDiscountsFromSupabase() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('discount_codes').select('*').order('created_at', { ascending: false });
+            if (error) { console.error('Could not load discount codes:', error.message); return; }
+            discounts = (data || []).map(d => ({
+                id: d.id, name: d.name, code: d.code, type: d.type, value: d.value,
+                buyQty: d.buy_qty, getQty: d.get_qty,
+                qualifyingScope: d.qualifying_scope, qualifyingCategory: d.qualifying_category, qualifyingProductId: d.qualifying_product_id,
+                minOrder: d.min_order, maxPerCustomer: d.max_per_customer,
+                startDate: d.start_date, endDate: d.end_date, active: d.active,
+            }));
+            discountsLoadedForAdmin = true;
+        }
         let appliedDiscount = null; // the currently-applied discount object, or null
         let editingDiscountId = null; // id of the discount the admin form is currently editing, or null when creating new
 
@@ -8081,35 +8110,34 @@
             });
         }
 
-        function findDiscountByCode(code) {
-            const norm = (code || '').trim().toLowerCase();
-            return discounts.find(d => d.code.toLowerCase() === norm) || null;
-        }
-        function discountUsageCount(discountId) {
-            try { return parseInt(localStorage.getItem(`yo7-discount-used-${discountId}`) || '0', 10); }
-            catch (e) { return 0; }
-        }
-        function recordDiscountUsage(discountId) {
-            try { localStorage.setItem(`yo7-discount-used-${discountId}`, String(discountUsageCount(discountId) + 1)); }
-            catch (e) { /* localStorage unavailable — usage just won't be capped this session */ }
-        }
+        // Discount codes are no longer a client-side list to search — the
+        // full set of rules (active, date range, minimum order, per-
+        // customer redemption count) only lives in the discount_codes
+        // table now, and only create-payment-intent (service-role,
+        // bypasses RLS) can read it. That's deliberate: a customer's own
+        // browser being able to list every code, including ones that
+        // haven't started yet or are reserved for someone else, was never
+        // something to expose. This calls the same function's
+        // "validate-discount" action, which runs the exact rules above
+        // against the cart as it stands right now and hands back the safe
+        // parts of the matching code (type/value/scope, not raw db
+        // fields) so the existing display math below keeps working
+        // unchanged. The final, authoritative check happens again at
+        // charge time regardless — this is only ever a preview.
         function cartQualifiesForDiscount(d) {
             if (d.qualifyingScope === 'all' || !d.qualifyingScope) return cart.length > 0;
             if (d.qualifyingScope === 'category') return cart.some(i => i.catSlug === d.qualifyingCategory);
             if (d.qualifyingScope === 'product') return cart.some(i => i.id.startsWith(d.qualifyingProductId));
             return false;
         }
-        function validateDiscount(code) {
-            const d = findDiscountByCode(code);
-            if (!d) return { ok: false, error: 'That code doesn\'t match any current discount.' };
-            if (d.active === false) return { ok: false, error: 'That discount code is no longer active.' };
-            const today = new Date().toISOString().slice(0, 10);
-            if (d.startDate && today < d.startDate) return { ok: false, error: `That code isn't valid until ${d.startDate}.` };
-            if (d.endDate && today > d.endDate) return { ok: false, error: 'That discount code has expired.' };
-            if (typeof d.minOrder === 'number' && cartSubtotal() < d.minOrder) return { ok: false, error: `This code needs a minimum order of ${money(d.minOrder)}.` };
-            if (!cartQualifiesForDiscount(d)) return { ok: false, error: 'Your basket doesn\'t contain the items this code applies to.' };
-            if (typeof d.maxPerCustomer === 'number' && discountUsageCount(d.id) >= d.maxPerCustomer) return { ok: false, error: 'You\'ve already used this code the maximum number of times.' };
-            return { ok: true, discount: d };
+        async function validateDiscount(code) {
+            if (!supabaseClient) return { ok: false, error: 'Discount codes need a moment, try again shortly.' };
+            const { data, error } = await supabaseClient.functions.invoke('create-payment-intent', {
+                body: { action: 'validate-discount', code, items: cartLineItemsForServer() },
+            });
+            if (error || !data) return { ok: false, error: 'Couldn\'t check that code right now, try again in a moment.' };
+            if (!data.ok) return { ok: false, error: data.error || 'That code isn\'t valid.' };
+            return { ok: true, discount: data.discount };
         }
         function qualifyingCartItems(d) {
             if (d.qualifyingScope === 'category') return cart.filter(i => i.catSlug === d.qualifyingCategory);
@@ -8139,12 +8167,19 @@
             }
             return 0; // freeDelivery has no cart-total effect — handled in delivery fee resolution
         }
-        function applyDiscountCode(code) {
-            const result = validateDiscount(code);
+        async function applyDiscountCode(code) {
+            const result = await validateDiscount(code);
             if (!result.ok) return result;
             appliedDiscount = result.discount;
             updateSummaries();
             return { ok: true };
+        }
+        // '<catSlug>::<idx>' | 'bundle::<i>' | 'combo::<i>' plus qty and
+        // whether it's a subscription — everything create-payment-intent
+        // needs to look up the trusted price itself. Sending a price here
+        // at all would be pointless, the server never trusts it.
+        function cartLineItemsForServer() {
+            return cart.map(i => ({ id: i.id, qty: i.qty, isSubscription: !!i.isSubscription }));
         }
         function removeAppliedDiscount() {
             appliedDiscount = null;
@@ -8189,10 +8224,16 @@
                 prodSelect.dataset.populated = 'true';
             }
         }
-        function removeDiscount(i) {
-            if (discounts[i] && discounts[i].id === editingDiscountId) resetDiscountForm();
+        async function removeDiscount(i) {
+            const target = discounts[i];
+            if (!target) return;
+            if (target.id === editingDiscountId) resetDiscountForm();
             discounts.splice(i, 1);
             renderDiscountsAdmin();
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('discount_codes').delete().eq('id', target.id);
+                if (error) { showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000); }
+            }
         }
         window.removeDiscount = removeDiscount;
         // Populates the (single, shared) discount form with an existing
@@ -8297,15 +8338,18 @@
                 document.getElementById('newDiscProductField').style.display = e.target.value === 'product' ? '' : 'none';
             });
             document.getElementById('discFormCancelBtn').addEventListener('click', () => resetDiscountForm());
-            document.getElementById('addDiscountForm').addEventListener('submit', (e) => {
+            document.getElementById('addDiscountForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
+                if (!supabaseClient) { showToast('Discounts need a moment to connect, try again shortly.'); return; }
                 const name = document.getElementById('newDiscName').value.trim();
                 const code = document.getElementById('newDiscCode').value.trim();
                 if (!name || !code) return;
                 // Editing a discount keeps its own code without tripping the
                 // "already exists" guard, that guard is only meant to catch a
-                // genuinely different discount claiming the same code.
-                const existing = findDiscountByCode(code);
+                // genuinely different discount claiming the same code (the
+                // database's own unique constraint on code is the real
+                // backstop either way).
+                const existing = discounts.find(d => d.code.toLowerCase() === code.toLowerCase());
                 if (existing && existing.id !== editingDiscountId) { showToast(`A discount with code "${code}" already exists.`); return; }
                 const type = document.getElementById('newDiscType').value;
                 const value = parseFloat(document.getElementById('newDiscValue').value) || 0;
@@ -8316,20 +8360,38 @@
                 const scope = document.getElementById('newDiscScope').value;
                 const minOrderRaw = document.getElementById('newDiscMinOrder').value;
                 const maxPerCustomerRaw = document.getElementById('newDiscMaxPerCustomer').value;
-                const fields = {
-                    name, code, type, value, buyQty, getQty, startDate, endDate,
-                    qualifyingScope: scope,
-                    qualifyingCategory: scope === 'category' ? document.getElementById('newDiscCategory').value : null,
-                    qualifyingProductId: scope === 'product' ? document.getElementById('newDiscProduct').value : null,
-                    minOrder: minOrderRaw ? parseFloat(minOrderRaw) : null,
-                    maxPerCustomer: maxPerCustomerRaw ? parseInt(maxPerCustomerRaw, 10) : null,
+                const row = {
+                    name, code, type, value: (type === 'percent' || type === 'fixed') ? value : null,
+                    buy_qty: type === 'bogo' ? buyQty : null,
+                    get_qty: type === 'bogo' ? getQty : null,
+                    start_date: startDate, end_date: endDate,
+                    qualifying_scope: scope,
+                    qualifying_category: scope === 'category' ? document.getElementById('newDiscCategory').value : null,
+                    qualifying_product_id: scope === 'product' ? document.getElementById('newDiscProduct').value : null,
+                    min_order: minOrderRaw ? parseFloat(minOrderRaw) : null,
+                    max_per_customer: maxPerCustomerRaw ? parseInt(maxPerCustomerRaw, 10) : null,
                 };
+                const submitBtn = document.getElementById('discFormSubmitBtn');
+                submitBtn.disabled = true;
                 if (editingDiscountId) {
-                    const target = discounts.find(d => d.id === editingDiscountId);
-                    if (target) Object.assign(target, fields);
+                    const { error } = await supabaseClient.from('discount_codes').update(row).eq('id', editingDiscountId);
+                    submitBtn.disabled = false;
+                    if (error) { showToast('Couldn\'t save that change: ' + error.message, 6000); return; }
+                    Object.assign(discounts.find(d => d.id === editingDiscountId) || {}, {
+                        name, code, type, value, buyQty, getQty, startDate, endDate,
+                        qualifyingScope: scope, qualifyingCategory: row.qualifying_category, qualifyingProductId: row.qualifying_product_id,
+                        minOrder: row.min_order, maxPerCustomer: row.max_per_customer,
+                    });
                     showToast(`Saved changes to "${code}".`);
                 } else {
-                    discounts.push({ id: 'disc-' + Date.now(), active: true, ...fields });
+                    const { data, error } = await supabaseClient.from('discount_codes').insert({ ...row, active: true }).select('id').single();
+                    submitBtn.disabled = false;
+                    if (error) { showToast('Couldn\'t create that discount: ' + error.message, 6000); return; }
+                    discounts.unshift({
+                        id: data.id, name, code, type, value, buyQty, getQty, startDate, endDate,
+                        qualifyingScope: scope, qualifyingCategory: row.qualifying_category, qualifyingProductId: row.qualifying_product_id,
+                        minOrder: row.min_order, maxPerCustomer: row.max_per_customer, active: true,
+                    });
                     showToast(`Created discount code "${code}".`);
                 }
                 resetDiscountForm();
@@ -8606,7 +8668,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.4';
+        const BUILD_VERSION = '2026-09-01.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10087,6 +10149,45 @@
         let pdQty = 1;
         let pdCurrent = null;
         let pdSelectedVariant = null; // index into pdCurrent.weightVariants, or null for the base price
+        // Structured data so a shared or bookmarked product link (WhatsApp,
+        // social, a direct search hit) shows a proper price/availability
+        // preview when crawled. Hash-routed URLs like this one aren't
+        // themselves reachable via a sitemap, Google only ever crawls the
+        // root document, so this doesn't make every product independently
+        // indexable, that would need real per-route URLs. It's still worth
+        // having for anything that lands on the page directly.
+        function updateProductJsonLd(p, cat, catSlug, idx) {
+            let el = document.getElementById('productJsonLd');
+            if (!el) {
+                el = document.createElement('script');
+                el.type = 'application/ld+json';
+                el.id = 'productJsonLd';
+                document.head.appendChild(el);
+            }
+            const stock = p.stock || 'in';
+            const availability = stock === 'out' ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock';
+            const price = (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
+            el.textContent = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'Product',
+                name: p.name,
+                description: p.description || `${p.name}, from Yo7 Foods' ${cat.name.replace(/&amp;/g, '&')} aisle.`,
+                sku: p.code || undefined,
+                category: cat.name.replace(/&amp;/g, '&'),
+                url: `https://yo7foods.co.uk/#/product/${catSlug}/${idx}`,
+                offers: {
+                    '@type': 'Offer',
+                    priceCurrency: 'GBP',
+                    price: price.toFixed(2),
+                    availability,
+                    url: `https://yo7foods.co.uk/#/product/${catSlug}/${idx}`,
+                },
+            });
+        }
+        function clearProductJsonLd() {
+            const el = document.getElementById('productJsonLd');
+            if (el) el.remove();
+        }
         function renderProductPage(catSlug, idx) {
             const p = getProduct(catSlug, Number(idx));
             const cat = findCategory(catSlug);
@@ -10100,6 +10201,7 @@
             if (freqRow) freqRow.style.display = 'none';
             document.getElementById('pdQtyVal').textContent = pdQty;
             if (!p) {
+                clearProductJsonLd();
                 document.getElementById('pdName').textContent = 'Product not found';
                 document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; Not found`;
                 ['pdCatTag', 'pdCode', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
@@ -10107,6 +10209,7 @@
                 return;
             }
             const stock = p.stock || 'in';
+            updateProductJsonLd(p, cat, catSlug, idx);
             const pdGroup = groupForCategory(catSlug);
             document.getElementById('pdCrumb').innerHTML = pdGroup
                 ? `<a href="#/">Home</a> &rsaquo; <a href="#/group/${pdGroup.slug}">${pdGroup.name.replace(/&amp;/g, '&')}</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`
@@ -10743,12 +10846,16 @@
         /* ================= DISCOUNT CODE ENTRY ================= */
         const applyDiscountBtn = document.getElementById('applyDiscountBtn');
         if (applyDiscountBtn) {
-            applyDiscountBtn.addEventListener('click', () => {
+            applyDiscountBtn.addEventListener('click', async () => {
                 const input = document.getElementById('discountCodeInput');
                 const msg = document.getElementById('discountCodeMsg');
                 const code = input.value.trim();
                 if (!code) return;
-                const result = applyDiscountCode(code);
+                applyDiscountBtn.disabled = true;
+                msg.textContent = 'Checking…';
+                msg.className = 'discount-code-msg';
+                const result = await applyDiscountCode(code);
+                applyDiscountBtn.disabled = false;
                 if (result.ok) {
                     msg.textContent = `"${appliedDiscount.code}" applied.`;
                     msg.className = 'discount-code-msg success';
@@ -10825,6 +10932,14 @@
             placeOrderBtn.disabled = true; // re-enabled once the Payment Element is actually ready to submit
             mountEl.innerHTML = '<div class="payment-element-loading"><span class="payment-spinner" aria-hidden="true"></span>Loading payment options…</div>';
 
+            // These are only a same-second estimate for what shows on screen
+            // while the request below is in flight — create-payment-intent
+            // recomputes every one of these figures itself, from a real
+            // products/discount_codes/loyalty_rewards lookup, and the
+            // PaymentIntent it creates is for THAT amount, not this one. The
+            // client-side total was previously the only amount that ever
+            // reached Stripe, which meant it could be edited before the
+            // request went out; this estimate now only ever drives the UI.
             const sub = cartSubtotal();
             const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
             const delivery = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
@@ -10832,7 +10947,6 @@
             const pendingReward = pendingLoyaltyReward();
             const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
-            const amountPence = Math.round(total * 100);
 
             pendingOrderContext = {
                 items: cart.map(i => ({ ...i })),
@@ -10854,8 +10968,9 @@
             try {
                 ({ data, error } = await supabaseClient.functions.invoke('create-payment-intent', {
                     body: {
-                        amount: amountPence,
-                        currency: 'gbp',
+                        items: cartLineItemsForServer(),
+                        discountCode: appliedDiscount ? appliedDiscount.code : undefined,
+                        fulfilmentMethod,
                         customerEmail: currentSupabaseUser ? currentSupabaseUser.email : undefined,
                         orderDescription: `Yo7 Foods order — ${cart.length} item${cart.length === 1 ? '' : 's'}`,
                     },
@@ -10870,6 +10985,20 @@
                 errorEl.textContent = `Couldn't start payment right now (${reason}). Please try again in a moment.`;
                 errorEl.style.display = 'block';
                 return;
+            }
+
+            // Reconcile against the server's own numbers — the actual
+            // charge, and the order this goes on to create, use these,
+            // not the estimate above.
+            if (data.verifiedTotal) {
+                Object.assign(pendingOrderContext, {
+                    subtotal: data.verifiedTotal.subtotal,
+                    delivery: data.verifiedTotal.delivery,
+                    discountAmount: data.verifiedTotal.discountAmount,
+                    loyaltyDiscountAmount: data.verifiedTotal.loyaltyDiscountAmount,
+                    total: data.verifiedTotal.total,
+                });
+                savePendingOrderContext(pendingOrderContext);
             }
 
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -11044,6 +11173,8 @@
                 notes: di ? di.notes : null,
                 stripe_payment_intent_id: paymentIntent.id,
                 payment_method_summary: paymentMethodSummary,
+                discount_id: ctx.discountId || null,
+                discount_code: ctx.discountCode || null,
             }).select('id, order_number').single();
 
             if (error) {
@@ -11074,7 +11205,10 @@
                 return { ok: false, message: `Your payment went through, but saving the order hit a problem on our end. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
             }
 
-            if (ctx.discountId) recordDiscountUsage(ctx.discountId);
+            // Redemption itself is now recorded server-side, by a trigger
+            // on the orders row that just got inserted above (see
+            // supabase-migration-20-discount-codes.sql) — nothing to do
+            // here.
             lastOrder.number = data.order_number;
             if (ctx.loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
             lastOrder.loyaltyRewardEarned = !!(await issueLoyaltyRewardIfEarned(data.id));
@@ -12208,7 +12342,7 @@
         // there; never turns edit mode on by itself if that check fails.
         let autoEnterEditMode = false;
         const editModeBanner = document.getElementById('editModeBanner');
-        function setEditMode(on) {
+        async function setEditMode(on) {
             // Turning edit mode ON requires a verified admin session, checked
             // fresh here rather than trusting that whatever called this only
             // does so from an already-gated surface. Turning it OFF is always
@@ -12218,6 +12352,7 @@
             document.body.classList.toggle('edit-mode-on', on);
             editModeBanner.classList.toggle('active', on);
             document.getElementById('editModeLabel').textContent = on ? 'Exit edit mode' : 'Enter edit mode';
+            if (on && !discountsLoadedForAdmin) await loadDiscountsFromSupabase();
             // These panels aren't hidden with CSS, they don't exist in the
             // DOM at all outside of edit mode, so they need to be built (or
             // torn back down) explicitly on every toggle.
@@ -12227,8 +12362,8 @@
             if (typeof renderDiscountAdminPanel === 'function') renderDiscountAdminPanel();
             syncNavSpacer();
         }
-        document.getElementById('editModeToggle').addEventListener('click', () => {
-            setEditMode(!editModeOn);
+        document.getElementById('editModeToggle').addEventListener('click', async () => {
+            await setEditMode(!editModeOn);
             accountDropdown.classList.remove('open');
         });
         document.getElementById('editModeBannerClose').addEventListener('click', () => setEditMode(false));
@@ -12955,6 +13090,7 @@
             if (hash === '#edit' || hash === '#/edit') { autoEnterEditMode = true; window.location.hash = '#/admin'; return; }
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
             updateActiveNavLink();
+            if (!hash.startsWith('#/product/')) clearProductJsonLd();
 
             if (hash === '#/shop') {
                 showView('view-shop-all');
@@ -13137,59 +13273,10 @@
            called whenever edit mode is toggled, since the panel (and its
            forms) don't exist in the DOM at all until then. */
 
-        /* ================= DISCOUNT ADMIN FORM (edit mode) ================= */
-        const newDiscTypeSelect = document.getElementById('newDiscType');
-        if (newDiscTypeSelect) {
-            newDiscTypeSelect.addEventListener('change', () => {
-                const isBogo = newDiscTypeSelect.value === 'bogo';
-                const needsValue = newDiscTypeSelect.value === 'percent' || newDiscTypeSelect.value === 'fixed';
-                document.getElementById('newDiscBogoFields').style.display = isBogo ? 'grid' : 'none';
-                document.getElementById('newDiscValueField').style.display = needsValue ? '' : 'none';
-            });
-        }
-        const newDiscScopeSelect = document.getElementById('newDiscScope');
-        if (newDiscScopeSelect) {
-            newDiscScopeSelect.addEventListener('change', () => {
-                document.getElementById('newDiscCategoryField').style.display = newDiscScopeSelect.value === 'category' ? '' : 'none';
-                document.getElementById('newDiscProductField').style.display = newDiscScopeSelect.value === 'product' ? '' : 'none';
-            });
-        }
-        const addDiscountForm = document.getElementById('addDiscountForm');
-        if (addDiscountForm) {
-            addDiscountForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const name = document.getElementById('newDiscName').value.trim();
-                const code = document.getElementById('newDiscCode').value.trim();
-                if (!name || !code) return;
-                if (findDiscountByCode(code)) { showToast(`A discount with code "${code}" already exists.`); return; }
-                const type = document.getElementById('newDiscType').value;
-                const value = parseFloat(document.getElementById('newDiscValue').value) || 0;
-                const buyQty = parseInt(document.getElementById('newDiscBuyQty').value, 10) || 1;
-                const getQty = parseInt(document.getElementById('newDiscGetQty').value, 10) || 1;
-                const startDate = document.getElementById('newDiscStart').value || null;
-                const endDate = document.getElementById('newDiscEnd').value || null;
-                const scope = document.getElementById('newDiscScope').value;
-                const minOrderRaw = document.getElementById('newDiscMinOrder').value;
-                const maxPerCustomerRaw = document.getElementById('newDiscMaxPerCustomer').value;
-                const discount = {
-                    id: 'disc-' + Date.now(),
-                    name, code, type, value, buyQty, getQty, startDate, endDate,
-                    qualifyingScope: scope,
-                    qualifyingCategory: scope === 'category' ? document.getElementById('newDiscCategory').value : null,
-                    qualifyingProductId: scope === 'product' ? document.getElementById('newDiscProduct').value : null,
-                    minOrder: minOrderRaw ? parseFloat(minOrderRaw) : null,
-                    maxPerCustomer: maxPerCustomerRaw ? parseInt(maxPerCustomerRaw, 10) : null,
-                    active: true,
-                };
-                discounts.push(discount);
-                addDiscountForm.reset();
-                document.getElementById('newDiscBogoFields').style.display = 'none';
-                document.getElementById('newDiscCategoryField').style.display = 'none';
-                document.getElementById('newDiscProductField').style.display = 'none';
-                renderDiscountsAdmin();
-                showToast(`Created discount code "${code}".`);
-            });
-        }
+        /* Discount admin form (name/type/scope/etc fields, create + edit)
+           is wired up inside renderDiscountAdminPanel(), called whenever
+           edit mode is toggled, since the panel (and its form) don't
+           exist in the DOM at all until then. */
 
         /* ================= CATEGORY STRIP: auto-carousel + manual scroll ================= */
         (function initCatCarousel() {
