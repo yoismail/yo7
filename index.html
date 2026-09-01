@@ -273,8 +273,8 @@
             left: 0;
             right: 0;
             z-index: 99;
-            background: var(--page-bg);
-            border-bottom: 1px solid rgba(144, 184, 0, 0.3);
+            background: var(--chartreuse);
+            border-bottom: 1px solid var(--chartreuse-rich);
             overflow: hidden;
         }
         .trust-bar-track {
@@ -299,7 +299,7 @@
             font-weight: 600;
             font-size: 12.5px;
             letter-spacing: 0.01em;
-            color: var(--heading);
+            color: var(--aubergine-deep);
             white-space: nowrap;
             flex-shrink: 0;
         }
@@ -311,10 +311,10 @@
         .trust-bar-icon {
             width: 13px;
             height: 13px;
-            color: var(--heading-mid);
+            color: var(--aubergine-deep);
             flex-shrink: 0;
         }
-        .trust-sep { color: var(--chartreuse); font-weight: 700; }
+        .trust-sep { color: var(--aubergine-deep); font-weight: 700; opacity: 0.55; }
         @media (max-width: 520px) {
             .trust-bar-set { font-size: 11.5px; padding: 8px 16px; gap: 7px; }
         }
@@ -2690,30 +2690,6 @@
                 transform: none;
                 transition: none;
             }
-        }
-
-        /* Section headings get a more deliberate per-word cascade instead of
-           just fading in as one flat block with everything else. The h2
-           itself opts out of the block-level fade above (stays opaque as a
-           container) so only its individual words carry the motion. */
-        .section-head.reveal h2, .new-section-head.reveal h2 {
-            opacity: 1;
-        }
-        .word-reveal {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(0.7em);
-            filter: blur(4px);
-            transition: opacity 0.6s cubic-bezier(.16,.84,.44,1), transform 0.6s cubic-bezier(.16,.84,.44,1), filter 0.6s cubic-bezier(.16,.84,.44,1);
-        }
-        .section-head.is-visible .word-reveal,
-        .new-section-head.is-visible .word-reveal {
-            opacity: 1;
-            transform: translateY(0);
-            filter: blur(0);
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .word-reveal { opacity: 1; transform: none; filter: none; transition: none; }
         }
 
         /* ================= FLOATING ORDER BUTTON ================= */
@@ -8756,7 +8732,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.9';
+        const BUILD_VERSION = '2026-09-01.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13382,20 +13358,6 @@
         window.addEventListener('hashchange', onScroll);
         onScroll();
 
-        // Wraps each word of a heading in its own span so .word-reveal's CSS
-        // transition can stagger them via transition-delay, run once at init
-        // since these headings are static markup, not re-rendered per route.
-        function splitHeadingWords() {
-            document.querySelectorAll('.section-head h2, .new-section-head h2').forEach(h2 => {
-                if (h2.dataset.wordsSplit) return;
-                h2.dataset.wordsSplit = 'true';
-                const words = h2.textContent.trim().split(/\s+/);
-                h2.innerHTML = words.map((word, i) =>
-                    `<span class="word-reveal" style="transition-delay:${(i * 0.11).toFixed(2)}s">${word}</span>`
-                ).join(' ');
-            });
-        }
-
         function observeReveals() {
             const io = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -13748,7 +13710,6 @@
         renderOfferCarousel();
         initThemeToggle();
         initDragScroll();
-        splitHeadingWords();
         observeReveals();
         updateCartBadge();
         handleStripeRedirectReturn();
