@@ -1161,26 +1161,25 @@
             pointer-events: none;
             animation: heroScrollCue 2s ease-in-out infinite;
         }
-        /* A quiet corner signature at the foot of the hero, not a repeat of
-           the nav bar's full logo — text only, low-contrast, same bottom
-           offset as the scroll cue it shares this edge with. left: uses the
-           same 28px .wrap padding as the hero's own heading/buttons once the
-           page is wider than .wrap's 1600px max-width, so it lines up with
-           that content's left edge rather than the raw viewport edge. */
-        .hero-mark {
+        /* Mirrors .hero-watermark above (the big faded seal icon bleeding
+           off the top-right corner) at the opposite corner, at the same
+           kind of scale and the same translucent-overlay opacity variable
+           — a background watermark, not a small corner signature. Text
+           rather than the icon since the icon watermark is already right
+           there; this is the wordmark half of the same mark. */
+        .hero-text-watermark {
             position: absolute;
-            left: max(28px, calc(50% - 772px));
-            bottom: 26px;
-            z-index: 2;
-            font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: -0.02em;
-            color: rgba(44, 28, 16, 0.4);
+            left: -3%;
+            bottom: -10%;
+            z-index: 1;
+            font-family: var(--display); font-weight: 700;
+            font-size: clamp(120px, 22vw, 340px); line-height: 0.8; letter-spacing: -0.02em;
+            color: var(--ink);
+            opacity: var(--hero-watermark-op);
             pointer-events: none;
+            white-space: nowrap;
         }
-        .hero-mark .accent { color: var(--chartreuse-rich); }
-        [data-theme="dark"] .hero-mark { color: rgba(233, 230, 218, 0.4); }
-        @media (max-width: 640px) {
-            .hero-mark { display: none; }
-        }
+        .hero-text-watermark .accent { color: var(--chartreuse-rich); }
         .hero-scroll-cue svg { width: 100%; height: 100%; }
         @keyframes heroScrollCue {
             0%, 100% { transform: translate(-50%, 0); opacity: 0.5; }
@@ -6161,7 +6160,7 @@
             <div class="hero-scroll-cue" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             </div>
-            <div class="hero-mark" aria-hidden="true">Yo<span class="accent">7</span></div>
+            <div class="hero-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         </header>
 
         <div class="hero-glimpse-strip">
@@ -9235,7 +9234,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.38';
+        const BUILD_VERSION = '2026-09-01.39';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
