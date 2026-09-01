@@ -100,10 +100,21 @@ def inject_route_seed(html, hash_route):
     # location.hash=, so this doesn't push an extra history entry — a
     # visitor arriving from Google and hitting Back once should leave the
     # site, not bounce back to this same page with the hash stripped.
+    #
+    # Only seeds when there's no hash yet (a genuinely fresh load — from
+    # Google, a bookmark, or a real <a href="/contact/"> navigation, all of
+    # which land with an empty hash). Every hash link elsewhere on the site
+    # (#/shop, #/checkout, ...) is still an in-page transition that never
+    # changes the real path away from /contact/, so once someone's browsed
+    # around from here, the URL bar's hash is the only record of where
+    # they actually are. Seeding unconditionally clobbered that on every
+    # refresh, forcing the visitor back to Contact Us no matter where in
+    # the app they'd navigated to since landing here — a real bug, not
+    # just a cosmetic one.
     marker = "        })();\n    </script>\n</head>"
     if marker not in html:
         raise ValueError('Theme-flash-prevention script block marker not found — index.html <head> script shape changed, update this script to match.')
-    seed_line = f"        history.replaceState(null, '', location.pathname + location.search + '{hash_route}');\n"
+    seed_line = f"        if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '{hash_route}');\n"
     replacement = "        })();\n" + seed_line + "    </script>\n</head>"
     return html.replace(marker, replacement, 1)
 

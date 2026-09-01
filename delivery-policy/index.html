@@ -5907,6 +5907,15 @@
                 flex: 0 0 220px;
                 max-width: 220px;
             }
+            /* .cat-flat-scroll (Shop by category) shares the .product-grid
+               base class purely for its scroll/drag/snap mechanics, but its
+               own gap (18px, matching Best Sellers) shouldn't be clobbered
+               by the generic mobile override above — same specificity as
+               .product-grid alone would otherwise lose to source order, so
+               this needs the extra class to actually win. */
+            .product-grid.cat-flat-scroll {
+                gap: 18px;
+            }
         }
     </style>    <script>
         // Stops the browser from restoring the scroll position it remembers
@@ -5925,7 +5934,7 @@
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
         })();
-        history.replaceState(null, '', location.pathname + location.search + '#/delivery-policy');
+        if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '#/delivery-policy');
     </script>
 </head>
 
@@ -9177,7 +9186,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.32';
+        const BUILD_VERSION = '2026-09-01.33';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12788,6 +12797,42 @@
             return pdfLibsPromise;
         }
 
+        // jsPDF only ships Helvetica/Times/Courier built in — anything else
+        // has to be embedded as real font bytes. Fetched from the site's own
+        // /fonts/ (same real Montserrat Alternates files the page itself
+        // loads from Google Fonts), converted to base64, and registered into
+        // jsPDF's virtual filesystem, once per session and cached, so the
+        // downloaded invoice actually reads as the same brand font as the
+        // website instead of falling back to a generic PDF default.
+        let invoiceFontsPromise = null;
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+            }
+            return btoa(binary);
+        }
+        async function ensureInvoiceFontsLoaded(pdf) {
+            if (!invoiceFontsPromise) {
+                invoiceFontsPromise = Promise.all([
+                    fetch('/fonts/MontserratAlternates-Regular.ttf').then(r => r.arrayBuffer()),
+                    fetch('/fonts/MontserratAlternates-Bold.ttf').then(r => r.arrayBuffer()),
+                ]).then(([regularBuf, boldBuf]) => ({
+                    regular: arrayBufferToBase64(regularBuf),
+                    bold: arrayBufferToBase64(boldBuf),
+                })).catch(() => null); // offline/blocked: buildInvoicePdfBlob falls back to Helvetica
+            }
+            const fonts = await invoiceFontsPromise;
+            if (!fonts) return false;
+            pdf.addFileToVFS('MontserratAlternates-Regular.ttf', fonts.regular);
+            pdf.addFont('MontserratAlternates-Regular.ttf', 'MontserratAlternates', 'normal');
+            pdf.addFileToVFS('MontserratAlternates-Bold.ttf', fonts.bold);
+            pdf.addFont('MontserratAlternates-Bold.ttf', 'MontserratAlternates', 'bold');
+            return true;
+        }
+
         /* Rendered once from the site's actual #seal-mark SVG (same
            shape, same brand colours) rather than approximated with jsPDF's
            primitive circle/line calls, so the invoice logo is pixel-for-
@@ -12811,6 +12856,7 @@
             await ensurePdfLibsLoaded();
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
+            const brandFontLoaded = await ensureInvoiceFontsLoaded(pdf);
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
             const margin = 42;
@@ -12836,7 +12882,7 @@
             const rule = [230, 225, 210];
 
             const setText = (size, style, color) => {
-                pdf.setFont('helvetica', style);
+                pdf.setFont(brandFontLoaded ? 'MontserratAlternates' : 'helvetica', style);
                 pdf.setFontSize(size);
                 pdf.setTextColor(...color);
             };
