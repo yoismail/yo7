@@ -104,6 +104,23 @@
             scroll-behavior: smooth;
         }
 
+        /* Baseline keyboard-focus ring for every interactive element that
+           doesn't already define its own (nav links, "View all" links,
+           carousel arrows, icon buttons, filter pills). :focus-visible
+           keeps this off a plain mouse/touch tap, so it only shows up when
+           someone's actually tabbing through the page. Anything with a
+           more specific rule (like .btn above) still wins over this. */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        [tabindex]:focus-visible {
+            outline: 2.5px solid var(--chartreuse-rich);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
         html { overflow-x: hidden; }
 
         /* Scroll anchoring is a browser feature that nudges scroll position
@@ -925,12 +942,27 @@
                 background: rgba(250, 249, 242, 0.12);
             }
             .btn-outline-dark:hover {
-                border-color: var(--heading);
+                border-color: var(--chartreuse-rich);
+                background: var(--section-alt-bg, var(--card-bg));
             }
         }
 
         .btn:active {
             transform: translateY(-1px);
+        }
+
+        /* Keyboard-focus ring, kept off pointer clicks (:focus-visible) so it
+           never flashes on a mouse/touch tap, only when someone's actually
+           tabbing through the page. This was missing entirely before, every
+           button and link fell back to whatever the browser's default
+           outline happened to be, inconsistent and easy to lose against
+           some of the darker/busier backgrounds on this page. */
+        .btn:focus-visible {
+            outline: 2.5px solid var(--chartreuse-rich);
+            outline-offset: 3px;
+        }
+        .btn-outline:focus-visible {
+            outline-color: var(--cream);
         }
 
         .btn-primary {
@@ -941,6 +973,7 @@
 
         .btn-primary:active {
             background: var(--chartreuse-rich);
+            box-shadow: 0 4px 12px rgba(144, 184, 0, 0.3);
         }
 
         .btn-outline {
@@ -953,6 +986,10 @@
             background: var(--card-bg);
             color: var(--heading);
             border: 1.5px solid rgba(var(--border-rgb), 0.18);
+        }
+        .btn-outline-dark:active {
+            background: var(--section-alt-bg, var(--card-bg));
+            border-color: var(--chartreuse-rich);
         }
 
         .btn-block {
@@ -1292,6 +1329,29 @@
         .hero-social-link svg { width: 15px; height: 15px; }
         .hero-social-link:hover { color: #2C1C10; }
 
+        /* The hero's colours (background, body text, scroll cue, social
+           link) were fixed light-theme values with no dark-mode variant at
+           all, so switching to dark left this one section stranded as a
+           bright white block directly under the dark nav bar. The seal
+           artwork and blobs already use theme-safe brand variables and
+           need no change; only the literal light-theme colours below do. */
+        [data-theme="dark"] .hero {
+            background: var(--page-bg);
+            color: var(--ink);
+        }
+        [data-theme="dark"] .hero-sub {
+            color: var(--text-body);
+        }
+        [data-theme="dark"] .hero-scroll-cue {
+            color: rgba(233, 230, 218, 0.32);
+        }
+        [data-theme="dark"] .hero-social-link {
+            color: rgba(233, 230, 218, 0.65);
+        }
+        [data-theme="dark"] .hero-social-link:hover {
+            color: var(--ink);
+        }
+
         /* ================= STORY ================= */
         .story {
             position: relative;
@@ -1563,7 +1623,7 @@
             margin-top: 12px;
         }
         .bundles-scroll { gap: 20px; padding: 4px 2px 10px; }
-        .bundles-scroll .bundle-card { flex: 0 0 300px; max-width: 300px; }
+        .bundles-scroll .bundle-card { flex: 0 0 300px; max-width: 300px; scroll-snap-align: start; }
         .bundle-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
@@ -1675,7 +1735,7 @@
         }
 
         .combos-scroll { padding-bottom: 6px; }
-        .combos-scroll .combo-card { flex: 0 0 265px; max-width: 265px; }
+        .combos-scroll .combo-card { flex: 0 0 265px; max-width: 265px; scroll-snap-align: start; }
         .combo-card {
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
@@ -1982,10 +2042,12 @@
             display: flex; gap: 18px; padding: 4px 2px 10px;
             overflow-x: auto; scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity;
         }
         .best-seller-carousel::-webkit-scrollbar { display: none; }
         .best-seller-card {
             flex: 0 0 220px; max-width: 220px;
+            scroll-snap-align: start;
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
@@ -2035,11 +2097,13 @@
             overflow-x: auto; overflow-y: hidden;
             -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
+            scroll-snap-type: x proximity;
         }
         .new-carousel::-webkit-scrollbar { display: none; }
         .new-carousel.dragging { cursor: grabbing; }
         .new-card {
             flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
+            scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -2096,11 +2160,13 @@
             overflow-x: auto; overflow-y: hidden;
             -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
+            scroll-snap-type: x proximity;
         }
         .offer-carousel::-webkit-scrollbar { display: none; }
         .offer-carousel.dragging { cursor: grabbing; }
         .offer-card {
             flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
+            scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -2197,7 +2263,10 @@
         }
 
         .why-choose-section {
-            padding: 72px 0 8px;
+            background: var(--section-alt-bg);
+            padding: 72px 0 80px;
+            border-top: 1px solid rgba(var(--border-rgb), 0.06);
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
         }
         .why-choose-section .about-values-grid {
             max-width: 1080px;
@@ -2911,6 +2980,7 @@
         .cat-flat-scroll { gap: 18px; padding: 4px 2px 10px; }
         .cat-flat-card {
             flex: 0 0 220px; max-width: 220px;
+            scroll-snap-align: start;
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
@@ -3082,6 +3152,11 @@
             scrollbar-width: none;
             padding-bottom: 6px;
             cursor: grab;
+            /* Native snap, not JS: settles on a card after a swipe/drag
+               instead of stopping mid-card, with zero main-thread cost and
+               nothing that can ever fight a gesture (that was the old
+               ambient auto-scroll's whole failure mode, removed entirely). */
+            scroll-snap-type: x proximity;
         }
         .product-grid::-webkit-scrollbar { display: none; }
         .product-grid.dragging {
@@ -3090,6 +3165,7 @@
         .product-grid .product-card {
             flex: 0 0 265px;
             max-width: 265px;
+            scroll-snap-align: start;
         }
         .product-grid .product-card,
         .product-grid .product-card-link,
@@ -8515,7 +8591,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-08-27.3';
+        const BUILD_VERSION = '2026-09-01.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9514,136 +9590,6 @@
     </a>`).join('');
             const strip = document.getElementById('newCarousel');
             strip.innerHTML = cardHTML;
-        }
-        /* ================= AMBIENT AUTO-SCROLL (Just landed / Special offer) =================
-           These two are real scrollable strips (native touch swipe, mouse-drag via
-           initDragScroll, arrow buttons), not the old CSS marquee. This layers a slow
-           ambient drift back on top: nudges scrollLeft forward each frame, bounces at
-           either end instead of jumping, and pauses the instant a real person touches,
-           drags, hovers, or clicks an arrow, only resuming after they've left it alone
-           for a bit, so it never fights a swipe in progress. */
-        function initCarouselAutoScroll(stripId, pxPerSecond) {
-            const strip = document.getElementById(stripId);
-            if (!strip) return;
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-            // The CSS scroll-behavior:smooth on this element is meant for the
-            // arrow buttons' one-shot jumps. Left in place, every per-frame
-            // scrollLeft nudge below would queue its own smooth-scroll
-            // animation and cancel the previous one before it moved anything,
-            // netting zero visible drift. Explicit {behavior:'smooth'} on the
-            // arrow buttons' scrollBy() calls overrides this inline value, so
-            // they stay smooth regardless.
-            strip.style.scrollBehavior = 'auto';
-            let paused = false;
-            let resumeTimer = null;
-            let safetyTimer = null;
-            let dir = 1;
-            let lastTs = null;
-            // Mutating scrollLeft forces a layout recalc on this element
-            // every single frame, forever, whether or not anyone can
-            // actually see it. With up to four of these running at once
-            // (new arrivals, offers, best sellers, categories) that adds up
-            // to real, constant main-thread cost competing with the page's
-            // own scrolling, especially noticeable once the user has
-            // scrolled past a strip and it's still animating off-screen.
-            // Skipping the move (not the rAF scheduling itself, so it can
-            // still resume the instant it's visible again) while outside
-            // the viewport or the tab is backgrounded removes that cost
-            // entirely without changing how the drift looks or behaves
-            // while it's actually on screen.
-            let inView = true;
-            const visibilityObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { inView = entry.isIntersecting; });
-            }, { threshold: 0 });
-            visibilityObserver.observe(strip);
-
-            function pause() {
-                paused = true;
-                clearTimeout(resumeTimer);
-                // Belt-and-braces on top of the window-level up/cancel
-                // listeners below: if literally no end-of-gesture event
-                // ever reaches this page at all, this guarantees it can't
-                // stay paused forever, without getting in the way of a
-                // normal drag, which is always well under this long.
-                clearTimeout(safetyTimer);
-                safetyTimer = setTimeout(() => { paused = false; lastTs = null; }, 2500);
-            }
-            function scheduleResume() {
-                clearTimeout(resumeTimer);
-                clearTimeout(safetyTimer);
-                resumeTimer = setTimeout(() => { paused = false; lastTs = null; }, 1800);
-            }
-            strip.__pauseAutoScroll = pause;
-            strip.__resumeAutoScroll = scheduleResume;
-
-            // Deliberately no mouseenter/mouseleave here, hovering to look at a
-            // card shouldn't stop the drift, only an actual drag or touch should.
-            // The up/cancel listeners are on window, not the strip: once a
-            // touch or drag starts on the strip, the finger (or the page's
-            // own scroll-direction heuristic taking over mid-gesture) very
-            // often ends up somewhere else by release time, and a listener
-            // scoped to the strip itself simply never sees that event. That
-            // was the actual freeze, every drag that didn't end exactly
-            // back over the strip left it paused until the safety timer
-            // above eventually rescued it.
-            strip.addEventListener('pointerdown', pause);
-            window.addEventListener('pointerup', scheduleResume);
-            window.addEventListener('pointercancel', scheduleResume);
-            strip.addEventListener('touchstart', pause, { passive: true });
-            window.addEventListener('touchend', scheduleResume, { passive: true });
-            window.addEventListener('touchcancel', scheduleResume, { passive: true });
-            // Trackpad/mouse-wheel horizontal scrolling never fires any
-            // pointer or touch event at all, so without this the drift loop
-            // kept nudging scrollLeft every frame *while* someone was
-            // actively wheel-scrolling the strip themselves, the two
-            // fighting over the same property every frame. That's what
-            // read as freezing/unresponsive, not literal freezing, the
-            // user's own scroll was being fought and mostly overwritten.
-            // pause() arms the safety-net timer and scheduleResume()
-            // immediately re-arms its own shorter timer on every wheel
-            // event, so as long as the gesture continues the resume never
-            // actually fires, only once wheel events stop for a beat.
-            strip.addEventListener('wheel', () => { pause(); scheduleResume(); }, { passive: true });
-
-            // Constant-speed drift with an instant direction flip at each end
-            // reads as mechanical, not premium. Easing the speed down on
-            // approach, resting briefly at the end, then easing back out
-            // gives the same ambient drift a much smoother, more deliberate
-            // feel, like a hand gently nudging it rather than a metronome.
-            const EASE_DIST = 140;
-            const DWELL_MS = 650;
-            let dwellUntil = 0;
-            function easeFactor(distFromEdge) {
-                const t = Math.min(1, Math.max(0, distFromEdge / EASE_DIST));
-                const smooth = t * t * (3 - 2 * t);
-                return 0.12 + 0.88 * smooth;
-            }
-            function frame(ts) {
-                if (!paused && inView && !document.hidden) {
-                    if (lastTs === null) lastTs = ts;
-                    const dt = (ts - lastTs) / 1000;
-                    lastTs = ts;
-                    const max = strip.scrollWidth - strip.clientWidth;
-                    if (max > 1) {
-                        if (dwellUntil && ts < dwellUntil) {
-                            // resting at the end, hold still
-                        } else if (dwellUntil) {
-                            dir *= -1;
-                            dwellUntil = 0;
-                        } else {
-                            const distFromEdge = dir === 1 ? (max - strip.scrollLeft) : strip.scrollLeft;
-                            const speed = pxPerSecond * easeFactor(distFromEdge);
-                            strip.scrollLeft += dir * speed * dt;
-                            if (strip.scrollLeft >= max) { strip.scrollLeft = max; dwellUntil = ts + DWELL_MS; }
-                            else if (strip.scrollLeft <= 0) { strip.scrollLeft = 0; dwellUntil = ts + DWELL_MS; }
-                        }
-                    }
-                } else {
-                    lastTs = null;
-                }
-                requestAnimationFrame(frame);
-            }
-            requestAnimationFrame(frame);
         }
         const BEST_SELLER_STAR_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
         function renderBestSellersSpotlight() {
@@ -13357,9 +13303,7 @@
         if (homeCatNavNext && homeCatGrid) homeCatNavNext.addEventListener('click', () => scrollCarouselStrip(homeCatGrid, HOME_CAT_STEP));
         function scrollCarouselStrip(strip, delta) {
             if (!strip) return;
-            if (strip.__pauseAutoScroll) strip.__pauseAutoScroll();
             strip.scrollBy({ left: delta, behavior: 'smooth' });
-            if (strip.__resumeAutoScroll) strip.__resumeAutoScroll();
         }
         const newCarouselPrev = document.getElementById('newCarouselPrev');
         const newCarouselNext = document.getElementById('newCarouselNext');
@@ -13376,11 +13320,6 @@
         const bestSellerCarouselStrip = document.getElementById('bestSellerCarousel');
         if (bestSellerCarouselPrev && bestSellerCarouselStrip) bestSellerCarouselPrev.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, -460));
         if (bestSellerCarouselNext && bestSellerCarouselStrip) bestSellerCarouselNext.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, 460));
-        initCarouselAutoScroll('newCarousel', 34);
-        initCarouselAutoScroll('offerCarousel', 34);
-        initCarouselAutoScroll('bestSellerCarousel', 34);
-        initCarouselAutoScroll('catGrid', 34);
-
         /* ================= NEWSLETTER =================
            Actually saves the address now (see
            supabase-migration-18-newsletter-signup.sql) instead of just
