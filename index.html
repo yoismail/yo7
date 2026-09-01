@@ -1261,39 +1261,47 @@
         /* Scoped to the hero's own buttons rather than .btn-primary/
            .btn-outline-dark themselves, this is a signature flourish for
            the hero specifically, not a change to every button site-wide
-           (checkout, add to basket, etc.). Runs on its own timer rather
-           than waiting for a hover, a first-time visitor who never
-           touches the button should still notice it. Each sweep is quick,
-           then holds off-screen for several seconds before repeating, a
-           single occasional glint reads as premium, a constant loop would
-           just be distracting. The two buttons run on slightly offset
-           timings so they don't flash in lockstep. */
-        .cta-row .btn-primary, .cta-row .btn-outline-dark {
-            position: relative;
-            overflow: hidden;
+           (checkout, add to basket, etc.). A soft breathing glow rather
+           than a sweeping shine, runs on its own timer so a first-time
+           visitor who never touches the button still notices it, closer
+           to the ambient glow seen on modern SaaS CTAs than a "shiny
+           button" effect. Hovering pauses the breathing at its brightest
+           point and layers on a real interaction: the icon nudges
+           forward, echoing "this moves you ahead". The two buttons pulse
+           on slightly offset timings so they don't breathe in lockstep. */
+        .cta-row .btn-primary {
+            animation: ctaPulseGlow 2.8s ease-in-out infinite;
         }
-        .cta-row .btn-primary::after, .cta-row .btn-outline-dark::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -60%;
-            width: 40%; height: 100%;
-            transform: skewX(-20deg);
-            animation: heroBtnSheen 4.5s ease-in-out infinite;
+        .cta-row .btn-outline-dark {
+            animation: ctaPulseBorder 2.8s ease-in-out infinite;
+            animation-delay: 1.4s;
         }
-        .cta-row .btn-primary::after {
-            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+        .cta-row .btn svg {
+            transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
         }
-        .cta-row .btn-outline-dark::after {
-            background: linear-gradient(120deg, transparent, rgba(var(--border-rgb), 0.14), transparent);
-            animation-delay: 1.3s;
+        @keyframes ctaPulseGlow {
+            0%, 100% { box-shadow: 0 6px 20px rgba(144, 184, 0, 0.28); }
+            50% { box-shadow: 0 10px 34px rgba(144, 184, 0, 0.58); }
         }
-        @keyframes heroBtnSheen {
-            0% { left: -60%; }
-            18% { left: 130%; }
-            100% { left: 130%; }
+        @keyframes ctaPulseBorder {
+            0%, 100% { border-color: rgba(var(--border-rgb), 0.18); box-shadow: 0 0 0 rgba(144, 184, 0, 0); }
+            50% { border-color: var(--chartreuse-rich); box-shadow: 0 6px 20px rgba(144, 184, 0, 0.22); }
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .cta-row .btn-primary:hover {
+                animation-play-state: paused;
+                box-shadow: 0 14px 36px rgba(144, 184, 0, 0.62);
+            }
+            .cta-row .btn-outline-dark:hover {
+                animation-play-state: paused;
+                box-shadow: 0 6px 20px rgba(144, 184, 0, 0.26);
+            }
+            .cta-row .btn:hover svg {
+                transform: translateX(4px);
+            }
         }
         @media (prefers-reduced-motion: reduce) {
-            .cta-row .btn-primary::after, .cta-row .btn-outline-dark::after { animation: none; }
+            .cta-row .btn-primary, .cta-row .btn-outline-dark { animation: none; }
         }
 
         .hero-social-link {
@@ -2129,7 +2137,6 @@
         }
         .hero-glimpse-pill {
             position: relative;
-            overflow: hidden;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -2142,24 +2149,32 @@
             font-size: 13px;
             color: var(--heading);
             text-decoration: none;
-        }
-        .hero-glimpse-pill span.emoji { font-size: 16px; }
-        .hero-glimpse-pill:hover { border-color: var(--heading-mid); }
-        /* Same occasional-glint idea as the hero buttons above, staggered
-           per pill via --pill-delay so the row catches the eye as a subtle
-           cascade rather than every pill flashing in sync. */
-        .hero-glimpse-pill::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -60%;
-            width: 40%; height: 100%;
-            background: linear-gradient(120deg, transparent, rgba(var(--border-rgb), 0.16), transparent);
-            transform: skewX(-20deg);
-            animation: heroBtnSheen 5.5s ease-in-out infinite;
+            /* Same breathing-glow idea as the hero buttons above, staggered
+               per pill via --pill-delay so the row reads as a slow, subtle
+               cascade rather than every pill pulsing in sync. */
+            animation: pillPulseGlow 3.4s ease-in-out infinite;
             animation-delay: var(--pill-delay, 0s);
         }
+        .hero-glimpse-pill span.emoji {
+            display: inline-flex;
+            transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
+        }
+        @keyframes pillPulseGlow {
+            0%, 100% { border-color: rgba(var(--border-rgb), 0.1); box-shadow: 0 0 0 rgba(144, 184, 0, 0); }
+            50% { border-color: var(--chartreuse-rich); box-shadow: 0 4px 16px rgba(144, 184, 0, 0.24); }
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .hero-glimpse-pill:hover {
+                animation-play-state: paused;
+                border-color: var(--chartreuse-rich);
+                box-shadow: 0 4px 16px rgba(144, 184, 0, 0.3);
+            }
+            .hero-glimpse-pill:hover span.emoji {
+                transform: scale(1.18) rotate(-6deg);
+            }
+        }
         @media (prefers-reduced-motion: reduce) {
-            .hero-glimpse-pill::after { animation: none; }
+            .hero-glimpse-pill { animation: none; }
         }
 
         .offer-section { background: var(--section-alt-bg); padding: 56px 0 60px; border-top: 1px solid rgba(var(--border-rgb), 0.06); border-bottom: 1px solid rgba(var(--border-rgb), 0.06); }
@@ -6065,8 +6080,8 @@
                 <div class="steps">
                     <div class="step reveal" style="transition-delay:0.05s">
                         <div class="step-num">01</div>
-                        <h3>Browse by category</h3>
-                        <p>Every aisle is one tap away from the homepage, add what you need as you go.</p>
+                        <h3>Browse by department</h3>
+                        <p>Jump straight to a department from the homepage's Shop by department row, or browse the full category list, add what you need as you go.</p>
                     </div>
                     <div class="step reveal" style="transition-delay:0.15s">
                         <div class="step-num">02</div>
@@ -8720,7 +8735,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.18';
+        const BUILD_VERSION = '2026-09-01.19';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
