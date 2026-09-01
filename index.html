@@ -3205,6 +3205,10 @@
             user-select: none;
         }
 
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         .product-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
@@ -3212,9 +3216,14 @@
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+            animation: cardFadeUp 0.45s cubic-bezier(.16,.84,.44,1) both;
+            animation-delay: var(--card-delay, 0s);
             display: block;
             text-decoration: none;
             color: var(--ink);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .product-card { animation: none; }
         }
 
         .product-card:hover {
@@ -8718,7 +8727,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.6';
+        const BUILD_VERSION = '2026-09-01.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9967,15 +9976,16 @@
             }
             return `<div class="thumb-placeholder">${comingSoonThumbHTML(p)}</div>`;
         }
-        function productCardHTML(p) {
+        function productCardHTML(p, i) {
             const pidx = p.idx !== undefined ? p.idx : p.id.split('::')[1];
             const href = `#/product/${p.catSlug}/${pidx}`;
             const stock = p.stock || 'in';
             const outOfStock = stock === 'out';
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             const unitInfo = unitPriceInfo(p);
+            const cardDelay = ((i || 0) % 10) * 0.045;
             return `
-    <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}">
+    <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
           <span class="stock-badge ${stock}">${stockLabel(stock)}</span>
@@ -10019,7 +10029,7 @@
                 if (empty) empty.style.display = 'block';
             } else {
                 if (empty) empty.style.display = 'none';
-                grid.innerHTML = items.map(productCardHTML).join('');
+                grid.innerHTML = items.map((p, i) => productCardHTML(p, i)).join('');
             }
         }
 
@@ -10040,7 +10050,7 @@
                     empty.style.display = 'block';
                 } else {
                     empty.style.display = 'none';
-                    grid.innerHTML = state.items.slice(0, state.visible).map(productCardHTML).join('');
+                    grid.innerHTML = state.items.slice(0, state.visible).map((p, i) => productCardHTML(p, i)).join('');
                 }
                 const loadMoreWrap = document.getElementById(loadMoreId);
                 const remaining = state.items.length - state.visible;
@@ -10123,7 +10133,7 @@
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
                 if (photoClass) {
                     return `
-    <a class="group-card" href="#/category/${c.slug}">
+    <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
       <div class="group-card-photo ${photoClass}"></div>
       <div class="group-card-body">
         <h3>${c.name}</h3>
@@ -10133,7 +10143,7 @@
     </a>`;
                 }
                 return `
-    <a class="group-card" href="#/category/${c.slug}">
+    <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
       <div class="group-card-photo no-photo">${c.emoji}</div>
       <div class="group-card-body">
         <h3>${c.name}</h3>
@@ -10142,6 +10152,7 @@
       </div>
     </a>`;
             }).join('');
+            observeReveals();
         }
         function matchesQuery(p, q) {
             return p.name.toLowerCase().includes(q) ||
