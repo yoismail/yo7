@@ -5442,6 +5442,72 @@
             border: 1px solid rgba(var(--border-rgb), 0.25);
             font-size: 16px;
         }
+        /* ================= ADMIN ANALYTICS ================= */
+        .analytics-month-picker {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .analytics-month-btn {
+            width: 32px; height: 32px;
+            border-radius: 9px;
+            border: 1px solid rgba(var(--border-rgb), 0.16);
+            background: var(--card-bg);
+            color: var(--heading);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .analytics-month-btn svg { width: 16px; height: 16px; }
+        .analytics-month-btn:hover { border-color: var(--chartreuse-rich); }
+        .analytics-month-btn:disabled { opacity: 0.4; cursor: default; }
+        #analyticsMonthLabel { font-family: var(--display); font-weight: 700; font-size: 15px; min-width: 140px; text-align: center; }
+        .analytics-loading, .analytics-empty { font-size: 13px; color: var(--text-muted); padding: 10px 0; }
+        .analytics-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .analytics-stat-card {
+            background: var(--section-alt-bg);
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+        .analytics-stat-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; }
+        .analytics-stat-value { font-family: var(--display); font-weight: 700; font-size: 21px; color: var(--heading); }
+        .analytics-stat-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+        .analytics-subsection { margin-bottom: 20px; }
+        .analytics-subsection h4 { font-family: var(--display); font-size: 14px; margin: 0 0 10px; }
+        .analytics-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            padding: 6px 0;
+        }
+        .analytics-bar-label { flex: 0 0 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .analytics-bar-track { flex: 1; height: 8px; border-radius: 999px; background: rgba(var(--border-rgb), 0.1); overflow: hidden; }
+        .analytics-bar-fill { height: 100%; background: var(--chartreuse); border-radius: 999px; }
+        .analytics-bar-value { flex: 0 0 auto; font-weight: 600; color: var(--heading); white-space: nowrap; }
+        .analytics-split-row { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; }
+
+        /* ================= ADMIN ACTIVITY LOG ================= */
+        .activity-log-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+            font-size: 13px;
+        }
+        .activity-log-row:last-child { border-bottom: none; }
+        .activity-log-desc { color: var(--ink); }
+        .activity-log-desc strong { color: var(--heading); }
+        .activity-log-meta { color: var(--text-muted); font-size: 11.5px; margin-top: 2px; }
+        .activity-log-time { flex-shrink: 0; color: var(--text-muted); font-size: 11.5px; white-space: nowrap; }
+
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -7614,6 +7680,25 @@
                         </div>
                     </div>
                     <div class="admin-panel-section">
+                        <h2>Business analytics</h2>
+                        <p class="sub">Revenue, orders, top products, customers, and delivery, one month at a time.</p>
+                        <div class="analytics-month-picker">
+                            <button type="button" id="analyticsPrevMonth" class="analytics-month-btn" aria-label="Previous month">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                            </button>
+                            <span id="analyticsMonthLabel"></span>
+                            <button type="button" id="analyticsNextMonth" class="analytics-month-btn" aria-label="Next month">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                            </button>
+                        </div>
+                        <div id="analyticsContent"><div class="analytics-loading">Loading analytics…</div></div>
+                    </div>
+                    <div class="admin-panel-section">
+                        <h2>Activity log</h2>
+                        <p class="sub">A record of what's been changed in edit mode, and who changed it.</p>
+                        <div id="activityLogList"><div class="analytics-loading">Loading activity…</div></div>
+                    </div>
+                    <div class="admin-panel-section">
                         <h2>Edit pages</h2>
                         <p class="sub">Turn on edit mode, then browse the site to tweak product photos, prices, stock, and descriptions, saved for real, visible to every visitor once you hit Save. Adding new products, bundles, combos, or dishes from here is still preview-only for now, that part resets on refresh.</p>
                         <button type="button" class="btn btn-outline-dark" id="editModeToggle">
@@ -8110,6 +8195,9 @@
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
             if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000);
+            else logAdminAction('pricing_settings_updated', 'pricing_settings', null, {
+                subscriptionDiscountPct, weightTierCount: deliveryWeightTiers.length, thresholdRuleCount: deliveryThresholdRules.length,
+            });
         }
 
         function resolveWeightTierFee(weight) {
@@ -8418,6 +8506,7 @@
             if (supabaseClient) {
                 const { error } = await supabaseClient.from('discount_codes').delete().eq('id', target.id);
                 if (error) { showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000); }
+                else logAdminAction('discount_deleted', 'discount_code', target.code, null);
             }
         }
         window.removeDiscount = removeDiscount;
@@ -8567,6 +8656,7 @@
                         qualifyingScope: scope, qualifyingCategory: row.qualifying_category, qualifyingProductId: row.qualifying_product_id,
                         minOrder: row.min_order, maxPerCustomer: row.max_per_customer,
                     });
+                    logAdminAction('discount_updated', 'discount_code', code, { type, value });
                     showToast(`Saved changes to "${code}".`);
                 } else {
                     const { data, error } = await supabaseClient.from('discount_codes').insert({ ...row, active: true }).select('id').single();
@@ -8577,6 +8667,7 @@
                         qualifyingScope: scope, qualifyingCategory: row.qualifying_category, qualifyingProductId: row.qualifying_product_id,
                         minOrder: row.min_order, maxPerCustomer: row.max_per_customer, active: true,
                     });
+                    logAdminAction('discount_created', 'discount_code', code, { type, value });
                     showToast(`Created discount code "${code}".`);
                 }
                 resetDiscountForm();
@@ -8819,6 +8910,24 @@
         let currentUser = null;
         let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
         let currentIsAdmin = false; // set from profiles.is_admin after login, gates the admin orders dashboard
+
+        // Fire-and-forget: an audit-log write failing (e.g. a dropped
+        // connection) shouldn't ever block or roll back the real action it's
+        // describing, so this is deliberately not awaited by its callers and
+        // swallows its own errors. Only ever called after a mutation has
+        // already succeeded against the real table, never before, an entry
+        // here is a claim that something really happened.
+        function logAdminAction(action, targetType, targetLabel, details) {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const adminName = (currentSupabaseUser.user_metadata && currentSupabaseUser.user_metadata.full_name) || currentSupabaseUser.email.split('@')[0];
+            supabaseClient.from('admin_audit_log').insert({
+                admin_user_id: currentSupabaseUser.id,
+                admin_name: adminName,
+                admin_email: currentSupabaseUser.email,
+                action, target_type: targetType, target_label: targetLabel || null,
+                details: details || null,
+            }).then(({ error }) => { if (error) console.error('Audit log write failed:', error.message); });
+        }
         let deliveryInfo = null;
         let lastOrder = null;
         let adminOrdersChannel = null; // realtime subscription for "new order placed" notifications, admins only
@@ -8855,7 +8964,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.23';
+        const BUILD_VERSION = '2026-09-01.24';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11784,6 +11893,7 @@
                 cancelOrderConfirmBtn.disabled = false;
                 cancelOrderConfirmBtn.textContent = 'Cancel this order';
                 if (error) { setAuthError('cancelOrderError', 'Could not cancel that order: ' + error.message); return; }
+                logAdminAction('order_cancelled', 'order', document.getElementById('cancelOrderNumber').textContent, { reason });
                 const onSuccess = cancelOrderOnSuccess;
                 closeCancelOrderModal();
                 if (onSuccess) onSuccess(); else renderAdminOrders();
@@ -11914,6 +12024,8 @@
                 aodSaveBtn.disabled = false;
                 aodSaveBtn.textContent = 'Save changes';
                 if (error) { setAuthError('aodUpdateError', 'Could not update that order: ' + error.message); return; }
+                const orderLabel = currentAdminOrder ? (currentAdminOrder.order_number || currentAdminOrder.id.slice(0, 8).toUpperCase()) : currentAdminOrderId;
+                logAdminAction('order_status_changed', 'order', orderLabel, { status: nextStatus, comment: comment || null });
                 // renderAdminOrderDetail resets the success banner to hidden as
                 // part of its own render, so it must finish first, otherwise the
                 // banner flips to visible then immediately back to hidden in the
@@ -11951,6 +12063,171 @@
             const trimmed = input.trim();
             return ADMIN_USERNAME_MAP[trimmed.toLowerCase()] || trimmed;
         }
+        // Turns a raw audit-log row into a plain-language sentence. Falls
+        // back to the raw action string for anything not explicitly
+        // described here, new action types keep showing up rather than
+        // silently failing if this list gets out of sync.
+        function activityLogDescribe(entry) {
+            const who = `<strong>${escapeHtml(entry.admin_name || entry.admin_email || 'Someone')}</strong>`;
+            const label = entry.target_label ? `<strong>${escapeHtml(entry.target_label)}</strong>` : '';
+            switch (entry.action) {
+                case 'product_updated': return `${who} updated ${label}`;
+                case 'product_photo_updated': return `${who} updated the photo for ${label}`;
+                case 'product_photo_removed': return `${who} removed the photo from ${label}`;
+                case 'discount_created': return `${who} created discount code ${label}`;
+                case 'discount_updated': return `${who} updated discount code ${label}`;
+                case 'discount_deleted': return `${who} deleted discount code ${label}`;
+                case 'pricing_settings_updated': return `${who} updated delivery &amp; pricing settings`;
+                case 'order_status_changed': return `${who} marked order ${label} as "${escapeHtml((entry.details && entry.details.status) || '')}"`;
+                case 'order_cancelled': return `${who} cancelled order ${label}`;
+                case 'loyalty_settings_updated': return `${who} updated loyalty reward settings`;
+                case 'admin_added': return `${who} made ${label} an admin`;
+                default: return `${who} — ${escapeHtml(entry.action)}${label ? ' (' + label + ')' : ''}`;
+            }
+        }
+        function activityLogTimeLabel(iso) {
+            const d = new Date(iso);
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+        async function renderActivityLog() {
+            const el = document.getElementById('activityLogList');
+            if (!el || !supabaseClient) return;
+            const { data, error } = await supabaseClient
+                .from('admin_audit_log')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(100);
+            if (error) { el.innerHTML = '<div class="analytics-empty">Couldn\'t load the activity log right now.</div>'; return; }
+            if (!data || data.length === 0) { el.innerHTML = '<div class="analytics-empty">No admin activity recorded yet, this fills in as edits are made from here on.</div>'; return; }
+            el.innerHTML = data.map(entry => `
+    <div class="activity-log-row">
+      <div class="activity-log-desc">${activityLogDescribe(entry)}<div class="activity-log-meta">${escapeHtml(entry.admin_email || '')}</div></div>
+      <div class="activity-log-time">${activityLogTimeLabel(entry.created_at)}</div>
+    </div>`).join('');
+        }
+
+        let analyticsMonthOffset = 0; // 0 = current month, 1 = last month, etc. — never lets you page into the future
+        function analyticsMonthRange(offset) {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+            const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 1);
+            return { start, end };
+        }
+        // Real numbers straight from the orders table (the same trusted
+        // records the server itself created at checkout, see
+        // create-payment-intent), nothing here is a client-side estimate.
+        // Cancelled orders are excluded from revenue/AOV/top-products so a
+        // cancelled order doesn't inflate "how much did we actually make",
+        // but still counted separately so cancellation rate is visible.
+        async function renderAnalytics(offset) {
+            analyticsMonthOffset = offset;
+            const content = document.getElementById('analyticsContent');
+            const label = document.getElementById('analyticsMonthLabel');
+            const nextBtn = document.getElementById('analyticsNextMonth');
+            if (!content) return;
+            const { start, end } = analyticsMonthRange(offset);
+            if (label) label.textContent = start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            if (nextBtn) nextBtn.disabled = offset === 0;
+            if (!supabaseClient) { content.innerHTML = '<div class="analytics-empty">Analytics need accounts connected first, this is preview mode right now.</div>'; return; }
+            content.innerHTML = '<div class="analytics-loading">Loading analytics…</div>';
+
+            const { data: monthOrders, error } = await supabaseClient
+                .from('orders').select('*')
+                .gte('created_at', start.toISOString()).lt('created_at', end.toISOString());
+            if (error) { content.innerHTML = '<div class="analytics-empty">Couldn\'t load analytics right now.</div>'; return; }
+            if (analyticsMonthOffset !== offset) return; // a newer month was requested while this was loading
+
+            // "New vs returning" needs to know, for each customer who ordered
+            // this month, whether they had any order before this month
+            // started — one lightweight follow-up query rather than pulling
+            // every customer's full order history up front.
+            const userIds = [...new Set((monthOrders || []).map(o => o.user_id).filter(Boolean))];
+            const returningIds = new Set();
+            if (userIds.length) {
+                const { data: priorOrders } = await supabaseClient
+                    .from('orders').select('user_id')
+                    .in('user_id', userIds).lt('created_at', start.toISOString());
+                (priorOrders || []).forEach(o => returningIds.add(o.user_id));
+            }
+
+            const orders = monthOrders || [];
+            const nonCancelled = orders.filter(o => o.status !== 'cancelled');
+            const cancelledCount = orders.length - nonCancelled.length;
+            const revenue = nonCancelled.reduce((s, o) => s + (o.total || 0), 0);
+            const aov = nonCancelled.length ? revenue / nonCancelled.length : 0;
+
+            const productStats = new Map(); // name -> { qty, revenue }
+            nonCancelled.forEach(o => {
+                (Array.isArray(o.items) ? o.items : []).forEach(item => {
+                    const key = item.name || 'Unknown item';
+                    const cur = productStats.get(key) || { qty: 0, revenue: 0 };
+                    cur.qty += item.qty || 0;
+                    cur.revenue += (item.price || 0) * (item.qty || 0);
+                    productStats.set(key, cur);
+                });
+            });
+            const topProducts = [...productStats.entries()].sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 5);
+            const maxProductRevenue = topProducts.length ? topProducts[0][1].revenue : 0;
+
+            const returningCount = returningIds.size;
+            const newCount = userIds.length - returningCount;
+            const discountedOrders = nonCancelled.filter(o => o.discount_code);
+            const discountTotal = nonCancelled.reduce((s, o) => s + (o.discount || 0), 0);
+
+            const deliveryOrders = nonCancelled.filter(o => o.fulfilment_method !== 'pickup');
+            const pickupOrders = nonCancelled.filter(o => o.fulfilment_method === 'pickup');
+            const deliveryFeeRevenue = nonCancelled.reduce((s, o) => s + (o.delivery_fee || 0), 0);
+            const tierCounts = new Map();
+            deliveryOrders.forEach(o => {
+                const w = (Array.isArray(o.items) ? o.items : []).reduce((s, i) => s + ((typeof i.weight === 'number' ? i.weight : 0) * (i.qty || 0)), 0);
+                const tier = deliveryWeightTiers.find(t => w <= t.maxWeight) || deliveryWeightTiers[deliveryWeightTiers.length - 1];
+                const tierLabel = (tier && tier.label) || 'Unknown';
+                tierCounts.set(tierLabel, (tierCounts.get(tierLabel) || 0) + 1);
+            });
+
+            content.innerHTML = `
+    <div class="analytics-stat-grid">
+      <div class="analytics-stat-card"><div class="analytics-stat-label">Revenue</div><div class="analytics-stat-value">${money(revenue)}</div><div class="analytics-stat-sub">${nonCancelled.length} order${nonCancelled.length === 1 ? '' : 's'}</div></div>
+      <div class="analytics-stat-card"><div class="analytics-stat-label">Average order</div><div class="analytics-stat-value">${money(aov)}</div></div>
+      <div class="analytics-stat-card"><div class="analytics-stat-label">Customers</div><div class="analytics-stat-value">${userIds.length}</div><div class="analytics-stat-sub">${newCount} new &middot; ${returningCount} returning</div></div>
+      <div class="analytics-stat-card"><div class="analytics-stat-label">Cancelled</div><div class="analytics-stat-value">${cancelledCount}</div></div>
+    </div>
+    <div class="analytics-subsection">
+      <h4>Top products</h4>
+      ${topProducts.length ? topProducts.map(([name, s]) => `
+      <div class="analytics-bar-row">
+        <span class="analytics-bar-label" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
+        <span class="analytics-bar-track"><span class="analytics-bar-fill" style="width:${maxProductRevenue ? Math.round(s.revenue / maxProductRevenue * 100) : 0}%"></span></span>
+        <span class="analytics-bar-value">${money(s.revenue)} &middot; ${s.qty} sold</span>
+      </div>`).join('') : '<div class="analytics-empty">No orders yet this month.</div>'}
+    </div>
+    <div class="analytics-subsection">
+      <h4>Discount codes</h4>
+      <div class="analytics-split-row">
+        <span>${discountedOrders.length} order${discountedOrders.length === 1 ? '' : 's'} used a code</span>
+        <span>${money(discountTotal)} given in discounts</span>
+      </div>
+    </div>
+    <div class="analytics-subsection">
+      <h4>Delivery &amp; pickup</h4>
+      <div class="analytics-split-row">
+        <span>${deliveryOrders.length} delivery</span>
+        <span>${pickupOrders.length} pickup</span>
+        <span>${money(deliveryFeeRevenue)} delivery fee revenue</span>
+      </div>
+      ${tierCounts.size ? [...tierCounts.entries()].map(([tierLabel, count]) => `
+      <div class="analytics-bar-row">
+        <span class="analytics-bar-label">${escapeHtml(tierLabel)}</span>
+        <span class="analytics-bar-track"><span class="analytics-bar-fill" style="width:${Math.round(count / deliveryOrders.length * 100)}%"></span></span>
+        <span class="analytics-bar-value">${count}</span>
+      </div>`).join('') : ''}
+    </div>`;
+        }
+        const analyticsPrevMonthBtn = document.getElementById('analyticsPrevMonth');
+        if (analyticsPrevMonthBtn) analyticsPrevMonthBtn.addEventListener('click', () => renderAnalytics(analyticsMonthOffset + 1));
+        const analyticsNextMonthBtn = document.getElementById('analyticsNextMonth');
+        if (analyticsNextMonthBtn) analyticsNextMonthBtn.addEventListener('click', () => { if (analyticsMonthOffset > 0) renderAnalytics(analyticsMonthOffset - 1); });
+
         async function renderAdminPage() {
             const loginSection = document.getElementById('adminLoginSection');
             const deniedSection = document.getElementById('adminDeniedSection');
@@ -11983,6 +12260,8 @@
             }
             dashSection.style.display = 'block';
             renderAdminOrders();
+            renderActivityLog();
+            renderAnalytics(0);
             if (autoEnterEditMode) {
                 autoEnterEditMode = false;
                 setEditMode(true);
@@ -12051,6 +12330,7 @@
                 const { error: updateError } = await supabaseClient.from('profiles').update({ is_admin: true }).eq('id', profile.id);
                 btn.disabled = false;
                 if (updateError) { setAuthError('addAdminError', updateError.message); return; }
+                logAdminAction('admin_added', 'admin', profile.full_name || email, { email });
                 setAuthSuccess('addAdminSuccess', (profile.full_name || email) + ' is now an admin.');
                 e.target.reset();
             });
@@ -12858,6 +13138,11 @@
                     updated_at: new Date().toISOString(),
                 });
                 if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000); }
+                else {
+                    logAdminAction('product_updated', 'product', product.name, {
+                        price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
+                    });
+                }
             }
             btn.closest('.edit-panel-slot').innerHTML = '';
             route(); // re-render the current view so the change is visible immediately everywhere it appears
@@ -12931,6 +13216,7 @@
                 updated_at: new Date().toISOString(),
             });
             if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000);
+            else logAdminAction('product_photo_updated', 'product', product.name, { imageUrl: publicUrl });
             // Update the preview in place rather than calling route(), a
             // full re-render here would regenerate the product grid and
             // close the very edit panel the person is still filling in.
@@ -12957,6 +13243,7 @@
                     updated_at: new Date().toISOString(),
                 });
                 if (error) showToast('Could not remove that photo from the live site: ' + error.message, 6000);
+                else logAdminAction('product_photo_removed', 'product', product.name, null);
             }
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (preview) preview.innerHTML = `<span>${product.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
@@ -13771,13 +14058,19 @@
             document.getElementById('loyaltyThresholdInput').addEventListener('change', async (e) => {
                 const n = parseFloat(e.target.value);
                 loyaltySpendThreshold = (!isNaN(n) && n > 0) ? n : 100;
-                if (supabaseClient) await supabaseClient.from('loyalty_settings').update({ spend_threshold: loyaltySpendThreshold }).eq('id', true);
+                if (supabaseClient) {
+                    const { error } = await supabaseClient.from('loyalty_settings').update({ spend_threshold: loyaltySpendThreshold }).eq('id', true);
+                    if (!error) logAdminAction('loyalty_settings_updated', 'loyalty_settings', null, { spendThreshold: loyaltySpendThreshold });
+                }
                 renderCartList();
             });
             document.getElementById('loyaltyRewardInput').addEventListener('change', async (e) => {
                 const n = parseFloat(e.target.value);
                 loyaltyRewardPct = isNaN(n) ? 10 : Math.max(0, Math.min(50, n));
-                if (supabaseClient) await supabaseClient.from('loyalty_settings').update({ reward_pct: loyaltyRewardPct }).eq('id', true);
+                if (supabaseClient) {
+                    const { error } = await supabaseClient.from('loyalty_settings').update({ reward_pct: loyaltyRewardPct }).eq('id', true);
+                    if (!error) logAdminAction('loyalty_settings_updated', 'loyalty_settings', null, { rewardPct: loyaltyRewardPct });
+                }
                 renderCartList();
             });
         }
