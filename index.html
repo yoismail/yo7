@@ -8293,6 +8293,8 @@
             BUNDLES.forEach((b, i) => { if (typeof bundleDiscounts[i] === 'number') b.discountPercent = bundleDiscounts[i]; });
             const comboDiscounts = data.combo_discounts || {};
             COMBOS.forEach((c, i) => { if (typeof comboDiscounts[i] === 'number') c.discountPercent = comboDiscounts[i]; });
+            if (typeof data.trustpilot_url === 'string') trustpilotUrl = data.trustpilot_url;
+            if (typeof data.google_business_url === 'string') googleBusinessUrl = data.google_business_url;
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -8464,7 +8466,11 @@
         /* ================= REVIEW PLATFORM BADGES =================
            Trustpilot and Google Business badges only ever link somewhere
            real. No profile URL set means no badge, not a placeholder link
-           to nowhere, same honesty standard as the rest of the site. */
+           to nowhere, same honesty standard as the rest of the site.
+           Persisted in the same pricing_settings singleton row the
+           delivery/subscription settings already live in (see
+           supabase-migration-24) — this used to be a plain JS variable
+           with no way to save it at all, reset on every refresh. */
         let trustpilotUrl = '';
         let googleBusinessUrl = '';
         function renderPlatformBadges() {
@@ -8474,6 +8480,21 @@
             if (isHttpUrl(trustpilotUrl)) badges.push(`<a class="platform-badge platform-badge-trustpilot" href="${escapeHtml(trustpilotUrl)}" target="_blank" rel="noopener">★ Trustpilot</a>`);
             if (isHttpUrl(googleBusinessUrl)) badges.push(`<a class="platform-badge platform-badge-google" href="${escapeHtml(googleBusinessUrl)}" target="_blank" rel="noopener">G Google</a>`);
             row.innerHTML = badges.join('');
+        }
+        async function saveReviewPlatforms() {
+            const btn = document.getElementById('reviewPlatformSaveBtn');
+            if (!supabaseClient) { showToast('Review platforms need accounts connected first, this is preview mode right now.', 6000); return; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+            const { error } = await supabaseClient.from('pricing_settings').update({
+                trustpilot_url: trustpilotUrl || null,
+                google_business_url: googleBusinessUrl || null,
+                updated_at: new Date().toISOString(),
+            }).eq('id', true);
+            if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
+            if (error) { showToast('Couldn\'t save that: ' + error.message, 6000); return; }
+            renderPlatformBadges();
+            logAdminAction('review_platforms_updated', 'pricing_settings', null, { trustpilotSet: !!trustpilotUrl, googleBusinessSet: !!googleBusinessUrl });
+            showToast('Review platform links saved.');
         }
         // This whole panel only ever exists in the DOM for a confirmed admin
         // with edit mode on, built fresh each time rather than sitting in
@@ -8489,7 +8510,8 @@
     <div class="field-row">
       <div class="field"><label>Trustpilot profile URL</label><input type="url" id="trustpilotUrlInput" placeholder="https://uk.trustpilot.com/review/yo7foods.co.uk" value="${escapeHtml(trustpilotUrl)}"></div>
       <div class="field"><label>Google Business profile URL</label><input type="url" id="googleBusinessUrlInput" placeholder="https://g.page/..." value="${escapeHtml(googleBusinessUrl)}"></div>
-    </div>`;
+    </div>
+    <button type="button" class="btn btn-primary" id="reviewPlatformSaveBtn">Save changes</button>`;
             document.getElementById('trustpilotUrlInput').addEventListener('change', (e) => {
                 trustpilotUrl = e.target.value.trim();
                 renderPlatformBadges();
@@ -8498,6 +8520,7 @@
                 googleBusinessUrl = e.target.value.trim();
                 renderPlatformBadges();
             });
+            document.getElementById('reviewPlatformSaveBtn').addEventListener('click', saveReviewPlatforms);
         }
 
         // Discount codes are no longer a client-side list to search — the
@@ -9081,7 +9104,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.28';
+        const BUILD_VERSION = '2026-09-01.29';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12240,6 +12263,7 @@
                 case 'discount_updated': return `${who} updated discount code ${label}`;
                 case 'discount_deleted': return `${who} deleted discount code ${label}`;
                 case 'pricing_settings_updated': return `${who} updated delivery &amp; pricing settings`;
+                case 'review_platforms_updated': return `${who} updated review platform links`;
                 case 'order_status_changed': return `${who} marked order ${label} as "${escapeHtml((entry.details && entry.details.status) || '')}"`;
                 case 'order_cancelled': return `${who} cancelled order ${label}`;
                 case 'loyalty_settings_updated': return `${who} updated loyalty reward settings`;
@@ -14273,6 +14297,7 @@
             renderCombos();
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
+            renderPlatformBadges();
         });
         const editModeBannerVersionEl = document.getElementById('editModeBannerVersion');
         if (editModeBannerVersionEl) editModeBannerVersionEl.textContent = `v${BUILD_VERSION}`;
