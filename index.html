@@ -1808,13 +1808,13 @@
             font-size: 16px; line-height: 1; cursor: pointer;
         }
         body.edit-mode-on .combo-remove-btn { display: block; }
-        .combo-edit-btn {
+        .combo-edit-btn, .bundle-edit-btn {
             display: none;
             width: 100%; margin-top: 8px; background: none; border: 1.5px solid rgba(var(--border-rgb), 0.18);
             color: var(--heading); border-radius: 10px; padding: 8px; font-family: var(--display);
             font-weight: 600; font-size: 12px; cursor: pointer;
         }
-        body.edit-mode-on .combo-edit-btn { display: block; }
+        body.edit-mode-on .combo-edit-btn, body.edit-mode-on .bundle-edit-btn { display: block; }
 
         /* ================= BUILD A BUNDLE ================= */
         .dish-picker {
@@ -2736,6 +2736,15 @@
             display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
         }
         .footer-payment-badges { margin-top: 0; }
+        .footer-bottom-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        /* Echoes the nav bar's logo mark at the opposite corner of the page,
+           small and text-only here since the full mark (icon + "Yo7 Foods")
+           already anchors the top of this same footer above. */
+        .footer-bottom-mark {
+            font-family: var(--display); font-weight: 700; font-size: 14px;
+            letter-spacing: -0.02em; color: #2C1C10;
+        }
+        .footer-bottom-mark .accent { color: var(--chartreuse-rich); }
 
         /* ================= REVEAL ================= */
         .reveal {
@@ -3401,6 +3410,23 @@
         .stock-badge.in { background: var(--chartreuse); color: var(--aubergine-deep); }
         .stock-badge.low { background: var(--orange); color: var(--aubergine); }
         .stock-badge.out { background: #5a4d48; color: #fff; }
+        /* A fresh badge node is rendered every time its card is (no reflow
+           trick needed to replay it, unlike route-view-enter), so this pops
+           in on every appearance: new stock/sale state, a re-render, or the
+           card simply entering the grid for the first time. */
+        .stock-badge.low, .stock-badge.out, .sale-badge {
+            transform-origin: center;
+            animation: badge-pop 0.5s cubic-bezier(.22,1,.36,1) both;
+        }
+        @keyframes badge-pop {
+            0% { transform: scale(0.35); opacity: 0; }
+            55% { transform: scale(1.18); opacity: 1; }
+            75% { transform: scale(0.93); }
+            100% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .stock-badge.low, .stock-badge.out, .sale-badge { animation: none; }
+        }
 
         .product-body {
             padding: 13px 15px 4px;
@@ -6088,7 +6114,7 @@
     </div>
 
     <!-- ================= HOME ================= -->
-    <div id="view-home">
+    <div id="view-home" class="hidden-view">
         <header class="hero">
             <svg class="hero-watermark" viewBox="65 25 875 900">
                 <use href="#seal-mark" />
@@ -7858,7 +7884,7 @@
                     </div>
                     <div class="admin-panel-section panel-editmode">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg></span>Edit pages</h2>
-                        <p class="sub">Turn on edit mode, then browse the site to tweak product photos, prices, stock, and descriptions, saved for real, visible to every visitor once you hit Save. Adding new products, bundles, combos, or dishes from here is still preview-only for now, that part resets on refresh.</p>
+                        <p class="sub">Turn on edit mode, then browse the site to tweak product photos, prices, stock, and descriptions, saved for real, visible to every visitor once you hit Save. Bundles and combos (adding, editing, or removing) also save for real. Adding new products or dishes from here is still preview-only for now, that part resets on refresh.</p>
                         <button type="button" class="btn btn-outline-dark" id="editModeToggle">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px;">
                                 <path d="M12 20h9" />
@@ -8029,7 +8055,10 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2026 Yo7 Foods Limited. All rights reserved.</span>
+                <div class="footer-bottom-left">
+                    <span class="footer-bottom-mark" aria-hidden="true">Yo<span class="accent">7</span></span>
+                    <span>© 2026 Yo7 Foods Limited. All rights reserved.</span>
+                </div>
                 <div class="payment-badges footer-payment-badges">
                     <span class="payment-badge payment-badge-visa">VISA</span>
                     <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
@@ -8330,10 +8359,22 @@
             }
             if (Array.isArray(data.delivery_threshold_rules)) deliveryThresholdRules = data.delivery_threshold_rules;
             if (typeof data.subscription_discount_pct === 'number') subscriptionDiscountPct = data.subscription_discount_pct;
+            // bundles_data/combos_data (added alongside the older
+            // discount-only columns below) carry the WHOLE bundle/combo —
+            // name, tagline/description, items, discount % — so an admin
+            // adding, editing, or removing one persists for real instead of
+            // resetting on refresh. Checked first and, when present,
+            // replaces the hardcoded catalog defaults outright (including a
+            // deliberately emptied array, if every bundle/combo was
+            // removed) rather than just overlaying a discount number onto
+            // them the way the older columns below still do as a fallback
+            // for a project that hasn't run that migration yet.
+            if (Array.isArray(data.bundles_data)) { BUNDLES.length = 0; BUNDLES.push(...data.bundles_data); }
+            if (Array.isArray(data.combos_data)) { COMBOS.length = 0; COMBOS.push(...data.combos_data); }
             const bundleDiscounts = data.bundle_discounts || {};
-            BUNDLES.forEach((b, i) => { if (typeof bundleDiscounts[i] === 'number') b.discountPercent = bundleDiscounts[i]; });
+            BUNDLES.forEach((b, i) => { if (typeof bundleDiscounts[i] === 'number' && !Array.isArray(data.bundles_data)) b.discountPercent = bundleDiscounts[i]; });
             const comboDiscounts = data.combo_discounts || {};
-            COMBOS.forEach((c, i) => { if (typeof comboDiscounts[i] === 'number') c.discountPercent = comboDiscounts[i]; });
+            COMBOS.forEach((c, i) => { if (typeof comboDiscounts[i] === 'number' && !Array.isArray(data.combos_data)) c.discountPercent = comboDiscounts[i]; });
             if (typeof data.trustpilot_url === 'string') trustpilotUrl = data.trustpilot_url;
             if (typeof data.google_business_url === 'string') googleBusinessUrl = data.google_business_url;
         }
@@ -8352,6 +8393,8 @@
                 subscription_discount_pct: subscriptionDiscountPct,
                 bundle_discounts: bundleDiscounts,
                 combo_discounts: comboDiscounts,
+                bundles_data: BUNDLES,
+                combos_data: COMBOS,
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
             if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000);
@@ -9163,7 +9206,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.35';
+        const BUILD_VERSION = '2026-09-01.36';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9470,7 +9513,7 @@
                 ? `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span><span class="bundle-was">${money(rawTotal)}</span> ${money(discountedTotal)}</span></div>`
                 : `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(discountedTotal)}</span></div>`;
             return `
-    <div class="bundle-card">
+    <div class="bundle-card" id="bundleCard-${bi}">
       <button type="button" class="bundle-remove-btn" onclick="removeBundle(${bi})" aria-label="Remove bundle">&times;</button>
       ${discountPct > 0 ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
       <h3>${bundle.name}</h3>
@@ -9483,6 +9526,7 @@
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setBundleDiscount(${bi}, this.value)">
       </div>
       <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add bundle to basket</button>
+      <button type="button" class="bundle-edit-btn" onclick="openBundleEdit(${bi})">Edit bundle</button>
     </div>`;
         }
         function setBundleDiscount(bi, value) {
@@ -9492,6 +9536,81 @@
             savePricingSettings();
         }
         window.setBundleDiscount = setBundleDiscount;
+
+        /* ================= EDIT AN EXISTING BUNDLE (edit mode) =================
+           Mirrors openComboEdit/saveComboEdit below almost exactly — bundles
+           previously had no way to rename, re-tagline, or change the items
+           of a bundle that already existed (only a brand new one, or that
+           one's discount %/item weights), so there was no "Save changes"
+           to find. A bundle still needs at least 2 items, same rule as
+           creating one (see saveNewBundle). */
+        let bundleEditNewItems = null;
+        function openBundleEdit(bi) {
+            const bundle = BUNDLES[bi];
+            const card = document.getElementById(`bundleCard-${bi}`);
+            if (!card) return;
+            bundleEditNewItems = [...(bundle.items || [])];
+            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            card.innerHTML = `
+      <h3>Edit bundle</h3>
+      <div class="field"><label>Bundle name</label><input type="text" id="bbe-name" value="${bundle.name}"></div>
+      <div class="field"><label>Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="bbe-discount" value="${bundle.discountPercent || 0}"></div>
+      <div class="field"><label>Tagline</label><input type="text" id="bbe-tagline" value="${bundle.tagline || ''}"></div>
+      <div class="field">
+        <label>Items included (at least 2)</label>
+        <div id="bbe-items-list" class="delivery-rule-list"></div>
+        <div class="apf-row">
+          <div><select id="bbe-item-cat"></select></div>
+          <div><select id="bbe-item-product"></select></div>
+        </div>
+        <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToBundleEdit()">Add item</button>
+      </div>
+      <div class="apf-actions">
+        <button class="apf-save" type="button" onclick="saveBundleEdit(${bi})">Save changes</button>
+        <button class="apf-cancel" type="button" onclick="renderBundles();">Cancel</button>
+      </div>`;
+            document.getElementById('bbe-item-cat').innerHTML = catOptions;
+            populateBundleEditProductSelect();
+            document.getElementById('bbe-item-cat').addEventListener('change', populateBundleEditProductSelect);
+            renderBundleEditItemsList();
+        }
+        window.openBundleEdit = openBundleEdit;
+        function populateBundleEditProductSelect() {
+            const catSlug = document.getElementById('bbe-item-cat').value;
+            const cat = findCategory(catSlug);
+            document.getElementById('bbe-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+        }
+        function renderBundleEditItemsList() {
+            document.getElementById('bbe-items-list').innerHTML = bundleEditNewItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="bundleEditNewItems.splice(${i},1); renderBundleEditItemsList();">Remove</button></div>`;
+            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
+        }
+        window.renderBundleEditItemsList = renderBundleEditItemsList;
+        function addItemToBundleEdit() {
+            const catSlug = document.getElementById('bbe-item-cat').value;
+            const idx = parseInt(document.getElementById('bbe-item-product').value, 10);
+            if (!getProduct(catSlug, idx)) return;
+            bundleEditNewItems.push({ catSlug, idx });
+            renderBundleEditItemsList();
+        }
+        window.addItemToBundleEdit = addItemToBundleEdit;
+        function saveBundleEdit(bi) {
+            const name = document.getElementById('bbe-name').value.trim();
+            if (!name || bundleEditNewItems.length < 2) { showToast('Give the bundle a name and at least 2 items.'); return; }
+            const discountPct = parseFloat(document.getElementById('bbe-discount').value);
+            BUNDLES[bi] = {
+                name,
+                tagline: document.getElementById('bbe-tagline').value.trim(),
+                discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)),
+                items: [...bundleEditNewItems],
+            };
+            bundleEditNewItems = null;
+            renderBundles();
+            savePricingSettings();
+            showToast(`Updated "${name}".`);
+        }
+        window.saveBundleEdit = saveBundleEdit;
 
         function renderBundles() {
             const grid = document.getElementById('bundlesGrid');
@@ -9506,7 +9625,7 @@
             const countEl = document.getElementById('allBundlesCount');
             if (countEl) countEl.textContent = `${BUNDLES.length} bundle${BUNDLES.length === 1 ? '' : 's'}`;
         }
-        function removeBundle(i) { BUNDLES.splice(i, 1); renderBundles(); }
+        function removeBundle(i) { BUNDLES.splice(i, 1); renderBundles(); savePricingSettings(); }
         window.removeBundle = removeBundle;
 
         /* ================= ADD A BUNDLE (edit mode) ================= */
@@ -9530,7 +9649,7 @@
           </div>
           <button type="button" class="ep-save" style="margin-bottom:14px;" onclick="addItemToNewBundle()">Add item to bundle</button>
           <div class="apf-actions">
-            <button class="apf-save" type="button" onclick="saveNewBundle()">Create bundle (this tab only)</button>
+            <button class="apf-save" type="button" onclick="saveNewBundle()">Create bundle</button>
             <button class="apf-cancel" type="button" onclick="document.getElementById('addBundleSlot').innerHTML=''; newBundleItems=[];">Cancel</button>
           </div>
         </div>`;
@@ -9572,6 +9691,7 @@
             document.getElementById('addBundleSlot').innerHTML = '';
             newBundleItems = [];
             renderBundles();
+            savePricingSettings();
             showToast(`Added bundle "${name}".`);
         }
         window.saveNewBundle = saveNewBundle;
@@ -9834,7 +9954,7 @@
             const countEl = document.getElementById('allCombosCount');
             if (countEl) countEl.textContent = `${COMBOS.length} combo${COMBOS.length === 1 ? '' : 's'}`;
         }
-        function removeCombo(i) { COMBOS.splice(i, 1); renderCombos(); }
+        function removeCombo(i) { COMBOS.splice(i, 1); renderCombos(); savePricingSettings(); }
         window.removeCombo = removeCombo;
 
         /* ================= EDIT AN EXISTING COMBO (edit mode) ================= */
@@ -9903,6 +10023,7 @@
             };
             comboEditNewItems = null;
             renderCombos();
+            savePricingSettings();
             showToast(`Updated "${name}".`);
         }
         window.saveComboEdit = saveComboEdit;
@@ -9934,7 +10055,7 @@
             <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToNewCombo()">Add item to combo</button>
           </div>
           <div class="apf-actions">
-            <button class="apf-save" type="button" onclick="saveNewCombo()">Add combo (this tab only)</button>
+            <button class="apf-save" type="button" onclick="saveNewCombo()">Add combo</button>
             <button class="apf-cancel" type="button" onclick="document.getElementById('addComboSlot').innerHTML=''; newComboItems=[];">Cancel</button>
           </div>
         </div>`;
@@ -9974,6 +10095,7 @@
             document.getElementById('addComboSlot').innerHTML = '';
             newComboItems = [];
             renderCombos();
+            savePricingSettings();
             showToast(`Added combo "${name}".`);
         }
         window.saveNewCombo = saveNewCombo;
