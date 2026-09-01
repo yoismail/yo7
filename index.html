@@ -2809,6 +2809,56 @@
             transform: translateY(0);
         }
 
+        .cookie-notice {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 210;
+            background: var(--card-bg);
+            border-top: 1px solid rgba(var(--border-rgb), 0.14);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(.2, .8, .3, 1);
+        }
+        .cookie-notice.is-visible { transform: translateY(0); }
+        .cookie-notice-inner {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .cookie-notice-inner p {
+            flex: 1;
+            min-width: 240px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-body);
+            margin: 0;
+        }
+        .cookie-notice-inner a { color: var(--chartreuse-rich); font-weight: 600; }
+        .cookie-notice-inner button {
+            flex-shrink: 0;
+            padding: 10px 22px;
+            border-radius: 10px;
+            border: none;
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .cookie-notice-inner button:hover { background: var(--chartreuse-soft); }
+        @media (max-width: 640px) {
+            .cookie-notice-inner { padding: 14px 16px; }
+            .cookie-notice-inner button { width: 100%; }
+        }
+
         .float-order.is-visible {
             opacity: 1;
             transform: scale(1) translateY(0);
@@ -7023,6 +7073,43 @@
         </section>
     </div>
 
+    <div id="view-cookie-policy" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Cookie Policy</div>
+                <h1>Cookie Policy</h1>
+                <p>What we actually use, in plain terms, not a generic template.</p>
+            </div>
+        </header>
+        <section class="legal-section">
+            <div class="wrap">
+                <div class="legal-content">
+                    <div class="legal-draft-note">This is a working draft, written to be genuinely accurate about how the site currently operates, not a substitute for a solicitor's review before the site goes live and starts processing real orders. If cookie-based analytics or advertising are ever added, this page and the notice on the site will be updated to match before that happens.</div>
+                    <div class="legal-updated">Last updated: September 2026</div>
+
+                    <h2>The short version</h2>
+                    <p>We don't use cookies or similar technology for analytics, social media, or advertising, there's nothing on this site tracking you across the web or building an ad profile. Everything below exists to make the site actually work.</p>
+
+                    <h2>What we use, and why</h2>
+                    <ul>
+                        <li><strong>Payment (Stripe):</strong> when you pay, our payment processor Stripe sets a small number of its own cookies for fraud prevention and to keep your payment session secure. These are set and controlled by Stripe, not us, and are strictly necessary to processing your payment, there's no way to take payment online without them.</li>
+                        <li><strong>Site analytics (Cloudflare):</strong> we use Cloudflare Web Analytics to understand overall traffic (how many people visit, which pages). It's a genuinely cookie-free, privacy-friendly service, it doesn't track you individually, doesn't use a persistent identifier, and doesn't store anything in your browser.</li>
+                        <li><strong>Local storage, not cookies:</strong> the site stores a small amount of information directly in your browser (not as a cookie) to make it work properly: your shopping basket, your dark/light mode preference, and a record of which discount codes you've used so a one-per-customer code can't simply be reapplied after a refresh. This stays on your device and is never sent anywhere.</li>
+                    </ul>
+
+                    <h2>Why there's no "accept/reject" banner</h2>
+                    <p>UK rules on cookies (PECR) only require asking your permission for non-essential ones, things like advertising trackers or third-party analytics that profile you. Since everything above is either strictly necessary to take your payment or doesn't use cookies at all, there's nothing optional here to ask permission for. If that changes, if we ever add analytics or advertising that isn't cookie-free, we'll add a proper consent banner before it goes live and update this page first.</p>
+
+                    <h2>Controlling cookies yourself</h2>
+                    <p>Since the only cookies here are Stripe's, and they're required to complete a payment, blocking them will stop checkout from working. You can still control cookies generally through your browser's settings if you'd like to see what's stored.</p>
+
+                    <h2>Questions</h2>
+                    <p>If anything here is unclear, email us at hello@yo7foods.co.uk. See also our <a href="#/privacy">Privacy Policy</a> for how we handle your personal information more broadly.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <div id="view-delivery-info" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
@@ -7674,6 +7761,7 @@
                         <a href="#/terms">Terms &amp; Conditions</a>
                         <a href="#/returns">Returns &amp; Refunds Policy</a>
                         <a href="#/delivery-policy">Delivery Policy</a>
+                        <a href="#/cookie-policy">Cookie Policy</a>
                     </div>
                 </div>
             </div>
@@ -7707,6 +7795,18 @@
     </a>
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <!-- Not a granular accept/reject consent tool, there's nothing optional
+         to consent to (see #/cookie-policy): just an honest, dismissible
+         notice about the strictly-necessary cookies Stripe sets at
+         checkout. If real analytics/advertising cookies are ever added,
+         this becomes a real consent gate, not before. -->
+    <div class="cookie-notice" id="cookieNotice" role="region" aria-label="Cookie notice">
+        <div class="cookie-notice-inner">
+            <p>We only use strictly-necessary cookies, mainly from Stripe to process payments securely, nothing for tracking, analytics, or advertising. See our <a href="#/cookie-policy">Cookie Policy</a> for the full picture.</p>
+            <button type="button" id="cookieNoticeDismiss">Got it</button>
+        </div>
+    </div>
 
     <!-- Moved here from <head> — performance fix. Both were previously
          blocking <script src> tags in <head>, forcing the browser to
@@ -8735,7 +8835,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.19';
+        const BUILD_VERSION = '2026-09-01.20';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9676,6 +9776,22 @@
             });
         }
 
+        // Not a consent gate, there's nothing optional here to gate (see
+        // #/cookie-policy), just a one-time, dismissible notice. Persisted
+        // in localStorage so it doesn't nag a returning visitor.
+        function initCookieNotice() {
+            const notice = document.getElementById('cookieNotice');
+            const dismissBtn = document.getElementById('cookieNoticeDismiss');
+            if (!notice || !dismissBtn) return;
+            let dismissed = false;
+            try { dismissed = localStorage.getItem('cookieNoticeDismissed') === 'true'; } catch (e) { /* private browsing etc. */ }
+            if (dismissed) return;
+            setTimeout(() => notice.classList.add('is-visible'), 600);
+            dismissBtn.addEventListener('click', () => {
+                notice.classList.remove('is-visible');
+                try { localStorage.setItem('cookieNoticeDismissed', 'true'); } catch (e) { /* not fatal, it'll just reappear next visit */ }
+            });
+        }
         function initThemeToggle() {
             const btn = document.getElementById('themeToggle');
             if (!btn) return;
@@ -13215,7 +13331,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         function showView(id) {
@@ -13331,6 +13447,8 @@
                 showView('view-terms');
             } else if (hash === '#/returns') {
                 showView('view-returns');
+            } else if (hash === '#/cookie-policy') {
+                showView('view-cookie-policy');
             } else if (hash === '#/delivery-policy') {
                 showView('view-delivery-policy');
             } else if (hash === '#/build-bundle') {
@@ -13754,6 +13872,7 @@
         renderPlatformBadges();
         renderOfferCarousel();
         initThemeToggle();
+        initCookieNotice();
         initDragScroll();
         observeReveals();
         updateCartBadge();
