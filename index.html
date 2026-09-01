@@ -5435,15 +5435,34 @@
         .order-status-badge.delivered { background: rgba(144,184,0,0.22); color: var(--aubergine); }
         .order-status-badge.cancelled { background: rgba(193,85,44,0.12); color: #C1552C; }
         .order-status-badge.returned { background: rgba(157,107,17,0.14); color: #9D6B11; }
+        /* Every admin panel used to be the same plain white box in a row,
+           so "Manage orders" blurred into "Activity log" blurred into
+           "Add another admin". A coloured top edge + icon badge per
+           section (plus real elevation instead of just a hairline
+           border) makes each one read as its own module at a glance. */
         .admin-panel-section {
             background: var(--card-bg, #fff);
             border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-top: 4px solid var(--panel-accent, var(--chartreuse-rich));
             border-radius: 16px;
             padding: 24px 26px;
-            margin-bottom: 22px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 26px rgba(var(--border-rgb), 0.06);
         }
-        .admin-panel-section h2 { font-family: var(--display); font-size: 19px; margin: 0 0 6px; }
+        .admin-panel-section h2 { font-family: var(--display); font-size: 19px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
         .admin-panel-section .sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+        .admin-panel-icon {
+            width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--panel-accent-tint, rgba(144, 184, 0, 0.14));
+            color: var(--panel-accent, var(--chartreuse-rich));
+        }
+        .admin-panel-icon svg { width: 17px; height: 17px; }
+        .admin-panel-section.panel-orders { --panel-accent: var(--aubergine-mid); --panel-accent-tint: rgba(38, 98, 16, 0.12); }
+        .admin-panel-section.panel-analytics { --panel-accent: var(--chartreuse-rich); --panel-accent-tint: rgba(114, 148, 0, 0.14); }
+        .admin-panel-section.panel-activity { --panel-accent: #9a7f00; --panel-accent-tint: rgba(154, 127, 0, 0.14); }
+        .admin-panel-section.panel-editmode { --panel-accent: #C1552C; --panel-accent-tint: rgba(193, 85, 44, 0.12); }
+        .admin-panel-section.panel-admins { --panel-accent: #9D6B11; --panel-accent-tint: rgba(157, 107, 17, 0.14); }
         .admin-inline-form { display: flex; gap: 10px; flex-wrap: wrap; }
         .admin-inline-form input {
             flex: 1;
@@ -5509,11 +5528,21 @@
             gap: 12px;
             margin-bottom: 22px;
         }
+        /* Each stat gets its own accent, pulled from colours already used
+           elsewhere on the site (the order-status badges) rather than new
+           ones, so "cancelled" here reads the same red-brown as a
+           cancelled order badge, etc. — a coherent palette, not a rainbow. */
         .analytics-stat-card {
-            background: var(--section-alt-bg);
+            background: var(--stat-tint);
             border-radius: 12px;
             padding: 14px 16px;
+            border-left: 4px solid var(--stat-accent);
         }
+        .analytics-stat-card.stat-revenue { --stat-accent: var(--chartreuse-rich); --stat-tint: rgba(144, 184, 0, 0.12); }
+        .analytics-stat-card.stat-aov { --stat-accent: var(--aubergine-mid); --stat-tint: rgba(38, 98, 16, 0.09); }
+        .analytics-stat-card.stat-customers { --stat-accent: #9a7f00; --stat-tint: rgba(154, 127, 0, 0.11); }
+        .analytics-stat-card.stat-cancelled { --stat-accent: #C1552C; --stat-tint: rgba(193, 85, 44, 0.1); }
+        .analytics-stat-card .analytics-stat-value { color: var(--stat-accent, var(--heading)); }
         .analytics-stat-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; }
         .analytics-stat-value { font-family: var(--display); font-weight: 700; font-size: 21px; color: var(--heading); }
         .analytics-stat-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
@@ -5528,7 +5557,11 @@
         }
         .analytics-bar-label { flex: 0 0 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .analytics-bar-track { flex: 1; height: 8px; border-radius: 999px; background: rgba(var(--border-rgb), 0.1); overflow: hidden; }
-        .analytics-bar-fill { height: 100%; background: var(--chartreuse); border-radius: 999px; }
+        .analytics-bar-fill { height: 100%; background: linear-gradient(90deg, var(--chartreuse-rich), var(--chartreuse-soft)); border-radius: 999px; }
+        .analytics-bar-fill.accent-aubergine { background: linear-gradient(90deg, var(--aubergine-mid), var(--chartreuse-rich)); }
+        .analytics-legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+        .analytics-revenue-split { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; align-items: center; }
+        .analytics-revenue-split .analytics-split-total { font-weight: 700; color: var(--heading); margin-left: auto; }
         .analytics-bar-value { flex: 0 0 auto; font-weight: 600; color: var(--heading); white-space: nowrap; }
         .analytics-split-row { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; }
 
@@ -7702,8 +7735,8 @@
                 </div>
 
                 <div id="adminDashboardSection" style="display:none;">
-                    <div class="admin-panel-section">
-                        <h2>Manage orders</h2>
+                    <div class="admin-panel-section panel-orders">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 3v18"/><path d="M4 7.5l8 4.5 8-4.5"/></svg></span>Manage orders</h2>
                         <div id="adminOrdersList"></div>
                     </div>
                     <div class="modal-overlay" id="cancelOrderModal" style="display:none;">
@@ -7719,8 +7752,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="admin-panel-section">
-                        <h2>Business analytics</h2>
+                    <div class="admin-panel-section panel-analytics">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/></svg></span>Business analytics</h2>
                         <p class="sub">Revenue, orders, top products, customers, and delivery, over whichever period you pick.</p>
                         <div class="analytics-range-tabs">
                             <button type="button" class="analytics-range-tab active" data-range="month">1 month</button>
@@ -7747,13 +7780,13 @@
                         </div>
                         <div id="analyticsContent"><div class="analytics-loading">Loading analytics…</div></div>
                     </div>
-                    <div class="admin-panel-section">
-                        <h2>Activity log</h2>
+                    <div class="admin-panel-section panel-activity">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 12 8 12 10 18 14 6 16 12 21 12"/></svg></span>Activity log</h2>
                         <p class="sub">A record of what's been changed in edit mode, and who changed it.</p>
                         <div id="activityLogList"><div class="analytics-loading">Loading activity…</div></div>
                     </div>
-                    <div class="admin-panel-section">
-                        <h2>Edit pages</h2>
+                    <div class="admin-panel-section panel-editmode">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg></span>Edit pages</h2>
                         <p class="sub">Turn on edit mode, then browse the site to tweak product photos, prices, stock, and descriptions, saved for real, visible to every visitor once you hit Save. Adding new products, bundles, combos, or dishes from here is still preview-only for now, that part resets on refresh.</p>
                         <button type="button" class="btn btn-outline-dark" id="editModeToggle">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px;">
@@ -7763,8 +7796,8 @@
                             <span id="editModeLabel">Enter edit mode</span>
                         </button>
                     </div>
-                    <div class="admin-panel-section">
-                        <h2>Add another admin</h2>
+                    <div class="admin-panel-section panel-admins">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></span>Add another admin</h2>
                         <p class="sub">They need a registered, confirmed account already. Enter the email they signed up with.</p>
                         <form id="addAdminForm" class="admin-inline-form">
                             <input type="email" id="addAdminEmail" required placeholder="colleague@example.com">
@@ -9018,7 +9051,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.26';
+        const BUILD_VERSION = '2026-09-01.27';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12312,17 +12345,17 @@
 
             content.innerHTML = `
     <div class="analytics-stat-grid">
-      <div class="analytics-stat-card"><div class="analytics-stat-label">Revenue</div><div class="analytics-stat-value">${money(revenue)}</div><div class="analytics-stat-sub">${nonCancelled.length} order${nonCancelled.length === 1 ? '' : 's'} &middot; incl. delivery fees</div></div>
-      <div class="analytics-stat-card"><div class="analytics-stat-label">Average order</div><div class="analytics-stat-value">${money(aov)}</div></div>
-      <div class="analytics-stat-card"><div class="analytics-stat-label">Customers</div><div class="analytics-stat-value">${userIds.length}</div><div class="analytics-stat-sub">${newCount} new &middot; ${returningCount} returning</div></div>
-      <div class="analytics-stat-card"><div class="analytics-stat-label">Cancelled</div><div class="analytics-stat-value">${cancelledCount}</div></div>
+      <div class="analytics-stat-card stat-revenue"><div class="analytics-stat-label">Revenue</div><div class="analytics-stat-value">${money(revenue)}</div><div class="analytics-stat-sub">${nonCancelled.length} order${nonCancelled.length === 1 ? '' : 's'} &middot; incl. delivery fees</div></div>
+      <div class="analytics-stat-card stat-aov"><div class="analytics-stat-label">Average order</div><div class="analytics-stat-value">${money(aov)}</div></div>
+      <div class="analytics-stat-card stat-customers"><div class="analytics-stat-label">Customers</div><div class="analytics-stat-value">${userIds.length}</div><div class="analytics-stat-sub">${newCount} new &middot; ${returningCount} returning</div></div>
+      <div class="analytics-stat-card stat-cancelled"><div class="analytics-stat-label">Cancelled</div><div class="analytics-stat-value">${cancelledCount}</div></div>
     </div>
     <div class="analytics-subsection">
       <h4>Revenue breakdown</h4>
-      <div class="analytics-split-row">
-        <span>Product sales: ${money(productRevenue)}</span>
-        <span>Delivery fees: ${money(deliveryFeeRevenue)}</span>
-        <span><strong>${money(revenue)} total</strong></span>
+      <div class="analytics-revenue-split">
+        <span><span class="analytics-legend-dot" style="background:var(--chartreuse-rich)"></span>Product sales: ${money(productRevenue)}</span>
+        <span><span class="analytics-legend-dot" style="background:var(--aubergine-mid)"></span>Delivery fees: ${money(deliveryFeeRevenue)}</span>
+        <span class="analytics-split-total">${money(revenue)} total</span>
       </div>
     </div>
     <div class="analytics-subsection">
@@ -12338,19 +12371,19 @@
       <h4>Discount codes</h4>
       <div class="analytics-split-row">
         <span>${discountedOrders.length} order${discountedOrders.length === 1 ? '' : 's'} used a code</span>
-        <span>${money(discountTotal)} given in discounts</span>
+        <span style="color:#9a7f00; font-weight:600;">${money(discountTotal)} given in discounts</span>
       </div>
     </div>
     <div class="analytics-subsection">
       <h4>Delivery &amp; pickup</h4>
       <div class="analytics-split-row">
-        <span>${deliveryOrders.length} delivery</span>
-        <span>${pickupOrders.length} pickup</span>
+        <span><span class="analytics-legend-dot" style="background:var(--aubergine-mid)"></span>${deliveryOrders.length} delivery</span>
+        <span><span class="analytics-legend-dot" style="background:#9a7f00"></span>${pickupOrders.length} pickup</span>
       </div>
       ${tierCounts.size ? [...tierCounts.entries()].map(([tierLabel, count]) => `
       <div class="analytics-bar-row">
         <span class="analytics-bar-label">${escapeHtml(tierLabel)}</span>
-        <span class="analytics-bar-track"><span class="analytics-bar-fill" style="width:${Math.round(count / deliveryOrders.length * 100)}%"></span></span>
+        <span class="analytics-bar-track"><span class="analytics-bar-fill accent-aubergine" style="width:${Math.round(count / deliveryOrders.length * 100)}%"></span></span>
         <span class="analytics-bar-value">${count}</span>
       </div>`).join('') : ''}
     </div>`;
