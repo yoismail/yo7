@@ -2966,6 +2966,7 @@
             display: flex;
             gap: 10px;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 18px 0 4px;
             scrollbar-width: none;
             cursor: grab;
@@ -7589,7 +7590,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
                     </span>
                     <div>
-                        <h4>Stay in the loop</h4>
+                        <h4>Join the Yo7 Foods Family</h4>
                         <p>New arrivals, offers, and updates. No spam, just the useful stuff.</p>
                     </div>
                 </div>
@@ -8605,7 +8606,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.3';
+        const BUILD_VERSION = '2026-09-01.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13193,10 +13194,10 @@
         /* ================= CATEGORY STRIP: auto-carousel + manual scroll ================= */
         (function initCatCarousel() {
             const strip = document.getElementById('catNavStrip');
-            let paused = false;
-            let resumeTimer = null;
-            let rafId = null;
-            const SPEED = 0.45; // px per frame, gentle
+            const SPEED_PX_PER_SEC = 70; // was a fixed 0.45px/frame (~27px/s at 60Hz,
+                                          // faster still on 120Hz screens) — read as
+                                          // sluggish/dragging, and wasn't frame-rate
+                                          // normalized at all.
 
             // offsetParent only catches display:none, not "scrolled past
             // it further down the page", which is the common case here
@@ -13211,54 +13212,67 @@
             }, { threshold: 0 });
             visibilityObserver.observe(strip);
 
+            // Previously, any touchmove/wheel/pointerdown paused for a flat
+            // 2200ms from that first event, regardless of whether the
+            // finger was still on the screen — a slow, deliberate swipe
+            // held past that window let the ambient drift resume and fight
+            // the touch already in progress, which is what actually read
+            // as "not smooth". This tracks whether a gesture that started
+            // on the strip is still active and only starts the resume
+            // countdown once it genuinely ends (mirrors the same fix
+            // already proven on the homepage carousels).
+            let active = true;
+            let pointerDownHere = false;
+            let resumeTimer = null;
+            let lastTs = null;
             let scrollPos = strip.scrollLeft; // float accumulator — strip.scrollLeft itself
                                                // rounds to an integer on every write, so a
-                                               // sub-pixel SPEED would otherwise truncate back
+                                               // sub-pixel step would otherwise truncate back
                                                // to 0 every single frame and never move at all
-            function tick() {
-                if (strip.offsetParent !== null && inView && !document.hidden) {
-                    if (paused) {
-                        // Don't touch scrollLeft at all while paused — this is what
-                        // lets drag, arrow clicks, and native smooth-scroll actually
-                        // move the strip without this loop fighting them every frame.
-                        scrollPos = strip.scrollLeft;
-                    } else {
-                        scrollPos += SPEED;
-                        const half = strip.scrollWidth / 2;
-                        if (scrollPos >= half) scrollPos -= half;
-                        else if (scrollPos < 0) scrollPos += half;
-                        strip.scrollLeft = scrollPos;
-                    }
-                }
-                rafId = requestAnimationFrame(tick);
-            }
-            function pauseThenResume() {
-                paused = true;
+            function scheduleResume(delay) {
                 clearTimeout(resumeTimer);
                 resumeTimer = setTimeout(() => {
+                    active = true;
+                    lastTs = null;
                     scrollPos = strip.scrollLeft; // pick up wherever the user left it
-                    paused = false;
-                }, 2200);
+                }, delay);
             }
-            ['mouseenter', 'wheel', 'pointerdown'].forEach(evt => {
-                strip.addEventListener(evt, pauseThenResume, { passive: true });
-            });
-            let catTouchStartX = 0, catTouchStartY = 0;
-            strip.addEventListener('touchstart', (e) => {
-                catTouchStartX = e.touches[0].clientX;
-                catTouchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            strip.addEventListener('touchmove', (e) => {
-                const dx = Math.abs(e.touches[0].clientX - catTouchStartX);
-                const dy = Math.abs(e.touches[0].clientY - catTouchStartY);
-                if (dx > dy && dx > 6) pauseThenResume();
-            }, { passive: true });
-            strip.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); resumeTimer = setTimeout(() => { scrollPos = strip.scrollLeft; paused = false; }, 800); });
+            function halt(delay) {
+                active = false;
+                scheduleResume(delay);
+            }
+
+            function frame(ts) {
+                if (active && strip.offsetParent !== null && inView && !document.hidden) {
+                    if (lastTs === null) lastTs = ts;
+                    const dt = (ts - lastTs) / 1000;
+                    lastTs = ts;
+                    scrollPos += SPEED_PX_PER_SEC * dt;
+                    const half = strip.scrollWidth / 2;
+                    if (scrollPos >= half) scrollPos -= half;
+                    else if (scrollPos < 0) scrollPos += half;
+                    strip.scrollLeft = scrollPos;
+                } else {
+                    lastTs = null;
+                }
+                requestAnimationFrame(frame);
+            }
+
+            strip.addEventListener('mouseenter', () => halt(2200), { passive: true });
+            strip.addEventListener('wheel', () => halt(2200), { passive: true });
+            strip.addEventListener('pointerdown', () => { pointerDownHere = true; halt(4000); });
+            strip.addEventListener('touchstart', () => { pointerDownHere = true; halt(4000); }, { passive: true });
+            const onRelease = () => { if (pointerDownHere) { pointerDownHere = false; scheduleResume(1200); } };
+            window.addEventListener('pointerup', onRelease);
+            window.addEventListener('pointercancel', onRelease);
+            window.addEventListener('touchend', onRelease, { passive: true });
+            window.addEventListener('touchcancel', onRelease, { passive: true });
+            strip.addEventListener('mouseleave', () => { if (!pointerDownHere) scheduleResume(800); });
 
             // simple drag-to-scroll for desktop mouse users
             let isDown = false, startX = 0, startScroll = 0;
-            strip.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX; startScroll = strip.scrollLeft; pauseThenResume(); });
-            window.addEventListener('mouseup', () => isDown = false);
+            strip.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX; startScroll = strip.scrollLeft; pointerDownHere = true; halt(4000); });
+            window.addEventListener('mouseup', () => { isDown = false; });
             window.addEventListener('mousemove', (e) => { if (!isDown) return; strip.scrollLeft = startScroll - (e.pageX - startX); });
 
             // explicit prev/next arrows for users who'd rather click than drag/swipe
@@ -13266,15 +13280,15 @@
             const nextBtn = document.getElementById('catNavNext');
             const STEP = 240; // roughly 2-3 chips per click, comfortable to read
             if (prevBtn) prevBtn.addEventListener('click', () => {
-                pauseThenResume();
+                halt(2200);
                 strip.scrollBy({ left: -STEP, behavior: 'smooth' });
             });
             if (nextBtn) nextBtn.addEventListener('click', () => {
-                pauseThenResume();
+                halt(2200);
                 strip.scrollBy({ left: STEP, behavior: 'smooth' });
             });
 
-            rafId = requestAnimationFrame(tick);
+            requestAnimationFrame(frame);
         })();
 
         /* ================= FIXED NAV + TRUST BAR SPACER ================= */
