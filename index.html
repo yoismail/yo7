@@ -72,16 +72,13 @@
             --warn-text: #7a4a26;
             --display: 'Space Grotesk', sans-serif;
             --body: 'Work Sans', sans-serif;
-            /* The hero's ambient blobs and watermark are translucent
-               colour overlays at a fixed opacity, tuned against a near-
-               black canvas in dark mode where they read as a clear glow.
-               Against white in light mode the exact same values wash out
-               to almost nothing, this boosts them so light mode gets the
-               same visible atmosphere rather than a flat white hero. */
-            --hero-blob-op-1: 0.32;
-            --hero-blob-op-2: 0.16;
-            --hero-blob-op-3: 0.26;
-            --hero-watermark-op: 0.16;
+            /* The hero's logo watermark is a translucent colour overlay at a
+               fixed opacity, tuned against a near-black canvas in dark mode
+               where it reads as a clear glow. Against white in light mode
+               the same value washes out to almost nothing, this boosts it
+               so light mode gets the same visible presence rather than a
+               flat white hero. */
+            --hero-watermark-op: 0.24;
         }
 
         /* ================= DARK MODE =================
@@ -104,10 +101,7 @@
             --section-alt-bg: #14210D;
             --border-rgb: 250, 249, 242;
             --warn-text: #E8B98A;
-            --hero-blob-op-1: 0.20;
-            --hero-blob-op-2: 0.10;
-            --hero-blob-op-3: 0.16;
-            --hero-watermark-op: 0.10;
+            --hero-watermark-op: 0.16;
         }
 
         * {
@@ -1097,56 +1091,6 @@
             padding: 88px 0 116px;
         }
 
-        /* Soft, slowly drifting colour blobs, a layered gradient-mesh feel
-           in the brand's own palette rather than a flat single watermark,
-           done entirely in CSS since there's no real hero photography to
-           lean on yet. blur() is genuinely expensive on some phones, so
-           this stays capped to a handful of large, simple shapes rather
-           than many small ones. */
-        .hero-blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
-            pointer-events: none;
-            z-index: 0;
-        }
-        .hero-blob-1 {
-            width: 420px; height: 420px;
-            top: -140px; left: -120px;
-            background: radial-gradient(circle, rgba(144, 184, 0, var(--hero-blob-op-1)), transparent 70%);
-            animation: heroBlobDriftA 19s ease-in-out infinite alternate;
-        }
-        .hero-blob-2 {
-            width: 480px; height: 480px;
-            bottom: -200px; right: -140px;
-            background: radial-gradient(circle, rgba(6, 59, 0, var(--hero-blob-op-2)), transparent 70%);
-            animation: heroBlobDriftB 23s ease-in-out infinite alternate;
-        }
-        .hero-blob-3 {
-            width: 280px; height: 280px;
-            top: 36%; left: 58%;
-            background: radial-gradient(circle, rgba(225, 225, 0, var(--hero-blob-op-3)), transparent 70%);
-            animation: heroBlobDriftA 16s ease-in-out infinite alternate-reverse;
-        }
-        @keyframes heroBlobDriftA {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(30px, 22px) scale(1.08); }
-        }
-        @keyframes heroBlobDriftB {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(-26px, -16px) scale(1.05); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-blob-1, .hero-blob-2, .hero-blob-3 { animation: none; }
-        }
-        @media (max-width: 640px) {
-            /* Full blur on three large shapes at once is a lot of paint
-               work for a phone GPU on a section that's the very first
-               thing rendered; simplifying rather than cutting entirely
-               keeps the depth without the cost. */
-            .hero-blob-3 { display: none; }
-            .hero-blob-1, .hero-blob-2 { filter: blur(40px); }
-        }
 
         .hero-accent {
             color: var(--chartreuse-rich);
@@ -5457,6 +5401,22 @@
         }
         .order-invoice-btn:hover { background: rgba(var(--border-rgb), 0.05); border-color: rgba(var(--border-rgb), 0.28); }
         .order-invoice-btn:disabled { opacity: 0.6; cursor: default; }
+        .order-card-actions { display: flex; gap: 10px; margin-top: 12px; }
+        .order-card-actions .order-invoice-btn { margin-top: 0; }
+        .order-reorder-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .order-reorder-btn:hover { background: var(--chartreuse-soft); }
 
         /* ================= ADMIN ORDERS TABLE ================= */
         .admin-orders-table-wrap {
@@ -5809,9 +5769,6 @@
     <!-- ================= HOME ================= -->
     <div id="view-home">
         <header class="hero">
-            <div class="hero-blob hero-blob-1" aria-hidden="true"></div>
-            <div class="hero-blob hero-blob-2" aria-hidden="true"></div>
-            <div class="hero-blob hero-blob-3" aria-hidden="true"></div>
             <svg class="hero-watermark" viewBox="65 25 875 900">
                 <use href="#seal-mark" />
             </svg>
@@ -8730,7 +8687,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.16';
+        const BUILD_VERSION = '2026-09-01.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11439,7 +11396,10 @@
             <span class="order-card-total">${money(order.total)}</span>
         </div>
         ${cancellationNote}
-        <button type="button" class="order-invoice-btn" onclick="viewOrderInvoice('${order.id}', this)">View invoice</button>
+        <div class="order-card-actions">
+            <button type="button" class="order-reorder-btn" onclick="reorderOrder('${order.id}', this)">Reorder</button>
+            <button type="button" class="order-invoice-btn" onclick="viewOrderInvoice('${order.id}', this)">View invoice</button>
+        </div>
     </div>`;
         }
         // Real order history, reads straight from Supabase (RLS restricts each
@@ -11474,6 +11434,45 @@
             data.forEach(o => { orderHistoryCache[o.id] = o; });
             el.innerHTML = data.map(o => orderHistoryRowHTML(o)).join('');
         }
+        // Adds a past order's items back to the current basket at today's
+        // prices and stock, rather than replaying the historical price
+        // (which may no longer be valid, checkout re-verifies everything
+        // server-side anyway). Bundles/combos go through their own add
+        // functions so out-of-stock members within them are still handled
+        // per-item the same way they are everywhere else on the site.
+        // Adds on top of whatever's already in the basket rather than
+        // replacing it, a "buy again" shouldn't silently wipe an
+        // in-progress order.
+        function reorderOrder(orderId, btnEl) {
+            const order = orderHistoryCache[orderId];
+            if (!order) { showToast("Couldn't find that order."); return; }
+            const items = Array.isArray(order.items) ? order.items : [];
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Adding…'; }
+            let added = 0, skipped = 0;
+            items.forEach(item => {
+                const id = item.id || '';
+                if (id.startsWith('bundle::')) {
+                    const bi = Number(id.split('::')[1]);
+                    if (BUNDLES[bi]) { addBundleToCart(bi); added++; } else { skipped++; }
+                } else if (id.startsWith('combo::')) {
+                    const ci = Number(id.split('::')[1]);
+                    if (COMBOS[ci]) { addComboToCart(ci); added++; } else { skipped++; }
+                } else {
+                    const [catSlug, idxStr] = id.split('::');
+                    const p = catSlug ? getProduct(catSlug, Number(idxStr)) : null;
+                    if (p && p.stock !== 'out') { addToCart(p, item.qty || 1); added++; }
+                    else { skipped++; }
+                }
+            });
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Reorder'; }
+            if (added === 0) { showToast('None of the items from that order are available right now.'); return; }
+            const summary = skipped > 0
+                ? `Added ${added} item${added === 1 ? '' : 's'} to your basket. ${skipped} item${skipped === 1 ? " isn't" : ' are'} no longer available.`
+                : `Added ${added} item${added === 1 ? '' : 's'} to your basket.`;
+            showToast(summary, 3200);
+            window.location.hash = '#/checkout';
+        }
+        window.reorderOrder = reorderOrder;
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
         // this query to return other people's rows at all). Rendered as a
