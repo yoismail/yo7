@@ -265,8 +265,8 @@
             left: 0;
             right: 0;
             z-index: 99;
-            background: var(--chartreuse);
-            border-bottom: 1px solid var(--chartreuse-rich);
+            background: var(--section-alt-bg);
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
             overflow: hidden;
         }
         .trust-bar-track {
@@ -291,7 +291,7 @@
             font-weight: 600;
             font-size: 12.5px;
             letter-spacing: 0.01em;
-            color: var(--aubergine-deep);
+            color: var(--heading);
             white-space: nowrap;
             flex-shrink: 0;
         }
@@ -303,10 +303,10 @@
         .trust-bar-icon {
             width: 13px;
             height: 13px;
-            color: var(--aubergine-deep);
+            color: var(--heading-mid);
             flex-shrink: 0;
         }
-        .trust-sep { color: var(--aubergine-deep); font-weight: 700; opacity: 0.55; }
+        .trust-sep { color: var(--chartreuse-rich); font-weight: 700; }
         @media (max-width: 520px) {
             .trust-bar-set { font-size: 11.5px; padding: 5px 16px; gap: 7px; }
         }
@@ -8719,7 +8719,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.13';
+        const BUILD_VERSION = '2026-09-01.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
