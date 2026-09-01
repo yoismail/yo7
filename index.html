@@ -5398,20 +5398,31 @@
 
         /* ================= ORDER HISTORY ================= */
         .orders-section { padding: 48px 0 100px; background: var(--page-bg); }
-        .order-history-list { display: flex; flex-direction: column; gap: 16px; }
+        .order-history-list { display: flex; flex-direction: column; gap: 22px; }
         .order-history-empty, .order-history-loading, .order-history-error {
             text-align: center; padding: 70px 20px; color: var(--text-muted); font-size: 14.5px;
         }
         .order-history-empty a { color: var(--heading-mid); font-weight: 600; }
+        /* Every card used to be near-identical (same white fill, a border
+           barely visible against the page background, no shadow), so a
+           list of more than two or three read as one continuous block
+           rather than distinct orders. Real elevation plus a status-
+           coloured left edge (set inline per card, same colours as the
+           status badge itself) gives each one its own visual weight and
+           an at-a-glance scan cue without needing to read any text. */
         .order-card {
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.1); border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-left: 5px solid var(--order-accent, rgba(var(--border-rgb), 0.2));
+            border-radius: 16px;
             padding: 20px 22px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 12px 28px rgba(var(--border-rgb), 0.07);
         }
         .order-card-top {
             display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;
             margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
         }
-        .order-card-number { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--heading); }
+        .order-card-number { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); letter-spacing: -0.01em; }
         .order-card-date { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
         .order-status-badge {
             font-family: var(--display); font-weight: 700; font-size: 10.5px; letter-spacing: 0.03em; text-transform: uppercase;
@@ -8964,7 +8975,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.24';
+        const BUILD_VERSION = '2026-09-01.25';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11665,6 +11676,19 @@
             try { return ['http:', 'https:'].includes(new URL(url).protocol); }
             catch (e) { return false; }
         }
+        // Same solid colours the status badge itself already uses (just
+        // the "color" half of the pair, not the pale background), reused
+        // as the card's left-edge accent so the two reinforce each other
+        // instead of introducing a second colour language.
+        const ORDER_ACCENT_COLORS = {
+            placed: '#9a7f00',
+            being_prepared: 'var(--chartreuse-rich)',
+            out_for_delivery: 'var(--aubergine-mid)',
+            ready_for_pickup: 'var(--aubergine-mid)',
+            delivered: 'var(--aubergine)',
+            cancelled: '#C1552C',
+            returned: '#9D6B11',
+        };
         function orderHistoryRowHTML(order) {
             const status = order.status || 'placed';
             const items = Array.isArray(order.items) ? order.items : [];
@@ -11672,8 +11696,9 @@
             const cancellationNote = (status === 'cancelled' && order.cancellation_reason)
                 ? `<div class="order-cancellation-reason"><strong>Cancelled:</strong> ${escapeHtml(order.cancellation_reason)}</div>`
                 : '';
+            const accent = ORDER_ACCENT_COLORS[status] || 'rgba(var(--border-rgb), 0.2)';
             return `
-    <div class="order-card">
+    <div class="order-card" style="--order-accent:${accent}">
         <div class="order-card-top">
             <div>
                 <div class="order-card-number">${escapeHtml(order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()))}</div>
