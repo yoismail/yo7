@@ -6084,7 +6084,7 @@
         <section class="why-choose-section">
             <div class="wrap">
                 <div class="section-head reveal" style="text-align:center;">
-                    <div class="section-eyebrow" style="color: var(--heading-mid);">Why choose Yo7 Foods</div>
+                    <div class="section-eyebrow" style="color: var(--heading-mid);">Why choose <span style="text-transform:none;">Yo7 Foods</span></div>
                     <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
                         What we hold ourselves to, in every order</h2>
                 </div>
@@ -8719,7 +8719,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.14';
+        const BUILD_VERSION = '2026-09-01.15';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13746,6 +13746,20 @@
             filter: blur(1px);
             pointer-events: none;
             z-index: 0;
+        }
+        /* The texture PNG is near-white line art: reads clearly against the
+           hero's dark-mode background but is essentially invisible against
+           the light cream one (white lines on near-white). Inverting it in
+           light mode turns those lines dark so the same pattern actually
+           shows up there too, dark mode is untouched since it already
+           looks right. footer::before intentionally keeps the plain
+           filter above, the footer's own surface stays "light chrome" in
+           both themes so there's no light/dark mismatch to correct there. */
+        .hero::before {
+            filter: invert(1) blur(1px);
+        }
+        [data-theme="dark"] .hero::before {
+            filter: blur(1px);
         }`;
             document.head.appendChild(style);
             syncNavSpacer(); // card heights can change once photos are in
