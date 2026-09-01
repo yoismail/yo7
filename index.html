@@ -9170,6 +9170,26 @@
                 details: details || null,
             }).then(({ error }) => { if (error) console.error('Audit log write failed:', error.message); });
         }
+        // Shared by every save function that wants its audit-log entry to
+        // name the exact before/after of what an admin changed, not just
+        // that a save happened — e.g. "Price £4.99 -> £5.49" settles a
+        // pricing dispute, "updated Rice" alone does not. defs is
+        // [{key, label, format?}]; only fields that actually differ (by
+        // JSON value, so null vs a real value counts as a change) are
+        // included, in defs order.
+        function diffFields(before, after, defs) {
+            const fmt = (v, f) => v === null || v === undefined || v === '' ? '—' : (f ? f(v) : String(v));
+            return defs
+                .filter(d => JSON.stringify(before[d.key] ?? null) !== JSON.stringify(after[d.key] ?? null))
+                .map(d => ({ label: d.label, from: fmt(before[d.key], d.format), to: fmt(after[d.key], d.format) }));
+        }
+        // Renders a diffFields() result as the plain-text/HTML-safe summary
+        // shown inline in the activity log row.
+        function changeSummary(changes) {
+            if (!changes || !changes.length) return '';
+            return changes.map(c => `${escapeHtml(c.label)}: ${escapeHtml(c.from)} → ${escapeHtml(c.to)}`).join(', ');
+        }
+        function unitOverrideLabel(u) { return u ? `${u.qty}${u.measure || ''}` : null; }
         let deliveryInfo = null;
         let lastOrder = null;
         let adminOrdersChannel = null; // realtime subscription for "new order placed" notifications, admins only
@@ -9206,7 +9226,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.36';
+        const BUILD_VERSION = '2026-09-01.37';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9481,6 +9501,7 @@
             const cat = findCategory(catSlug);
             const product = cat && cat.products[idx];
             if (!product) return;
+            const weightBefore = typeof product.weight === 'number' ? product.weight : null;
             const raw = input.value;
             if (raw === '') { delete product.weight; }
             else {
@@ -9495,7 +9516,10 @@
                     updated_at: new Date().toISOString(),
                 });
                 if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000); return; }
-                logAdminAction('product_updated', 'product', product.name, { weight: product.weight ?? null });
+                const changes = diffFields({ weight: weightBefore }, { weight: product.weight ?? null }, [
+                    { key: 'weight', label: 'Weight (drives delivery fee)', format: w => w + 'kg' },
+                ]);
+                logAdminAction('product_updated', 'product', product.name, { changes });
             }
             renderBundles();
             renderCombos();
@@ -9530,10 +9554,16 @@
     </div>`;
         }
         function setBundleDiscount(bi, value) {
+            const before = BUNDLES[bi].discountPercent || 0;
             const pct = parseFloat(value);
             BUNDLES[bi].discountPercent = isNaN(pct) ? 0 : Math.max(0, Math.min(90, pct));
             renderBundles();
             savePricingSettings();
+            if (before !== BUNDLES[bi].discountPercent) {
+                logAdminAction('bundle_updated', 'bundle', BUNDLES[bi].name, {
+                    changes: [{ label: 'Discount %', from: before + '%', to: BUNDLES[bi].discountPercent + '%' }],
+                });
+            }
         }
         window.setBundleDiscount = setBundleDiscount;
 
@@ -9598,16 +9628,30 @@
         function saveBundleEdit(bi) {
             const name = document.getElementById('bbe-name').value.trim();
             if (!name || bundleEditNewItems.length < 2) { showToast('Give the bundle a name and at least 2 items.'); return; }
+            const before = BUNDLES[bi];
             const discountPct = parseFloat(document.getElementById('bbe-discount').value);
+            const itemNamesBefore = (before.items || []).map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             BUNDLES[bi] = {
                 name,
                 tagline: document.getElementById('bbe-tagline').value.trim(),
                 discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)),
                 items: [...bundleEditNewItems],
             };
+            const itemNamesAfter = BUNDLES[bi].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             bundleEditNewItems = null;
             renderBundles();
             savePricingSettings();
+            const changes = diffFields(
+                { name: before.name, tagline: before.tagline || null, discountPercent: before.discountPercent || 0, items: itemNamesBefore },
+                { name, tagline: BUNDLES[bi].tagline || null, discountPercent: BUNDLES[bi].discountPercent, items: itemNamesAfter },
+                [
+                    { key: 'name', label: 'Name' },
+                    { key: 'tagline', label: 'Tagline' },
+                    { key: 'discountPercent', label: 'Discount %', format: p => p + '%' },
+                    { key: 'items', label: 'Items' },
+                ]
+            );
+            logAdminAction('bundle_updated', 'bundle', name, { changes });
             showToast(`Updated "${name}".`);
         }
         window.saveBundleEdit = saveBundleEdit;
@@ -9625,7 +9669,13 @@
             const countEl = document.getElementById('allBundlesCount');
             if (countEl) countEl.textContent = `${BUNDLES.length} bundle${BUNDLES.length === 1 ? '' : 's'}`;
         }
-        function removeBundle(i) { BUNDLES.splice(i, 1); renderBundles(); savePricingSettings(); }
+        function removeBundle(i) {
+            const removed = BUNDLES[i];
+            BUNDLES.splice(i, 1);
+            renderBundles();
+            savePricingSettings();
+            if (removed) logAdminAction('bundle_removed', 'bundle', removed.name, null);
+        }
         window.removeBundle = removeBundle;
 
         /* ================= ADD A BUNDLE (edit mode) ================= */
@@ -9687,11 +9737,13 @@
             const name = document.getElementById('abf-name').value.trim();
             const tagline = document.getElementById('abf-tagline').value.trim();
             if (!name || newBundleItems.length < 2) { showToast('Give the bundle a name and at least 2 items.'); return; }
+            const itemNames = newBundleItems.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).join(', ');
             BUNDLES.push({ name, tagline: tagline || '', items: [...newBundleItems] });
             document.getElementById('addBundleSlot').innerHTML = '';
             newBundleItems = [];
             renderBundles();
             savePricingSettings();
+            logAdminAction('bundle_created', 'bundle', name, { items: itemNames });
             showToast(`Added bundle "${name}".`);
         }
         window.saveNewBundle = saveNewBundle;
@@ -9909,10 +9961,16 @@
     </div>`;
         }
         function setComboDiscount(ci, value) {
+            const before = COMBOS[ci].discountPercent || 0;
             const pct = parseFloat(value);
             COMBOS[ci].discountPercent = isNaN(pct) ? 0 : Math.max(0, Math.min(90, pct));
             renderCombos();
             savePricingSettings();
+            if (before !== COMBOS[ci].discountPercent) {
+                logAdminAction('combo_updated', 'combo', COMBOS[ci].name, {
+                    changes: [{ label: 'Discount %', from: before + '%', to: COMBOS[ci].discountPercent + '%' }],
+                });
+            }
         }
         window.setComboDiscount = setComboDiscount;
         function addComboToCart(ci) {
@@ -9954,7 +10012,13 @@
             const countEl = document.getElementById('allCombosCount');
             if (countEl) countEl.textContent = `${COMBOS.length} combo${COMBOS.length === 1 ? '' : 's'}`;
         }
-        function removeCombo(i) { COMBOS.splice(i, 1); renderCombos(); savePricingSettings(); }
+        function removeCombo(i) {
+            const removed = COMBOS[i];
+            COMBOS.splice(i, 1);
+            renderCombos();
+            savePricingSettings();
+            if (removed) logAdminAction('combo_removed', 'combo', removed.name, null);
+        }
         window.removeCombo = removeCombo;
 
         /* ================= EDIT AN EXISTING COMBO (edit mode) ================= */
@@ -10013,7 +10077,9 @@
         function saveComboEdit(ci) {
             const name = document.getElementById('cce-name').value.trim();
             if (!name) { showToast('A combo needs a name.'); return; }
+            const before = COMBOS[ci];
             const discountPct = parseFloat(document.getElementById('cce-discount').value);
+            const itemNamesBefore = (before.items || []).map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             COMBOS[ci] = {
                 name,
                 discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)),
@@ -10021,9 +10087,21 @@
                 linkCategory: document.getElementById('cce-link').value || null,
                 items: [...comboEditNewItems],
             };
+            const itemNamesAfter = COMBOS[ci].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             comboEditNewItems = null;
             renderCombos();
             savePricingSettings();
+            const changes = diffFields(
+                { name: before.name, description: before.description || null, discountPercent: before.discountPercent || 0, items: itemNamesBefore },
+                { name, description: COMBOS[ci].description || null, discountPercent: COMBOS[ci].discountPercent, items: itemNamesAfter },
+                [
+                    { key: 'name', label: 'Name' },
+                    { key: 'description', label: 'Description' },
+                    { key: 'discountPercent', label: 'Discount %', format: p => p + '%' },
+                    { key: 'items', label: 'Items' },
+                ]
+            );
+            logAdminAction('combo_updated', 'combo', name, { changes });
             showToast(`Updated "${name}".`);
         }
         window.saveComboEdit = saveComboEdit;
@@ -10091,11 +10169,13 @@
             const description = document.getElementById('acf-desc').value.trim();
             const linkCategory = document.getElementById('acf-link').value || null;
             if (!name) { showToast('Give the combo a name.'); return; }
+            const itemNames = newComboItems.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).join(', ');
             COMBOS.push({ name, discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)), description, linkCategory, items: [...newComboItems] });
             document.getElementById('addComboSlot').innerHTML = '';
             newComboItems = [];
             renderCombos();
             savePricingSettings();
+            logAdminAction('combo_created', 'combo', name, { items: itemNames || null });
             showToast(`Added combo "${name}".`);
         }
         window.saveNewCombo = saveNewCombo;
@@ -12464,7 +12544,10 @@
                 aodSaveBtn.textContent = 'Save changes';
                 if (error) { setAuthError('aodUpdateError', 'Could not update that order: ' + error.message); return; }
                 const orderLabel = currentAdminOrder ? (currentAdminOrder.order_number || currentAdminOrder.id.slice(0, 8).toUpperCase()) : currentAdminOrderId;
-                logAdminAction('order_status_changed', 'order', orderLabel, { status: nextStatus, comment: comment || null });
+                const prevStatus = currentAdminOrder ? (currentAdminOrder.status || 'placed') : null;
+                logAdminAction('order_status_changed', 'order', orderLabel, {
+                    fromStatus: prevStatus, toStatus: nextStatus, statusChanged, comment: comment || null,
+                });
                 // renderAdminOrderDetail resets the success banner to hidden as
                 // part of its own render, so it must finish first, otherwise the
                 // banner flips to visible then immediately back to hidden in the
@@ -12520,16 +12603,38 @@
             const who = `<strong>${escapeHtml(entry.admin_name || entry.admin_email || 'Someone')}</strong>`;
             const label = entry.target_label ? `<strong>${escapeHtml(entry.target_label)}</strong>` : '';
             switch (entry.action) {
-                case 'product_updated': return `${who} updated ${label}`;
+                case 'product_updated': {
+                    const summary = entry.details && changeSummary(entry.details.changes);
+                    return summary ? `${who} updated ${label} — ${summary}` : `${who} updated ${label}`;
+                }
                 case 'product_photo_updated': return `${who} updated the photo for ${label}`;
                 case 'product_photo_removed': return `${who} removed the photo from ${label}`;
-                case 'discount_created': return `${who} created discount code ${label}`;
-                case 'discount_updated': return `${who} updated discount code ${label}`;
+                case 'bundle_updated': case 'combo_updated': {
+                    const kind = entry.action === 'bundle_updated' ? 'bundle' : 'combo';
+                    const summary = entry.details && changeSummary(entry.details.changes);
+                    return summary ? `${who} updated ${kind} ${label} — ${summary}` : `${who} updated ${kind} ${label}`;
+                }
+                case 'bundle_removed': return `${who} removed bundle ${label}`;
+                case 'combo_removed': return `${who} removed combo ${label}`;
+                case 'bundle_created': return `${who} created bundle ${label}${entry.details && entry.details.items ? ` with items: ${escapeHtml(entry.details.items)}` : ''}`;
+                case 'combo_created': return `${who} created combo ${label}${entry.details && entry.details.items ? ` with items: ${escapeHtml(entry.details.items)}` : ''}`;
+                case 'discount_created': return `${who} created discount code ${label}${entry.details ? ` (${escapeHtml(entry.details.type || '')}: ${escapeHtml(String(entry.details.value ?? ''))})` : ''}`;
+                case 'discount_updated': return `${who} updated discount code ${label}${entry.details ? ` (${escapeHtml(entry.details.type || '')}: ${escapeHtml(String(entry.details.value ?? ''))})` : ''}`;
                 case 'discount_deleted': return `${who} deleted discount code ${label}`;
                 case 'pricing_settings_updated': return `${who} updated delivery &amp; pricing settings`;
                 case 'review_platforms_updated': return `${who} updated review platform links`;
-                case 'order_status_changed': return `${who} marked order ${label} as "${escapeHtml((entry.details && entry.details.status) || '')}"`;
-                case 'order_cancelled': return `${who} cancelled order ${label}`;
+                case 'order_status_changed': {
+                    const d = entry.details || {};
+                    const from = d.fromStatus ? (ORDER_STATUS_LABELS[d.fromStatus] || d.fromStatus) : null;
+                    const to = ORDER_STATUS_LABELS[d.toStatus] || d.toStatus || '';
+                    const transition = (d.statusChanged && from) ? `"${escapeHtml(from)}" → "${escapeHtml(to)}"` : `"${escapeHtml(to)}" (comment only, status unchanged)`;
+                    const note = d.comment ? ` — comment shown to customer: "${escapeHtml(d.comment)}"` : '';
+                    return `${who} updated order ${label}: ${transition}${note}`;
+                }
+                case 'order_cancelled': {
+                    const reason = entry.details && entry.details.reason;
+                    return `${who} cancelled order ${label}${reason ? ` — reason shown to customer: "${escapeHtml(reason)}"` : ''}`;
+                }
                 case 'loyalty_settings_updated': return `${who} updated loyalty reward settings`;
                 case 'admin_added': return `${who} made ${label} an admin`;
                 default: return `${who} — ${escapeHtml(entry.action)}${label ? ' (' + label + ')' : ''}`;
@@ -13670,6 +13775,16 @@
         async function saveEditPanel(catSlug, idx, btn) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
+            // Snapshotted before anything below changes it, so the audit
+            // log entry can say exactly what moved from what to what —
+            // "price £4.99 -> £5.49", not just "updated Rice" — which is
+            // what actually settles a "you charged me the wrong price"
+            // dispute instead of just confirming a change happened.
+            const before = {
+                price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
+                weight: typeof product.weight === 'number' ? product.weight : null,
+                unitOverride: product.unitOverride || null, description: product.description || null,
+            };
             const priceVal = parseFloat(document.getElementById(`ep-price-${catSlug}-${idx}`).value);
             const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`).value;
             const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`).value;
@@ -13719,9 +13834,20 @@
                 });
                 if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000); }
                 else {
-                    logAdminAction('product_updated', 'product', product.name, {
+                    const after = {
                         price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
-                    });
+                        weight: typeof product.weight === 'number' ? product.weight : null,
+                        unitOverride: product.unitOverride || null, description: product.description || null,
+                    };
+                    const changes = diffFields(before, after, [
+                        { key: 'price', label: 'Price', format: money },
+                        { key: 'salePrice', label: 'Sale price', format: money },
+                        { key: 'stock', label: 'Stock', format: stockLabel },
+                        { key: 'weight', label: 'Weight', format: w => w + 'kg' },
+                        { key: 'unitOverride', label: 'Unit size', format: unitOverrideLabel },
+                        { key: 'description', label: 'Description', format: () => 'edited' },
+                    ]);
+                    logAdminAction('product_updated', 'product', product.name, { changes });
                 }
             }
             btn.closest('.edit-panel-slot').innerHTML = '';
