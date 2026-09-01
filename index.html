@@ -4792,6 +4792,18 @@
             flex-wrap: wrap;
         }
 
+        .confirm-orders-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        .confirm-orders-link a {
+            color: var(--chartreuse-rich);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .confirm-orders-link a:hover { text-decoration: underline; }
+
         .email-fallback-note {
             max-width: 480px;
             margin: 16px auto 0;
@@ -5831,6 +5843,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
+            <a href="#/orders">My Orders</a>
             <a href="#/about">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
@@ -6709,6 +6722,7 @@
                     </button>
                     <a class="btn btn-primary" href="#/">Continue shopping</a>
                 </div>
+                <p class="confirm-orders-link"><a href="#/orders">View all my orders &rsaquo;</a></p>
                 <div class="email-fallback-note" id="emailFallbackNote" style="display:none;">
                     Your invoice PDF has downloaded, and your email app should have opened. Attach the downloaded file to send it.
                 </div>
@@ -7749,6 +7763,7 @@
                         <a href="#/shop">Shop</a>
                         <a href="#/about">About Us</a>
                         <a href="#/checkout">Basket</a>
+                        <a href="#/orders">My Orders</a>
                         <a href="#/delivery-info">Delivery Info</a>
                         <a href="#/guide">New Here?</a>
                     </div>
@@ -8840,7 +8855,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.22';
+        const BUILD_VERSION = '2026-09-01.23';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
