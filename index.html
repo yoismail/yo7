@@ -1476,11 +1476,27 @@
             transform: translateY(-6px);
             box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
         }
+        /* Five identical grey icons in a row read as one undifferentiated
+           block. Same accent family used on the admin panels, reused here
+           so it's one consistent colour system across the whole site,
+           not a one-off. This card is shared by the homepage "Why choose"
+           section and the About Us "Our values" section, so both pick
+           this up. */
         .about-value-card svg {
-            width: 26px; height: 26px; color: var(--heading-mid); margin-bottom: 12px;
+            width: 26px; height: 26px; margin-bottom: 12px;
+            padding: 8px;
+            box-sizing: content-box;
+            border-radius: 12px;
+            background: var(--value-accent-tint, rgba(114, 148, 0, 0.14));
+            color: var(--value-accent, var(--chartreuse-rich));
             transition: transform 0.3s cubic-bezier(.16,.84,.44,1);
         }
         .about-value-card:hover svg { transform: scale(1.12); }
+        .about-value-card:nth-child(5n+1) svg { --value-accent: var(--chartreuse-rich); --value-accent-tint: rgba(114, 148, 0, 0.14); }
+        .about-value-card:nth-child(5n+2) svg { --value-accent: var(--aubergine-mid); --value-accent-tint: rgba(38, 98, 16, 0.12); }
+        .about-value-card:nth-child(5n+3) svg { --value-accent: #9a7f00; --value-accent-tint: rgba(154, 127, 0, 0.14); }
+        .about-value-card:nth-child(5n+4) svg { --value-accent: #C1552C; --value-accent-tint: rgba(193, 85, 44, 0.12); }
+        .about-value-card:nth-child(5n+5) svg { --value-accent: #9D6B11; --value-accent-tint: rgba(157, 107, 17, 0.14); }
         .about-value-card h3 {
             font-family: var(--display); font-weight: 700; font-size: 15.5px; color: var(--heading); margin-bottom: 8px;
         }
@@ -2377,14 +2393,28 @@
             background: linear-gradient(180deg, transparent, rgba(var(--border-rgb), 0.16) 20%, rgba(var(--border-rgb), 0.16) 80%, transparent);
         }
 
+        /* A plain "01/02/03" used to read as one flat grey label repeated
+           three times. A coloured circle per step (same accent family as
+           the admin panels) gives each step its own identity at a glance,
+           doubling as a lightweight progress marker. */
         .step-num {
             font-family: var(--display);
             font-weight: 700;
             font-size: 15px;
-            color: var(--heading-mid);
-            letter-spacing: 0.08em;
+            letter-spacing: 0.02em;
             margin-bottom: 14px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--step-accent-tint, rgba(114, 148, 0, 0.14));
+            color: var(--step-accent, var(--chartreuse-rich));
         }
+        .step:nth-child(1) .step-num { --step-accent: var(--chartreuse-rich); --step-accent-tint: rgba(114, 148, 0, 0.14); }
+        .step:nth-child(2) .step-num { --step-accent: var(--aubergine-mid); --step-accent-tint: rgba(38, 98, 16, 0.12); }
+        .step:nth-child(3) .step-num { --step-accent: #9a7f00; --step-accent-tint: rgba(154, 127, 0, 0.14); }
 
         .step h3 {
             font-family: var(--display);
@@ -9051,7 +9081,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.27';
+        const BUILD_VERSION = '2026-09-01.28';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
