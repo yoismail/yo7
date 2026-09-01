@@ -11,10 +11,64 @@
     <meta property="og:title" content="Yo7 Foods | Fresh African &amp; Caribbean Groceries, Essex &amp; Suffolk">
     <meta property="og:description" content="Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Authentic flavours, premium quality, trusted by households everywhere.">
     <meta property="og:locale" content="en_GB">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:url" content="https://yo7foods.co.uk/">
+    <meta property="og:image" content="https://yo7foods.co.uk/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Yo7 Foods — Fresh African &amp; Caribbean groceries, delivered with modern convenience.">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Yo7 Foods | Fresh African &amp; Caribbean Groceries, Essex &amp; Suffolk">
     <meta name="twitter:description" content="Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Authentic flavours, premium quality.">
+    <meta name="twitter:image" content="https://yo7foods.co.uk/og-image.png">
     <link rel="canonical" href="https://yo7foods.co.uk/" id="canonicalLink">
+    <!-- Local-business structured data for search engines (Google's local
+         pack / knowledge panel matching, not just the blue links). Static
+         here rather than injected by JS so it's present the instant a
+         crawler fetches the document, no rendering required. Every field
+         is a real, already-published fact (same address as the Privacy
+         Policy and order pickup info, same phone as the Contact page,
+         same hours as OPENING_HOURS below) — nothing invented for SEO's
+         sake. sameAs picks up the Trustpilot/Google Business links too,
+         once an admin sets them in edit mode (see updateLocalBusinessSameAs). -->
+    <script type="application/ld+json" id="localBusinessJsonLd">
+    {
+        "@context": "https://schema.org",
+        "@type": "GroceryStore",
+        "@id": "https://yo7foods.co.uk/#business",
+        "name": "Yo7 Foods",
+        "image": "https://yo7foods.co.uk/og-image.png",
+        "url": "https://yo7foods.co.uk/",
+        "telephone": "+447398810052",
+        "email": "hello@yo7foods.co.uk",
+        "priceRange": "££",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "7 Lancaster Road",
+            "addressLocality": "Ipswich",
+            "postalCode": "IP4 2NY",
+            "addressCountry": "GB"
+        },
+        "areaServed": {
+            "@type": "Country",
+            "name": "United Kingdom"
+        },
+        "openingHoursSpecification": [
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                "opens": "08:00",
+                "closes": "21:00"
+            },
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": "Sunday",
+                "opens": "10:00",
+                "closes": "17:00"
+            }
+        ],
+        "sameAs": ["https://instagram.com/yo7foods"]
+    }
+    </script>
     <!-- unsafe-inline is required for both script-src and style-src: this
          site ships as a single static HTML file with no build step, so
          there's no way to generate per-request nonces or hash every inline
@@ -8481,6 +8535,23 @@
             if (isHttpUrl(googleBusinessUrl)) badges.push(`<a class="platform-badge platform-badge-google" href="${escapeHtml(googleBusinessUrl)}" target="_blank" rel="noopener">G Google</a>`);
             row.innerHTML = badges.join('');
         }
+        // The static LocalBusiness JSON-LD in <head> ships with just
+        // Instagram in sameAs (the only social link known at page-build
+        // time) — once the real Trustpilot/Google Business URLs load from
+        // pricing_settings (if an admin has set them), they're added here
+        // too, so a crawler sees the same profile links a customer does.
+        function updateLocalBusinessSameAs() {
+            const el = document.getElementById('localBusinessJsonLd');
+            if (!el) return;
+            try {
+                const data = JSON.parse(el.textContent);
+                const sameAs = ['https://instagram.com/yo7foods'];
+                if (isHttpUrl(trustpilotUrl)) sameAs.push(trustpilotUrl);
+                if (isHttpUrl(googleBusinessUrl)) sameAs.push(googleBusinessUrl);
+                data.sameAs = sameAs;
+                el.textContent = JSON.stringify(data);
+            } catch (e) { /* malformed JSON-LD would only break search-engine parsing, never the page itself */ }
+        }
         async function saveReviewPlatforms() {
             const btn = document.getElementById('reviewPlatformSaveBtn');
             if (!supabaseClient) { showToast('Review platforms need accounts connected first, this is preview mode right now.', 6000); return; }
@@ -8493,6 +8564,7 @@
             if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
             if (error) { showToast('Couldn\'t save that: ' + error.message, 6000); return; }
             renderPlatformBadges();
+            updateLocalBusinessSameAs();
             logAdminAction('review_platforms_updated', 'pricing_settings', null, { trustpilotSet: !!trustpilotUrl, googleBusinessSet: !!googleBusinessUrl });
             showToast('Review platform links saved.');
         }
@@ -9104,7 +9176,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.29';
+        const BUILD_VERSION = '2026-09-01.30';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13872,7 +13944,7 @@
             { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 10am are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
-            { q: 'Is payment on the site secure?', a: 'The checkout you see now is a preview, it doesn\'t process real payments yet. Once live payment is switched on, it\'ll run through a proper secure processor, not through this site directly.' },
+            { q: 'Is payment on the site secure?', a: 'Yes. Checkout runs through Stripe, a PCI-compliant payment processor used by major retailers worldwide, your card details are handled directly by Stripe and never touch our own servers.' },
             { q: 'Do I need an account to order?', a: 'Not necessarily for browsing, but you\'ll need delivery details at checkout either way. Creating an account just makes future orders quicker.' },
             { q: 'How do I get in touch if I have a problem with my order?', a: 'WhatsApp is the fastest way, there\'s a button on the Contact page and a floating button on every page. We read every message.' },
         ];
@@ -13892,6 +13964,24 @@
             document.getElementById('faq-' + i).classList.toggle('open');
         }
         window.toggleFaq = toggleFaq;
+        // FAQPage structured data straight from the same FAQS array the
+        // visible accordion renders from, so this can never drift out of
+        // sync with what a visitor actually sees. Google can show these
+        // directly as an expandable rich result on a matching search.
+        (function addFaqJsonLd() {
+            const el = document.createElement('script');
+            el.type = 'application/ld+json';
+            el.textContent = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: FAQS.map(f => ({
+                    '@type': 'Question',
+                    name: f.q,
+                    acceptedAnswer: { '@type': 'Answer', text: f.a },
+                })),
+            });
+            document.head.appendChild(el);
+        })();
 
         /* ================= CONTACT PAGE: hours + open status ================= */
         function timeToMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
@@ -14298,6 +14388,7 @@
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
+            updateLocalBusinessSameAs();
         });
         const editModeBannerVersionEl = document.getElementById('editModeBannerVersion');
         if (editModeBannerVersionEl) editModeBannerVersionEl.textContent = `v${BUILD_VERSION}`;
