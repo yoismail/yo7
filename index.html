@@ -88,7 +88,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <!-- Supabase and Stripe's own libraries moved to just before the main
          app script at the bottom of <body> (deliberate performance fix,
@@ -124,8 +124,8 @@
             --page-bg: var(--cream);
             --border-rgb: 6, 59, 0;
             --warn-text: #7a4a26;
-            --display: 'Space Grotesk', sans-serif;
-            --body: 'Work Sans', sans-serif;
+            --display: 'Montserrat Alternates', sans-serif;
+            --body: 'Montserrat Alternates', sans-serif;
             /* The hero's logo watermark is a translucent colour overlay at a
                fixed opacity, tuned against a near-black canvas in dark mode
                where it reads as a clear glow. Against white in light mode
@@ -5939,7 +5939,7 @@
                 <path
                     d="M 811.10 500.00 Q 811.10 500.00 799.66 569.40 Q 788.22 638.80 753.14 706.12 Q 718.06 773.44 643.76 788.90 Q 569.47 804.36 499.62 806.04 Q 429.76 807.73 364.45 779.80 Q 299.14 751.87 269.30 688.67 Q 239.46 625.47 211.74 562.73 Q 184.02 500.00 195.32 429.36 Q 206.61 358.71 247.63 296.84 Q 288.64 234.96 362.97 230.13 Q 437.30 225.31 501.91 216.95 Q 566.51 208.60 621.00 244.26 Q 675.50 279.93 741.08 316.13 Q 806.65 352.32 808.88 426.16 Z"
                     fill="var(--aubergine-deep)" />
-                <text x="500" y="629" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="360"
+                <text x="500" y="629" text-anchor="middle" font-family="Montserrat Alternates" font-weight="700" font-size="360"
                     fill="var(--cream)">7</text>
                 <g class="sprout" fill="none" stroke="var(--orange)" stroke-width="14" stroke-linecap="round">
                     <path d="M532,178 C532,146 532,118 532,86" />
@@ -9176,7 +9176,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.31';
+        const BUILD_VERSION = '2026-09-01.32';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11594,7 +11594,7 @@
                         colorBackground: isDark ? '#17240E' : '#FFFFFF',
                         colorText: isDark ? '#E9E6DA' : '#16210D',
                         colorDanger: '#C1552C',
-                        fontFamily: "'Work Sans', sans-serif",
+                        fontFamily: "'Montserrat Alternates', sans-serif",
                         borderRadius: '10px',
                     },
                 },
@@ -14603,7 +14603,7 @@
 .cat-photo-hair-products { background-image: url('/images/categories/cat-hair-products.jpg'); }
 .cat-photo-body-oral-products { background-image: url('/images/categories/cat-body-oral-products.jpg'); }
 .cat-photo-tropical-foods { background-image: url('/images/categories/cat-tropical-foods.jpg'); }
-.hero::before, footer::before {
+footer::before {
             content: '';
             position: absolute;
             inset: 0;
@@ -14615,20 +14615,6 @@
             filter: blur(1px);
             pointer-events: none;
             z-index: 0;
-        }
-        /* The texture PNG is near-white line art: reads clearly against the
-           hero's dark-mode background but is essentially invisible against
-           the light cream one (white lines on near-white). Inverting it in
-           light mode turns those lines dark so the same pattern actually
-           shows up there too, dark mode is untouched since it already
-           looks right. footer::before intentionally keeps the plain
-           filter above, the footer's own surface stays "light chrome" in
-           both themes so there's no light/dark mismatch to correct there. */
-        .hero::before {
-            filter: invert(1) blur(1px);
-        }
-        [data-theme="dark"] .hero::before {
-            filter: blur(1px);
         }`;
             document.head.appendChild(style);
             syncNavSpacer(); // card heights can change once photos are in
