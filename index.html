@@ -5453,6 +5453,7 @@
             border: 1px solid rgba(var(--border-rgb), 0.25);
             font-size: 16px;
         }
+        .admin-orders-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
         /* ================= ADMIN ANALYTICS ================= */
         .analytics-month-picker {
             display: flex;
@@ -5474,6 +5475,34 @@
         .analytics-month-btn:disabled { opacity: 0.4; cursor: default; }
         #analyticsMonthLabel { font-family: var(--display); font-weight: 700; font-size: 15px; min-width: 140px; text-align: center; }
         .analytics-loading, .analytics-empty { font-size: 13px; color: var(--text-muted); padding: 10px 0; }
+        .analytics-range-tabs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .analytics-range-tab {
+            padding: 7px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(var(--border-rgb), 0.16);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            font-size: 12.5px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .analytics-range-tab:hover { border-color: var(--chartreuse-rich); }
+        .analytics-range-tab.active { background: var(--chartreuse); color: var(--aubergine-deep); border-color: var(--chartreuse); }
+        .analytics-custom-range { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+        .analytics-custom-range.active { display: flex; }
+        .analytics-custom-range input[type="date"] {
+            border: 1px solid rgba(var(--border-rgb), 0.16);
+            border-radius: 9px;
+            padding: 7px 10px;
+            font-size: 13px;
+            background: var(--card-bg);
+            color: var(--heading);
+            font-family: inherit;
+        }
+        .analytics-custom-range span { color: var(--text-muted); font-size: 13px; }
+        .analytics-custom-range .btn { padding: 7px 16px; font-size: 12.5px; }
+        .analytics-custom-range .analytics-custom-error { color: #C1552C; font-size: 12.5px; flex-basis: 100%; }
         .analytics-stat-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -7692,15 +7721,29 @@
                     </div>
                     <div class="admin-panel-section">
                         <h2>Business analytics</h2>
-                        <p class="sub">Revenue, orders, top products, customers, and delivery, one month at a time.</p>
-                        <div class="analytics-month-picker">
-                            <button type="button" id="analyticsPrevMonth" class="analytics-month-btn" aria-label="Previous month">
+                        <p class="sub">Revenue, orders, top products, customers, and delivery, over whichever period you pick.</p>
+                        <div class="analytics-range-tabs">
+                            <button type="button" class="analytics-range-tab active" data-range="month">1 month</button>
+                            <button type="button" class="analytics-range-tab" data-range="3month">3 months</button>
+                            <button type="button" class="analytics-range-tab" data-range="6month">6 months</button>
+                            <button type="button" class="analytics-range-tab" data-range="custom">Custom</button>
+                        </div>
+                        <div class="analytics-month-picker" id="analyticsMonthPicker">
+                            <button type="button" id="analyticsPrevMonth" class="analytics-month-btn" aria-label="Previous period">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
                             </button>
                             <span id="analyticsMonthLabel"></span>
-                            <button type="button" id="analyticsNextMonth" class="analytics-month-btn" aria-label="Next month">
+                            <button type="button" id="analyticsNextMonth" class="analytics-month-btn" aria-label="Next period">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                             </button>
+                        </div>
+                        <div class="analytics-custom-range" id="analyticsCustomRange">
+                            <span>From</span>
+                            <input type="date" id="analyticsCustomFrom">
+                            <span>to</span>
+                            <input type="date" id="analyticsCustomTo">
+                            <button type="button" class="btn btn-outline-dark" id="analyticsCustomApply">Apply</button>
+                            <div class="analytics-custom-error" id="analyticsCustomError" style="display:none;"></div>
                         </div>
                         <div id="analyticsContent"><div class="analytics-loading">Loading analytics…</div></div>
                     </div>
@@ -8975,7 +9018,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.25';
+        const BUILD_VERSION = '2026-09-01.26';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11830,6 +11873,12 @@
             data.forEach(p => { byId[p.id] = p; });
             return byId;
         }
+        // Orders are paged client-side, 10 at a time — the full set is
+        // fetched once and cached here, renderAdminOrdersPage() just slices
+        // it, so paging back and forth doesn't re-hit the database.
+        const ADMIN_ORDERS_PAGE_SIZE = 10;
+        let adminOrdersCache = [];
+        let adminOrdersPage = 0;
         async function renderAdminOrders() {
             const el = document.getElementById('adminOrdersList');
             if (!el) return;
@@ -11860,6 +11909,17 @@
             }
             const profilesById = await fetchProfilesByIds(data.map(o => o.user_id));
             data.forEach(o => { o.profiles = profilesById[o.user_id] || null; });
+            adminOrdersCache = data;
+            adminOrdersPage = 0;
+            renderAdminOrdersPage();
+        }
+        function renderAdminOrdersPage() {
+            const el = document.getElementById('adminOrdersList');
+            if (!el) return;
+            const totalPages = Math.max(1, Math.ceil(adminOrdersCache.length / ADMIN_ORDERS_PAGE_SIZE));
+            if (adminOrdersPage >= totalPages) adminOrdersPage = totalPages - 1;
+            const start = adminOrdersPage * ADMIN_ORDERS_PAGE_SIZE;
+            const pageOrders = adminOrdersCache.slice(start, start + ADMIN_ORDERS_PAGE_SIZE);
             el.innerHTML = `
     <div class="admin-orders-table-wrap">
         <table class="admin-orders-table">
@@ -11875,9 +11935,23 @@
                     <th>Details</th>
                 </tr>
             </thead>
-            <tbody>${data.map(adminOrderTableRowHTML).join('')}</tbody>
+            <tbody>${pageOrders.map(adminOrderTableRowHTML).join('')}</tbody>
         </table>
-    </div>`;
+    </div>
+    ${totalPages > 1 ? `
+    <div class="admin-orders-pagination">
+        <button type="button" class="analytics-month-btn" id="adminOrdersPrevPage" aria-label="Previous page" ${adminOrdersPage === 0 ? 'disabled' : ''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span>Page ${adminOrdersPage + 1} of ${totalPages} &middot; ${adminOrdersCache.length} order${adminOrdersCache.length === 1 ? '' : 's'}</span>
+        <button type="button" class="analytics-month-btn" id="adminOrdersNextPage" aria-label="Next page" ${adminOrdersPage >= totalPages - 1 ? 'disabled' : ''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+    </div>` : ''}`;
+            const prevBtn = document.getElementById('adminOrdersPrevPage');
+            const nextBtn = document.getElementById('adminOrdersNextPage');
+            if (prevBtn) prevBtn.addEventListener('click', () => { adminOrdersPage--; renderAdminOrdersPage(); });
+            if (nextBtn) nextBtn.addEventListener('click', () => { adminOrdersPage++; renderAdminOrdersPage(); });
         }
 
         // A reason is required before an admin can cancel an order, both so
@@ -12131,11 +12205,20 @@
     </div>`).join('');
         }
 
-        let analyticsMonthOffset = 0; // 0 = current month, 1 = last month, etc. — never lets you page into the future
+        // 'month' pages one calendar month at a time (the original
+        // behaviour), '3month'/'6month' page in that many calendar months
+        // per step, 'custom' ignores paging entirely and uses whatever
+        // range was last Applied below.
+        let analyticsRangeMode = 'month';
+        let analyticsMonthOffset = 0; // periods back within the current range mode's span — 0 = most recent, never lets you page into the future
+        let analyticsCustomRange = null; // { start, end } Date objects, set only once a custom range has been Applied
+        function analyticsRangeSpan(mode) { return mode === '6month' ? 6 : mode === '3month' ? 3 : 1; }
         function analyticsMonthRange(offset) {
+            if (analyticsRangeMode === 'custom') return analyticsCustomRange || { start: new Date(), end: new Date() };
+            const span = analyticsRangeSpan(analyticsRangeMode);
             const now = new Date();
-            const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-            const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 1);
+            const end = new Date(now.getFullYear(), now.getMonth() - (offset * span) + 1, 1);
+            const start = new Date(now.getFullYear(), now.getMonth() - (offset * span) - span + 1, 1);
             return { start, end };
         }
         // Real numbers straight from the orders table (the same trusted
@@ -12150,8 +12233,20 @@
             const label = document.getElementById('analyticsMonthLabel');
             const nextBtn = document.getElementById('analyticsNextMonth');
             if (!content) return;
+            if (analyticsRangeMode === 'custom' && !analyticsCustomRange) {
+                content.innerHTML = '<div class="analytics-empty">Pick a start and end date above, then Apply.</div>';
+                return;
+            }
             const { start, end } = analyticsMonthRange(offset);
-            if (label) label.textContent = start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            if (analyticsRangeMode === 'custom') {
+                if (label) label.textContent = '';
+            } else if (analyticsRangeSpan(analyticsRangeMode) === 1) {
+                if (label) label.textContent = start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            } else {
+                const lastMonth = new Date(end.getFullYear(), end.getMonth() - 1, 1);
+                const sameYear = start.getFullYear() === lastMonth.getFullYear();
+                if (label) label.textContent = `${start.toLocaleDateString('en-GB', sameYear ? { month: 'short' } : { month: 'short', year: 'numeric' })} – ${lastMonth.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+            }
             if (nextBtn) nextBtn.disabled = offset === 0;
             if (!supabaseClient) { content.innerHTML = '<div class="analytics-empty">Analytics need accounts connected first, this is preview mode right now.</div>'; return; }
             content.innerHTML = '<div class="analytics-loading">Loading analytics…</div>';
@@ -12201,7 +12296,12 @@
 
             const deliveryOrders = nonCancelled.filter(o => o.fulfilment_method !== 'pickup');
             const pickupOrders = nonCancelled.filter(o => o.fulfilment_method === 'pickup');
+            // Revenue above already includes delivery fees (order.total is
+            // computed server-side as subtotal + delivery - discounts), so
+            // productRevenue is derived from it rather than summed
+            // separately, guaranteeing the breakdown always adds up exactly.
             const deliveryFeeRevenue = nonCancelled.reduce((s, o) => s + (o.delivery_fee || 0), 0);
+            const productRevenue = revenue - deliveryFeeRevenue;
             const tierCounts = new Map();
             deliveryOrders.forEach(o => {
                 const w = (Array.isArray(o.items) ? o.items : []).reduce((s, i) => s + ((typeof i.weight === 'number' ? i.weight : 0) * (i.qty || 0)), 0);
@@ -12212,10 +12312,18 @@
 
             content.innerHTML = `
     <div class="analytics-stat-grid">
-      <div class="analytics-stat-card"><div class="analytics-stat-label">Revenue</div><div class="analytics-stat-value">${money(revenue)}</div><div class="analytics-stat-sub">${nonCancelled.length} order${nonCancelled.length === 1 ? '' : 's'}</div></div>
+      <div class="analytics-stat-card"><div class="analytics-stat-label">Revenue</div><div class="analytics-stat-value">${money(revenue)}</div><div class="analytics-stat-sub">${nonCancelled.length} order${nonCancelled.length === 1 ? '' : 's'} &middot; incl. delivery fees</div></div>
       <div class="analytics-stat-card"><div class="analytics-stat-label">Average order</div><div class="analytics-stat-value">${money(aov)}</div></div>
       <div class="analytics-stat-card"><div class="analytics-stat-label">Customers</div><div class="analytics-stat-value">${userIds.length}</div><div class="analytics-stat-sub">${newCount} new &middot; ${returningCount} returning</div></div>
       <div class="analytics-stat-card"><div class="analytics-stat-label">Cancelled</div><div class="analytics-stat-value">${cancelledCount}</div></div>
+    </div>
+    <div class="analytics-subsection">
+      <h4>Revenue breakdown</h4>
+      <div class="analytics-split-row">
+        <span>Product sales: ${money(productRevenue)}</span>
+        <span>Delivery fees: ${money(deliveryFeeRevenue)}</span>
+        <span><strong>${money(revenue)} total</strong></span>
+      </div>
     </div>
     <div class="analytics-subsection">
       <h4>Top products</h4>
@@ -12224,7 +12332,7 @@
         <span class="analytics-bar-label" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
         <span class="analytics-bar-track"><span class="analytics-bar-fill" style="width:${maxProductRevenue ? Math.round(s.revenue / maxProductRevenue * 100) : 0}%"></span></span>
         <span class="analytics-bar-value">${money(s.revenue)} &middot; ${s.qty} sold</span>
-      </div>`).join('') : '<div class="analytics-empty">No orders yet this month.</div>'}
+      </div>`).join('') : '<div class="analytics-empty">No orders yet in this period.</div>'}
     </div>
     <div class="analytics-subsection">
       <h4>Discount codes</h4>
@@ -12238,7 +12346,6 @@
       <div class="analytics-split-row">
         <span>${deliveryOrders.length} delivery</span>
         <span>${pickupOrders.length} pickup</span>
-        <span>${money(deliveryFeeRevenue)} delivery fee revenue</span>
       </div>
       ${tierCounts.size ? [...tierCounts.entries()].map(([tierLabel, count]) => `
       <div class="analytics-bar-row">
@@ -12252,6 +12359,46 @@
         if (analyticsPrevMonthBtn) analyticsPrevMonthBtn.addEventListener('click', () => renderAnalytics(analyticsMonthOffset + 1));
         const analyticsNextMonthBtn = document.getElementById('analyticsNextMonth');
         if (analyticsNextMonthBtn) analyticsNextMonthBtn.addEventListener('click', () => { if (analyticsMonthOffset > 0) renderAnalytics(analyticsMonthOffset - 1); });
+
+        const analyticsRangeTabs = document.querySelectorAll('.analytics-range-tab');
+        const analyticsMonthPickerEl = document.getElementById('analyticsMonthPicker');
+        const analyticsCustomRangeEl = document.getElementById('analyticsCustomRange');
+        function setAnalyticsRangeMode(mode) {
+            analyticsRangeMode = mode;
+            analyticsRangeTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.range === mode));
+            const errorEl = document.getElementById('analyticsCustomError');
+            if (errorEl) errorEl.style.display = 'none';
+            if (mode === 'custom') {
+                if (analyticsMonthPickerEl) analyticsMonthPickerEl.style.display = 'none';
+                if (analyticsCustomRangeEl) analyticsCustomRangeEl.classList.add('active');
+                renderAnalytics(0);
+            } else {
+                if (analyticsMonthPickerEl) analyticsMonthPickerEl.style.display = '';
+                if (analyticsCustomRangeEl) analyticsCustomRangeEl.classList.remove('active');
+                renderAnalytics(0);
+            }
+        }
+        analyticsRangeTabs.forEach(tab => tab.addEventListener('click', () => setAnalyticsRangeMode(tab.dataset.range)));
+        const analyticsCustomApplyBtn = document.getElementById('analyticsCustomApply');
+        if (analyticsCustomApplyBtn) {
+            analyticsCustomApplyBtn.addEventListener('click', () => {
+                const errorEl = document.getElementById('analyticsCustomError');
+                const fromVal = document.getElementById('analyticsCustomFrom').value;
+                const toVal = document.getElementById('analyticsCustomTo').value;
+                const showError = (msg) => { if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; } };
+                if (errorEl) errorEl.style.display = 'none';
+                if (!fromVal || !toVal) { showError('Pick both a start and end date.'); return; }
+                const start = new Date(fromVal + 'T00:00:00');
+                // The end date picked is meant to be inclusive (e.g. "1 Jan
+                // to 31 Jan" should cover all of the 31st), so the range
+                // actually queried extends to the start of the next day.
+                const end = new Date(toVal + 'T00:00:00');
+                end.setDate(end.getDate() + 1);
+                if (start >= end) { showError('The start date must be before the end date.'); return; }
+                analyticsCustomRange = { start, end };
+                renderAnalytics(0);
+            });
+        }
 
         async function renderAdminPage() {
             const loginSection = document.getElementById('adminLoginSection');
