@@ -3476,27 +3476,27 @@
         /* A fresh badge node is rendered every time its card is (no reflow
            trick needed to replay it, unlike route-view-enter), so this
            triggers on every appearance: new stock/sale state, a re-render,
-           or the card simply entering the grid for the first time. Most
-           product grids sit below the fold on load, though, and a CSS
-           animation's clock starts the instant the element paints —
-           on-screen or not — so a single quick pop was finishing before
-           most visitors had scrolled down far enough to ever see it. This
-           fades in once, then settles with a few short bounces rather than
-           one, so it's still visibly moving through the couple of seconds
-           it typically takes to actually scroll a card into view. */
+           or the card simply entering the grid for the first time. Fades
+           in once, then keeps a slow, low-amplitude pulse going for as
+           long as the badge is on screen — a full bounce loop across a
+           whole grid of badges reads as busy rather than premium and
+           fights for attention against the prices, so this stays gentle
+           enough to sit in peripheral vision rather than demand it, while
+           still being visibly "alive" whenever someone actually looks,
+           regardless of when they happen to scroll it into view. */
         .stock-badge.low, .stock-badge.out, .sale-badge {
             transform-origin: center;
             animation:
                 badge-fade-in 0.25s ease-out both,
-                badge-bounce 0.55s cubic-bezier(.34,1.56,.64,1) 3 0.25s both;
+                badge-pulse 2.4s ease-in-out 0.25s infinite;
         }
         @keyframes badge-fade-in {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        @keyframes badge-bounce {
+        @keyframes badge-pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.16); }
+            50% { transform: scale(1.07); }
         }
         @media (prefers-reduced-motion: reduce) {
             .stock-badge.low, .stock-badge.out, .sale-badge { animation: none; }
@@ -9306,7 +9306,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.1';
+        const BUILD_VERSION = '2026-09-02.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
