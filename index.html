@@ -115,11 +115,12 @@
             --heading-mid: var(--aubergine-mid);
             --heading-deep: var(--aubergine-deep);
             --card-bg: #FFFFFF;
-            --text-muted: #8a7f78;
-            --text-faint: #a89a94;
+            --text-muted: #6b5f58;
+            --text-faint: #7a6d65;
             --text-body: #4a3d3a;
             --thumb-grad-1: #f0ecdc;
             --thumb-grad-2: #e7e1cc;
+            --neutral-track: #e3ddc9;
             --section-alt-bg: #F1F5EA;
             --page-bg: var(--cream);
             --border-rgb: 6, 59, 0;
@@ -156,6 +157,7 @@
             --border-rgb: 250, 249, 242;
             --warn-text: #E8B98A;
             --hero-watermark-op: 0.16;
+            --neutral-track: #2c2618;
         }
 
         * {
@@ -3584,7 +3586,7 @@
         }
 
         .add-btn:disabled {
-            background: #e3ddc9;
+            background: var(--neutral-track);
             color: var(--text-faint);
             cursor: not-allowed;
         }
@@ -3652,7 +3654,7 @@
         .card-add-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
         .card-add-btn:hover { background: var(--chartreuse-soft); }
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
-        .card-add-btn:disabled { background: #e3ddc9; color: var(--text-faint); cursor: not-allowed; }
+        .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
 
 
@@ -4098,7 +4100,7 @@
             width: 26px;
             height: 26px;
             border-radius: 50%;
-            background: #e9e2d3;
+            background: var(--neutral-track);
             color: var(--text-muted);
             display: flex;
             align-items: center;
@@ -4124,7 +4126,7 @@
         .cstep-sep {
             width: 28px;
             height: 1.5px;
-            background: #e9e2d3;
+            background: var(--neutral-track);
         }
 
         .checkout-grid {
@@ -4366,6 +4368,17 @@
             .cart-price {
                 margin-left: auto;
                 width: auto;
+            }
+            /* Tap targets are ~26px on desktop, where a mouse pointer makes
+               that easy to hit, below the ~44px minimum a thumb needs — so
+               only mobile gets the larger hit area, not the whole layout. */
+            .cart-qty button {
+                width: 40px;
+                height: 40px;
+            }
+            .cart-remove {
+                width: 44px;
+                height: 44px;
             }
         }
 
@@ -5615,6 +5628,19 @@
         .order-status-badge.delivered { background: rgba(144,184,0,0.22); color: var(--aubergine); }
         .order-status-badge.cancelled { background: rgba(193,85,44,0.12); color: #C1552C; }
         .order-status-badge.returned { background: rgba(157,107,17,0.14); color: #9D6B11; }
+        /* The badge backgrounds above are low-opacity tints of the same
+           brand colours in both themes, still readable as a coloured chip
+           on a dark card. The text colours themselves are brand greens/
+           browns tuned for white, near-invisible on the dark-mode page/card
+           background beneath that tint, so only the text gets lightened
+           here. */
+        [data-theme="dark"] .order-status-badge.placed { color: #E8D34D; }
+        [data-theme="dark"] .order-status-badge.being_prepared { color: var(--chartreuse-soft); }
+        [data-theme="dark"] .order-status-badge.out_for_delivery,
+        [data-theme="dark"] .order-status-badge.ready_for_pickup { color: #8FCB6B; }
+        [data-theme="dark"] .order-status-badge.delivered { color: #9FE870; }
+        [data-theme="dark"] .order-status-badge.cancelled { color: var(--warn-text); }
+        [data-theme="dark"] .order-status-badge.returned { color: #D9A54D; }
         /* Every admin panel used to be the same plain white box in a row,
            so "Manage orders" blurred into "Activity log" blurred into
            "Add another admin". A coloured top edge + icon badge per
@@ -6076,7 +6102,7 @@
                         <circle cx="11" cy="11" r="7" />
                         <path d="m21 21-4.3-4.3" />
                     </svg>
-                    <input id="navSearchInput" type="text" placeholder="Search: all items..." autocomplete="off">
+                    <input id="navSearchInput" type="text" placeholder="Search: all items..." autocomplete="off" aria-label="Search all items">
                 </div>
                 <div class="search-results" id="navSearchResults"></div>
             </div>
@@ -6612,7 +6638,7 @@
             <div class="wrap">
                 <div class="shop-all-search-wrap">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    <input type="text" id="shopAllSearchInput" placeholder="Search: all items..." autocomplete="off">
+                    <input type="text" id="shopAllSearchInput" placeholder="Search: all items..." autocomplete="off" aria-label="Search all items">
                 </div>
                 <div class="cat-pill-row" id="shopAllPillRow"></div>
                 <div class="shop-all-result-count" id="shopAllResultCount"></div>
@@ -6789,7 +6815,7 @@
                             <h2>Order summary</h2>
                             <div class="loyalty-note" id="loyaltyNote"></div>
                             <div class="discount-code-row">
-                                <input type="text" id="discountCodeInput" placeholder="Discount code">
+                                <input type="text" id="discountCodeInput" placeholder="Discount code" aria-label="Discount code">
                                 <button type="button" id="applyDiscountBtn">Apply</button>
                             </div>
                             <div id="discountCodeMsg" class="discount-code-msg"></div>
@@ -7461,7 +7487,7 @@
                         <h2>Check if we deliver to you</h2>
                         <p>Enter your postcode, we'll tell you straight away.</p>
                         <div class="pc-input-row">
-                            <input type="text" id="postcodeInput" placeholder="e.g. CO1 1AA" autocomplete="off" maxlength="8">
+                            <input type="text" id="postcodeInput" placeholder="e.g. CO1 1AA" autocomplete="off" maxlength="8" aria-label="Postcode">
                             <button class="btn btn-primary" id="postcodeCheckBtn" type="button">Check</button>
                         </div>
                         <div class="pc-result" id="postcodeResult"></div>
@@ -8719,6 +8745,7 @@
         // unchanged. The final, authoritative check happens again at
         // charge time regardless — this is only ever a preview.
         function cartQualifiesForDiscount(d) {
+            if (d.minOrder && cartSubtotal() < d.minOrder) return false;
             if (d.qualifyingScope === 'all' || !d.qualifyingScope) return cart.length > 0;
             if (d.qualifyingScope === 'category') return cart.some(i => i.catSlug === d.qualifyingCategory);
             if (d.qualifyingScope === 'product') return cart.some(i => i.id.startsWith(d.qualifyingProductId));
@@ -9306,7 +9333,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.2';
+        const BUILD_VERSION = '2026-09-02.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9569,7 +9596,7 @@
       </span>` : (typeof p.weight === 'number' ? `<span class="bundle-item-weight">${fmtWeight(p.weight)}</span>` : '');
             return `
       <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}">
-        <span>${p.name}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
+        <span>${escapeHtml(p.name)}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
         ${weightDisplay}
         <span>${outOfStock ? '' : money(effectivePrice(p))}</span>
       </div>`;
@@ -9638,8 +9665,8 @@
     <div class="bundle-card" id="bundleCard-${bi}">
       <button type="button" class="bundle-remove-btn" onclick="removeBundle(${bi})" aria-label="Remove bundle">&times;</button>
       ${discountPct > 0 ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
-      <h3>${bundle.name}</h3>
-      <div class="bundle-tagline">${bundle.tagline}</div>
+      <h3>${escapeHtml(bundle.name)}</h3>
+      <div class="bundle-tagline">${escapeHtml(bundle.tagline || '')}</div>
       <div class="bundle-items">${itemRows}</div>
       ${totalRow}
       ${bundleWeightTotalHTML(inStockItems)}
@@ -10043,8 +10070,8 @@
     <div class="combo-card" id="comboCard-${ci}">
       <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
       ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
-      <h3>${combo.name}</h3>
-      <div class="bundle-tagline">${combo.description || ''}</div>
+      <h3>${escapeHtml(combo.name)}</h3>
+      <div class="bundle-tagline">${escapeHtml(combo.description || '')}</div>
       <div class="bundle-items">${itemRows}</div>
       ${totalRow}
       ${bundleWeightTotalHTML(inStockItems)}
@@ -10840,7 +10867,7 @@
         // falls back to the Coming Soon placeholder if there's no image yet, or if it fails to load.
         function productPhotoHTML(p, altText) {
             if (p.image) {
-                return `<img src="${p.image}" alt="${altText}" loading="lazy" decoding="async" class="product-photo-img"
+                return `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(altText)}" loading="lazy" decoding="async" class="product-photo-img"
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="thumb-placeholder" style="display:none;">${comingSoonThumbHTML(p)}</div>`;
             }
@@ -10863,8 +10890,8 @@
           ${productPhotoHTML(p, p.name)}
         </div>
         <div class="product-body">
-          <h4>${p.name}</h4>
-          <div class="product-unit">${p.unit}</div>
+          <h4>${escapeHtml(p.name)}</h4>
+          <div class="product-unit">${escapeHtml(p.unit || '')}</div>
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
           </div>
@@ -11479,7 +11506,7 @@
             if (!picker) return;
             if (!p.weightVariants || !p.weightVariants.length) { picker.innerHTML = ''; return; }
             picker.innerHTML = p.weightVariants.map((v, i) => `
-      <button type="button" class="pd-variant-pill ${pdSelectedVariant === i ? 'active' : ''}" onclick="selectPdVariant(${i})">${v.label}, ${money(v.price)}</button>`).join('');
+      <button type="button" class="pd-variant-pill ${pdSelectedVariant === i ? 'active' : ''}" onclick="selectPdVariant(${i})">${escapeHtml(v.label)}, ${money(v.price)}</button>`).join('');
         }
         function selectPdVariant(i) {
             pdSelectedVariant = i;
@@ -11561,9 +11588,9 @@
       <div class="cart-row cart-row-combo">
         <div class="cart-thumb">${item.emoji || DEFAULT_DISH_ICON_SVG}</div>
         <div class="cart-info">
-          <h4>${item.name}</h4>
-          <span>${item.unit}</span>
-          <span class="combo-included">Includes: ${(item.comboItems || []).join(', ')}</span>
+          <h4>${escapeHtml(item.name)}</h4>
+          <span>${escapeHtml(item.unit || '')}</span>
+          <span class="combo-included">Includes: ${(item.comboItems || []).map(escapeHtml).join(', ')}</span>
         </div>
         <div class="cart-qty cart-qty-locked" title="Combo pricing is fixed, quantities inside can't be adjusted separately">Combo</div>
         <div class="cart-price">${money(item.price * item.qty)}</div>
@@ -11593,8 +11620,8 @@
       <div class="cart-row">
         <div class="cart-thumb">${thumbHTML}</div>
         <div class="cart-info">
-          <h4>${item.name}</h4>
-          <span>${item.unit}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
+          <h4>${escapeHtml(item.name)}</h4>
+          <span>${escapeHtml(item.unit || '')}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
           ${item.isSubscription ? `<span class="subscription-badge">Subscription, every ${item.subscriptionFrequency} weeks</span>` : ''}
         </div>
         <div class="cart-qty">
@@ -11685,6 +11712,10 @@
         window.removeFromCart = removeFromCart;
 
         function updateSummaries() {
+            if (appliedDiscount && !cartQualifiesForDiscount(appliedDiscount)) {
+                appliedDiscount = null;
+                showToast("Your discount code no longer applies, your basket changed.");
+            }
             const sub = cartSubtotal();
             const postcodeField = document.getElementById('dPostcode');
             const postcode = postcodeField ? postcodeField.value : '';
@@ -12290,7 +12321,8 @@
             const { data, error } = await supabaseClient
                 .from('orders')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(100);
             if (error) {
                 el.innerHTML = '<div class="order-history-error">Couldn\'t load your orders right now, please try again shortly.</div>';
                 return;
@@ -12329,8 +12361,28 @@
                 } else {
                     const [catSlug, idxStr] = id.split('::');
                     const p = catSlug ? getProduct(catSlug, Number(idxStr)) : null;
-                    if (p && p.stock !== 'out') { addToCart(p, item.qty || 1); added++; }
-                    else { skipped++; }
+                    // Base product just gates current availability — the
+                    // actual line re-added must keep this order item's own
+                    // id/price/weight, since a weight-variant or subscription
+                    // id (catSlug::idx::<variant>, or a ::sub<freq> suffix)
+                    // prices and weighs differently than the plain base
+                    // product getProduct() would otherwise hand back here.
+                    if (p && p.stock !== 'out') {
+                        const existingLine = cart.find(ci => ci.id === id);
+                        if (existingLine) { existingLine.qty += (item.qty || 1); }
+                        else {
+                            const entry = {
+                                id, code: item.code, name: item.name, unit: item.unit,
+                                price: item.price, originalPrice: item.originalPrice != null ? item.originalPrice : item.price,
+                                onSale: !!item.onSale, emoji: item.emoji || p.emoji, catSlug, qty: item.qty || 1,
+                            };
+                            if (typeof item.weight === 'number') entry.weight = item.weight;
+                            if (item.isSubscription) { entry.isSubscription = true; entry.subscriptionFrequency = item.subscriptionFrequency; }
+                            cart.push(entry);
+                        }
+                        updateCartBadge();
+                        added++;
+                    } else { skipped++; }
                 }
             });
             if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Reorder'; }
@@ -12406,7 +12458,8 @@
             const { data, error } = await supabaseClient
                 .from('orders')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(500);
             if (error) {
                 el.innerHTML = '<div class="order-history-error">Couldn\'t load orders right now, please try again shortly.</div>';
                 return;
@@ -12857,9 +12910,10 @@
             const deliveryFeeRevenue = nonCancelled.reduce((s, o) => s + (o.delivery_fee || 0), 0);
             const productRevenue = revenue - deliveryFeeRevenue;
             const tierCounts = new Map();
+            const sortedWeightTiers = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
             deliveryOrders.forEach(o => {
                 const w = (Array.isArray(o.items) ? o.items : []).reduce((s, i) => s + ((typeof i.weight === 'number' ? i.weight : 0) * (i.qty || 0)), 0);
-                const tier = deliveryWeightTiers.find(t => w <= t.maxWeight) || deliveryWeightTiers[deliveryWeightTiers.length - 1];
+                const tier = sortedWeightTiers.find(t => w <= t.maxWeight) || sortedWeightTiers[sortedWeightTiers.length - 1];
                 const tierLabel = (tier && tier.label) || 'Unknown';
                 tierCounts.set(tierLabel, (tierCounts.get(tierLabel) || 0) + 1);
             });
@@ -13109,12 +13163,12 @@
             const isPickup = lastOrder.fulfilment === 'pickup';
             const slotLine = (!isPickup && di.slotDay) ? `<br>${new Date(di.slotDay).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}` : '';
             document.getElementById('invAddress').innerHTML = isPickup
-                ? `${di.name || ''}<br>Collecting in store: 7 Lancaster Road<br>Ipswich, IP4 2NY<br>${di.phone || ''}`
-                : `${di.name || ''}<br>${di.address || ''}<br>${di.town || ''} ${di.postcode || ''}<br>${di.phone || ''}${slotLine}`;
+                ? `${escapeHtml(di.name || '')}<br>Collecting in store: 7 Lancaster Road<br>Ipswich, IP4 2NY<br>${escapeHtml(di.phone || '')}`
+                : `${escapeHtml(di.name || '')}<br>${escapeHtml(di.address || '')}<br>${escapeHtml(di.town || '')} ${escapeHtml(di.postcode || '')}<br>${escapeHtml(di.phone || '')}${slotLine}`;
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
-      <td class="inv-item-name">${i.name}${i.code ? ` <span class="inv-item-code">(${i.code})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.join(', ')}` : i.unit}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
+      <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.map(escapeHtml).join(', ')}` : escapeHtml(i.unit || '')}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
       <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
       <td class="inv-qty">${i.qty}</td>
       <td class="inv-line-total">${money(i.price * i.qty)}</td>
@@ -13820,7 +13874,7 @@
             <label>Weight options (optional, one product with several sizes, e.g. 2kg / 5kg / 10kg / 20kg, instead of a separate product per size)</label>
             <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${(product.weightVariants || []).map((v, vi) => `
               <div class="ep-variant-row">
-                <span>${v.label}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
+                <span>${escapeHtml(v.label)}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
                 <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
               </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>'}</div>
             <div class="ep-variant-add-row">
@@ -13846,7 +13900,7 @@
             if (!list) return;
             list.innerHTML = (product.weightVariants || []).map((v, vi) => `
               <div class="ep-variant-row">
-                <span>${v.label}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
+                <span>${escapeHtml(v.label)}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
                 <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
               </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>';
         }
@@ -14307,7 +14361,7 @@
                 if (row.price != null) product.price = row.price;
                 if (row.sale_price != null) product.salePrice = row.sale_price; else delete product.salePrice;
                 if (row.stock) product.stock = row.stock;
-                if (row.weight != null) product.weight = row.weight;
+                if (row.weight != null) product.weight = row.weight; else delete product.weight;
                 if (row.unit_override) product.unitOverride = row.unit_override;
                 if (row.description) product.description = row.description;
                 if (Array.isArray(row.weight_variants) && row.weight_variants.length) product.weightVariants = row.weight_variants;
@@ -14376,7 +14430,7 @@
         function renderSearchDropdown(resultsEl, items, query) {
             if (!query.trim()) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
             if (items.length === 0) {
-                resultsEl.innerHTML = `<div class="search-empty">No matches for "${query}" yet, try another word.</div>`;
+                resultsEl.innerHTML = `<div class="search-empty">No matches for "${escapeHtml(query)}" yet, try another word.</div>`;
                 resultsEl.classList.add('open');
                 return;
             }
