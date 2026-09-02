@@ -661,7 +661,7 @@
             left: 0; right: 0; bottom: -8px;
             height: 3px;
             border-radius: 999px;
-            background: var(--chartreuse);
+            background: var(--orange);
             transform: scaleX(0);
             transform-origin: center;
             transition: transform 0.25s cubic-bezier(.4,0,.2,1);
@@ -1008,8 +1008,8 @@
                 transform: translateY(-3px);
             }
             .btn-primary:hover {
-                box-shadow: 0 14px 30px rgba(144, 184, 0, 0.4);
-                background: var(--chartreuse-soft);
+                box-shadow: 0 14px 30px rgba(225, 225, 0, 0.45);
+                background: #cfcf00;
             }
             .btn-outline:hover {
                 border-color: rgba(250, 249, 242, 0.7);
@@ -1040,14 +1040,14 @@
         }
 
         .btn-primary {
-            background: var(--chartreuse);
+            background: var(--orange);
             color: var(--aubergine-deep);
-            box-shadow: 0 6px 20px rgba(144, 184, 0, 0.28);
+            box-shadow: 0 6px 20px rgba(225, 225, 0, 0.35);
         }
 
         .btn-primary:active {
-            background: var(--chartreuse-rich);
-            box-shadow: 0 4px 12px rgba(144, 184, 0, 0.3);
+            background: #b8b800;
+            box-shadow: 0 4px 12px rgba(225, 225, 0, 0.35);
         }
 
         .btn-outline {
@@ -1404,8 +1404,8 @@
             transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
         }
         @keyframes ctaPulseGlow {
-            0%, 100% { box-shadow: 0 6px 20px rgba(144, 184, 0, 0.28); }
-            50% { box-shadow: 0 10px 34px rgba(144, 184, 0, 0.58); }
+            0%, 100% { box-shadow: 0 6px 20px rgba(225, 225, 0, 0.35); }
+            50% { box-shadow: 0 10px 34px rgba(225, 225, 0, 0.65); }
         }
         @keyframes ctaPulseBorder {
             0%, 100% { border-color: rgba(var(--border-rgb), 0.18); box-shadow: 0 0 0 rgba(144, 184, 0, 0); }
@@ -1414,7 +1414,7 @@
         @media (hover: hover) and (pointer: fine) {
             .cta-row .btn-primary:hover {
                 animation-play-state: paused;
-                box-shadow: 0 14px 36px rgba(144, 184, 0, 0.62);
+                box-shadow: 0 14px 36px rgba(225, 225, 0, 0.7);
             }
             .cta-row .btn-outline-dark:hover {
                 animation-play-state: paused;
@@ -1714,7 +1714,6 @@
             pointer-events: none;
         }
         .about-thanks > * { position: relative; z-index: 1; }
-        .about-thanks .section-eyebrow { color: var(--chartreuse); }
         .about-thanks h2 {
             font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.4vw, 34px);
             letter-spacing: -0.01em; color: var(--cream); margin: 10px 0 18px;
@@ -1739,8 +1738,6 @@
             color: #2C1C10;
             padding: 88px 0 96px;
         }
-        .shop-section .section-eyebrow { color: var(--chartreuse-rich); }
-
         .bundles-section {
             background: var(--page-bg);
             padding: 80px 0 88px;
@@ -1839,7 +1836,6 @@
         }
 
         .combos-section { background: #FAF2E3; padding: 64px 0 60px; }
-        .combos-section .section-eyebrow { color: var(--chartreuse-rich) !important; }
         .combos-section h2 { color: #2C1C10 !important; }
         .combos-section .new-section-head p { color: #6b5c4f; }
         .combos-section .view-all-btn { color: #2C1C10; background: rgba(44, 28, 16, 0.05); }
@@ -1969,9 +1965,6 @@
         #groupCategorySection {
             background: var(--section-alt-bg);
         }
-        #shopByGroup .section-eyebrow {
-            color: var(--heading-mid);
-        }
         #shopByGroup .section-head p {
             color: rgba(var(--border-rgb), 0.65);
         }
@@ -1989,12 +1982,16 @@
         }
 
         .section-eyebrow {
+            display: inline-block;
             font-family: var(--display);
-            font-weight: 500;
-            font-size: 13px;
-            letter-spacing: 0.2em;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
-            color: var(--chartreuse);
+            background: var(--orange);
+            color: var(--aubergine-deep);
+            padding: 5px 14px;
+            border-radius: 999px;
             margin-bottom: 14px;
         }
 
@@ -3519,27 +3516,19 @@
         /* A fresh badge node is rendered every time its card is (no reflow
            trick needed to replay it, unlike route-view-enter), so this
            triggers on every appearance: new stock/sale state, a re-render,
-           or the card simply entering the grid for the first time. Fades
-           in once, then keeps a slow, low-amplitude pulse going for as
-           long as the badge is on screen — a full bounce loop across a
-           whole grid of badges reads as busy rather than premium and
-           fights for attention against the prices, so this stays gentle
-           enough to sit in peripheral vision rather than demand it, while
-           still being visibly "alive" whenever someone actually looks,
-           regardless of when they happen to scroll it into view. */
+           or the card simply entering the grid for the first time. A
+           continuous pulse across a whole grid of these read as busy
+           rather than premium and fought for attention against the
+           prices, so this is a one-time fade-in only now — still
+           noticeable when it appears, not still demanding attention
+           a minute later. */
         .stock-badge.low, .stock-badge.out, .sale-badge {
             transform-origin: center;
-            animation:
-                badge-fade-in 0.25s ease-out both,
-                badge-pulse 2.4s ease-in-out 0.25s infinite;
+            animation: badge-fade-in 0.25s ease-out both;
         }
         @keyframes badge-fade-in {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
-        @keyframes badge-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.07); }
         }
         @media (prefers-reduced-motion: reduce) {
             .stock-badge.low, .stock-badge.out, .sale-badge { animation: none; }
@@ -9381,7 +9370,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.10';
+        const BUILD_VERSION = '2026-09-02.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10950,15 +10939,13 @@
             const href = `#/product/${p.catSlug}/${pidx}`;
             const stock = p.stock || 'in';
             const outOfStock = stock === 'out';
-            const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
             return `
     <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
-          <span class="stock-badge ${stock}">${stockLabel(stock)}</span>
-          ${onSale ? '<span class="sale-badge">Sale</span>' : ''}
+          ${stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : ''}
           ${productPhotoHTML(p, p.name)}
         </div>
         <div class="product-body">
