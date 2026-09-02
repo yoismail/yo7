@@ -9333,7 +9333,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.3';
+        const BUILD_VERSION = '2026-09-02.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9371,6 +9371,11 @@
             return { text: `£${perUnit.toFixed(2)}/${measureLabel}`, perUnit, measure: parsed.measure };
         }
         function priceHTML(p, size) {
+            const variants = Array.isArray(p.weightVariants) ? p.weightVariants : [];
+            if (variants.length) {
+                const prices = [effectivePrice(p), ...variants.map(v => v.price).filter(n => typeof n === 'number')];
+                return `<span class="price-now">From ${money(Math.min(...prices))}</span>`;
+            }
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             if (!onSale) return `<span class="price-now">${money(p.price)}</span>`;
             const pct = Math.round((1 - p.salePrice / p.price) * 100);
@@ -10545,7 +10550,7 @@
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
-        <h4>${p.name}</h4>
+        <h4>${escapeHtml(p.name)}</h4>
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
         <div class="price">${priceHTML(p)}</div>
       </div>
@@ -10563,7 +10568,7 @@
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
-        <h4>${p.name}</h4>
+        <h4>${escapeHtml(p.name)}</h4>
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
         <div class="price">${priceHTML(p)}</div>
       </div>
@@ -10732,7 +10737,7 @@
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
-        <h4>${p.name}</h4>
+        <h4>${escapeHtml(p.name)}</h4>
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
         <div class="price">${priceHTML(p)}</div>
       </div>
@@ -10880,6 +10885,7 @@
             const outOfStock = stock === 'out';
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
             const unitInfo = unitPriceInfo(p);
+            const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
             return `
     <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
@@ -10891,7 +10897,7 @@
         </div>
         <div class="product-body">
           <h4>${escapeHtml(p.name)}</h4>
-          <div class="product-unit">${escapeHtml(p.unit || '')}</div>
+          <div class="product-unit">${escapeHtml(p.unit || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
           </div>
@@ -12795,21 +12801,52 @@
             const d = new Date(iso);
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         }
+        // Same client-side paging pattern as Manage Orders (renderAdminOrdersPage):
+        // fetch the capped set once, cache it, then just slice/re-render on
+        // Prev/Next so paging back and forth doesn't re-hit the database.
+        const ACTIVITY_LOG_PAGE_SIZE = 15;
+        let activityLogCache = [];
+        let activityLogPage = 0;
         async function renderActivityLog() {
             const el = document.getElementById('activityLogList');
             if (!el || !supabaseClient) return;
+            el.innerHTML = '<div class="analytics-loading">Loading activity…</div>';
             const { data, error } = await supabaseClient
                 .from('admin_audit_log')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(100);
+                .limit(300);
             if (error) { el.innerHTML = '<div class="analytics-empty">Couldn\'t load the activity log right now.</div>'; return; }
-            if (!data || data.length === 0) { el.innerHTML = '<div class="analytics-empty">No admin activity recorded yet, this fills in as edits are made from here on.</div>'; return; }
-            el.innerHTML = data.map(entry => `
+            activityLogCache = data || [];
+            activityLogPage = 0;
+            renderActivityLogPage();
+        }
+        function renderActivityLogPage() {
+            const el = document.getElementById('activityLogList');
+            if (!el) return;
+            if (activityLogCache.length === 0) { el.innerHTML = '<div class="analytics-empty">No admin activity recorded yet, this fills in as edits are made from here on.</div>'; return; }
+            const totalPages = Math.max(1, Math.ceil(activityLogCache.length / ACTIVITY_LOG_PAGE_SIZE));
+            if (activityLogPage >= totalPages) activityLogPage = totalPages - 1;
+            const start = activityLogPage * ACTIVITY_LOG_PAGE_SIZE;
+            const pageEntries = activityLogCache.slice(start, start + ACTIVITY_LOG_PAGE_SIZE);
+            el.innerHTML = pageEntries.map(entry => `
     <div class="activity-log-row">
       <div class="activity-log-desc">${activityLogDescribe(entry)}<div class="activity-log-meta">${escapeHtml(entry.admin_email || '')}</div></div>
       <div class="activity-log-time">${activityLogTimeLabel(entry.created_at)}</div>
-    </div>`).join('');
+    </div>`).join('') + (totalPages > 1 ? `
+    <div class="admin-orders-pagination">
+        <button type="button" class="analytics-month-btn" id="activityLogPrevPage" aria-label="Previous page" ${activityLogPage === 0 ? 'disabled' : ''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span>Page ${activityLogPage + 1} of ${totalPages} &middot; ${activityLogCache.length} entr${activityLogCache.length === 1 ? 'y' : 'ies'}</span>
+        <button type="button" class="analytics-month-btn" id="activityLogNextPage" aria-label="Next page" ${activityLogPage >= totalPages - 1 ? 'disabled' : ''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+    </div>` : '');
+            const prevBtn = document.getElementById('activityLogPrevPage');
+            const nextBtn = document.getElementById('activityLogNextPage');
+            if (prevBtn) prevBtn.addEventListener('click', () => { activityLogPage--; renderActivityLogPage(); });
+            if (nextBtn) nextBtn.addEventListener('click', () => { activityLogPage++; renderActivityLogPage(); });
         }
 
         // 'month' pages one calendar month at a time (the original
