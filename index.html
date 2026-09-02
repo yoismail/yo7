@@ -1167,19 +1167,69 @@
            — a background watermark, not a small corner signature. Text
            rather than the icon since the icon watermark is already right
            there; this is the wordmark half of the same mark. */
-        .hero-text-watermark {
+        /* Shared by every large background "Yo7" watermark across the site
+           (hero, About intro, order confirmation, newsletter panel) — same
+           family/weight/letter-spacing everywhere, so it always reads as
+           one consistent brand mark. Each place using it sets its own
+           position, size, and color/opacity (a section that stays a fixed
+           light background regardless of theme, like the footer or
+           .shop-header, needs a fixed faded ink color rather than the
+           theme-flipping var(--ink)/--hero-watermark-op pairing the hero
+           and confirmation page use). */
+        .text-watermark {
             position: absolute;
-            left: -3%;
-            bottom: -10%;
             z-index: 1;
             font-family: var(--display); font-weight: 700;
-            font-size: clamp(120px, 22vw, 340px); line-height: 0.8; letter-spacing: -0.02em;
-            color: var(--ink);
-            opacity: var(--hero-watermark-op);
+            line-height: 0.8; letter-spacing: -0.02em;
             pointer-events: none;
             white-space: nowrap;
         }
-        .hero-text-watermark .accent { color: var(--chartreuse-rich); }
+        .text-watermark .accent { color: var(--chartreuse-rich); }
+        .hero-text-watermark {
+            left: -3%;
+            bottom: -10%;
+            font-size: clamp(120px, 22vw, 340px);
+            color: var(--ink);
+            opacity: var(--hero-watermark-op);
+        }
+        /* .shop-header (About Us intro) is a fixed white/light panel in
+           both themes (see .shop-header-story), so this uses a fixed faded
+           ink colour rather than the theme-flipping var(--ink) the hero
+           and confirmation page use — var(--ink) would fade to near-white
+           and vanish here in dark mode. */
+        .about-intro-watermark {
+            right: -3%;
+            bottom: -22%;
+            font-size: clamp(90px, 15vw, 220px);
+            color: rgba(44, 28, 16, 0.06);
+        }
+        /* .confirm-section (order confirmation) does flip with the theme
+           (background: var(--page-bg)), so this can reuse the same
+           var(--ink)/--hero-watermark-op pairing the hero uses. top is a
+           fixed px offset rather than a percentage on purpose — this
+           section's height varies a lot with the invoice's own length
+           below it, and a percentage bleed (sized off that whole tall
+           section) pushed the mark's visible portion entirely above the
+           section and off-screen. A fixed offset keeps it anchored near
+           the "Order placed" heading regardless of how long the invoice
+           under it ends up being. Excluded from print (see the print media
+           query below) so it never bleeds into the saved/printed invoice. */
+        .confirm-watermark {
+            right: -3%;
+            top: -10px;
+            font-size: clamp(80px, 14vw, 220px);
+            color: var(--ink);
+            opacity: var(--hero-watermark-op);
+        }
+        /* .footer-newsletter is a fixed white card regardless of theme
+           (same reasoning as .shop-header above), and much shallower than
+           the hero, hence the smaller clamp. */
+        .newsletter-watermark {
+            right: 4%;
+            bottom: -14px;
+            font-size: clamp(48px, 9vw, 120px);
+            color: rgba(44, 28, 16, 0.07);
+        }
         .hero-scroll-cue svg { width: 100%; height: 100%; }
         @keyframes heroScrollCue {
             0%, 100% { transform: translate(-50%, 0); opacity: 0.5; }
@@ -2571,6 +2621,7 @@
             opacity: 0.7;
         }
         .footer-newsletter-text {
+            position: relative; z-index: 2;
             display: flex; align-items: center; gap: 16px;
         }
         .footer-newsletter-icon {
@@ -2584,6 +2635,7 @@
         }
         .footer-newsletter p { font-size: 13px; color: #6b5c4f; }
         .newsletter-form {
+            position: relative; z-index: 2;
             display: flex; gap: 10px; flex-wrap: wrap;
         }
         .newsletter-form input {
@@ -2985,6 +3037,7 @@
             padding: 52px 0 48px;
             border-bottom: 1px solid rgba(44, 28, 16, 0.08);
         }
+        .shop-header .wrap { position: relative; z-index: 2; }
 
         .shop-header-contact,
         .shop-header-story {
@@ -3411,9 +3464,9 @@
 
         .stock-badge {
             position: absolute; top: 10px; left: 10px;
-            font-family: var(--display); font-weight: 700; font-size: 10px;
+            font-family: var(--display); font-weight: 700; font-size: 8.5px;
             letter-spacing: 0.03em; text-transform: uppercase;
-            padding: 5px 10px; border-radius: 999px;
+            padding: 4px 8px; border-radius: 999px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.18), 0 0 0 2px var(--card-bg);
             z-index: 3;
         }
@@ -3421,18 +3474,29 @@
         .stock-badge.low { background: var(--orange); color: var(--aubergine); }
         .stock-badge.out { background: #5a4d48; color: #fff; }
         /* A fresh badge node is rendered every time its card is (no reflow
-           trick needed to replay it, unlike route-view-enter), so this pops
-           in on every appearance: new stock/sale state, a re-render, or the
-           card simply entering the grid for the first time. */
+           trick needed to replay it, unlike route-view-enter), so this
+           triggers on every appearance: new stock/sale state, a re-render,
+           or the card simply entering the grid for the first time. Most
+           product grids sit below the fold on load, though, and a CSS
+           animation's clock starts the instant the element paints —
+           on-screen or not — so a single quick pop was finishing before
+           most visitors had scrolled down far enough to ever see it. This
+           fades in once, then settles with a few short bounces rather than
+           one, so it's still visibly moving through the couple of seconds
+           it typically takes to actually scroll a card into view. */
         .stock-badge.low, .stock-badge.out, .sale-badge {
             transform-origin: center;
-            animation: badge-pop 0.5s cubic-bezier(.22,1,.36,1) both;
+            animation:
+                badge-fade-in 0.25s ease-out both,
+                badge-bounce 0.55s cubic-bezier(.34,1.56,.64,1) 3 0.25s both;
         }
-        @keyframes badge-pop {
-            0% { transform: scale(0.35); opacity: 0; }
-            55% { transform: scale(1.18); opacity: 1; }
-            75% { transform: scale(0.93); }
-            100% { transform: scale(1); }
+        @keyframes badge-fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes badge-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.16); }
         }
         @media (prefers-reduced-motion: reduce) {
             .stock-badge.low, .stock-badge.out, .sale-badge { animation: none; }
@@ -3494,9 +3558,9 @@
         .sale-badge {
             position: absolute; top: 10px; right: 10px;
             background: var(--chartreuse); color: var(--aubergine);
-            font-family: var(--display); font-weight: 700; font-size: 10px;
+            font-family: var(--display); font-weight: 700; font-size: 8.5px;
             letter-spacing: 0.03em; text-transform: uppercase;
-            padding: 5px 10px; border-radius: 999px;
+            padding: 4px 8px; border-radius: 999px;
             box-shadow: 0 3px 8px rgba(144,184,0,0.4), 0 0 0 2px var(--card-bg);
             z-index: 3;
         }
@@ -4685,9 +4749,12 @@
 
         /* ================= CONFIRMATION / INVOICE ================= */
         .confirm-section {
+            position: relative;
+            overflow: hidden;
             background: var(--page-bg);
             padding: 60px 0 110px;
         }
+        .confirm-section .wrap { position: relative; z-index: 2; }
 
         .confirm-head {
             text-align: center;
@@ -4941,6 +5008,7 @@
             .float-order,
             .confirm-head,
             .confirm-actions,
+            .confirm-watermark,
             .email-fallback-note {
                 display: none !important;
             }
@@ -6160,7 +6228,7 @@
             <div class="hero-scroll-cue" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             </div>
-            <div class="hero-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
+            <div class="text-watermark hero-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         </header>
 
         <div class="hero-glimpse-strip">
@@ -6883,6 +6951,7 @@
     <!-- ================= ORDER CONFIRMATION / INVOICE ================= -->
     <div id="view-confirm" class="hidden-view">
         <section class="confirm-section">
+            <div class="text-watermark confirm-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
             <div class="wrap">
                 <div class="confirm-head">
                     <div class="confirm-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -7046,6 +7115,7 @@
     <!-- ================= ABOUT US ================= -->
     <div id="view-about" class="hidden-view">
         <header class="shop-header shop-header-story">
+            <div class="text-watermark about-intro-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; About Us</div>
                 <h1>About Us</h1>
@@ -8004,6 +8074,7 @@
         </svg>
         <div class="wrap">
             <div class="footer-newsletter">
+                <div class="text-watermark newsletter-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
@@ -9198,6 +9269,7 @@
             return changes.map(c => `${escapeHtml(c.label)}: ${escapeHtml(c.from)} → ${escapeHtml(c.to)}`).join(', ');
         }
         function unitOverrideLabel(u) { return u ? `${u.qty}${u.measure || ''}` : null; }
+        function variantSummary(variants) { return variants.map(v => `${v.label} ${money(v.price)}`).join(', '); }
         let deliveryInfo = null;
         let lastOrder = null;
         let adminOrdersChannel = null; // realtime subscription for "new order placed" notifications, admins only
@@ -9234,7 +9306,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-01.39';
+        const BUILD_VERSION = '2026-09-02.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9322,6 +9394,22 @@
             try { localStorage.setItem('yo7-cart', JSON.stringify(cart)); }
             catch (e) { /* localStorage unavailable, cart just won't survive a refresh this session */ }
         }
+        // Records which account's cart is currently mirrored in this
+        // browser's localStorage — see mergeGuestCartIntoAccount below for
+        // why this matters: without it, a device that's synced this same
+        // account before (e.g. its session just lapsed rather than an
+        // explicit logout, which is what actually clears this) gets its own
+        // stale mirror re-merged into the real account cart on the next
+        // login, doubling every matching item's quantity.
+        function tagCartOwner(userId) {
+            try { localStorage.setItem('yo7-cart-owner', userId); } catch (e) {}
+        }
+        function getCartOwnerTag() {
+            try { return localStorage.getItem('yo7-cart-owner'); } catch (e) { return null; }
+        }
+        function clearCartOwnerTag() {
+            try { localStorage.removeItem('yo7-cart-owner'); } catch (e) {}
+        }
         function loadCartFromStorage() {
             try {
                 const saved = JSON.parse(localStorage.getItem('yo7-cart') || '[]');
@@ -9383,6 +9471,7 @@
             const serverItems = await fetchAccountCartItems();
             if (serverItems === null) return;
             if (serverItems.length > 0) cart = mergeCartItems(serverItems, cart);
+            tagCartOwner(currentSupabaseUser.id);
             renderCartList();
             updateCartBadge(); // persists the merged result back to Supabase + localStorage
         }
@@ -9396,6 +9485,7 @@
             const serverItems = await fetchAccountCartItems();
             if (serverItems === null) return;
             cart = serverItems;
+            tagCartOwner(currentSupabaseUser.id);
             renderCartList();
             updateCartBadge();
         }
@@ -13467,6 +13557,18 @@
         // ordinary page load must not re-merge the basket, see
         // mergeGuestCartIntoAccount/loadAccountCart above for why that
         // distinction matters.
+        //
+        // A "fresh" sign-in isn't always actually fresh from the cart's
+        // point of view, though: if this browser already synced this exact
+        // account's cart before (yo7-cart-owner still tags it, because the
+        // session merely lapsed rather than an explicit log-out, which is
+        // what clears that tag), the local cart is a stale mirror of the
+        // account's own saved cart, not new guest additions. Merging it in
+        // again would double every matching item's quantity — the actual
+        // "logging in on different devices adds items" bug reported. So
+        // that case is treated as a session restore for the cart
+        // specifically (authoritative reload, no merge) even though it's a
+        // real sign-in for everything else in this function.
         function setUser(name, supabaseUser, { freshSignIn = true } = {}) {
             currentUser = name;
             currentSupabaseUser = supabaseUser || null;
@@ -13477,7 +13579,8 @@
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             renderCartList();
             syncLoyaltyState().then(renderCartList);
-            if (freshSignIn) mergeGuestCartIntoAccount(); else loadAccountCart();
+            const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
+            if (freshSignIn && !staleOwnCartMirror) mergeGuestCartIntoAccount(); else loadAccountCart();
             refreshAdminStatus();
             subscribeMyOrders();
         }
@@ -13497,6 +13600,7 @@
             clearTimeout(cartSyncTimer);
             cart = [];
             saveCartToStorage();
+            clearCartOwnerTag();
             updateCartBadge();
             if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
@@ -13792,6 +13896,7 @@
                 price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
                 weight: typeof product.weight === 'number' ? product.weight : null,
                 unitOverride: product.unitOverride || null, description: product.description || null,
+                weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
             };
             const priceVal = parseFloat(document.getElementById(`ep-price-${catSlug}-${idx}`).value);
             const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`).value;
@@ -13838,6 +13943,7 @@
                     weight: typeof product.weight === 'number' ? product.weight : null,
                     unit_override: product.unitOverride || null,
                     description: product.description || null,
+                    weight_variants: (product.weightVariants && product.weightVariants.length) ? product.weightVariants : null,
                     updated_at: new Date().toISOString(),
                 });
                 if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000); }
@@ -13846,6 +13952,7 @@
                         price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
                         weight: typeof product.weight === 'number' ? product.weight : null,
                         unitOverride: product.unitOverride || null, description: product.description || null,
+                        weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
                     };
                     const changes = diffFields(before, after, [
                         { key: 'price', label: 'Price', format: money },
@@ -13854,6 +13961,7 @@
                         { key: 'weight', label: 'Weight', format: w => w + 'kg' },
                         { key: 'unitOverride', label: 'Unit size', format: unitOverrideLabel },
                         { key: 'description', label: 'Description', format: () => 'edited' },
+                        { key: 'weightVariants', label: 'Weight options' },
                     ]);
                     logAdminAction('product_updated', 'product', product.name, { changes });
                 }
@@ -14202,6 +14310,8 @@
                 if (row.weight != null) product.weight = row.weight;
                 if (row.unit_override) product.unitOverride = row.unit_override;
                 if (row.description) product.description = row.description;
+                if (Array.isArray(row.weight_variants) && row.weight_variants.length) product.weightVariants = row.weight_variants;
+                else if (row.weight_variants === null) delete product.weightVariants;
             });
             route(); // re-render whatever's currently on screen with the real data now in hand
         }
