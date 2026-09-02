@@ -8426,10 +8426,17 @@
             meat: 'MEA', 'body-oral-products': 'BOP', poultry: 'POU', 'root-vegetables': 'ROV',
             beans: 'BNS', drinks: 'DRK',
         };
-        CATEGORIES.forEach(cat => {
-            const prefix = CATEGORY_CODE_PREFIX[cat.slug] || cat.slug.slice(0, 3).toUpperCase();
-            cat.products.forEach((p, i) => { p.code = `${prefix}-${String(i + 1).padStart(2, '0')}`; });
-        });
+        // Re-run any time the catalogue's shape changes after this initial
+        // load (loadCustomProducts() appending admin-added products), not
+        // just once here, so a new product gets a real code too instead of
+        // sitting without one until the next full page load.
+        function assignProductCodes() {
+            CATEGORIES.forEach(cat => {
+                const prefix = CATEGORY_CODE_PREFIX[cat.slug] || cat.slug.slice(0, 3).toUpperCase();
+                cat.products.forEach((p, i) => { p.code = `${prefix}-${String(i + 1).padStart(2, '0')}`; });
+            });
+        }
+        assignProductCodes();
         const GROUPS = [
             { slug: 'staples', name: 'Staples &amp; Base Ingredients', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l.8 4H8.2L9 3.5Z"/><path d="M8.2 7.5 6.5 19a1.5 1.5 0 0 0 1.5 1.7h8a1.5 1.5 0 0 0 1.5-1.7L15.8 7.5"/></svg>', tagline: 'Rice, flour, beans, yam, the everyday foundations.', categories: ['flour', 'rice', 'root-vegetables', 'beans', 'noodles'] },
             { slug: 'seasoning-oils-flavours', name: 'Seasoning, Oils &amp; Flavours', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h5V6h-5z"/><path d="M8.3 6h7.4l1 13.2a1.5 1.5 0 0 1-1.5 1.6H8.8a1.5 1.5 0 0 1-1.5-1.6L8.3 6Z"/><circle cx="10.7" cy="9.5" r=".55"/><circle cx="13.3" cy="9.5" r=".55"/><circle cx="12" cy="11.6" r=".55"/></svg>', tagline: 'Everything that builds real flavour into a pot.', categories: ['oils', 'seasoning', 'condiments'] },
@@ -9356,7 +9363,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.7';
+        const BUILD_VERSION = '2026-09-02.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12784,6 +12791,7 @@
                     const summary = entry.details && changeSummary(entry.details.changes);
                     return summary ? `${who} updated ${label} — ${summary}` : `${who} updated ${label}`;
                 }
+                case 'product_created': return `${who} added ${label}${entry.details && entry.details.catName ? ` to ${escapeHtml(entry.details.catName)}` : ''}`;
                 case 'product_photo_updated': return `${who} updated the photo for ${label}`;
                 case 'product_photo_removed': return `${who} removed the photo from ${label}`;
                 case 'bundle_updated': case 'combo_updated': {
@@ -14223,6 +14231,9 @@
             <div><label>Price (£)</label><input type="number" step="0.01" min="0" id="apf-price-${uid}" placeholder="0.00"></div>
             <div><label>Sale price (£, optional)</label><input type="number" step="0.01" min="0" id="apf-sale-${uid}"></div>
           </div>
+          <div class="apf-row" style="grid-template-columns:1fr;">
+            <div><label>Weight (kg, used for delivery pricing)</label><input type="number" step="0.01" min="0" id="apf-weight-${uid}" placeholder="e.g. 2 for a 2kg bag"></div>
+          </div>
           <div>
             <label>Description (optional, leave blank to use the default)</label>
             <textarea id="apf-desc-${uid}" rows="2" placeholder="Leave blank to auto-generate from the category"></textarea>
@@ -14240,7 +14251,7 @@
           <label class="apf-checkbox"><input type="checkbox" id="apf-isnew-${uid}" ${presetCategorySlug ? '' : 'checked'}> Feature in "New in stock"</label>
           <label class="apf-checkbox"><input type="checkbox" id="apf-isbestseller-${uid}"> Feature in "Best sellers"</label>
           <div class="apf-actions">
-            <button class="apf-save" type="button" onclick="saveNewProduct('${slotId}', '${uid}', ${presetCategorySlug ? `'${presetCategorySlug}'` : 'null'})">Add product (this tab only)</button>
+            <button class="apf-save" type="button" onclick="saveNewProduct('${slotId}', '${uid}', ${presetCategorySlug ? `'${presetCategorySlug}'` : 'null'})">Add product</button>
             <button class="apf-cancel" type="button" onclick="document.getElementById('${slotId}').innerHTML='';">Cancel</button>
           </div>
         </div>`;
@@ -14278,11 +14289,12 @@
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
 
-        function saveNewProduct(slotId, uid, presetCategorySlug) {
+        async function saveNewProduct(slotId, uid, presetCategorySlug) {
             const name = document.getElementById(`apf-name-${uid}`).value.trim();
             const unit = document.getElementById(`apf-unit-${uid}`).value.trim();
             const price = parseFloat(document.getElementById(`apf-price-${uid}`).value);
             const saleVal = document.getElementById(`apf-sale-${uid}`).value;
+            const weightVal = document.getElementById(`apf-weight-${uid}`).value;
             const catSlug = presetCategorySlug || document.getElementById(`apf-cat-${uid}`).value;
             const stock = document.getElementById(`apf-stock-${uid}`).value;
             const isNewChecked = document.getElementById(`apf-isnew-${uid}`).checked;
@@ -14299,14 +14311,41 @@
 
             const newProduct = { name, unit, price, stock };
             if (saleVal !== '' && !isNaN(parseFloat(saleVal))) newProduct.salePrice = parseFloat(saleVal);
+            if (weightVal !== '' && !isNaN(parseFloat(weightVal))) newProduct.weight = parseFloat(weightVal);
             if (isNewChecked) newProduct.isNew = true;
             if (isBestSellerChecked) newProduct.isBestSeller = true;
             if (descVal) newProduct.description = descVal;
             if (newProductPhotoData[uid]) { newProduct.image = newProductPhotoData[uid]; delete newProductPhotoData[uid]; }
+            // Assigned as the next free slot in this category's own array —
+            // stable across reloads since loadCustomProducts() always
+            // merges every admin-added product back into this exact index
+            // before anything else runs, so a later edit-mode change to
+            // this same product (via product_overrides, keyed the same
+            // "catSlug::idx" way) lands on the right item.
+            const idx = cat.products.length;
             cat.products.push(newProduct);
+            assignProductCodes();
 
             document.getElementById(slotId).innerHTML = '';
             route(); // re-render current view so the new product shows up immediately
+
+            if (!supabaseClient) {
+                showToast('Added here, but accounts aren\'t connected yet, this is preview mode and won\'t survive a refresh.', 5000);
+                return;
+            }
+            const { error } = await supabaseClient.from('custom_products').insert({
+                cat_slug: catSlug, idx, name, unit, price,
+                sale_price: newProduct.salePrice ?? null,
+                weight: newProduct.weight ?? null,
+                stock, description: descVal || null,
+                image_url: newProduct.image || null,
+                is_new: isNewChecked, is_best_seller: isBestSellerChecked,
+            });
+            if (error) {
+                showToast('Added here, but couldn\'t sync to the live site: ' + error.message, 6000);
+            } else {
+                logAdminAction('product_created', 'product', name, { catName: cat.name });
+            }
         }
         window.saveNewProduct = saveNewProduct;
 
@@ -14420,8 +14459,37 @@
         // and actually show up on the live site rather than resetting on
         // refresh or only being visible in the editor's own browser tab.
         function productKey(catSlug, idx) { return catSlug + '::' + idx; }
+        // Admin-created products (the "Add a new product" form) live here,
+        // full rows rather than deltas — product_overrides can only modify
+        // a product that already exists at a given catalogue index, it has
+        // no way to introduce a brand new one. Each row's idx was assigned
+        // as the next free slot in its category at creation time, so
+        // writing it back at that same index here always lands as a plain
+        // append, never a gap — and running this BEFORE product_overrides
+        // (see applyProductOverrides below) means a later edit-mode change
+        // to one of these products already finds it in place, going
+        // through the exact same override path an original product uses.
+        async function loadCustomProducts() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('custom_products').select('*').order('idx');
+            if (error || !data) return;
+            data.forEach(row => {
+                const cat = findCategory(row.cat_slug);
+                if (!cat) return;
+                const product = { name: row.name, unit: row.unit, price: row.price, stock: row.stock || 'in' };
+                if (row.sale_price != null) product.salePrice = row.sale_price;
+                if (row.weight != null) product.weight = row.weight;
+                if (row.description) product.description = row.description;
+                if (row.image_url) product.image = row.image_url;
+                if (row.is_new) product.isNew = true;
+                if (row.is_best_seller) product.isBestSeller = true;
+                cat.products[row.idx] = product;
+            });
+            assignProductCodes();
+        }
         async function applyProductOverrides() {
             if (!supabaseClient) return;
+            await loadCustomProducts();
             const { data, error } = await supabaseClient.from('product_overrides').select('*');
             if (error || !data) return;
             data.forEach(row => {
