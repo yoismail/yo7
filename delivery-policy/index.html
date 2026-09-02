@@ -3242,23 +3242,6 @@
             aspect-ratio: 1/1; position: relative; overflow: hidden;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
-        /* A light gleam sweeps across the category tile's photo on hover —
-           these are the first cards a visitor sees on the homepage, worth
-           the one bit of "someone's paying attention to detail" motion. */
-        .cat-flat-card .thumb::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -60%;
-            width: 40%; height: 100%;
-            background: linear-gradient(75deg, transparent, rgba(255,255,255,0.32), transparent);
-            transform: skewX(-18deg);
-            transition: left 0.7s cubic-bezier(.2,.7,.3,1);
-            pointer-events: none;
-        }
-        .cat-flat-card:hover .thumb::after { left: 130%; }
-        @media (prefers-reduced-motion: reduce) {
-            .cat-flat-card .thumb::after { transition: none; }
-        }
         .cat-flat-photo {
             display: block; width: 100%; height: 100%;
             background-size: 122%; background-position: center 22%;
@@ -3690,22 +3673,6 @@
         }
         .card-add-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
         .card-add-btn:hover { background: var(--chartreuse-soft); }
-        .card-add-btn .icon-check { display: none; }
-        .card-add-btn.just-added {
-            background: var(--aubergine-mid);
-            color: var(--cream);
-            animation: cardAddPulse 0.45s cubic-bezier(.34,1.56,.64,1);
-        }
-        .card-add-btn.just-added .icon-plus { display: none; }
-        .card-add-btn.just-added .icon-check { display: block; }
-        @keyframes cardAddPulse {
-            0% { transform: scale(1); }
-            45% { transform: scale(1.07); }
-            100% { transform: scale(1); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .card-add-btn.just-added { animation: none; }
-        }
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
@@ -9390,7 +9357,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.6';
+        const BUILD_VERSION = '2026-09-02.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10951,10 +10918,9 @@
         </div>
       </a>
       <div class="card-actions">
-        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="quickAdd(this, '${p.catSlug}', ${pidx});">
-          <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
-          <span class="card-add-label">${outOfStock ? 'Out of stock' : 'Add to basket'}</span>
+        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="quickAdd('${p.catSlug}', ${pidx});">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          ${outOfStock ? 'Out of stock' : 'Add to basket'}
         </button>
       </div>
       <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
@@ -10963,21 +10929,11 @@
       <div class="edit-panel-slot"></div>
     </div>`;
         }
-        function quickAdd(btn, catSlug, idx) {
+        function quickAdd(catSlug, idx) {
             const p = getProduct(catSlug, idx);
             if (!p || p.stock === 'out') return;
             addToCart(p, 1);
             showToast(`Added ${p.name} to your basket.`);
-            if (btn) {
-                const label = btn.querySelector('.card-add-label');
-                const prevText = label ? label.textContent : null;
-                if (label) label.textContent = 'Added';
-                btn.classList.add('just-added');
-                setTimeout(() => {
-                    btn.classList.remove('just-added');
-                    if (label && prevText !== null) label.textContent = prevText;
-                }, 1100);
-            }
         }
         window.quickAdd = quickAdd;
 
@@ -11742,7 +11698,7 @@
       </a>
       <div class="checkout-upsell-row">
         <span class="checkout-upsell-price">${money(p.price)}</span>
-        <button type="button" class="checkout-upsell-add" onclick="quickAdd(null, '${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${p.name} to basket">
+        <button type="button" class="checkout-upsell-add" onclick="quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${p.name} to basket">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
