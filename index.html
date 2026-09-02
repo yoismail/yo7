@@ -9333,7 +9333,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.4';
+        const BUILD_VERSION = '2026-09-02.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11178,8 +11178,8 @@
             updateProductJsonLd(p, cat, catSlug, idx);
             const pdGroup = groupForCategory(catSlug);
             document.getElementById('pdCrumb').innerHTML = pdGroup
-                ? `<a href="#/">Home</a> &rsaquo; <a href="#/group/${pdGroup.slug}">${pdGroup.name.replace(/&amp;/g, '&')}</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`
-                : `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${p.name}`;
+                ? `<a href="#/">Home</a> &rsaquo; <a href="#/group/${pdGroup.slug}">${pdGroup.name.replace(/&amp;/g, '&')}</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${escapeHtml(p.name)}`
+                : `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${escapeHtml(p.name)}`;
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
             document.getElementById('pdName').textContent = p.name;
             document.getElementById('pdCode').textContent = p.code ? `Product code: ${p.code}` : '';
@@ -11492,6 +11492,7 @@
         function updatePdPrice() {
             if (!pdCurrent) return;
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
+            document.getElementById('pdUnit').textContent = variant ? variant.label : pdCurrent.unit;
             let unit = variant ? variant.price : effectivePrice(pdCurrent);
             if (pdPurchaseType === 'subscribe') unit = unit * (1 - subscriptionDiscountPct / 100);
             const total = unit * pdQty;
@@ -11511,8 +11512,13 @@
             const picker = document.getElementById('pdVariantPicker');
             if (!picker) return;
             if (!p.weightVariants || !p.weightVariants.length) { picker.innerHTML = ''; return; }
-            picker.innerHTML = p.weightVariants.map((v, i) => `
+            // The base pack is its own selectable pill too, not just the
+            // variants — otherwise picking a variant has no way back.
+            const basePill = `
+      <button type="button" class="pd-variant-pill ${pdSelectedVariant === null ? 'active' : ''}" onclick="selectPdVariant(null)">${escapeHtml(p.unit || '')}, ${money(effectivePrice(p))}</button>`;
+            const variantPills = p.weightVariants.map((v, i) => `
       <button type="button" class="pd-variant-pill ${pdSelectedVariant === i ? 'active' : ''}" onclick="selectPdVariant(${i})">${escapeHtml(v.label)}, ${money(v.price)}</button>`).join('');
+            picker.innerHTML = basePill + variantPills;
         }
         function selectPdVariant(i) {
             pdSelectedVariant = i;
