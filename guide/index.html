@@ -2203,7 +2203,7 @@
         }
         .best-seller-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16); }
         .best-seller-card .thumb {
-            aspect-ratio: 1/1; position: relative; display: flex; flex-direction: column;
+            aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
@@ -2257,7 +2257,7 @@
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
         }
         .new-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16); }
-        .new-card .thumb { aspect-ratio: 1/1; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
+        .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
         .new-tag {
@@ -2355,7 +2355,7 @@
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
         }
         .offer-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16); }
-        .offer-card .thumb { aspect-ratio: 1/1; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
+        .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         .offer-tag {
             position: absolute; top: 10px; left: 10px; background: var(--chartreuse); color: var(--aubergine-deep);
             font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.04em;
@@ -3464,6 +3464,21 @@
         }
 
         .product-photo-img {
+            /* Absolutely positioned rather than a plain flex/block child on
+               purpose: every container this fills (.product-thumb, .pd-image,
+               .new-card .thumb, .best-seller-card .thumb, .offer-card .thumb)
+               is a flex box with align/justify-content:center, and a flex
+               item's default min-height/min-width is "auto" — meaning it
+               won't shrink below its own intrinsic content size no matter
+               what width/height percentages say. A plain product photo is
+               close enough to square that this never showed, but a wide
+               marketing/promo image (banner text, a second product floating
+               beside the main one) is exactly the shape that hits that
+               default and overflows its rounded card, uncropped, regardless
+               of object-fit. Absolute positioning removes it from flex
+               sizing entirely, so it's always exactly its container's box. */
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -4216,6 +4231,7 @@
             text-decoration: none;
         }
         .checkout-upsell-thumb {
+            position: relative;
             width: 100%;
             aspect-ratio: 1;
             border-radius: 10px;
@@ -4285,6 +4301,7 @@
         }
 
         .cart-thumb {
+            position: relative;
             width: 52px;
             height: 52px;
             border-radius: 12px;
@@ -6236,7 +6253,7 @@
     <div class="edit-mode-banner" id="editModeBanner">
         <div class="wrap emb-inner">
             <span class="emb-dot"></span>
-            <span><strong>Edit mode is on.</strong> Price, discount, and stock changes apply live in this browser tab only, they are not saved to a server and will reset on refresh.</span>
+            <span><strong>Edit mode is on.</strong> Product edits save for real — click Save on a product's edit panel to make a change live for every customer, not just this tab.</span>
             <span class="emb-version" id="editModeBannerVersion"></span>
             <button type="button" id="editModeBannerClose">Exit edit mode</button>
         </div>
@@ -9364,7 +9381,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.9';
+        const BUILD_VERSION = '2026-09-02.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10432,10 +10449,38 @@
             renderBestSellersSpotlight();
             renderBestSellersPage();
         }
+        // A product with weight variants is really several separately-priced
+        // sizes sharing one listing. offerItems() used to treat it as a
+        // single sale-or-not unit — a discounted 5kg bag on a product whose
+        // base pack wasn't discounted showed up nowhere, and a base pack AND
+        // a 5kg bag discounted at once still collapsed to one card that
+        // (because priceHTML's weightVariants branch takes over whenever any
+        // variant exists at all) didn't even show the discount, just a plain
+        // "From £X". Fixed by treating each discounted size as its own offer
+        // card — the base pack (if its own price/salePrice is a discount)
+        // and each weight variant that carries its own salePrice, each
+        // stripped of weightVariants so priceHTML shows that size's actual
+        // was/now price instead of falling back to "From £X". Each variant
+        // card carries variantIdx so its "Add to basket" button (see
+        // productCardHTML) adds that exact size, not the base pack.
         function offerItems() {
-            return allProducts()
-                .filter(p => typeof p.salePrice === 'number' && p.salePrice < p.price)
-                .map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+            const items = [];
+            allProducts().forEach(p => {
+                const idx = Number(p.id.split('::')[1]);
+                if (typeof p.salePrice === 'number' && p.salePrice < p.price) {
+                    items.push({ ...p, idx, weightVariants: undefined });
+                }
+                (Array.isArray(p.weightVariants) ? p.weightVariants : []).forEach((v, variantIdx) => {
+                    if (typeof v.salePrice !== 'number' || v.salePrice >= v.price) return;
+                    items.push({
+                        ...p, idx, weightVariants: undefined, variantIdx,
+                        id: p.id + '::' + v.label, unit: v.label,
+                        price: v.price, salePrice: v.salePrice,
+                        weight: (typeof v.weight === 'number') ? v.weight : p.weight,
+                    });
+                });
+            });
+            return items;
         }
         /* ================= DARK MODE TOGGLE ================= */
         function applyTheme(theme) {
@@ -10925,7 +10970,7 @@
         </div>
       </a>
       <div class="card-actions">
-        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="quickAdd('${p.catSlug}', ${pidx});">
+        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           ${outOfStock ? 'Out of stock' : 'Add to basket'}
         </button>
@@ -10943,6 +10988,26 @@
             showToast(`Added ${p.name} to your basket.`);
         }
         window.quickAdd = quickAdd;
+        // Same id shape (and the same price/weight rules) as buildPdCartItem's
+        // variant branch — deliberately, since that's what parseProductCartId()
+        // and the real checkout function already know how to price. Used by
+        // any card representing one specific weight variant rather than the
+        // base pack (see offerItems()), so its quick "Add to basket" adds the
+        // exact size shown, not the base product.
+        function addVariantToCart(catSlug, idx, variantIdx) {
+            const p = getProduct(catSlug, idx);
+            if (!p || p.stock === 'out') return;
+            const variant = Array.isArray(p.weightVariants) ? p.weightVariants[variantIdx] : null;
+            if (!variant) { addToCart(p, 1); return; }
+            const toAdd = {
+                ...p, price: variant.price, unit: variant.label,
+                salePrice: (typeof variant.salePrice === 'number' && variant.salePrice < variant.price) ? variant.salePrice : undefined,
+                id: p.id + '::' + variant.label, weight: (typeof variant.weight === 'number' ? variant.weight : p.weight),
+            };
+            addToCart(toAdd, 1);
+            showToast(`Added ${p.name} (${variant.label}) to your basket.`);
+        }
+        window.addVariantToCart = addVariantToCart;
 
         function renderGrid(items, gridId, emptyId) {
             const grid = document.getElementById(gridId);
@@ -13993,6 +14058,23 @@
             if (!list) return;
             list.innerHTML = variantsListHTML(product, catSlug, idx);
         }
+        // A weight variant added (or removed) here is immediately live
+        // everywhere else in the tab — the product page's size picker, its
+        // price, a cart line built from it — because it's all reading the
+        // same in-memory product object. That made it look saved. It
+        // wasn't: only the panel's own "Save" button ever wrote it to
+        // product_overrides, so an admin who added a size, saw it working
+        // everywhere, and went to test checkout without a separate Save
+        // click was adding a cart line the real checkout function (server
+        // truth, not this tab) had never heard of — "Unknown product
+        // variant". Closing that gap by having the add/remove buttons
+        // trigger the exact same save the panel's own button does, so
+        // there is no longer a window where a variant is visible but not
+        // yet on the server.
+        async function triggerEditPanelSave(catSlug, idx) {
+            const result = await persistProductOverride(catSlug, idx);
+            if (!result.ok) showToast('Couldn\'t sync that size to the live site: ' + result.error.message, 6000);
+        }
         // Updates only the variant list in place rather than re-rendering the
         // whole edit panel, re-rendering the panel would reset every other
         // field (price, base weight, stock, description) back to its last
@@ -14023,6 +14105,7 @@
             document.getElementById(`ep-varprice-${catSlug}-${idx}`).value = '';
             document.getElementById(`ep-varsale-${catSlug}-${idx}`).value = '';
             document.getElementById(`ep-varweight-${catSlug}-${idx}`).value = '';
+            triggerEditPanelSave(catSlug, idx);
         }
         window.addWeightVariant = addWeightVariant;
         function removeWeightVariant(catSlug, idx, variantIdx) {
@@ -14030,10 +14113,19 @@
             const product = cat.products[idx];
             if (product.weightVariants) product.weightVariants.splice(variantIdx, 1);
             renderVariantsList(catSlug, idx);
+            triggerEditPanelSave(catSlug, idx);
         }
         window.removeWeightVariant = removeWeightVariant;
 
-        async function saveEditPanel(catSlug, idx, btn) {
+        // The actual "write this product's current form values to the
+        // server" logic, split out from saveEditPanel so it can also run
+        // silently whenever a weight variant is added or removed (see
+        // triggerEditPanelSave above) without closing the panel the admin
+        // still has open — closing it after every single "+ Add" click
+        // would make adding three sizes take three separate trips into
+        // edit mode. Reads the same live form fields saveEditPanel always
+        // has, so an explicit Save afterwards persists nothing new.
+        async function persistProductOverride(catSlug, idx) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             // Snapshotted before anything below changes it, so the audit
@@ -14047,11 +14139,12 @@
                 unitOverride: product.unitOverride || null, description: product.description || null,
                 weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
             };
-            const priceVal = parseFloat(document.getElementById(`ep-price-${catSlug}-${idx}`).value);
-            const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`).value;
-            const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`).value;
-            const unitQtyVal = document.getElementById(`ep-unitqty-${catSlug}-${idx}`).value;
-            const unitMeasureVal = document.getElementById(`ep-unitmeasure-${catSlug}-${idx}`).value;
+            const priceEl = document.getElementById(`ep-price-${catSlug}-${idx}`);
+            const priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
+            const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`)?.value ?? '';
+            const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`)?.value;
+            const unitQtyVal = document.getElementById(`ep-unitqty-${catSlug}-${idx}`)?.value ?? '';
+            const unitMeasureVal = document.getElementById(`ep-unitmeasure-${catSlug}-${idx}`)?.value;
 
             if (!isNaN(priceVal) && priceVal >= 0) product.price = priceVal;
             if (saleVal === '' ) { delete product.salePrice; }
@@ -14059,9 +14152,9 @@
                 const sv = parseFloat(saleVal);
                 if (!isNaN(sv) && sv >= 0) product.salePrice = sv;
             }
-            product.stock = stockVal;
+            if (stockVal) product.stock = stockVal;
 
-            const weightVal = document.getElementById(`ep-weight-${catSlug}-${idx}`).value;
+            const weightVal = document.getElementById(`ep-weight-${catSlug}-${idx}`)?.value ?? '';
             if (weightVal === '') { delete product.weight; }
             else {
                 const wv = parseFloat(weightVal);
@@ -14081,40 +14174,42 @@
                 else { product.description = descVal; }
             }
 
+            if (!supabaseClient) return { ok: true };
+            const { error } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(catSlug, idx),
+                price: product.price,
+                sale_price: product.salePrice != null ? product.salePrice : null,
+                stock: product.stock,
+                weight: typeof product.weight === 'number' ? product.weight : null,
+                unit_override: product.unitOverride || null,
+                description: product.description || null,
+                weight_variants: (product.weightVariants && product.weightVariants.length) ? product.weightVariants : null,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) return { ok: false, error };
+            const after = {
+                price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
+                weight: typeof product.weight === 'number' ? product.weight : null,
+                unitOverride: product.unitOverride || null, description: product.description || null,
+                weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
+            };
+            const changes = diffFields(before, after, [
+                { key: 'price', label: 'Price', format: money },
+                { key: 'salePrice', label: 'Sale price', format: money },
+                { key: 'stock', label: 'Stock', format: stockLabel },
+                { key: 'weight', label: 'Weight', format: w => w + 'kg' },
+                { key: 'unitOverride', label: 'Unit size', format: unitOverrideLabel },
+                { key: 'description', label: 'Description', format: () => 'edited' },
+                { key: 'weightVariants', label: 'Weight options' },
+            ]);
+            if (changes.length) logAdminAction('product_updated', 'product', product.name, { changes });
+            return { ok: true };
+        }
+        async function saveEditPanel(catSlug, idx, btn) {
             btn.disabled = true;
             btn.textContent = 'Saving…';
-            if (supabaseClient) {
-                const { error } = await supabaseClient.from('product_overrides').upsert({
-                    product_key: productKey(catSlug, idx),
-                    price: product.price,
-                    sale_price: product.salePrice != null ? product.salePrice : null,
-                    stock: product.stock,
-                    weight: typeof product.weight === 'number' ? product.weight : null,
-                    unit_override: product.unitOverride || null,
-                    description: product.description || null,
-                    weight_variants: (product.weightVariants && product.weightVariants.length) ? product.weightVariants : null,
-                    updated_at: new Date().toISOString(),
-                });
-                if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000); }
-                else {
-                    const after = {
-                        price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
-                        weight: typeof product.weight === 'number' ? product.weight : null,
-                        unitOverride: product.unitOverride || null, description: product.description || null,
-                        weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
-                    };
-                    const changes = diffFields(before, after, [
-                        { key: 'price', label: 'Price', format: money },
-                        { key: 'salePrice', label: 'Sale price', format: money },
-                        { key: 'stock', label: 'Stock', format: stockLabel },
-                        { key: 'weight', label: 'Weight', format: w => w + 'kg' },
-                        { key: 'unitOverride', label: 'Unit size', format: unitOverrideLabel },
-                        { key: 'description', label: 'Description', format: () => 'edited' },
-                        { key: 'weightVariants', label: 'Weight options' },
-                    ]);
-                    logAdminAction('product_updated', 'product', product.name, { changes });
-                }
-            }
+            const result = await persistProductOverride(catSlug, idx);
+            if (!result.ok) showToast('Saved here, but couldn\'t sync to the live site: ' + result.error.message, 6000);
             btn.closest('.edit-panel-slot').innerHTML = '';
             route(); // re-render the current view so the change is visible immediately everywhere it appears
         }
