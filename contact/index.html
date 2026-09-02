@@ -9364,7 +9364,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.8';
+        const BUILD_VERSION = '2026-09-02.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11544,6 +11544,20 @@
             updatePdPrice();
         }
         window.selectPdVariant = selectPdVariant;
+        // Whatever id shape this function mints (base "catSlug::idx", plus
+        // "::<variant label>" and/or "::subN" suffixes) has to stay in
+        // lockstep with THREE other places, or checkout silently rejects
+        // it at the register with no clue why: parseProductCartId() and
+        // priceCart() in supabase/functions/create-payment-intent/index.ts
+        // (the real trust boundary — this client object is never trusted
+        // for price), the matching parseProductCartId()/trusted()/
+        // priceCart() block in the Playwright mock
+        // (scratchpad delivery/.../mockblock.html, merged into perftest.html),
+        // and run/extend checkoutcompatibilitymatrixtest.js before shipping
+        // any change here. This is exactly the class of bug that broke
+        // checkout twice already — once for variant/subscription ids, once
+        // for admin-added custom_products — both times because this
+        // function grew a new id shape the server didn't know about yet.
         function buildPdCartItem() {
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
             let toAdd = variant
@@ -14290,6 +14304,17 @@
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
 
+        // This is the other place that mints a new source of product truth
+        // (a custom_products row, keyed catSlug::idx just like the seeded
+        // products table). Same rule as buildPdCartItem() above: the real
+        // checkout function (supabase/functions/create-payment-intent/
+        // index.ts) prices carts by looking products up in the `products`
+        // table with `custom_products` as a fallback — if this function
+        // ever changes what it writes (a new column checkout needs to
+        // price against, a different key shape), the edge function's
+        // lookup has to change with it or checkout rejects anything that
+        // came from here. Update the Playwright mock the same way, and
+        // run checkoutcompatibilitymatrixtest.js before shipping.
         async function saveNewProduct(slotId, uid, presetCategorySlug) {
             const name = document.getElementById(`apf-name-${uid}`).value.trim();
             const unit = document.getElementById(`apf-unit-${uid}`).value.trim();
