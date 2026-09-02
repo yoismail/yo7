@@ -419,8 +419,10 @@
         .ep-variant-row button {
             background: none; border: none; color: #b34a4a; font-size: 11px; font-weight: 600; cursor: pointer; padding: 2px 4px;
         }
-        .ep-variant-add-row { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 6px; }
+        .ep-variant-add-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .ep-variant-add-row input { flex: 1 1 88px; min-width: 70px; }
         .ep-variant-add-row button {
+            flex: 0 0 auto;
             background: var(--aubergine-mid); color: var(--cream); border: none; border-radius: 8px;
             font-family: var(--display); font-weight: 700; font-size: 11.5px; padding: 0 12px; cursor: pointer;
         }
@@ -1150,6 +1152,30 @@
 
         .hero-accent {
             color: var(--chartreuse-rich);
+        }
+
+        /* Stretched Type Repeater: each word of the headline gently
+           stretches taller and settles, one after another, so a wave of
+           motion keeps travelling left to right across the sentence on a
+           loop — "repeater" meaning the wave itself repeats, not the
+           words. Vertical stretch, not horizontal: scaling a word's
+           width with a plain space between words doesn't reflow its
+           neighbours, so at the peak of the stretch a wide word visually
+           overlapped the next one — this axis has no such collision.
+           Kept subtle (10%) since this is the page's core value
+           proposition and has to stay easy to read mid-animation, not
+           just at rest. */
+        .stretch-word {
+            display: inline-block;
+            transform-origin: center;
+            animation: heroStretchWord 2.8s ease-in-out infinite;
+        }
+        @keyframes heroStretchWord {
+            0%, 40%, 100% { transform: scaleY(1); }
+            20% { transform: scaleY(1.1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .stretch-word { animation: none; }
         }
 
         .hero-scroll-cue {
@@ -3216,6 +3242,23 @@
             aspect-ratio: 1/1; position: relative; overflow: hidden;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
+        /* A light gleam sweeps across the category tile's photo on hover —
+           these are the first cards a visitor sees on the homepage, worth
+           the one bit of "someone's paying attention to detail" motion. */
+        .cat-flat-card .thumb::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -60%;
+            width: 40%; height: 100%;
+            background: linear-gradient(75deg, transparent, rgba(255,255,255,0.32), transparent);
+            transform: skewX(-18deg);
+            transition: left 0.7s cubic-bezier(.2,.7,.3,1);
+            pointer-events: none;
+        }
+        .cat-flat-card:hover .thumb::after { left: 130%; }
+        @media (prefers-reduced-motion: reduce) {
+            .cat-flat-card .thumb::after { transition: none; }
+        }
         .cat-flat-photo {
             display: block; width: 100%; height: 100%;
             background-size: 122%; background-position: center 22%;
@@ -3523,12 +3566,6 @@
             margin-bottom: 7px;
         }
 
-        .unit-price {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
         .product-row {
             display: flex;
             align-items: center;
@@ -3653,6 +3690,22 @@
         }
         .card-add-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
         .card-add-btn:hover { background: var(--chartreuse-soft); }
+        .card-add-btn .icon-check { display: none; }
+        .card-add-btn.just-added {
+            background: var(--aubergine-mid);
+            color: var(--cream);
+            animation: cardAddPulse 0.45s cubic-bezier(.34,1.56,.64,1);
+        }
+        .card-add-btn.just-added .icon-plus { display: none; }
+        .card-add-btn.just-added .icon-check { display: block; }
+        @keyframes cardAddPulse {
+            0% { transform: scale(1); }
+            45% { transform: scale(1.07); }
+            100% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .card-add-btn.just-added { animation: none; }
+        }
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
@@ -3734,14 +3787,7 @@
             font-weight: 700;
             font-size: 30px;
             color: var(--ink);
-            margin-bottom: 4px;
-        }
-
-        .pd-unit-price {
-            font-size: 13px;
-            color: var(--text-muted);
             margin-bottom: 22px;
-            min-height: 1px;
         }
 
         .pd-desc {
@@ -3772,6 +3818,17 @@
             border-color: var(--aubergine);
             background: var(--aubergine);
             color: var(--cream);
+        }
+        .pd-variant-pill-was {
+            color: var(--text-faint);
+            font-weight: 500;
+            margin-left: 2px;
+        }
+        .pd-variant-pill.active .pd-variant-pill-was {
+            /* The active pill is always a fixed dark-green background
+               (var(--aubergine) isn't themed), so this needs a fixed
+               light color rather than a theme-flipping token. */
+            color: rgba(250, 249, 242, 0.65);
         }
 
         .qty-stepper {
@@ -6229,7 +6286,7 @@
                 <svg class="seal" viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <h1><span class="hero-accent">Fresh</span> African groceries, delivered with <span class="hero-accent">modern convenience</span>.</h1>
+                <h1><span class="hero-accent stretch-word" style="animation-delay:0s">Fresh</span> <span class="stretch-word" style="animation-delay:0.14s">African</span> <span class="stretch-word" style="animation-delay:0.28s">groceries,</span> <span class="stretch-word" style="animation-delay:0.42s">delivered</span> <span class="stretch-word" style="animation-delay:0.56s">with</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">modern</span> <span class="hero-accent stretch-word" style="animation-delay:0.84s">convenience</span>.</h1>
                 <p class="hero-sub">Authentic flavours, premium quality, and a clean shopping experience designed for today's UK households.</p>
                 <div class="cta-row">
                     <a class="btn btn-primary" href="#/shop">
@@ -6681,7 +6738,6 @@
                         </a>
                         <div class="pd-unit" id="pdUnit"></div>
                         <div class="pd-price" id="pdPrice"></div>
-                        <div class="pd-unit-price" id="pdUnitPrice"></div>
                         <p class="pd-desc" id="pdDesc"></p>
                         <div class="pd-variant-picker" id="pdVariantPicker"></div>
                         <div class="qty-stepper">
@@ -9334,7 +9390,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.5';
+        const BUILD_VERSION = '2026-09-02.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9342,15 +9398,13 @@
             return (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
         }
 
-        /* ================= UNIT PRICING (Price Marking Order) =================
-           UK law requires showing a price per kg/litre alongside the selling
-           price for goods sold by weight or volume, so shoppers can compare
-           products of different pack sizes. Auto-derived from the existing
-           `unit` text (e.g. "5kg bag" -> £/kg) wherever it's parseable;
-           `p.unitOverride` lets edit mode correct or supply one where it
-           isn't (e.g. "Single pack"). Pure count items (per piece, per bird,
-           pack of 10) are deliberately left without a unit price — the
-           comparison the law is aimed at doesn't apply to those. */
+        /* ================= UNIT QUANTITY PARSING =================
+           Pulls a numeric quantity + measure out of a unit string (e.g.
+           "5kg bag" -> {qty:5, measure:'kg'}). Used by edit mode to
+           pre-fill the unit-override qty/measure fields from whatever
+           unit text a product already has (see the edit panel below);
+           the on-page per-kg/per-litre price this used to also drive was
+           removed at the customer's request. */
         function parseUnitQuantity(unitStr) {
             if (!unitStr) return null;
             const s = unitStr.toLowerCase();
@@ -9363,13 +9417,6 @@
             m = s.match(/(\d+(?:\.\d+)?)\s*ml\b/);
             if (m) return { qty: parseFloat(m[1]) / 1000, measure: 'l' };
             return null;
-        }
-        function unitPriceInfo(p) {
-            const parsed = (p.unitOverride && p.unitOverride.qty > 0) ? p.unitOverride : parseUnitQuantity(p.unit);
-            if (!parsed || !parsed.qty) return null;
-            const perUnit = effectivePrice(p) / parsed.qty;
-            const measureLabel = parsed.measure === 'kg' ? 'kg' : 'litre';
-            return { text: `£${perUnit.toFixed(2)}/${measureLabel}`, perUnit, measure: parsed.measure };
         }
         function priceHTML(p, size) {
             const variants = Array.isArray(p.weightVariants) ? p.weightVariants : [];
@@ -10885,7 +10932,6 @@
             const stock = p.stock || 'in';
             const outOfStock = stock === 'out';
             const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
-            const unitInfo = unitPriceInfo(p);
             const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
             return `
@@ -10902,13 +10948,13 @@
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
           </div>
-          ${unitInfo ? `<div class="unit-price">${unitInfo.text}</div>` : ''}
         </div>
       </a>
       <div class="card-actions">
-        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="quickAdd('${p.catSlug}', ${pidx});">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          ${outOfStock ? 'Out of stock' : 'Add to basket'}
+        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="quickAdd(this, '${p.catSlug}', ${pidx});">
+          <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+          <span class="card-add-label">${outOfStock ? 'Out of stock' : 'Add to basket'}</span>
         </button>
       </div>
       <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
@@ -10917,11 +10963,21 @@
       <div class="edit-panel-slot"></div>
     </div>`;
         }
-        function quickAdd(catSlug, idx) {
+        function quickAdd(btn, catSlug, idx) {
             const p = getProduct(catSlug, idx);
             if (!p || p.stock === 'out') return;
             addToCart(p, 1);
             showToast(`Added ${p.name} to your basket.`);
+            if (btn) {
+                const label = btn.querySelector('.card-add-label');
+                const prevText = label ? label.textContent : null;
+                if (label) label.textContent = 'Added';
+                btn.classList.add('just-added');
+                setTimeout(() => {
+                    btn.classList.remove('just-added');
+                    if (label && prevText !== null) label.textContent = prevText;
+                }, 1100);
+            }
         }
         window.quickAdd = quickAdd;
 
@@ -11190,8 +11246,6 @@
             if (reviewWaBtn) reviewWaBtn.href = `https://wa.me/447398810052?text=${encodeURIComponent(`Hi Yo7 Foods! I'd like to leave a review for ${p.name}: `)}`;
             if (reviewEmailBtn) reviewEmailBtn.href = `mailto:hello@yo7foods.co.uk?subject=${encodeURIComponent(`My review: ${p.name}`)}`;
             document.getElementById('pdPrice').textContent = money(p.price);
-            const pdUnitInfo = unitPriceInfo(p);
-            document.getElementById('pdUnitPrice').textContent = pdUnitInfo ? pdUnitInfo.text : '';
             renderPdVariantPicker(p);
             document.getElementById('pdDesc').textContent = p.description || `${p.name}, a Yo7 Foods staple from our ${cat.name.replace(/&amp;/g, '&')} aisle. ${cat.tagline}`;
 
@@ -11494,20 +11548,16 @@
             if (!pdCurrent) return;
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
             document.getElementById('pdUnit').textContent = variant ? variant.label : pdCurrent.unit;
-            let unit = variant ? variant.price : effectivePrice(pdCurrent);
+            let unit = variant ? effectiveVariantPrice(variant) : effectivePrice(pdCurrent);
             if (pdPurchaseType === 'subscribe') unit = unit * (1 - subscriptionDiscountPct / 100);
             const total = unit * pdQty;
-            const onSale = !variant && pdPurchaseType === 'onetime' && typeof pdCurrent.salePrice === 'number' && pdCurrent.salePrice < pdCurrent.price;
+            const onSale = pdPurchaseType === 'onetime' && (variant
+                ? typeof variant.salePrice === 'number' && variant.salePrice < variant.price
+                : typeof pdCurrent.salePrice === 'number' && pdCurrent.salePrice < pdCurrent.price);
             const eachNote = pdQty > 1 ? ` <span style="font-size:14px; color:var(--text-muted); font-weight:500;">(${money(unit)} each)</span>` : '';
             const basePrice = variant ? variant.price : pdCurrent.price;
             const wasNote = (onSale || pdPurchaseType === 'subscribe') ? ` <span class="price-was" style="font-size:0.55em;">${money(basePrice * pdQty)}</span>` : '';
             document.getElementById('pdPrice').innerHTML = `<span class="${onSale || pdPurchaseType === 'subscribe' ? 'sale' : ''}">${money(total)}</span>${wasNote}${eachNote}`;
-
-            // Unit price reflects whichever weight is actually selected, not the base pack.
-            const unitInfo = variant
-                ? (() => { const parsed = parseUnitQuantity(variant.label); return parsed ? { text: `£${(variant.price / parsed.qty).toFixed(2)}/${parsed.measure === 'kg' ? 'kg' : 'litre'}` } : null; })()
-                : unitPriceInfo(pdCurrent);
-            document.getElementById('pdUnitPrice').textContent = unitInfo ? unitInfo.text : '';
         }
         function renderPdVariantPicker(p) {
             const picker = document.getElementById('pdVariantPicker');
@@ -11517,8 +11567,12 @@
             // variants — otherwise picking a variant has no way back.
             const basePill = `
       <button type="button" class="pd-variant-pill ${pdSelectedVariant === null ? 'active' : ''}" onclick="selectPdVariant(null)">${escapeHtml(p.unit || '')}, ${money(effectivePrice(p))}</button>`;
-            const variantPills = p.weightVariants.map((v, i) => `
-      <button type="button" class="pd-variant-pill ${pdSelectedVariant === i ? 'active' : ''}" onclick="selectPdVariant(${i})">${escapeHtml(v.label)}, ${money(v.price)}</button>`).join('');
+            const variantPills = p.weightVariants.map((v, i) => {
+                const onSale = typeof v.salePrice === 'number' && v.salePrice < v.price;
+                const priceText = onSale ? `${money(v.salePrice)} <s class="pd-variant-pill-was">${money(v.price)}</s>` : money(v.price);
+                return `
+      <button type="button" class="pd-variant-pill ${pdSelectedVariant === i ? 'active' : ''}" onclick="selectPdVariant(${i})">${escapeHtml(v.label)}, ${priceText}</button>`;
+            }).join('');
             picker.innerHTML = basePill + variantPills;
         }
         function selectPdVariant(i) {
@@ -11530,7 +11584,11 @@
         function buildPdCartItem() {
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
             let toAdd = variant
-                ? { ...pdCurrent, price: variant.price, unit: variant.label, salePrice: undefined, id: pdCurrent.id + '::' + variant.label, weight: (typeof variant.weight === 'number' ? variant.weight : pdCurrent.weight) }
+                ? {
+                    ...pdCurrent, price: variant.price, unit: variant.label,
+                    salePrice: (typeof variant.salePrice === 'number' && variant.salePrice < variant.price) ? variant.salePrice : undefined,
+                    id: pdCurrent.id + '::' + variant.label, weight: (typeof variant.weight === 'number' ? variant.weight : pdCurrent.weight),
+                }
                 : { ...pdCurrent };
             if (pdPurchaseType === 'subscribe') {
                 const freq = document.getElementById('pdSubscribeFrequency').value;
@@ -11684,7 +11742,7 @@
       </a>
       <div class="checkout-upsell-row">
         <span class="checkout-upsell-price">${money(p.price)}</span>
-        <button type="button" class="checkout-upsell-add" onclick="quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${p.name} to basket">
+        <button type="button" class="checkout-upsell-add" onclick="quickAdd(null, '${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${p.name} to basket">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
@@ -13916,14 +13974,11 @@
           <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">Leave quantity blank for items sold by count (per piece, per bird, pack of X), no unit price is required for those.</p>
           <div class="ep-variants-block">
             <label>Weight options (optional, one product with several sizes, e.g. 2kg / 5kg / 10kg / 20kg, instead of a separate product per size)</label>
-            <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${(product.weightVariants || []).map((v, vi) => `
-              <div class="ep-variant-row">
-                <span>${escapeHtml(v.label)}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
-                <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
-              </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>'}</div>
+            <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${variantsListHTML(product, catSlug, idx)}</div>
             <div class="ep-variant-add-row">
               <input type="text" id="ep-varlabel-${catSlug}-${idx}" placeholder="Label, e.g. 5kg">
               <input type="number" step="0.01" min="0" id="ep-varprice-${catSlug}-${idx}" placeholder="Price (£)">
+              <input type="number" step="0.01" min="0" id="ep-varsale-${catSlug}-${idx}" placeholder="Sale price (£, optional)">
               <input type="number" step="0.01" min="0" id="ep-varweight-${catSlug}-${idx}" placeholder="Weight (kg)">
               <button type="button" onclick="addWeightVariant('${catSlug}', ${idx})">Add</button>
             </div>
@@ -13937,16 +13992,28 @@
         }
         window.openEditPanel = openEditPanel;
 
+        function effectiveVariantPrice(v) {
+            return (typeof v.salePrice === 'number' && v.salePrice < v.price) ? v.salePrice : v.price;
+        }
+        // Shared by the edit panel's first render and renderVariantsList()'s
+        // in-place refresh after add/remove, so the two never drift apart.
+        function variantsListHTML(product, catSlug, idx) {
+            return (product.weightVariants || []).map((v, vi) => {
+                const onSale = typeof v.salePrice === 'number' && v.salePrice < v.price;
+                const priceText = onSale ? `${money(v.salePrice)} <s style="color:var(--text-faint);">${money(v.price)}</s>` : money(v.price);
+                return `
+              <div class="ep-variant-row">
+                <span>${escapeHtml(v.label)}, ${priceText}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
+                <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
+              </div>`;
+            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>';
+        }
         function renderVariantsList(catSlug, idx) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             const list = document.getElementById(`ep-variants-list-${catSlug}-${idx}`);
             if (!list) return;
-            list.innerHTML = (product.weightVariants || []).map((v, vi) => `
-              <div class="ep-variant-row">
-                <span>${escapeHtml(v.label)}, ${money(v.price)}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
-                <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
-              </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>';
+            list.innerHTML = variantsListHTML(product, catSlug, idx);
         }
         // Updates only the variant list in place rather than re-rendering the
         // whole edit panel, re-rendering the panel would reset every other
@@ -13957,10 +14024,15 @@
             const product = cat.products[idx];
             const label = document.getElementById(`ep-varlabel-${catSlug}-${idx}`).value.trim();
             const price = parseFloat(document.getElementById(`ep-varprice-${catSlug}-${idx}`).value);
+            const saleVal = document.getElementById(`ep-varsale-${catSlug}-${idx}`).value;
             const weightVal = document.getElementById(`ep-varweight-${catSlug}-${idx}`).value;
             if (!label || isNaN(price) || price < 0) return;
             if (!product.weightVariants) product.weightVariants = [];
             const variant = { label, price };
+            if (saleVal !== '') {
+                const sp = parseFloat(saleVal);
+                if (!isNaN(sp) && sp >= 0 && sp < price) variant.salePrice = sp;
+            }
             if (weightVal !== '') {
                 const w = parseFloat(weightVal);
                 if (!isNaN(w) && w >= 0) variant.weight = w;
@@ -13971,6 +14043,7 @@
             renderVariantsList(catSlug, idx);
             document.getElementById(`ep-varlabel-${catSlug}-${idx}`).value = '';
             document.getElementById(`ep-varprice-${catSlug}-${idx}`).value = '';
+            document.getElementById(`ep-varsale-${catSlug}-${idx}`).value = '';
             document.getElementById(`ep-varweight-${catSlug}-${idx}`).value = '';
         }
         window.addWeightVariant = addWeightVariant;
