@@ -879,6 +879,24 @@
             pointer-events: auto;
         }
 
+        /* The button itself already shows "Hi, Jane" as text next to the
+           icon — but that text (and the caret) is hidden at the 480px
+           icon-only breakpoint (see .nav-account span#accountLabel below),
+           leaving mobile with no text anywhere confirming WHICH account is
+           signed in, only the status-dot's yes/no. This is that
+           confirmation's other home: same greeting, shown here instead so
+           it survives on mobile once the account button is tapped open. */
+        .account-dropdown-name {
+            padding: 8px 12px 10px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--heading);
+            display: none;
+        }
+
         .account-dropdown button,
         .account-dropdown a {
             width: 100%;
@@ -6324,6 +6342,7 @@
                         </svg>
                     </a>
                     <div class="account-dropdown" id="accountDropdown">
+                        <div class="account-dropdown-name" id="accountDropdownName"></div>
                         <a href="#/orders" id="orderHistoryLink" style="display:none;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -9129,12 +9148,21 @@
             updateSummaries();
             return { ok: true };
         }
-        // '<catSlug>::<idx>' | 'bundle::<i>' | 'combo::<i>' plus qty and
-        // whether it's a subscription — everything create-payment-intent
-        // needs to look up the trusted price itself. Sending a price here
-        // at all would be pointless, the server never trusts it.
+        // The full cart line — id/qty/isSubscription is all
+        // create-payment-intent actually needs to look up the trusted
+        // price itself (sending a price would be pointless, the server
+        // never trusts it for that), but the rest (name, code, unit,
+        // emoji...) rides along too, same shape as pendingOrderContext.items
+        // above. That's what lets create-payment-intent's own
+        // pending_checkouts row — and so the stripe-webhook safety net, if
+        // it's ever what actually ends up creating this order — show real
+        // item names instead of blank ones. A previous version sent only
+        // {id, qty, isSubscription}, which priced correctly but meant any
+        // order the webhook had to reconstruct (the browser never made it
+        // back to finishOrderAfterPayment) showed empty item names forever,
+        // since pending_checkouts.items had nothing else to give it.
         function cartLineItemsForServer() {
-            return cart.map(i => ({ id: i.id, qty: i.qty, isSubscription: !!i.isSubscription }));
+            return cart.map(i => ({ ...i }));
         }
         function removeAppliedDiscount() {
             appliedDiscount = null;
@@ -9667,7 +9695,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.17';
+        const BUILD_VERSION = '2026-09-03.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14135,7 +14163,10 @@
         function setUser(name, supabaseUser, { freshSignIn = true } = {}) {
             currentUser = name;
             currentSupabaseUser = supabaseUser || null;
-            document.getElementById('accountLabel').textContent = 'Hi, ' + name.split(' ')[0];
+            const greeting = 'Hi, ' + name.split(' ')[0];
+            document.getElementById('accountLabel').textContent = greeting;
+            const dropdownName = document.getElementById('accountDropdownName');
+            if (dropdownName) { dropdownName.textContent = greeting; dropdownName.style.display = 'block'; }
             accountBtn.setAttribute('href', '#');
             accountBtn.setAttribute('aria-label', 'Account menu — signed in as ' + name.split(' ')[0]);
             accountBtn.classList.add('is-logged-in');
@@ -14169,6 +14200,8 @@
             updateCartBadge();
             if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
+            const dropdownName = document.getElementById('accountDropdownName');
+            if (dropdownName) { dropdownName.textContent = ''; dropdownName.style.display = 'none'; }
             accountBtn.setAttribute('href', '#/login');
             accountBtn.setAttribute('aria-label', 'Sign up or log in');
             accountBtn.classList.remove('is-logged-in');
