@@ -9598,7 +9598,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.11';
+        const BUILD_VERSION = '2026-09-03.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12323,18 +12323,24 @@
             // above, plus these layout/order options) — not something we
             // can otherwise restructure freely.
             //
-            // paymentMethodOrder puts the one-tap wallets first — most
-            // customers on a phone have Apple Pay or Google Pay set up
-            // and it's genuinely faster than typing a card in, so that's
-            // what should be waiting expanded at the top, not Card's full
-            // number/expiry/CVC/address form pushing everything else
-            // below the fold. Card and the redirect methods (Klarna,
-            // Revolut Pay, Amazon Pay) still show right below as compact
-            // one-line rows — nothing hidden, just not defaulted-open.
-            // Whichever wallet the browser doesn't support (e.g. Google
-            // Pay in Safari) Stripe simply omits, no gap left behind.
+            // paymentMethodOrder puts the one-tap wallets first in the
+            // list — most customers on a phone have Apple Pay or Google
+            // Pay set up and it's genuinely faster than typing a card in.
+            //
+            // defaultCollapsed stays true (auto-expanding the first row
+            // was tried and reverted — real-world testing found that
+            // auto-expanding a row via this config does NOT make Stripe
+            // treat it as the actively selected payment method, only an
+            // explicit click on a row does. With auto-expand on, tapping
+            // "Place order" without first tapping the Apple Pay row still
+            // submitted against Card underneath the visually-expanded
+            // Apple Pay panel — Card was empty, so it failed with "Please
+            // fill in your card details" despite Apple Pay looking
+            // selected. Every row starting collapsed means whichever one
+            // the customer taps is unambiguously the one that gets
+            // submitted — one extra tap, but it actually works.
             const paymentElement = stripeElements.create('payment', {
-                layout: { type: 'accordion', defaultCollapsed: false, radios: false, spacedAccordionItems: true },
+                layout: { type: 'accordion', defaultCollapsed: true, radios: false, spacedAccordionItems: true },
                 paymentMethodOrder: ['apple_pay', 'google_pay', 'card', 'klarna', 'revolut_pay', 'amazon_pay'],
             });
             paymentElement.mount('#stripePaymentElement');
