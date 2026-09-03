@@ -2377,7 +2377,7 @@
                above), so the card needs to stay a fixed light tile too,
                or a dark-mode visitor would get a dark card lost against a
                dark section instead of the intended spotlight contrast. */
-            background: #FFFDF7; border: none; border-radius: 14px;
+            background: #FFFDF7; border: none; border-radius: 0;
             overflow: hidden; text-decoration: none; color: #2C1C10;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -2575,7 +2575,7 @@
         .offer-carousel::-webkit-scrollbar { display: none; }
         .offer-carousel.dragging { cursor: grabbing; }
         .offer-card {
-            flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 14px;
+            flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
@@ -9902,7 +9902,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.26';
+        const BUILD_VERSION = '2026-09-03.27';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
