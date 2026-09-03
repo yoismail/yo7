@@ -2740,6 +2740,12 @@
             color: var(--chartreuse-rich);
         }
 
+        /* Matches .nav-mark .accent (the header logo's own "7") — this
+           mark's "7" is plain text with no accent color at all otherwise. */
+        .footer-mark .accent {
+            color: var(--chartreuse-rich);
+        }
+
         .footer-mark svg {
             width: 30px;
             height: 30px;
@@ -5254,11 +5260,15 @@
         }
 
         .hours-table tr.today td {
-            color: var(--heading-mid);
+            background: var(--orange);
+            color: var(--aubergine-deep);
+            font-weight: 700;
+            padding-left: 10px;
         }
 
         .hours-table tr.today td:last-child {
-            color: var(--heading-mid);
+            color: var(--aubergine-deep);
+            padding-right: 10px;
         }
 
         .open-badge {
@@ -8166,7 +8176,7 @@
                         <svg viewBox="65 25 875 900">
                             <use href="#seal-mark" />
                         </svg>
-                        <span class="footer-mark-text">Yo7<span class="footer-foods">Foods</span></span>
+                        <span class="footer-mark-text"><span class="word">Yo<span class="accent">7</span></span><span class="footer-foods">Foods</span></span>
                     </a>
                     <p class="footer-tag">Where culture meets convenience. Essex &amp; Suffolk, and beyond.</p>
                     <div class="footer-social-row">
@@ -9385,7 +9395,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.15';
+        const BUILD_VERSION = '2026-09-02.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
