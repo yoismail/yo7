@@ -1956,8 +1956,9 @@
         }
         .dish-builder-row:last-child { border-bottom: none; }
         .dish-builder-row input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; }
-        .dish-builder-row label { flex: 1; font-size: 14px; color: var(--text-body); cursor: pointer; }
+        .dish-builder-row label { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--text-body); cursor: pointer; }
         .dish-builder-row label em { color: #b34a4a; font-style: normal; font-size: 12px; }
+        .dish-builder-unit { font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
         .dish-builder-row .price { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); }
         .dish-builder-summary { border-top: 1px solid rgba(var(--border-rgb), 0.1); padding-top: 16px; }
         .dish-builder-total-row {
@@ -9418,7 +9419,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.17';
+        const BUILD_VERSION = '2026-09-02.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10039,7 +10040,10 @@
                 return `
       <div class="dish-builder-row">
         <input type="checkbox" id="dish-item-${idx}" ${checked ? 'checked' : ''} ${outOfStock ? 'disabled' : ''} onchange="toggleDishItem(${idx})">
-        <label for="dish-item-${idx}">${p.name}${outOfStock ? ' <em>(out of stock)</em>' : ''}</label>
+        <label for="dish-item-${idx}">
+          <span>${escapeHtml(p.name)}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
+          ${p.unit ? `<span class="dish-builder-unit">${escapeHtml(p.unit)}</span>` : ''}
+        </label>
         <span class="price">${money(effectivePrice(p))}</span>
       </div>`;
             }).join('');
