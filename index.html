@@ -79,6 +79,16 @@
          injected into the page's own inline code from running. Treat this
          as one layer, not a substitute for careful escaping. -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
+    <!-- Referrer-Policy is normally an HTTP header, but unlike
+         X-Frame-Options/frame-ancestors it's one of the few security
+         controls that DOES work as a <meta> tag, which matters here
+         since GitHub Pages serves this file with no way to add custom
+         HTTP response headers. strict-origin-when-cross-origin sends the
+         full URL to same-origin requests but only the bare origin (no
+         path/query) to other sites, so an outbound link never leaks a
+         customer's cart contents, order id, or search terms via the
+         referrer of the page they were on. -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -9418,7 +9428,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.3';
+        const BUILD_VERSION = '2026-09-03.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
