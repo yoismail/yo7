@@ -417,16 +417,23 @@
             border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
         }
         .ep-variants-block { margin-bottom: 10px; }
+        /* Stacked, not side-by-side — the card this panel lives inside is
+           only ~265px wide, no room left for the file input next to a
+           preview large enough to actually judge a crop by. A 64px preview
+           technically showed the same square crop that ends up live, but
+           was too small to catch a real problem the way it should (a
+           marketing collage getting its brand name cropped off, say,
+           genuinely reported by a user relying on it). */
         .ep-photo-row {
-            display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
+            display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 10px;
         }
         .ep-photo-preview {
-            width: 64px; height: 64px; border-radius: 12px; overflow: hidden; flex-shrink: 0;
+            width: 140px; height: 140px; border-radius: 14px; overflow: hidden; flex-shrink: 0;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
-            display: flex; align-items: center; justify-content: center; font-size: 26px;
+            display: flex; align-items: center; justify-content: center; font-size: 52px;
         }
         .ep-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .ep-photo-row input[type="file"] { font-size: 12px; color: var(--text-muted); max-width: 200px; }
+        .ep-photo-row input[type="file"] { font-size: 12px; color: var(--text-muted); max-width: 100%; }
         .ep-photo-remove {
             display: block; margin-top: 6px; background: none; border: none; color: #b34a4a;
             font-size: 11.5px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline;
@@ -9833,7 +9840,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.20';
+        const BUILD_VERSION = '2026-09-03.21';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
