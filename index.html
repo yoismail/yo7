@@ -1368,6 +1368,19 @@
             opacity: var(--hero-watermark-op);
             pointer-events: none;
             z-index: 1;
+            transform-origin: 62% 42%;
+            animation: heroWatermarkLive 9s ease-in-out infinite;
+        }
+        /* A slow, continuous tilt-and-breathe rather than a spin — a mark
+           this size spinning would read as a loading indicator, not a
+           logo. Kept gentle since it's ambient background behind real
+           content, not something meant to grab attention on its own. */
+        @keyframes heroWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(4deg) scale(1.035); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-watermark { animation: none; }
         }
 
         .hero-inner {
@@ -9598,7 +9611,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.14';
+        const BUILD_VERSION = '2026-09-03.15';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
