@@ -8862,7 +8862,15 @@
             const heading = document.getElementById('reviewsSectionHeading');
             const sub = document.getElementById('reviewsSectionSub');
             if (!grid) return;
-            if (!googleReviewsData || !googleReviewsData.review_count || !Array.isArray(googleReviewsData.reviews) || googleReviewsData.reviews.length === 0) {
+            // review_count > 0 alone is real, verified data worth showing
+            // (Google's own rating/count) even on the — fairly common —
+            // day-one case where Google's Places API hasn't surfaced any
+            // individual review TEXT yet for a business with only one or
+            // two reviews so far, even though the rating itself already
+            // came through. Only fall back to the honest "we're new" copy
+            // when there's genuinely nothing at all, not just no review
+            // text yet.
+            if (!googleReviewsData || !googleReviewsData.review_count) {
                 grid.style.display = 'none';
                 grid.innerHTML = '';
                 // Restores the honest "we're new" copy — needed because this
@@ -8881,6 +8889,17 @@
             const starsHTML = '★★★★★☆☆☆☆☆'.slice(5 - fullStars, 10 - fullStars);
             if (heading) heading.textContent = 'What people are saying';
             if (sub) sub.innerHTML = `<span class="google-rating-summary">${rating !== null ? `<span class="stars">${starsHTML}</span><span class="score">${rating.toFixed(1)}</span>` : ''}<span class="count">from ${googleReviewsData.review_count} Google review${googleReviewsData.review_count === 1 ? '' : 's'}</span></span>`;
+            const hasReviewText = Array.isArray(googleReviewsData.reviews) && googleReviewsData.reviews.length > 0;
+            if (!hasReviewText) {
+                // A real rating with no review text yet — genuinely nothing
+                // to put in a card, so the grid just stays hidden and the
+                // summary line above is the whole of what's shown. Not an
+                // error state, just what "we have 1 review, Google hasn't
+                // surfaced its text via the API yet" honestly looks like.
+                grid.style.display = 'none';
+                grid.innerHTML = '';
+                return;
+            }
             grid.style.display = 'grid';
             grid.innerHTML = googleReviewsData.reviews.map(r => {
                 const rFull = Math.round(r.rating || 0);
@@ -9580,7 +9599,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.7';
+        const BUILD_VERSION = '2026-09-03.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
