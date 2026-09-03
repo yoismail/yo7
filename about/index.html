@@ -2390,27 +2390,42 @@
             align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
-        /* Gold rather than the site's usual green/orange badge colours —
-           reads as "trophy/favourite" specifically, and gives the section
-           its one ambient (not scroll-driven) motion: a slow, restrained
-           glow breathing on the badge only, never the whole card or strip. */
+        /* A diagonal corner ribbon — the site's own bright yellow
+           (var(--orange), same colour/pairing as the section-eyebrow
+           pills) rather than an invented gold, cut across the thumb's
+           corner rather than sitting as a pill/flag like the other two
+           sections' badges. .thumb's own overflow:hidden (above) is what
+           clips both ends flush with the card edge — that's what makes
+           the ribbon illusion work, not anything on the ribbon itself.
+           No ambient loop here (a previous version glow-pulsed forever,
+           which read as gimmicky rather than premium) — instead the
+           ribbon pops in once, a beat after the card's own entrance,
+           when .bs-card-reveal settles into view; nothing moves again
+           after that. */
         .best-seller-rank {
-            position: absolute; top: 10px; left: 10px; z-index: 3;
-            display: flex; align-items: center; gap: 4px;
-            background: linear-gradient(135deg, #F6CE4E, #E1A100); color: #3D2900;
-            font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
-            padding: 5px 11px 5px 9px; border-radius: 999px;
-            box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px #FFFDF7;
-            animation: bestSellerBadgeGlow 2.6s ease-in-out infinite;
+            position: absolute; top: 17px; left: -38px; z-index: 3;
+            width: 150px;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            background: var(--orange); color: var(--aubergine-deep);
+            font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: 0.04em;
+            padding: 5px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+            transform: rotate(-45deg) scale(0.7);
+            opacity: 0;
+            transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
         }
-        @keyframes bestSellerBadgeGlow {
-            0%, 100% { box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px #FFFDF7; }
-            50% { box-shadow: 0 3px 18px rgba(225, 161, 0, 0.85), 0 0 0 2px #FFFDF7; }
+        .bs-card-reveal.is-visible .best-seller-rank {
+            transform: rotate(-45deg) scale(1);
+            opacity: 1;
         }
         @media (prefers-reduced-motion: reduce) {
-            .best-seller-rank { animation: none; }
+            .best-seller-rank {
+                transition: none;
+                transform: rotate(-45deg) scale(1);
+                opacity: 1;
+            }
         }
-        .best-seller-rank svg { width: 11px; height: 11px; flex-shrink: 0; }
+        .best-seller-rank svg { width: 10px; height: 10px; flex-shrink: 0; }
         .best-seller-card .body { padding: 12px 14px 14px; }
         .best-seller-card h4 {
             font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #2C1C10;
@@ -9890,7 +9905,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.23';
+        const BUILD_VERSION = '2026-09-03.24';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
