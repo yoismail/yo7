@@ -9599,7 +9599,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.8';
+        const BUILD_VERSION = '2026-09-03.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14314,7 +14314,7 @@
             }
             if (weightVal !== '') {
                 const w = parseFloat(weightVal);
-                if (!isNaN(w) && w >= 0) variant.weight = w;
+                if (!isNaN(w) && w >= 0 && confirmReasonableWeight(w)) variant.weight = w;
             } else {
                 showToast('Added without a delivery weight, that size will fall back to the product\'s base weight until you set one.');
             }
@@ -14335,6 +14335,20 @@
             triggerEditPanelSave(catSlug, idx);
         }
         window.removeWeightVariant = removeWeightVariant;
+
+        // Weight drives delivery pricing directly (see resolveDeliveryFee
+        // and the matching server-side logic in create-payment-intent) —
+        // a single mistyped digit here (500 instead of 5) doesn't fail
+        // validation the way a negative number would, it just silently
+        // charges every customer who buys that item a wildly wrong
+        // delivery fee until someone notices. 50kg is well above anything
+        // in the real catalogue (the heaviest bag today is 10kg) but still
+        // leaves room for a genuine bulk/wholesale item — this only asks
+        // for a second look, it never blocks a confirmed real weight.
+        function confirmReasonableWeight(weightKg) {
+            if (weightKg <= 50) return true;
+            return confirm(`${weightKg}kg is unusually heavy for a single item, weight drives delivery pricing for every customer who buys this. Sure that's correct and not a typo (e.g. meant ${weightKg / 100} or ${weightKg / 1000})?`);
+        }
 
         // The actual "write this product's current form values to the
         // server" logic, split out from saveEditPanel so it can also run
@@ -14377,7 +14391,16 @@
             if (weightVal === '') { delete product.weight; }
             else {
                 const wv = parseFloat(weightVal);
-                if (!isNaN(wv) && wv >= 0) product.weight = wv;
+                // Confirmed once here, not silently skipped like an out-of-
+                // range price/qty above — this number drives delivery
+                // pricing for every customer who buys this item, and a
+                // stray extra zero (500 instead of 5) is exactly the kind
+                // of typo that's easy to make and easy to not notice until
+                // a customer's delivery fee is wrong. Doesn't block a
+                // genuinely large real weight, just makes sure it wasn't a
+                // slip — if cancelled, the rest of this save (price, stock,
+                // etc.) still goes through, only the weight is left as it was.
+                if (!isNaN(wv) && wv >= 0 && confirmReasonableWeight(wv)) product.weight = wv;
             }
 
             if (unitQtyVal === '') { delete product.unitOverride; }
@@ -14651,7 +14674,13 @@
 
             const newProduct = { name, unit, price, stock };
             if (saleVal !== '' && !isNaN(parseFloat(saleVal))) newProduct.salePrice = parseFloat(saleVal);
-            if (weightVal !== '' && !isNaN(parseFloat(weightVal))) newProduct.weight = parseFloat(weightVal);
+            if (weightVal !== '' && !isNaN(parseFloat(weightVal))) {
+                const wv = parseFloat(weightVal);
+                // Same confirm-not-block guard as persistProductOverride —
+                // a stray extra zero here (500 instead of 5) drives a wrong
+                // delivery fee for every customer who buys this new product.
+                if (confirmReasonableWeight(wv)) newProduct.weight = wv;
+            }
             if (isNewChecked) newProduct.isNew = true;
             if (isBestSellerChecked) newProduct.isBestSeller = true;
             if (descVal) newProduct.description = descVal;
