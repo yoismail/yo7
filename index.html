@@ -9598,7 +9598,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.13';
+        const BUILD_VERSION = '2026-09-03.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12268,6 +12268,19 @@
                         fulfilmentMethod,
                         customerEmail: currentSupabaseUser ? currentSupabaseUser.email : undefined,
                         orderDescription: `Yo7 Foods order — ${cart.length} item${cart.length === 1 ? '' : 's'}`,
+                        // Lets the server write a pending_checkouts row (see
+                        // migration 33 + stripe-webhook) the moment the
+                        // PaymentIntent exists, so an order can still be
+                        // reconstructed server-side if this browser never
+                        // gets to finishOrderAfterPayment() itself — a
+                        // dropped connection or killed tab right after a
+                        // real charge, not something a client-only flow can
+                        // recover from on its own.
+                        deliveryInfo: deliveryInfo ? {
+                            name: deliveryInfo.name, phone: deliveryInfo.phone,
+                            address: deliveryInfo.address, town: deliveryInfo.town,
+                            postcode: deliveryInfo.postcode, notes: deliveryInfo.notes,
+                        } : undefined,
                     },
                 }));
             } catch (err) {
