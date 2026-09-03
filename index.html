@@ -7056,7 +7056,7 @@
                                 <div style="display:flex; gap:12px; margin-top:16px;">
                                     <button class="btn btn-outline-dark" type="button"
                                         id="backToDeliveryBtn">Back</button>
-                                    <button class="btn btn-primary btn-block" id="placeOrderBtn" type="submit"><span class="place-order-label">Place order &middot; <span
+                                    <button class="btn btn-primary btn-block" id="placeOrderBtn" type="submit"><span class="place-order-label">Place order <span
                                             id="payButtonTotal">£0.00</span></span><span class="btn-spinner" aria-hidden="true"></span></button>
                                 </div>
                             </form>
@@ -9598,7 +9598,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.9';
+        const BUILD_VERSION = '2026-09-03.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12312,7 +12312,19 @@
                 },
             });
             mountEl.innerHTML = '';
-            const paymentElement = stripeElements.create('payment');
+            // Stripe's default layout shows a row of tabs and collapses
+            // anything that doesn't fit (Klarna etc.) behind a "more
+            // options" chevron — the exact thing that read as unfriendly:
+            // a customer has to click through to even see what's on offer.
+            // 'accordion' instead lists every enabled payment method as
+            // its own row up front, no hidden dropdown; each one expands
+            // in place when picked. This is a Stripe-hosted iframe with a
+            // narrow, documented theming surface (appearance.variables
+            // above, plus this layout option) — not something we can
+            // otherwise restructure freely.
+            const paymentElement = stripeElements.create('payment', {
+                layout: { type: 'accordion', defaultCollapsed: false, radios: false, spacedAccordionItems: true },
+            });
             paymentElement.mount('#stripePaymentElement');
             paymentElement.on('ready', () => { placeOrderBtn.disabled = false; });
         }
