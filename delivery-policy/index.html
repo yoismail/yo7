@@ -7832,8 +7832,8 @@
                     </div>
                     <div class="guide-step reveal" style="transition-delay:0.16s">
                         <div class="num">3</div>
-                        <h3>Checkout and receive</h3>
-                        <p>Confirm delivery details, pay, and get a proper invoice. We Deliver To All UK Postcodes, or pick up yourself.</p>
+                        <h3>Log in, then checkout</h3>
+                        <p>You'll need a free account to complete your order, it's how we keep it trackable in your Order History. Log in or sign up in a few seconds, confirm delivery details, pay, and get a proper invoice. We Deliver To All UK Postcodes, or pick up yourself.</p>
                     </div>
                 </div>
 
@@ -9419,7 +9419,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.18';
+        const BUILD_VERSION = '2026-09-03.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14792,7 +14792,7 @@
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
             { q: 'Is payment on the site secure?', a: 'Yes. Checkout runs through Stripe, a PCI-compliant payment processor used by major retailers worldwide, your card details are handled directly by Stripe and never touch our own servers.' },
-            { q: 'Do I need an account to order?', a: 'Not necessarily for browsing, but you\'ll need delivery details at checkout either way. Creating an account just makes future orders quicker.' },
+            { q: 'Do I need an account to order?', a: 'Yes, a free account is required to complete checkout, it\'s what lets you (and us) track your order afterwards in Order History. You can browse and build a basket without one, you\'re only asked to log in or sign up when you\'re ready to check out, and it only takes a few seconds.' },
             { q: 'How do I get in touch if I have a problem with my order?', a: 'WhatsApp is the fastest way, there\'s a button on the Contact page and a floating button on every page. We read every message.' },
         ];
         function renderFAQ() {
