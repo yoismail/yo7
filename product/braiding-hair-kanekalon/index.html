@@ -2552,6 +2552,19 @@
             box-shadow: 0 3px 8px rgba(225,225,0,0.45), 0 0 0 2px var(--card-bg);
             z-index: 3;
         }
+        /* Same edit-mode-only remove control as .offer-remove-btn, same
+           reason — no per-card admin affordance existed on this carousel
+           either, just the general product editor to hunt through. */
+        .new-remove-btn {
+            display: none;
+            position: absolute; top: 10px; right: 10px; z-index: 4;
+            width: 24px; height: 24px; border-radius: 50%; border: none;
+            background: rgba(179, 74, 74, 0.9); color: #fff;
+            align-items: center; justify-content: center;
+            font-size: 16px; line-height: 1; cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+        }
+        body.edit-mode-on .new-remove-btn { display: flex; }
         .new-card .body { padding: 12px 14px 14px; }
         .new-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .new-card .cat { font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
@@ -10021,7 +10034,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.35';
+        const BUILD_VERSION = '2026-09-03.36';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11362,6 +11375,7 @@
     <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="new-tag">New</span>
+        <button type="button" class="new-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromNewArrivals('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from New Arrivals">&times;</button>
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
@@ -11581,6 +11595,36 @@
             showToast(`${name} removed from special offers.`);
         }
         window.removeProductFromOffer = removeProductFromOffer;
+        // Mirrors removeProductFromOffer above, but for the isNew flag
+        // instead of salePrice. Unlike salePrice (already overridable via
+        // product_overrides.sale_price), isNew previously had no override
+        // column at all — it came straight from NEW_PRODUCT_SLUGS (a
+        // hardcoded default) or a custom product's own is_new column, both
+        // of which re-run and reassert isNew=true on every fresh load. A
+        // client-side-only removal would look like it worked and then
+        // silently reappear on refresh, so applyProductOverrides() above
+        // was extended first to actually honour is_new:false as a real
+        // override before this could be written at all.
+        async function removeProductFromNewArrivals(catSlug, idx) {
+            const cat = findCategory(catSlug);
+            const product = cat && cat.products[idx];
+            if (!product) return;
+            const name = product.name;
+            product.isNew = false;
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('product_overrides').upsert({
+                    product_key: productKey(catSlug, idx),
+                    is_new: false,
+                    updated_at: new Date().toISOString(),
+                });
+                if (error) showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000);
+            }
+            renderNewCarousel();
+            if (document.getElementById('newArrivalsGrid')) renderNewArrivalsPage();
+            logAdminAction('product_removed_from_new', 'product', name, null);
+            showToast(`${name} removed from New Arrivals.`);
+        }
+        window.removeProductFromNewArrivals = removeProductFromNewArrivals;
 
         (function initTrustBarPause() {
             const track = document.getElementById('trustBarTrack');
@@ -15425,6 +15469,14 @@
                 if (row.description) product.description = row.description;
                 if (Array.isArray(row.weight_variants) && row.weight_variants.length) product.weightVariants = row.weight_variants;
                 else if (row.weight_variants === null) delete product.weightVariants;
+                // Explicit tri-state, not truthy/falsy like most fields above
+                // — is_new being absent (null/undefined) means "no override,
+                // leave whatever NEW_PRODUCT_SLUGS/custom_products already
+                // set", but false is itself a real override (an admin
+                // removing this product from New Arrivals) that has to win
+                // over both of those, not get treated as "nothing to apply".
+                if (row.is_new === true) product.isNew = true;
+                else if (row.is_new === false) product.isNew = false;
             });
             route(); // re-render whatever's currently on screen with the real data now in hand
         }
