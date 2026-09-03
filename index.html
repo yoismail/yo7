@@ -9389,7 +9389,7 @@
             const dateLabel = (d.startDate || d.endDate) ? `, ${d.startDate || 'any time'} to ${d.endDate || 'no end date'}` : '';
             const minLabel = d.minOrder ? `, min order ${money(d.minOrder)}` : '';
             const maxLabel = d.maxPerCustomer ? `, max ${d.maxPerCustomer}/customer` : '';
-            return `"${d.code}", ${typeLabel} ${scopeLabel}${dateLabel}${minLabel}${maxLabel}`;
+            return `"${escapeHtml(d.code)}", ${typeLabel} ${scopeLabel}${dateLabel}${minLabel}${maxLabel}`;
         }
         function renderDiscountsAdmin() {
             const list = document.getElementById('discountsList');
@@ -9411,7 +9411,7 @@
             const prodSelect = document.getElementById('newDiscProduct');
             if (prodSelect && !prodSelect.dataset.populated) {
                 const options = [];
-                CATEGORIES.forEach(c => c.products.forEach((p, i) => options.push(`<option value="${c.slug}::${i}">${p.name}</option>`)));
+                CATEGORIES.forEach(c => c.products.forEach((p, i) => options.push(`<option value="${c.slug}::${i}">${escapeHtml(p.name)}</option>`)));
                 prodSelect.innerHTML = options.join('');
                 prodSelect.dataset.populated = 'true';
             }
@@ -9904,7 +9904,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.28';
+        const BUILD_VERSION = '2026-09-03.29';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10283,9 +10283,9 @@
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
       <h3>Edit bundle</h3>
-      <div class="field"><label>Bundle name</label><input type="text" id="bbe-name" value="${bundle.name}"></div>
+      <div class="field"><label>Bundle name</label><input type="text" id="bbe-name" value="${escapeHtml(bundle.name)}"></div>
       <div class="field"><label>Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="bbe-discount" value="${bundle.discountPercent || 0}"></div>
-      <div class="field"><label>Tagline</label><input type="text" id="bbe-tagline" value="${bundle.tagline || ''}"></div>
+      <div class="field"><label>Tagline</label><input type="text" id="bbe-tagline" value="${escapeHtml(bundle.tagline || '')}"></div>
       <div class="field">
         <label>Items included (at least 2)</label>
         <div id="bbe-items-list" class="delivery-rule-list"></div>
@@ -10308,12 +10308,12 @@
         function populateBundleEditProductSelect() {
             const catSlug = document.getElementById('bbe-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('bbe-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+            document.getElementById('bbe-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
         }
         function renderBundleEditItemsList() {
             document.getElementById('bbe-items-list').innerHTML = bundleEditNewItems.map((ref, i) => {
                 const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="bundleEditNewItems.splice(${i},1); renderBundleEditItemsList();">Remove</button></div>`;
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="bundleEditNewItems.splice(${i},1); renderBundleEditItemsList();">Remove</button></div>`;
             }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
         }
         window.renderBundleEditItemsList = renderBundleEditItemsList;
@@ -10412,7 +10412,7 @@
             const catSlug = document.getElementById('abf-cat').value;
             const cat = findCategory(catSlug);
             const select = document.getElementById('abf-product');
-            select.innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+            select.innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
         }
         function addItemToNewBundle() {
             const catSlug = document.getElementById('abf-cat').value;
@@ -10422,14 +10422,14 @@
             newBundleItems.push({ catSlug, idx });
             document.getElementById('abf-items-list').innerHTML = newBundleItems.map((ref, i) => {
                 const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
             }).join('');
         }
         window.addItemToNewBundle = addItemToNewBundle;
         function addItemToNewBundle_refresh() {
             document.getElementById('abf-items-list').innerHTML = newBundleItems.map((ref, i) => {
                 const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
             }).join('');
         }
         window.addItemToNewBundle_refresh = addItemToNewBundle_refresh;
@@ -10604,12 +10604,12 @@
         function populateAdfProductSelect() {
             const catSlug = document.getElementById('adf-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('adf-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+            document.getElementById('adf-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
         }
         function renderNewDishItemsList() {
             document.getElementById('adf-items-list').innerHTML = newDishItems.map((ref, i) => {
                 const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="newDishItems.splice(${i},1); renderNewDishItemsList();">Remove</button></div>`;
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newDishItems.splice(${i},1); renderNewDishItemsList();">Remove</button></div>`;
             }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No ingredients added yet.</p>';
         }
         window.renderNewDishItemsList = renderNewDishItemsList;
@@ -10733,9 +10733,9 @@
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
       <h3>Edit combo</h3>
-      <div class="field"><label>Combo name</label><input type="text" id="cce-name" value="${combo.name}"></div>
+      <div class="field"><label>Combo name</label><input type="text" id="cce-name" value="${escapeHtml(combo.name)}"></div>
       <div class="field"><label>Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="cce-discount" value="${combo.discountPercent || 0}"></div>
-      <div class="field"><label>Description</label><input type="text" id="cce-desc" value="${combo.description || ''}"></div>
+      <div class="field"><label>Description</label><input type="text" id="cce-desc" value="${escapeHtml(combo.description || '')}"></div>
       <div class="field"><label>Link to category (used only if no items are added)</label><select id="cce-link"><option value="">No link</option>${catOptions}</select></div>
       <div class="field">
         <label>Items included (optional, shown on the card)</label>
@@ -10760,12 +10760,12 @@
         function populateComboEditProductSelect() {
             const catSlug = document.getElementById('cce-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('cce-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+            document.getElementById('cce-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
         }
         function renderComboEditItemsList() {
             document.getElementById('cce-items-list').innerHTML = comboEditNewItems.map((ref, i) => {
                 const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="comboEditNewItems.splice(${i},1); renderComboEditItemsList();">Remove</button></div>`;
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="comboEditNewItems.splice(${i},1); renderComboEditItemsList();">Remove</button></div>`;
             }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
         }
         window.renderComboEditItemsList = renderComboEditItemsList;
@@ -10849,12 +10849,12 @@
         function populateAcfProductSelect() {
             const catSlug = document.getElementById('acf-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('acf-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+            document.getElementById('acf-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
         }
         function renderNewComboItemsList() {
             document.getElementById('acf-items-list').innerHTML = newComboItems.map((ref, i) => {
                 const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${item.name}</span><button type="button" class="rule-remove-btn" onclick="newComboItems.splice(${i},1); renderNewComboItemsList();">Remove</button></div>`;
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newComboItems.splice(${i},1); renderNewComboItemsList();">Remove</button></div>`;
             }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
         }
         window.renderNewComboItemsList = renderNewComboItemsList;
@@ -11326,7 +11326,7 @@
         function populateAtoProductSelect() {
             const catSlug = document.getElementById('ato-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('ato-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${p.name}</option>`).join('');
+            document.getElementById('ato-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
             updateAtoCurrentPriceLabel();
         }
         function updateAtoCurrentPriceLabel() {
@@ -12256,11 +12256,11 @@
     <div class="checkout-upsell-card">
       <a class="checkout-upsell-link" href="#/product/${p.catSlug}/${idx}">
         <div class="checkout-upsell-thumb">${productPhotoHTML(p, p.name)}</div>
-        <div class="checkout-upsell-name">${p.name}</div>
+        <div class="checkout-upsell-name">${escapeHtml(p.name)}</div>
       </a>
       <div class="checkout-upsell-row">
         <span class="checkout-upsell-price">${money(p.price)}</span>
-        <button type="button" class="checkout-upsell-add" onclick="quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${p.name} to basket">
+        <button type="button" class="checkout-upsell-add" onclick="quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${escapeHtml(p.name)} to basket">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
@@ -14520,7 +14520,7 @@
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
               <label>Description (optional, leave blank to use the default)</label>
-              <textarea id="ep-desc-${catSlug}-${idx}" rows="3" placeholder="${product.name}, a Yo7 Foods staple from our ${cat.name.replace(/&amp;/g, '&')} aisle...">${product.description || ''}</textarea>
+              <textarea id="ep-desc-${catSlug}-${idx}" rows="3" placeholder="${escapeHtml(product.name)}, a Yo7 Foods staple from our ${cat.name.replace(/&amp;/g, '&')} aisle...">${escapeHtml(product.description || '')}</textarea>
             </div>
           </div>
           <div class="ep-row">
@@ -15277,7 +15277,7 @@
                 <a class="search-result-item" href="#/product/${p.catSlug}/${p.idx}">
                     <div class="search-result-thumb"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
                     <div class="search-result-info">
-                        <div class="name">${p.name}</div>
+                        <div class="name">${escapeHtml(p.name)}</div>
                         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
                     </div>
                     <div class="search-result-price">${money(p.price)}</div>
