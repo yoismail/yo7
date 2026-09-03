@@ -97,9 +97,20 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
+    <!-- A plain <link rel="stylesheet"> here blocks first paint until this
+         third-party request completes — real latency added to EVERY load,
+         worse on slow mobile connections, for exactly the kind of resource
+         that doesn't need to be in the critical path. preload+onload fetches
+         it with the same high priority but doesn't hold up rendering: text
+         paints immediately in the fallback font from the CSS var() stack
+         (--display/--body) and swaps to Montserrat Alternates the moment it
+         arrives — which is what display=swap already does even when
+         render-blocking, so this changes nothing about the visual result,
+         only removes the wait beforehand. <noscript> covers the no-JS case. -->
+    <link rel="preload" as="style"
         href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&display=swap"></noscript>
     <!-- Supabase and Stripe's own libraries moved to just before the main
          app script at the bottom of <body> (deliberate performance fix,
          see the note there) — neither is needed until the app script
@@ -9429,7 +9440,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.5';
+        const BUILD_VERSION = '2026-09-03.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
