@@ -9418,7 +9418,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.2';
+        const BUILD_VERSION = '2026-09-03.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11850,7 +11850,7 @@
             const hasSubscription = cart.some(item => item.isSubscription);
             if (!hasSubscription) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
             banner.style.display = 'block';
-            banner.innerHTML = `<strong>About your subscription item(s)</strong>Today's delivery is charged as normal. Automatic recurring billing isn't switched on yet, so we'll personally reach out on WhatsApp or email ahead of each future delivery to confirm it before charging you again.`;
+            banner.innerHTML = `<strong>About your subscription item(s)</strong>Today's delivery is charged as normal. Nothing is auto-charged after this, you'll place and pay for each future order yourself. We'll just send a reminder email when it's time to reorder, with a one-click link to turn reminders off any time.`;
         }
         function changeQty(i, delta) {
             cart[i].qty += delta;
