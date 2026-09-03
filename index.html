@@ -2312,6 +2312,66 @@
             flex-shrink: 0;
         }
 
+        /* ================= ADVERTS (home, admin-managed) =================
+           A plain image carousel, not a product card — the photos are
+           whatever the admin uploads, this just displays and auto-scrolls
+           them. Black background regardless of site theme, same fixed-dark
+           convention as the nav/footer/best-sellers spotlight, so uploaded
+           adverts (often already designed against a dark background) don't
+           fight a light page around them. Hidden entirely for an ordinary
+           visitor when there's nothing to show; stays visible (empty) for
+           an admin in edit mode so the add-image tile is still reachable. */
+        .advert-section {
+            background: #000;
+            line-height: 0;
+        }
+        .advert-carousel {
+            display: flex; gap: 2px;
+            overflow-x: auto; scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity;
+        }
+        .advert-carousel::-webkit-scrollbar { display: none; }
+        .advert-slide {
+            position: relative;
+            flex: 0 0 100%; max-width: 100%;
+            aspect-ratio: 21/7;
+            scroll-snap-align: start;
+            background: #000;
+        }
+        .advert-slide img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        @media (max-width: 700px) {
+            .advert-slide { aspect-ratio: 4/3; }
+        }
+        .advert-remove-btn {
+            display: none;
+            position: absolute; top: 12px; right: 12px; z-index: 2;
+            width: 28px; height: 28px; border-radius: 50%; border: none;
+            background: rgba(0, 0, 0, 0.65); color: #fff;
+            align-items: center; justify-content: center;
+            font-size: 17px; line-height: 1; cursor: pointer;
+        }
+        body.edit-mode-on .advert-remove-btn { display: flex; }
+        .advert-add-slide {
+            display: none;
+            align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+        }
+        body.edit-mode-on .advert-add-slide { display: flex; }
+        .advert-add-label {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%; cursor: pointer;
+            color: rgba(255, 255, 255, 0.75);
+            font-family: var(--display); font-weight: 600; font-size: 14px;
+        }
+        .advert-add-label input[type="file"] {
+            position: absolute; width: 1px; height: 1px; overflow: hidden;
+            clip: rect(0, 0, 0, 0); white-space: nowrap;
+        }
+
         /* ================= DELIVERY / ORDER (home) ================= */
         .new-section {
             position: relative;
@@ -6649,6 +6709,9 @@
 
     <!-- ================= HOME ================= -->
     <div id="view-home" class="hidden-view">
+        <section class="advert-section" id="advertSection">
+            <div class="advert-carousel" id="advertCarousel"></div>
+        </section>
         <header class="hero">
             <svg class="hero-watermark" viewBox="65 25 875 900">
                 <use href="#seal-mark" />
@@ -9955,7 +10018,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.34';
+        const BUILD_VERSION = '2026-09-03.35';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11184,6 +11247,78 @@
                 applyTheme(next);
             });
         }
+
+        /* ================= ADVERT CAROUSEL (home, admin-managed) =================
+           A plain list of image URLs the admin uploads and removes directly,
+           stored in advert_banners (see the migration in the setup notes) —
+           there's no relationship to products here, just images and the
+           order they show in. Same product-photos storage bucket everything
+           else already uploads to (under an adverts/ path), so no new
+           bucket/policy setup is needed beyond the one new table. */
+        let advertBanners = [];
+        async function loadAdvertBanners() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('advert_banners').select('*').order('sort_order', { ascending: true });
+            if (error || !Array.isArray(data)) return;
+            advertBanners = data;
+            renderAdvertCarousel();
+        }
+        function renderAdvertCarousel() {
+            const section = document.getElementById('advertSection');
+            const strip = document.getElementById('advertCarousel');
+            if (!section || !strip) return;
+            const canManage = currentIsAdmin && editModeOn;
+            if (advertBanners.length === 0 && !canManage) { section.style.display = 'none'; return; }
+            section.style.display = '';
+            const slides = advertBanners.map(b => `
+    <div class="advert-slide">
+      <img src="${escapeHtml(b.image_url)}" alt="Advertisement" loading="lazy">
+      <button type="button" class="advert-remove-btn" onclick="removeAdvertBanner('${b.id}')" aria-label="Remove this advert image">&times;</button>
+    </div>`).join('');
+            const addTile = `
+    <div class="advert-slide advert-add-slide">
+      <label class="advert-add-label">
+        <input type="file" accept="image/*" onchange="handleAdvertUpload(this)">
+        <span>+ Add advert image</span>
+      </label>
+    </div>`;
+            strip.innerHTML = slides + addTile;
+        }
+        async function handleAdvertUpload(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            if (!supabaseClient) { showToast('Advert uploads need accounts connected first, this is preview mode right now.'); return; }
+            showToast('Uploading advert image…');
+            // Wider max dimension than a product photo (1600 vs 1000) — these
+            // are wide banner images, not square thumbnails, so they need
+            // more horizontal resolution to stay sharp at full-bleed width.
+            const uploadFile = await compressImageFile(file, 1600, 0.85);
+            const isJpeg = uploadFile.type === 'image/jpeg';
+            const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+            const path = `adverts/${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000); return; }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const sortOrder = advertBanners.length ? Math.max(...advertBanners.map(b => b.sort_order || 0)) + 1 : 0;
+            const { data: inserted, error: insertError } = await supabaseClient.from('advert_banners').insert({ image_url: publicUrl, sort_order: sortOrder }).select('*').single();
+            if (insertError) { showToast('Uploaded, but couldn\'t save it: ' + insertError.message, 6000); return; }
+            advertBanners.push(inserted);
+            renderAdvertCarousel();
+            logAdminAction('advert_added', 'advert', publicUrl, null);
+            showToast('Advert image added.');
+        }
+        window.handleAdvertUpload = handleAdvertUpload;
+        async function removeAdvertBanner(id) {
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.from('advert_banners').delete().eq('id', id);
+            if (error) { showToast('Could not remove that advert: ' + error.message, 6000); return; }
+            advertBanners = advertBanners.filter(b => b.id !== id);
+            renderAdvertCarousel();
+            logAdminAction('advert_removed', 'advert', id, null);
+            showToast('Advert removed.');
+        }
+        window.removeAdvertBanner = removeAdvertBanner;
 
         function renderOfferCarousel() {
             const items = offerItems();
@@ -14565,6 +14700,12 @@
             // restores edit mode automatically, on whatever page loads first.
             if (typeof renderBundles === 'function') renderBundles();
             if (typeof renderCombos === 'function') renderCombos();
+            // The advert section hides itself entirely when there are no
+            // adverts and nobody's around to add one — that's a JS-computed
+            // display:none, not a CSS class, so it needs an explicit
+            // re-render (not just the body.edit-mode-on toggle) to reappear
+            // the moment an admin turns edit mode on with an empty list.
+            if (typeof renderAdvertCarousel === 'function') renderAdvertCarousel();
             syncNavSpacer();
         }
         document.getElementById('editModeToggle').addEventListener('click', async () => {
@@ -16029,6 +16170,7 @@
         if (bestSellerCarouselNext && bestSellerCarouselStrip) bestSellerCarouselNext.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, 460));
         initCarouselPeriodicJump('newCarousel');
         initCarouselPeriodicJump('offerCarousel');
+        initCarouselPeriodicJump('advertCarousel', 5000);
         // Best sellers, Shop by category, Bundles, and Shop-by-meal are all
         // manual/swipe/arrow-driven only, no auto-scroll — Best sellers and
         // Shop by category used to have a continuous ambient auto-scroll
@@ -16077,6 +16219,8 @@
         loadRealBestSellers();
         renderPlatformBadges();
         renderOfferCarousel();
+        renderAdvertCarousel();
+        loadAdvertBanners();
         initThemeToggle();
         initCookieNotice();
         initDragScroll();
