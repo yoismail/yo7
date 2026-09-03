@@ -1861,6 +1861,23 @@
             color: #2C1C10;
             padding: 88px 0 96px;
         }
+        /* Homepage instance only (#groupCategorySection, the standalone
+           category-browsing page, shares .shop-section but keeps the plain
+           version) — a soft chartreuse wash behind the tile row, giving
+           this section its own quiet backdrop rather than the flat cream
+           every .shop-section otherwise has. */
+        #shopByGroup {
+            position: relative;
+            isolation: isolate;
+        }
+        #shopByGroup::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(640px 320px at 12% 0%, rgba(144, 184, 0, 0.1), transparent 62%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        #shopByGroup .wrap { position: relative; z-index: 1; }
         .bundles-section {
             background: var(--page-bg);
             padding: 80px 0 88px;
@@ -2295,12 +2312,38 @@
             border-top: 1px solid rgba(var(--border-rgb), 0.06);
             border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
         }
+        /* A dark "spotlight stage" rather than the plain page background
+           every other homepage section uses — fixed dark in both themes on
+           purpose (same convention the nav/footer/hero already use: these
+           don't flip with light/dark mode, they're the site's own fixed
+           brand colour), so cream product cards read as spotlighted tiles
+           against it instead of blending into the page. */
         .best-sellers-section {
-            background: var(--section-alt-bg);
-            padding: 56px 0 60px;
-            border-top: 1px solid rgba(var(--border-rgb), 0.06);
-            border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
+            position: relative;
+            background: linear-gradient(155deg, var(--aubergine-deep) 0%, var(--aubergine) 55%, var(--aubergine-mid) 100%);
+            padding: 64px 0 68px;
+            overflow: hidden;
+            isolation: isolate;
         }
+        .best-sellers-section::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(560px 300px at 90% -10%, rgba(225, 225, 0, 0.16), transparent 60%),
+                radial-gradient(480px 260px at 4% 110%, rgba(144, 184, 0, 0.18), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .best-sellers-section .wrap { position: relative; z-index: 1; }
+        .best-sellers-section .new-section-head h2 { color: #FAF9F2; }
+        .best-sellers-section .view-all-btn { color: #FAF9F2; background: rgba(250, 249, 242, 0.12); }
+        .best-sellers-section .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
+        .best-sellers-section .swipe-hint { color: rgba(250, 249, 242, 0.55); }
+        .best-sellers-section .cat-nav-arrow {
+            display: flex;
+            background: rgba(250, 249, 242, 0.14); border-color: rgba(250, 249, 242, 0.24); color: #FAF9F2;
+        }
+        .best-sellers-section .cat-nav-arrow:hover { background: rgba(250, 249, 242, 0.26); }
         /* Same card-in-a-scrollable-row pattern as the Special Offer and
            Just Landed carousels right above it on the same page, rather
            than the mismatched "one big feature card + a plain list" layout
@@ -2317,32 +2360,58 @@
         .best-seller-card {
             flex: 0 0 220px; max-width: 220px;
             scroll-snap-align: start;
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
-            overflow: hidden; text-decoration: none; color: var(--ink);
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+            /* Fixed light, not var(--card-bg) — this section's own
+               background is fixed-dark regardless of site theme (see
+               above), so the card needs to stay a fixed light tile too,
+               or a dark-mode visitor would get a dark card lost against a
+               dark section instead of the intended spotlight contrast. */
+            background: #FFFDF7; border: none; border-radius: 14px;
+            overflow: hidden; text-decoration: none; color: #2C1C10;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
         }
-        .best-seller-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16); }
+        .best-seller-card:hover { transform: translateY(-7px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
         .best-seller-card .thumb {
             aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
+        /* Gold rather than the site's usual green/orange badge colours —
+           reads as "trophy/favourite" specifically, and gives the section
+           its one ambient (not scroll-driven) motion: a slow, restrained
+           glow breathing on the badge only, never the whole card or strip. */
         .best-seller-rank {
             position: absolute; top: 10px; left: 10px; z-index: 3;
             display: flex; align-items: center; gap: 4px;
-            background: var(--aubergine); color: var(--cream);
+            background: linear-gradient(135deg, #F6CE4E, #E1A100); color: #3D2900;
             font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
             padding: 5px 11px 5px 9px; border-radius: 999px;
-            box-shadow: 0 3px 8px rgba(6, 59, 0, 0.3), 0 0 0 2px var(--card-bg);
+            box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px #FFFDF7;
+            animation: bestSellerBadgeGlow 2.6s ease-in-out infinite;
+        }
+        @keyframes bestSellerBadgeGlow {
+            0%, 100% { box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px #FFFDF7; }
+            50% { box-shadow: 0 3px 18px rgba(225, 161, 0, 0.85), 0 0 0 2px #FFFDF7; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .best-seller-rank { animation: none; }
         }
         .best-seller-rank svg { width: 11px; height: 11px; flex-shrink: 0; }
         .best-seller-card .body { padding: 12px 14px 14px; }
         .best-seller-card h4 {
-            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #2C1C10;
             margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .best-seller-card .cat { font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
+        .best-seller-card .cat { font-size: 10.5px; color: #8a7d6f; margin-bottom: 6px; }
+        /* .price-now.sale and .price-was normally read var(--heading-mid)/
+           var(--text-faint), tuned for light text on the page's own
+           theme-reactive background — this card's background is fixed
+           light regardless of theme (see .best-seller-card above), so in
+           dark mode those variables would resolve to their pale, dark-page
+           values here and go low-contrast. Pinned to fixed colours that
+           work against this card's fixed light background either way. */
+        .best-seller-card .price-now.sale { color: var(--chartreuse-rich); }
+        .best-seller-card .price-was { color: #8a7d6f; }
         @media (max-width: 900px) {
             .best-seller-card { flex-basis: 168px; max-width: 168px; }
         }
@@ -3015,6 +3084,33 @@
             }
         }
 
+        /* Best Sellers / Shop by category card entrances — a bit more
+           pronounced than the plain fade-up .reveal uses everywhere else
+           (scale in as well as fade+rise), reserved for these two sections
+           specifically so their scroll-into-view moment reads as more
+           deliberate than the rest of the homepage. Re-observed per render
+           via observeContainerReveals() rather than the global one-shot
+           observeReveals() — see the comment on that function. */
+        .bs-card-reveal,
+        .cat-tile-reveal {
+            opacity: 0;
+            transform: translateY(24px) scale(0.94);
+            transition: opacity 0.6s cubic-bezier(.16,.84,.44,1), transform 0.6s cubic-bezier(.16,.84,.44,1);
+        }
+        .bs-card-reveal.is-visible,
+        .cat-tile-reveal.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .bs-card-reveal,
+            .cat-tile-reveal {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+        }
+
         /* ================= FLOATING ORDER BUTTON ================= */
         .float-cart {
             position: fixed;
@@ -3384,41 +3480,79 @@
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
         }
+        /* Shop by category lost its ambient auto-scroll (see the removed
+           initCarouselAutoAdvance call), so the arrows are its main
+           discoverable "there's more to the right" affordance now, unlike
+           every other carousel on the page which still leaves them hidden
+           in favour of swipe/drag alone. */
+        #shopByGroup .cat-nav-arrow {
+            display: flex;
+        }
         #shopByGroup .cat-nav-arrow:hover,
         .new-carousel-wrap .cat-nav-arrow:hover,
         .offer-carousel-wrap .cat-nav-arrow:hover { background: var(--section-alt-bg); }
         .cat-flat-scroll { gap: 18px; padding: 4px 2px 10px; }
+        /* Editorial tile, not a product card: full-bleed photo with the
+           name/count overlaid on a scrim rather than a separate white body
+           underneath — taller (3/4, not square) and sharp-cornered with a
+           single colour-block accent edge, deliberately unlike every
+           square, white-bodied card everywhere else on the homepage
+           (product cards, best sellers, new arrivals, offers). */
         .cat-flat-card {
             flex: 0 0 220px; max-width: 220px;
+            aspect-ratio: 3/4;
             scroll-snap-align: start;
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
-            overflow: hidden; text-decoration: none; color: var(--ink);
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
-            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+            position: relative;
+            display: block;
+            border-radius: 20px 20px 4px 4px;
+            overflow: hidden;
+            text-decoration: none;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
+            border-bottom: 4px solid var(--chartreuse);
+            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
-        .cat-flat-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16); }
+        .cat-flat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2);
+        }
         .cat-flat-card .thumb {
-            aspect-ratio: 1/1; position: relative; overflow: hidden;
+            position: absolute; inset: 0; overflow: hidden;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
         .cat-flat-photo {
             display: block; width: 100%; height: 100%;
-            background-size: 122%; background-position: center 22%;
+            background-size: 128%; background-position: center 24%;
+            transition: transform 0.6s cubic-bezier(.16,.84,.44,1);
         }
+        .cat-flat-card:hover .cat-flat-photo { transform: scale(1.09); }
         .cat-flat-photo-emoji {
             display: flex; align-items: center; justify-content: center;
         }
-        .cat-flat-photo-emoji span { font-size: 44px; }
-        .cat-flat-card .body { padding: 14px 16px 16px; }
+        .cat-flat-photo-emoji span { font-size: 58px; }
+        .cat-flat-scrim {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            padding: 34px 16px 14px;
+            background: linear-gradient(to top, rgba(6, 20, 0, 0.85) 0%, rgba(6, 20, 0, 0.5) 60%, rgba(6, 20, 0, 0) 100%);
+            color: #FAF9F2;
+        }
         .cat-flat-card h3 {
-            font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--heading); line-height: 1.3;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px;
+            font-family: var(--display); font-weight: 700; font-size: 16px; line-height: 1.25;
+            letter-spacing: -0.01em; margin-bottom: 6px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
-        .cat-flat-desc {
-            font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-bottom: 8px;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        .cat-flat-meta {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
         }
-        .cat-flat-count { font-size: 11px; color: var(--text-muted); }
+        .cat-flat-count {
+            font-family: var(--display); font-weight: 600; font-size: 10.5px;
+            letter-spacing: 0.06em; text-transform: uppercase; color: rgba(250, 249, 242, 0.78);
+        }
+        .cat-flat-arrow {
+            width: 15px; height: 15px; flex-shrink: 0; color: var(--chartreuse-soft);
+            opacity: 0; transform: translateX(-5px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .cat-flat-card:hover .cat-flat-arrow { opacity: 1; transform: translateX(0); }
         .swipe-hint {
             text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 4px;
         }
@@ -6520,7 +6654,7 @@
                 <div class="new-section-head reveal">
                     <div>
                         <div class="section-eyebrow">Best sellers</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Customer favourites, the essentials everyone trusts</h2>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">Customer favourites, the essentials everyone trusts</h2>
                     </div>
                     <a class="view-all-btn" href="#/best-sellers">
                         View all
@@ -9699,7 +9833,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.19';
+        const BUILD_VERSION = '2026-09-03.20';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9929,15 +10063,23 @@
                     ? `<span class="cat-flat-photo ${photoClass}"></span>`
                     : `<span class="cat-flat-photo cat-flat-photo-emoji"><span>${c.emoji}</span></span>`;
                 return `
-    <a class="cat-flat-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.03).toFixed(2)}s">
+    <a class="cat-flat-card cat-tile-reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.05).toFixed(2)}s">
       <div class="thumb">${thumbBlock}</div>
-      <div class="body">
+      <div class="cat-flat-scrim">
         <h3>${c.name.replace(/&amp;/g, '&')}</h3>
-        <p class="cat-flat-desc">${c.tagline}</p>
-        <span class="cat-flat-count">${c.products.length} item${c.products.length === 1 ? '' : 's'}</span>
+        <div class="cat-flat-meta">
+          <span class="cat-flat-count">${c.products.length} item${c.products.length === 1 ? '' : 's'}</span>
+          <svg class="cat-flat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
       </div>
     </a>`;
             }).join('');
+            // Only ever rendered once at boot today, but re-observed the same
+            // safe way as Best Sellers rather than relying on the global
+            // one-shot observeReveals() pass — matches that pattern, and
+            // stops this from silently breaking if a future change ever
+            // makes this re-render after boot too.
+            observeContainerReveals(document.getElementById('catGrid'), '.cat-tile-reveal');
         }
 
         // Shared by both bundleCardHTML (Shop by meal) and comboCardHTML
@@ -10965,97 +11107,15 @@
             strip.innerHTML = cardHTML;
         }
         /* ================= CAROUSEL AUTO-ADVANCE =================
-           Matches the trust bar's scroll character: a continuous, gentle
-           glide rather than a periodic jump, which is what "smooth, never
-           freezes" actually looks like. The trust bar gets that for free
-           because it's a non-interactive CSS transform loop; these
-           carousels have to stay draggable, swipeable, and arrow-clickable,
-           so the glide is still driven by nudging scrollLeft every frame —
-           but the pause/resume state that drives it is kept to the same
-           minimal shape the trust bar relies on: one boolean, one resume
-           timer, nothing else. A previous version of this tracked pause
-           state across half a dozen listeners with per-frame timing math
-           layered on top (dwell timers, easing, direction); every fix for
-           one interaction sequence that left it stuck opened another. This
-           has already been stress-tested against 40 rapid overlapping
-           interaction cycles without getting stuck. */
-        function initCarouselAutoAdvance(stripId, pxPerSecond = 34) {
-            const strip = document.getElementById(stripId);
-            if (!strip) return;
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+           Best sellers and Shop by category used to also have a continuous
+           ambient auto-scroll here (initCarouselAutoAdvance, a per-frame
+           scrollLeft drift). Removed on purpose — those two sections are
+           manual/swipe-driven only now, matching Bundles and Shop-by-meal
+           below, which never had it. initCarouselPeriodicJump (the New
+           Arrivals / Offers carousels' slower one-card-at-a-time advance)
+           is untouched. */
 
-            let active = true;
-            let inView = true;
-            let dir = 1;
-            let pointerDownHere = false;
-            let resumeTimer = null;
-            let lastTs = null;
-
-            // CSS scroll-snap-type actively fights a per-frame scrollLeft
-            // nudge, the browser keeps pulling position back toward the
-            // nearest snap point every frame, which quietly cancels the
-            // drift to nothing without erroring or looking "stuck" in any
-            // obvious way. So snap is off while the ambient glide is
-            // driving, and restored the instant a real interaction takes
-            // over, giving the satisfying snap-to-card feel back for
-            // drags and arrow clicks specifically.
-            strip.style.scrollSnapType = 'none';
-
-            function scheduleResume(delay) {
-                clearTimeout(resumeTimer);
-                resumeTimer = setTimeout(() => {
-                    active = true;
-                    lastTs = null;
-                    strip.style.scrollSnapType = 'none';
-                }, delay);
-            }
-            function halt(delay) {
-                active = false;
-                strip.style.scrollSnapType = 'x proximity';
-                scheduleResume(delay);
-            }
-
-            // Strip-scoped: only a gesture that actually started on this
-            // carousel should ever pause it.
-            strip.addEventListener('pointerdown', () => { pointerDownHere = true; halt(4000); });
-            strip.addEventListener('touchstart', () => { pointerDownHere = true; halt(4000); }, { passive: true });
-            strip.addEventListener('wheel', () => halt(2200), { passive: true });
-            // Window-level on purpose: a drag or touch very often ends up
-            // somewhere else by release time, and a listener scoped to the
-            // strip itself would simply never see that event. Gated on
-            // pointerDownHere so a click anywhere else on the page can't
-            // pause a carousel it never touched.
-            const onRelease = () => { if (pointerDownHere) { pointerDownHere = false; scheduleResume(2200); } };
-            window.addEventListener('pointerup', onRelease);
-            window.addEventListener('pointercancel', onRelease);
-            window.addEventListener('touchend', onRelease, { passive: true });
-            window.addEventListener('touchcancel', onRelease, { passive: true });
-
-            const visibilityObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { inView = entry.isIntersecting; });
-            }, { threshold: 0 });
-            visibilityObserver.observe(strip);
-
-            function frame(ts) {
-                if (active && inView && !document.hidden) {
-                    if (lastTs === null) lastTs = ts;
-                    const dt = (ts - lastTs) / 1000;
-                    lastTs = ts;
-                    const max = strip.scrollWidth - strip.clientWidth;
-                    if (max > 1) {
-                        if (dir === 1 && strip.scrollLeft >= max - 1) dir = -1;
-                        else if (dir === -1 && strip.scrollLeft <= 1) dir = 1;
-                        strip.scrollLeft += dir * pxPerSecond * dt;
-                    }
-                } else {
-                    lastTs = null;
-                }
-                requestAnimationFrame(frame);
-            }
-            requestAnimationFrame(frame);
-        }
-
-        // A slower, more deliberate cousin of initCarouselAutoAdvance above:
+        // A slower, more deliberate cousin of the removed continuous glide:
         // instead of an ambient continuous drift, this waits, then glides
         // exactly one card over using the browser's own smooth scroll (so it
         // settles cleanly on each card's scroll-snap point) and wraps back to
@@ -11119,7 +11179,7 @@
                 return;
             }
             strip.innerHTML = items.map((p, i) => `
-    <a class="best-seller-card" href="#/product/${p.catSlug}/${p.idx}">
+    <a class="best-seller-card bs-card-reveal" href="#/product/${p.catSlug}/${p.idx}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
       <div class="thumb">
         <span class="best-seller-rank">${BEST_SELLER_STAR_SVG}#${i + 1}</span>
         ${productPhotoHTML(p, p.name)}
@@ -11130,6 +11190,12 @@
         <div class="price">${priceHTML(p)}</div>
       </div>
     </a>`).join('');
+            // Re-observed on every call (not the global one-shot
+            // observeReveals()) — this strip can re-render after boot once
+            // real order data loads, and a stale single observer pass would
+            // leave those later cards stuck invisible with nothing left
+            // watching them.
+            observeContainerReveals(strip, '.bs-card-reveal');
         }
         function renderNewArrivalsPage() {
             const items = newArrivalsItems();
@@ -15476,6 +15542,23 @@
             }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
             document.querySelectorAll('.reveal').forEach(el => io.observe(el));
         }
+        // Same one-shot scroll-into-view reveal as observeReveals() above,
+        // but callable per-container instead of once globally at boot —
+        // for a strip like Best Sellers that re-renders its cards after
+        // boot (real order data can load asynchronously), the global pass
+        // would have already run and unobserved everything by the time
+        // fresh cards exist, leaving them stuck at opacity:0 forever with
+        // nothing left watching them. Call this again at the end of
+        // whatever function just repopulated the container.
+        function observeContainerReveals(container, selector) {
+            if (!container) return;
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) { entry.target.classList.add('is-visible'); io.unobserve(entry.target); }
+                });
+            }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+            container.querySelectorAll(selector).forEach(el => io.observe(el));
+        }
 
         /* ================= POSTCODE CHECKER =================
            Delivery now covers all UK postcodes, so this no longer needs to
@@ -15792,10 +15875,11 @@
         if (bestSellerCarouselNext && bestSellerCarouselStrip) bestSellerCarouselNext.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, 460));
         initCarouselPeriodicJump('newCarousel');
         initCarouselPeriodicJump('offerCarousel');
-        initCarouselAutoAdvance('bestSellerCarousel', 34);
-        initCarouselAutoAdvance('catGrid', 34);
-        // Bundles and Shop-by-meal (combos) are intentionally left without
-        // auto-scroll, manual swipe/drag/arrows only.
+        // Best sellers, Shop by category, Bundles, and Shop-by-meal are all
+        // manual/swipe/arrow-driven only, no auto-scroll — Best sellers and
+        // Shop by category used to have a continuous ambient auto-scroll
+        // here, removed on request (it read as distracting rather than
+        // lively, and fought a visitor trying to browse at their own pace).
         /* ================= NEWSLETTER =================
            Actually saves the address now (see
            supabase-migration-18-newsletter-signup.sql) instead of just
