@@ -9665,7 +9665,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.16';
+        const BUILD_VERSION = '2026-09-03.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11487,11 +11487,13 @@
         let pdSelectedVariant = null; // index into pdCurrent.weightVariants, or null for the base price
         // Structured data so a shared or bookmarked product link (WhatsApp,
         // social, a direct search hit) shows a proper price/availability
-        // preview when crawled. Hash-routed URLs like this one aren't
-        // themselves reachable via a sitemap, Google only ever crawls the
-        // root document, so this doesn't make every product independently
-        // indexable, that would need real per-route URLs. It's still worth
-        // having for anything that lands on the page directly.
+        // preview when crawled. The 76 static products additionally have
+        // real per-route URLs (scripts/generate-product-pages.py) that ship
+        // with this same JSON-LD baked into <head> already, so it's present
+        // the instant a crawler fetches the document — this function is
+        // what keeps it correct after that (or produces it fresh for
+        // in-app/hash-only navigation and admin-added products, which don't
+        // have a real page).
         function updateProductJsonLd(p, cat, catSlug, idx) {
             let el = document.getElementById('productJsonLd');
             if (!el) {
@@ -11503,6 +11505,17 @@
             const stock = p.stock || 'in';
             const availability = stock === 'out' ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock';
             const price = (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
+            // A generated static page for this exact product (see
+            // scripts/generate-product-pages.py) seeds window.__STATIC_PRODUCT_PAGE__
+            // and bakes a real-URL JSON-LD block into <head> before this ever
+            // runs. Keep using that real URL as long as we're still showing
+            // the product it was generated for and still sitting on that
+            // page's own path — the moment a visitor browses to a DIFFERENT
+            // product (or this same product is reached via the SPA, where no
+            // marker exists), fall back to the hash-route URL like before.
+            const staticPage = window.__STATIC_PRODUCT_PAGE__;
+            const onOwnStaticPage = staticPage && staticPage.catSlug === catSlug && String(staticPage.idx) === String(idx) && location.pathname === staticPage.path;
+            const pageUrl = onOwnStaticPage ? `https://yo7foods.co.uk${staticPage.path}` : `https://yo7foods.co.uk/#/product/${catSlug}/${idx}`;
             el.textContent = JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'Product',
@@ -11510,13 +11523,14 @@
                 description: p.description || `${p.name}, from Yo7 Foods' ${cat.name.replace(/&amp;/g, '&')} aisle.`,
                 sku: p.code || undefined,
                 category: cat.name.replace(/&amp;/g, '&'),
-                url: `https://yo7foods.co.uk/#/product/${catSlug}/${idx}`,
+                image: 'https://yo7foods.co.uk/og-image.png',
+                url: pageUrl,
                 offers: {
                     '@type': 'Offer',
                     priceCurrency: 'GBP',
                     price: price.toFixed(2),
                     availability,
-                    url: `https://yo7foods.co.uk/#/product/${catSlug}/${idx}`,
+                    url: pageUrl,
                 },
             });
         }
