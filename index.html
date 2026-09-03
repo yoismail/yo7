@@ -7911,6 +7911,29 @@
         </section>
     </div>
 
+    <!-- ================= REORDER REMINDER UNSUBSCRIBE ================= -->
+    <!-- Reached only from the "Stop these reminders for this item" link in
+         a reorder-reminder email — never linked from anywhere on the site
+         itself. Works with no login: the token in the URL is the whole
+         authorization (see unsubscribe_reminder() in migration 30), the
+         same one-click pattern most transactional/marketing email
+         unsubscribe links use, since asking someone to log in first just to
+         turn off an email is exactly the kind of friction that makes people
+         report the mail as spam instead. -->
+    <div id="view-unsubscribe-reminder" class="hidden-view">
+        <section class="auth-section">
+            <div class="auth-box">
+                <svg class="seal-mini" viewBox="65 25 875 900"
+                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
+                    <use href="#seal-mark" />
+                </svg>
+                <h1 id="unsubReminderHeading">One moment…</h1>
+                <div class="sub" id="unsubReminderSub">Turning off those reminders.</div>
+                <a class="btn btn-primary btn-block btn-lg" href="#/">Back to shop</a>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= SIGN UP ================= -->
     <div id="view-signup" class="hidden-view">
         <section class="auth-section">
@@ -9394,7 +9417,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.16';
+        const BUILD_VERSION = '2026-09-02.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14828,9 +14851,33 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
+        // Deliberately does not require currentSupabaseUser/sign-in — see
+        // the comment on view-unsubscribe-reminder above for why. The
+        // token itself (unsubscribe_reminder(), migration 30) is the only
+        // authorization, same as it is in every "one-click unsubscribe"
+        // email link.
+        async function handleUnsubscribeReminder(token) {
+            const heading = document.getElementById('unsubReminderHeading');
+            const sub = document.getElementById('unsubReminderSub');
+            if (!supabaseClient || !token) {
+                heading.textContent = "Couldn't process that link";
+                sub.textContent = 'This link looks incomplete. If you keep getting reminder emails you don\'t want, just get in touch and we\'ll turn them off for you.';
+                return;
+            }
+            const { data, error } = await supabaseClient.rpc('unsubscribe_reminder', { p_token: token });
+            if (error || !data) {
+                heading.textContent = "Couldn't find that reminder";
+                sub.textContent = 'It may already be turned off, or the link has expired. If reminder emails keep arriving, get in touch and we\'ll sort it.';
+                return;
+            }
+            heading.textContent = 'Done';
+            sub.textContent = `You won't get reorder reminders for ${data} anymore.`;
+        }
+        window.handleUnsubscribeReminder = handleUnsubscribeReminder;
+
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
             const floatBtn = document.getElementById('floatOrder');
@@ -14904,6 +14951,9 @@
                 showView('view-forgot-password');
             } else if (hash === '#/reset-password') {
                 showView('view-reset-password');
+            } else if (hash.startsWith('#/unsubscribe-reminder/')) {
+                showView('view-unsubscribe-reminder');
+                handleUnsubscribeReminder(hash.replace('#/unsubscribe-reminder/', ''));
             } else if (hash === '#/orders') {
                 showView('view-orders');
                 renderOrderHistory();
