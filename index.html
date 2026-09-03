@@ -9598,7 +9598,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.12';
+        const BUILD_VERSION = '2026-09-03.13';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12309,6 +12309,21 @@
                         fontFamily: "'Montserrat Alternates', sans-serif",
                         borderRadius: '10px',
                     },
+                    // .AccordionItem--selected is Stripe's own documented
+                    // hook for "this payment method row is the one
+                    // currently chosen" — without this rule the selected
+                    // row looks nearly identical to an unselected one
+                    // (a very subtle border shift), easy to miss. Giving
+                    // it the brand green border plus a soft tinted
+                    // background makes the selection visually obvious at
+                    // a glance, on top of the radio dot from layout.radios
+                    // below.
+                    rules: {
+                        '.AccordionItem--selected': {
+                            borderColor: '#90B800',
+                            backgroundColor: isDark ? 'rgba(144, 184, 0, 0.12)' : 'rgba(144, 184, 0, 0.08)',
+                        },
+                    },
                 },
             });
             mountEl.innerHTML = '';
@@ -12339,8 +12354,13 @@
             // selected. Every row starting collapsed means whichever one
             // the customer taps is unambiguously the one that gets
             // submitted — one extra tap, but it actually works.
+            // radios: true adds Stripe's own built-in selection indicator
+            // — a filled radio dot on whichever row is actually chosen —
+            // directly answering "make it visually obvious which payment
+            // method is selected" without us reaching inside Stripe's
+            // iframe (which isn't something the public API allows).
             const paymentElement = stripeElements.create('payment', {
-                layout: { type: 'accordion', defaultCollapsed: true, radios: false, spacedAccordionItems: true },
+                layout: { type: 'accordion', defaultCollapsed: true, radios: true, spacedAccordionItems: true },
                 paymentMethodOrder: ['apple_pay', 'google_pay', 'card', 'klarna', 'revolut_pay', 'amazon_pay'],
             });
             paymentElement.mount('#stripePaymentElement');
