@@ -2324,15 +2324,36 @@
            purpose (same convention the nav/footer/hero already use: these
            don't flip with light/dark mode, they're the site's own fixed
            brand colour), so cream product cards read as spotlighted tiles
-           against it instead of blending into the page. */
+           against it instead of blending into the page.
+           The colour lives on .wrap now, not the full-bleed section — a
+           rounded, inset panel (curved corners in the same family as the
+           product cards', just scaled up) rather than an edge-to-edge
+           band, so it reads as a distinct floating panel on the page
+           instead of a stripe running behind it. */
         .best-sellers-section {
-            position: relative;
-            background: linear-gradient(155deg, var(--aubergine-deep) 0%, var(--aubergine) 55%, var(--aubergine-mid) 100%);
-            padding: 64px 0 68px;
-            overflow: hidden;
-            isolation: isolate;
+            background: var(--page-bg);
+            padding: 48px 0 52px;
         }
-        .best-sellers-section::before {
+        .best-sellers-section .wrap {
+            /* .wrap's own max-width (1600px) only ever constrains it above
+               that viewport width — at ordinary desktop sizes it fills
+               100% with nothing to create an inset from the browser edge.
+               An explicit width here is what actually pulls it in from
+               the edges so the rounded corners have page background
+               visible beside them, at any viewport width, not just very
+               wide ones. */
+            width: calc(100% - 56px);
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            background: linear-gradient(155deg, var(--aubergine-deep) 0%, var(--aubergine) 55%, var(--aubergine-mid) 100%);
+            border-radius: 28px;
+            padding: 40px 32px 44px;
+        }
+        @media (max-width: 640px) {
+            .best-sellers-section .wrap { width: calc(100% - 32px); border-radius: 20px; padding: 32px 20px 36px; }
+        }
+        .best-sellers-section .wrap::before {
             content: '';
             position: absolute; inset: 0;
             background:
@@ -2341,7 +2362,13 @@
             pointer-events: none;
             z-index: 0;
         }
-        .best-sellers-section .wrap { position: relative; z-index: 1; }
+        /* position:relative (not just z-index) on every direct child —
+           z-index has no effect on a plain non-positioned block box, and
+           without it these would paint UNDER the glow pseudo-element above
+           despite the z-index:1, since a positioned z-index:0 descendant
+           still paints after plain in-flow block content in default
+           stacking order. */
+        .best-sellers-section .wrap > * { position: relative; z-index: 1; }
         .best-sellers-section .new-section-head h2 { color: #FAF9F2; }
         .best-sellers-section .view-all-btn { color: #FAF9F2; background: rgba(250, 249, 242, 0.12); }
         .best-sellers-section .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
@@ -2390,42 +2417,34 @@
             align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
-        /* A diagonal corner ribbon — the site's own bright yellow
-           (var(--orange), same colour/pairing as the section-eyebrow
-           pills) rather than an invented gold, cut across the thumb's
-           corner rather than sitting as a pill/flag like the other two
-           sections' badges. .thumb's own overflow:hidden (above) is what
-           clips both ends flush with the card edge — that's what makes
-           the ribbon illusion work, not anything on the ribbon itself.
-           No ambient loop here (a previous version glow-pulsed forever,
-           which read as gimmicky rather than premium) — instead the
-           ribbon pops in once, a beat after the card's own entrance,
-           when .bs-card-reveal settles into view; nothing moves again
-           after that. */
+        /* Gold pill badge — reads as "trophy/favourite" specifically.
+           Pops in once, a beat after the card's own entrance, when
+           .bs-card-reveal settles into view (no continuous animation —
+           a previous version glow-pulsed forever, which read as gimmicky
+           rather than premium; nothing moves once this settles). */
         .best-seller-rank {
-            position: absolute; top: 17px; left: -38px; z-index: 3;
-            width: 150px;
-            display: flex; align-items: center; justify-content: center; gap: 4px;
-            background: var(--orange); color: var(--aubergine-deep);
-            font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: 0.04em;
-            padding: 5px 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
-            transform: rotate(-45deg) scale(0.7);
+            position: absolute; top: 10px; left: 10px; z-index: 3;
+            display: flex; align-items: center; gap: 4px;
+            background: linear-gradient(135deg, #F6CE4E, #E1A100); color: #3D2900;
+            font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
+            padding: 5px 11px 5px 9px; border-radius: 999px;
+            box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px #FFFDF7;
+            transform: scale(0.7);
             opacity: 0;
             transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
         }
         .bs-card-reveal.is-visible .best-seller-rank {
-            transform: rotate(-45deg) scale(1);
+            transform: scale(1);
             opacity: 1;
         }
         @media (prefers-reduced-motion: reduce) {
             .best-seller-rank {
                 transition: none;
-                transform: rotate(-45deg) scale(1);
+                transform: scale(1);
                 opacity: 1;
             }
         }
-        .best-seller-rank svg { width: 10px; height: 10px; flex-shrink: 0; }
+        .best-seller-rank svg { width: 11px; height: 11px; flex-shrink: 0; }
         .best-seller-card .body { padding: 12px 14px 14px; }
         .best-seller-card h4 {
             font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #2C1C10;
@@ -2589,32 +2608,32 @@
            otherwise win the transform property once a card settles). */
         a.offer-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(193, 85, 44, 0.22); }
         .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
-        /* A corner flag rather than the best-seller/shop-by-category
-           badges' pill/plain shapes — its own silhouette so a discounted
-           item reads as "on offer" at a glance even among other card
-           styles. The shine sweep is this section's one ambient (never
-           scroll-driven) motion, its own flavour of restrained rather than
-           reusing best sellers' glow-pulse outright. */
+        /* Same gold pill shape/colour as the Best Sellers rank badge
+           (.best-seller-rank) — matched on purpose, not each section
+           having its own badge language. Same pop-in entrance too: no
+           continuous animation, it settles once when .offer-card-reveal
+           comes into view and stays still after that. */
         .offer-tag {
-            position: absolute; top: 0; left: 0; z-index: 3;
-            overflow: hidden;
-            background: linear-gradient(135deg, #E1663A, #C1552C); color: #FFF6EC;
-            font-family: var(--display); font-weight: 800; font-size: 12.5px; letter-spacing: 0.01em;
-            padding: 7px 14px 7px 12px; border-radius: 0 0 14px 0;
-            box-shadow: 0 3px 10px rgba(193, 85, 44, 0.45);
+            position: absolute; top: 10px; left: 10px; z-index: 3;
+            display: flex; align-items: center; gap: 4px;
+            background: linear-gradient(135deg, #F6CE4E, #E1A100); color: #3D2900;
+            font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
+            padding: 5px 11px 5px 9px; border-radius: 999px;
+            box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px var(--card-bg);
+            transform: scale(0.7);
+            opacity: 0;
+            transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
         }
-        .offer-tag::after {
-            content: '';
-            position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
-            background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.55), transparent);
-            animation: offerTagShine 3.2s ease-in-out infinite;
-        }
-        @keyframes offerTagShine {
-            0% { left: -60%; }
-            45%, 100% { left: 130%; }
+        .offer-card-reveal.is-visible .offer-tag {
+            transform: scale(1);
+            opacity: 1;
         }
         @media (prefers-reduced-motion: reduce) {
-            .offer-tag::after { animation: none; display: none; }
+            .offer-tag {
+                transition: none;
+                transform: scale(1);
+                opacity: 1;
+            }
         }
         .offer-card .body { padding: 12px 14px 14px; }
         .offer-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -9907,7 +9926,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.24';
+        const BUILD_VERSION = '2026-09-03.25';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
