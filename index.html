@@ -880,12 +880,14 @@
         }
 
         /* The button itself already shows "Hi, Jane" as text next to the
-           icon — but that text (and the caret) is hidden at the 480px
-           icon-only breakpoint (see .nav-account span#accountLabel below),
-           leaving mobile with no text anywhere confirming WHICH account is
-           signed in, only the status-dot's yes/no. This is that
-           confirmation's other home: same greeting, shown here instead so
-           it survives on mobile once the account button is tapped open. */
+           icon on desktop — this would just repeat it right underneath.
+           It only earns its place at the 480px icon-only breakpoint below
+           (see .nav-account span#accountLabel), where that text (and the
+           caret) disappears, leaving mobile with no text anywhere
+           confirming WHICH account is signed in, only the status-dot's
+           yes/no. Hidden here at every width by default; the mobile media
+           query below is what actually shows it, once .visible (set by
+           setUser/clearUser) says there's a name to show. */
         .account-dropdown-name {
             padding: 8px 12px 10px;
             margin-bottom: 4px;
@@ -1056,6 +1058,10 @@
             .nav-account span#accountLabel,
             .account-caret {
                 display: none !important;
+            }
+
+            .account-dropdown-name.visible {
+                display: block;
             }
 
             .icon-btn,
@@ -9692,7 +9698,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.18';
+        const BUILD_VERSION = '2026-09-03.19';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14163,7 +14169,7 @@
             const greeting = 'Hi, ' + name.split(' ')[0];
             document.getElementById('accountLabel').textContent = greeting;
             const dropdownName = document.getElementById('accountDropdownName');
-            if (dropdownName) { dropdownName.textContent = greeting; dropdownName.style.display = 'block'; }
+            if (dropdownName) { dropdownName.textContent = greeting; dropdownName.classList.add('visible'); }
             accountBtn.setAttribute('href', '#');
             accountBtn.setAttribute('aria-label', 'Account menu — signed in as ' + name.split(' ')[0]);
             accountBtn.classList.add('is-logged-in');
@@ -14198,7 +14204,7 @@
             if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             const dropdownName = document.getElementById('accountDropdownName');
-            if (dropdownName) { dropdownName.textContent = ''; dropdownName.style.display = 'none'; }
+            if (dropdownName) { dropdownName.textContent = ''; dropdownName.classList.remove('visible'); }
             accountBtn.setAttribute('href', '#/login');
             accountBtn.setAttribute('aria-label', 'Sign up or log in');
             accountBtn.classList.remove('is-logged-in');
