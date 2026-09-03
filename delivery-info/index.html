@@ -2395,18 +2395,21 @@
             align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
-        /* Gold pill badge — reads as "trophy/favourite" specifically.
-           Pops in once, a beat after the card's own entrance, when
-           .bs-card-reveal settles into view (no continuous animation —
-           a previous version glow-pulsed forever, which read as gimmicky
-           rather than premium; nothing moves once this settles). */
+        /* Bright yellow pill badge — the site's own accent colour
+           (var(--orange), same pairing as the section-eyebrow pills)
+           rather than an invented gold, ties this to the rest of the
+           brand instead of introducing a one-off hue. Pops in once, a
+           beat after the card's own entrance, when .bs-card-reveal
+           settles into view (no continuous animation — a previous
+           version glow-pulsed forever, which read as gimmicky rather
+           than premium; nothing moves once this settles). */
         .best-seller-rank {
             position: absolute; top: 10px; left: 10px; z-index: 3;
             display: flex; align-items: center; gap: 4px;
-            background: linear-gradient(135deg, #F6CE4E, #E1A100); color: #3D2900;
+            background: var(--orange); color: var(--aubergine-deep);
             font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
             padding: 5px 11px 5px 9px; border-radius: 999px;
-            box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px #FFFDF7;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), 0 0 0 2px #FFFDF7;
             transform: scale(0.7);
             opacity: 0;
             transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
@@ -2586,18 +2589,18 @@
            otherwise win the transform property once a card settles). */
         a.offer-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(193, 85, 44, 0.22); }
         .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
-        /* Same gold pill shape/colour as the Best Sellers rank badge
-           (.best-seller-rank) — matched on purpose, not each section
+        /* Same bright yellow pill shape/colour as the Best Sellers rank
+           badge (.best-seller-rank) — matched on purpose, not each section
            having its own badge language. Same pop-in entrance too: no
            continuous animation, it settles once when .offer-card-reveal
            comes into view and stays still after that. */
         .offer-tag {
             position: absolute; top: 10px; left: 10px; z-index: 3;
             display: flex; align-items: center; gap: 4px;
-            background: linear-gradient(135deg, #F6CE4E, #E1A100); color: #3D2900;
+            background: var(--orange); color: var(--aubergine-deep);
             font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
             padding: 5px 11px 5px 9px; border-radius: 999px;
-            box-shadow: 0 3px 10px rgba(225, 161, 0, 0.5), 0 0 0 2px var(--card-bg);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), 0 0 0 2px var(--card-bg);
             transform: scale(0.7);
             opacity: 0;
             transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
@@ -9902,7 +9905,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.27';
+        const BUILD_VERSION = '2026-09-03.28';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
