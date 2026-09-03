@@ -800,6 +800,52 @@
             height: 16px;
         }
 
+        .account-icon-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+
+        /* Hidden until .nav-account.is-logged-in is set. On desktop this
+           sits next to the "Hi, Jane" text as reinforcement; on mobile the
+           text and caret collapse away (see the 480px breakpoint below) so
+           this dot is the ONLY thing left telling a signed-in user apart
+           from a signed-out one — that's why it gets its own subtle pulse
+           rather than just a static mark. */
+        .account-status-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--chartreuse-rich);
+            border: 2px solid #FFFFFF;
+            display: none;
+        }
+
+        .account-status-dot::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: var(--chartreuse-rich);
+            opacity: 0.55;
+            animation: accountDotPulse 2.2s ease-out infinite;
+        }
+
+        @keyframes accountDotPulse {
+            0% { transform: scale(0.7); opacity: 0.55; }
+            100% { transform: scale(2.1); opacity: 0; }
+        }
+
+        .nav-account.is-logged-in .account-status-dot {
+            display: block;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .account-status-dot::after { animation: none; }
+        }
+
         .account-caret {
             width: 12px !important;
             height: 12px !important;
@@ -1369,15 +1415,19 @@
             pointer-events: none;
             z-index: 1;
             transform-origin: 62% 42%;
-            animation: heroWatermarkLive 9s ease-in-out infinite;
+            animation: heroWatermarkLive 6.5s ease-in-out infinite;
         }
-        /* A slow, continuous tilt-and-breathe rather than a spin — a mark
-           this size spinning would read as a loading indicator, not a
-           logo. Kept gentle since it's ambient background behind real
-           content, not something meant to grab attention on its own. */
+        /* A continuous tilt-breathe-glow rather than a spin — a mark this
+           size spinning would read as a loading indicator, not a logo.
+           Four uneven stops (not a symmetric 2-point wobble) keep the
+           motion reading as organic rather than mechanical, and the
+           opacity lift at the peak gives it a soft glow pulse so it stays
+           noticeable as ambient motion without shouting for attention. */
         @keyframes heroWatermarkLive {
-            0%, 100% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(4deg) scale(1.035); }
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: var(--hero-watermark-op); }
+            30% { transform: rotate(-4deg) scale(1.02); }
+            60% { transform: rotate(7deg) scale(1.09); opacity: calc(var(--hero-watermark-op) + 0.1); }
+            85% { transform: rotate(2deg) scale(1.03); }
         }
         @media (prefers-reduced-motion: reduce) {
             .hero-watermark { animation: none; }
@@ -6258,10 +6308,13 @@
                 </a>
                 <div class="account-wrap" id="accountWrap">
                     <a class="nav-account" id="accountBtn" href="#/login">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
-                        </svg>
+                        <span class="account-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <circle cx="12" cy="8" r="4" />
+                                <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
+                            </svg>
+                            <span class="account-status-dot" aria-hidden="true"></span>
+                        </span>
                         <span id="accountLabel">Sign up / Log in</span>
                         <svg class="account-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" style="display:none;">
@@ -9612,7 +9665,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.15';
+        const BUILD_VERSION = '2026-09-03.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14068,6 +14121,8 @@
             currentSupabaseUser = supabaseUser || null;
             document.getElementById('accountLabel').textContent = 'Hi, ' + name.split(' ')[0];
             accountBtn.setAttribute('href', '#');
+            accountBtn.setAttribute('aria-label', 'Account menu — signed in as ' + name.split(' ')[0]);
+            accountBtn.classList.add('is-logged-in');
             accountCaret.style.display = 'inline-block';
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
@@ -14099,6 +14154,8 @@
             if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             accountBtn.setAttribute('href', '#/login');
+            accountBtn.setAttribute('aria-label', 'Sign up or log in');
+            accountBtn.classList.remove('is-logged-in');
             accountCaret.style.display = 'none';
             accountDropdown.classList.remove('open');
             const orderHistoryLink = document.getElementById('orderHistoryLink');
