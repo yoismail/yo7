@@ -9428,7 +9428,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.4';
+        const BUILD_VERSION = '2026-09-03.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15128,10 +15128,13 @@
         /* ================= CATEGORY STRIP: auto-carousel + manual scroll ================= */
         (function initCatCarousel() {
             const strip = document.getElementById('catNavStrip');
-            const SPEED_PX_PER_SEC = 70; // was a fixed 0.45px/frame (~27px/s at 60Hz,
-                                          // faster still on 120Hz screens) — read as
-                                          // sluggish/dragging, and wasn't frame-rate
-                                          // normalized at all.
+            const SPEED_PX_PER_SEC = 38; // was a fixed 0.45px/frame (~27px/s at 60Hz,
+                                          // faster still on 120Hz screens) — that read as
+                                          // sluggish/dragging, so it went up to 70px/s,
+                                          // which then read as too fast to actually read
+                                          // a category name before it scrolled past.
+                                          // Frame-rate normalized either way (px/sec, not
+                                          // px/frame), just the target speed itself moved.
 
             // offsetParent only catches display:none, not "scrolled past
             // it further down the page", which is the common case here
