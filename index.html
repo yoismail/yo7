@@ -8945,7 +8945,7 @@
             el.className = 'delivery-admin-panel discount-admin-panel';
             el.innerHTML = `
     <h3>Discounts &amp; codes <span class="admin-only-tag">Edit mode only</span></h3>
-    <p class="delivery-admin-note">Changes here apply immediately for this session but aren't saved permanently yet, they reset on refresh. "Max per customer" is tracked in this browser's storage only, it isn't a hard guarantee across devices.</p>
+    <p class="delivery-admin-note">Discount codes save for real and go live for every customer immediately. "Max per customer" is enforced against real redemption records, not this browser's storage.</p>
     <div id="discountsList" class="delivery-rule-list"></div>
     <form id="addDiscountForm" class="discount-admin-form">
       <div class="field"><label>Internal name</label><input type="text" id="newDiscName" placeholder="e.g. August welcome offer" required></div>
@@ -9369,7 +9369,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-02.11';
+        const BUILD_VERSION = '2026-09-02.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
