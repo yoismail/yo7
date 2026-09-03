@@ -2364,6 +2364,15 @@
             overflow-x: auto; scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
             scroll-snap-type: x proximity;
+            /* Unlike the other two homepage carousels, this one scrolls over
+               a dark section with two overlapping radial gradients behind it
+               (.best-sellers-section::before) rather than a plain/light
+               background — promoting it to its own compositing layer here
+               means the browser can composite the card row separately from
+               that background instead of re-rasterizing both together on
+               every scroll frame, which is where a lower-end phone would
+               feel it as lag that a fast desktop/CI machine won't show. */
+            will-change: scroll-position;
         }
         .best-seller-carousel::-webkit-scrollbar { display: none; }
         .best-seller-card {
@@ -9894,7 +9903,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.31';
+        const BUILD_VERSION = '2026-09-03.32';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
