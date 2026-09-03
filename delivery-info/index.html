@@ -201,8 +201,19 @@
             font-size: 16px;
         }
 
+        /* Not scroll-behavior:smooth — every intentional smooth scroll on
+           the site already passes behavior:'smooth' explicitly in its own
+           JS call (scrollIntoView/scrollTo), so this global default did
+           nothing for those. What it DID do is apply to ordinary page
+           scrolling too: ordinary mouse-wheel input is a stream of
+           discrete ticks (unlike one continuous trackpad/touch gesture),
+           and under scroll-behavior:smooth each tick queues a fresh
+           smooth-scroll animation that cancels the last one before it
+           finishes — the exact "fighting the input meant to drive it"
+           pattern already diagnosed and fixed for .product-grid elsewhere
+           in this file, just never scoped away from the page itself. */
         html {
-            scroll-behavior: smooth;
+            scroll-behavior: auto;
         }
 
         /* Baseline keyboard-focus ring for every interactive element that
@@ -10039,7 +10050,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.37';
+        const BUILD_VERSION = '2026-09-03.38';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
