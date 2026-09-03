@@ -3826,15 +3826,22 @@
         .grid-load-more {
             display: flex; justify-content: center; margin: 32px 0 8px;
         }
+        /* Bright yellow rather than the muted neutral it used to be — same
+           "this needs to pop" accent colour as the best-seller/offer
+           badges, deliberately so this doesn't read as just another quiet
+           grey button someone scrolls straight past. */
         .see-more-btn {
             font-family: var(--display); font-weight: 700; font-size: 13.5px;
-            color: var(--heading); background: rgba(var(--border-rgb), 0.06);
-            border: 1.5px solid rgba(var(--border-rgb), 0.14); border-radius: 12px;
+            color: var(--aubergine-deep); background: var(--orange);
+            border: 1.5px solid var(--orange); border-radius: 12px;
             padding: 13px 30px; cursor: pointer;
-            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 3px 10px rgba(225, 225, 0, 0.35);
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
         }
         .see-more-btn:hover {
             background: var(--aubergine); color: var(--cream); border-color: var(--aubergine);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
         }
 
         /* ================= PRODUCT GRID / CARD ================= */
@@ -10031,7 +10038,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.36';
+        const BUILD_VERSION = '2026-09-03.37';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
