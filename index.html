@@ -9598,7 +9598,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.10';
+        const BUILD_VERSION = '2026-09-03.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12320,10 +12320,22 @@
             // its own row up front, no hidden dropdown; each one expands
             // in place when picked. This is a Stripe-hosted iframe with a
             // narrow, documented theming surface (appearance.variables
-            // above, plus this layout option) — not something we can
-            // otherwise restructure freely.
+            // above, plus these layout/order options) — not something we
+            // can otherwise restructure freely.
+            //
+            // paymentMethodOrder puts the one-tap wallets first — most
+            // customers on a phone have Apple Pay or Google Pay set up
+            // and it's genuinely faster than typing a card in, so that's
+            // what should be waiting expanded at the top, not Card's full
+            // number/expiry/CVC/address form pushing everything else
+            // below the fold. Card and the redirect methods (Klarna,
+            // Revolut Pay, Amazon Pay) still show right below as compact
+            // one-line rows — nothing hidden, just not defaulted-open.
+            // Whichever wallet the browser doesn't support (e.g. Google
+            // Pay in Safari) Stripe simply omits, no gap left behind.
             const paymentElement = stripeElements.create('payment', {
                 layout: { type: 'accordion', defaultCollapsed: false, radios: false, spacedAccordionItems: true },
+                paymentMethodOrder: ['apple_pay', 'google_pay', 'card', 'klarna', 'revolut_pay', 'amazon_pay'],
             });
             paymentElement.mount('#stripePaymentElement');
             paymentElement.on('ready', () => { placeOrderBtn.disabled = false; });
