@@ -2377,7 +2377,14 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
         }
-        .best-seller-card:hover { transform: translateY(-7px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
+        /* Tag-qualified (a.best-seller-card, not just .best-seller-card) so
+           this reliably outranks .bs-card-reveal.is-visible's own transform
+           (equal class-specificity otherwise, and that rule is unconditional
+           — active any time a card has settled into view, not just while
+           hovered — so without this bump it silently wins the moment a
+           card finishes its entrance reveal, cancelling the hover lift for
+           good instead of just at one point in time). */
+        a.best-seller-card:hover { transform: translateY(-7px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
         .best-seller-card .thumb {
             aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
@@ -2562,7 +2569,10 @@
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
         }
-        .offer-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(193, 85, 44, 0.22); }
+        /* Tag-qualified — see the comment on a.best-seller-card:hover, same
+           fix for the same reason (.offer-card-reveal.is-visible would
+           otherwise win the transform property once a card settles). */
+        a.offer-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(193, 85, 44, 0.22); }
         .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         /* A corner flag rather than the best-seller/shop-by-category
            badges' pill/plain shapes — its own silhouette so a discounted
@@ -3553,7 +3563,12 @@
             border-bottom: 4px solid var(--chartreuse);
             transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
-        .cat-flat-card:hover {
+        /* Tag-qualified — see the comment on a.best-seller-card:hover.
+           This one happens to already win by source order alone (it's
+           declared after .cat-tile-reveal.is-visible), but that's fragile
+           — the same bump keeps it correct regardless of future reordering
+           rather than relying on accidental source position. */
+        a.cat-flat-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2);
         }
@@ -9875,7 +9890,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.22';
+        const BUILD_VERSION = '2026-09-03.23';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
