@@ -2314,10 +2314,12 @@
 
         /* ================= DELIVERY / ORDER (home) ================= */
         .new-section {
-            background: var(--page-bg);
+            position: relative;
+            background: linear-gradient(200deg, rgba(144, 184, 0, 0.12), rgba(250, 249, 242, 0) 60%), var(--page-bg);
             padding: 56px 0 60px;
             border-top: 1px solid rgba(var(--border-rgb), 0.06);
             border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
+            overflow: hidden;
         }
         /* A dark "spotlight stage" rather than the plain page background
            every other homepage section uses — fixed dark in both themes on
@@ -3630,7 +3632,7 @@
         }
 
         @media (max-width: 900px) {
-            .cat-flat-card { flex-basis: 168px; max-width: 168px; }
+            .cat-flat-card { flex-basis: 168px; max-width: 168px; aspect-ratio: 2/3; }
         }
 
         .cat-nav-strip:active {
@@ -9904,7 +9906,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.29';
+        const BUILD_VERSION = '2026-09-03.30';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
