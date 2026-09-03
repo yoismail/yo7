@@ -2325,35 +2325,20 @@
            don't flip with light/dark mode, they're the site's own fixed
            brand colour), so cream product cards read as spotlighted tiles
            against it instead of blending into the page.
-           The colour lives on .wrap now, not the full-bleed section — a
-           rounded, inset panel (curved corners in the same family as the
-           product cards', just scaled up) rather than an edge-to-edge
-           band, so it reads as a distinct floating panel on the page
-           instead of a stripe running behind it. */
+           Full-bleed rectangle, same shape as Shop by category
+           (#shopByGroup) — edge to edge, no rounded corners/inset margin —
+           rather than the rounded floating-panel treatment this had for a
+           moment; the colour itself is what carries the section, not its
+           silhouette. */
         .best-sellers-section {
-            background: var(--page-bg);
-            padding: 48px 0 52px;
-        }
-        .best-sellers-section .wrap {
-            /* .wrap's own max-width (1600px) only ever constrains it above
-               that viewport width — at ordinary desktop sizes it fills
-               100% with nothing to create an inset from the browser edge.
-               An explicit width here is what actually pulls it in from
-               the edges so the rounded corners have page background
-               visible beside them, at any viewport width, not just very
-               wide ones. */
-            width: calc(100% - 56px);
             position: relative;
             isolation: isolate;
             overflow: hidden;
             background: linear-gradient(155deg, var(--aubergine-deep) 0%, var(--aubergine) 55%, var(--aubergine-mid) 100%);
-            border-radius: 28px;
-            padding: 40px 32px 44px;
+            padding: 64px 0 68px;
         }
-        @media (max-width: 640px) {
-            .best-sellers-section .wrap { width: calc(100% - 32px); border-radius: 20px; padding: 32px 20px 36px; }
-        }
-        .best-sellers-section .wrap::before {
+        .best-sellers-section .wrap { position: relative; z-index: 1; }
+        .best-sellers-section::before {
             content: '';
             position: absolute; inset: 0;
             background:
@@ -2362,13 +2347,6 @@
             pointer-events: none;
             z-index: 0;
         }
-        /* position:relative (not just z-index) on every direct child —
-           z-index has no effect on a plain non-positioned block box, and
-           without it these would paint UNDER the glow pseudo-element above
-           despite the z-index:1, since a positioned z-index:0 descendant
-           still paints after plain in-flow block content in default
-           stacking order. */
-        .best-sellers-section .wrap > * { position: relative; z-index: 1; }
         .best-sellers-section .new-section-head h2 { color: #FAF9F2; }
         .best-sellers-section .view-all-btn { color: #FAF9F2; background: rgba(250, 249, 242, 0.12); }
         .best-sellers-section .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
@@ -9923,7 +9901,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.25';
+        const BUILD_VERSION = '2026-09-03.26';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
