@@ -2595,6 +2595,25 @@
            otherwise win the transform property once a card settles). */
         a.offer-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(193, 85, 44, 0.22); }
         .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
+        /* Edit-mode-only "take this product off special offers" control —
+           same on/off mechanism as every other admin-only button on the
+           site (body.edit-mode-on toggles display), and functionally just
+           clears the salePrice offerItems() keys off, same field the
+           per-product edit panel already exposes. Sits opposite the offer
+           tag rather than reusing the pencil edit button, since clearing
+           the sale price is the one specific action an admin scanning this
+           carousel is most likely to want, not a detour into the full
+           product editor. */
+        .offer-remove-btn {
+            display: none;
+            position: absolute; top: 10px; right: 10px; z-index: 4;
+            width: 24px; height: 24px; border-radius: 50%; border: none;
+            background: rgba(179, 74, 74, 0.9); color: #fff;
+            align-items: center; justify-content: center;
+            font-size: 16px; line-height: 1; cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+        }
+        body.edit-mode-on .offer-remove-btn { display: flex; }
         /* Same bright yellow pill shape/colour as the Best Sellers rank
            badge (.best-seller-rank) — matched on purpose, not each section
            having its own badge language. Same pop-in entrance too: no
@@ -6608,13 +6627,13 @@
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
             <div class="trust-bar-set">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>Free delivery over &pound;50</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg><span class="free-delivery-text">Free delivery over &pound;50</span></span>
                 <span class="trust-sep">&bull;</span>
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
             <div class="trust-bar-set" aria-hidden="true">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>Free delivery over &pound;50</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg><span class="free-delivery-text">Free delivery over &pound;50</span></span>
                 <span class="trust-sep">&bull;</span>
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
                 <span class="trust-sep">&bull;</span>
@@ -7157,7 +7176,7 @@
                             </div>
                             <div class="trust-pill">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                Free delivery over £50
+                                <span class="free-delivery-text">Free delivery over £50</span>
                             </div>
                             <div class="trust-pill">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
@@ -7264,7 +7283,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    Free delivery over £50
+                                    <span class="free-delivery-text">Free delivery over £50</span>
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -7394,7 +7413,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    Free delivery over £50
+                                    <span class="free-delivery-text">Free delivery over £50</span>
                                 </div>
                             </div>
                         </div>
@@ -8911,7 +8930,7 @@
             { id: 'tier-above', label: 'Above 20kg', maxWeight: Infinity, fee: 15.99 },
         ];
         let deliveryThresholdRules = [
-            { id: 'rule-free50', name: 'Free delivery over £50', conditionType: 'price', operator: 'gte', value: 50, effect: 'free' },
+            { id: 'rule-free70', name: 'Free delivery over £70', conditionType: 'price', operator: 'gte', value: 70, effect: 'free' },
         ];
         // Loaded from pricing_settings (see supabase-migration-21) on every
         // page load, for every visitor, not just an admin — these four
@@ -9622,11 +9641,20 @@
 
         /* ================= DELIVERY RULES ADMIN PANEL (edit mode) ================= */
         function renderDeliveryFeeInfo() {
+            const freeRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price');
+            // Trust-bar/checkout copy ("Free delivery over £X") used to be
+            // hardcoded text, so it silently went stale the moment this
+            // threshold was ever changed from here — every .free-delivery-text
+            // span now mirrors whatever the real rule says instead, admin
+            // panel or the shipped-default fallback alike.
+            if (freeRule) {
+                const amount = Number.isInteger(freeRule.value) ? freeRule.value : freeRule.value.toFixed(2);
+                document.querySelectorAll('.free-delivery-text').forEach(el => { el.textContent = `Free delivery over £${amount}`; });
+            }
             const el = document.getElementById('dinfoFeeText');
             if (!el) return;
             const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
             const parts = sorted.map(t => `${t.label.toLowerCase()}: ${money(t.fee)}`);
-            const freeRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price');
             const freeNote = freeRule ? ` Free once your order reaches ${money(freeRule.value)}.` : '';
             el.textContent = `Priced by order weight, ${parts.join(', ')}.${freeNote} Pickup is always free. Your exact fee is shown at checkout before you pay.`;
         }
@@ -9930,7 +9958,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.33';
+        const BUILD_VERSION = '2026-09-03.34';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11174,6 +11202,7 @@
     <a class="offer-card offer-card-reveal" href="#/product/${p.catSlug}/${p.idx}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
       <div class="thumb">
         <span class="offer-tag">${pct}% off</span>
+        <button type="button" class="offer-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromOffer('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from special offers">&times;</button>
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
@@ -11392,6 +11421,31 @@
             showToast(`${product.name} added to special offers at ${money(salePrice)}.`);
         }
         window.saveProductToOffer = saveProductToOffer;
+        // The inverse of saveProductToOffer above: clears the salePrice
+        // that's the only thing making offerItems() treat this product as
+        // "on offer" in the first place. Mutates the real catalogue entry
+        // (cat.products[idx]), not a getProduct() copy, same reason
+        // saveProductToOffer does — offerItems()/allProducts() read off
+        // that shared object directly.
+        async function removeProductFromOffer(catSlug, idx) {
+            const cat = findCategory(catSlug);
+            const product = cat && cat.products[idx];
+            if (!product) return;
+            const name = product.name;
+            delete product.salePrice;
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('product_overrides').upsert({
+                    product_key: productKey(catSlug, idx),
+                    sale_price: null,
+                    updated_at: new Date().toISOString(),
+                });
+                if (error) showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000);
+            }
+            renderOfferCarousel();
+            if (document.getElementById('specialOffersGrid')) renderSpecialOffersPage();
+            showToast(`${name} removed from special offers.`);
+        }
+        window.removeProductFromOffer = removeProductFromOffer;
 
         (function initTrustBarPause() {
             const track = document.getElementById('trustBarTrack');
