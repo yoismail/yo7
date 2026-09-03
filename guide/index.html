@@ -2521,6 +2521,38 @@
         .platform-badge-trustpilot { color: #00B67A; }
         .platform-badge-google { color: #4285F4; }
 
+        .google-rating-summary {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin: 18px 0 6px; flex-wrap: wrap;
+        }
+        .google-rating-summary .stars { color: var(--orange); font-size: 20px; letter-spacing: 2px; }
+        .google-rating-summary .score { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); }
+        .google-rating-summary .count { color: var(--text-muted); font-size: 14px; }
+        .google-reviews-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px; max-width: 1000px; margin: 26px auto 0;
+        }
+        .google-review-card {
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.14);
+            border-radius: 14px; padding: 20px; text-align: left;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .google-review-card .grc-head { display: flex; align-items: center; gap: 10px; }
+        .google-review-card .grc-avatar {
+            width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+            background: var(--chartreuse-soft); color: var(--aubergine-deep);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--display); font-weight: 700; font-size: 14px;
+            object-fit: cover;
+        }
+        .google-review-card .grc-name { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); }
+        .google-review-card .grc-time { font-size: 12px; color: var(--text-muted); }
+        .google-review-card .grc-stars { color: var(--orange); font-size: 14px; letter-spacing: 1px; }
+        .google-review-card .grc-text {
+            font-size: 14px; line-height: 1.55; color: var(--text-body);
+            display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
         .section-divider {
             height: 1px;
             max-width: 220px;
@@ -6628,10 +6660,15 @@
             <div class="wrap">
                 <div class="section-head reveal" style="text-align:center;">
                     <div class="section-eyebrow">Reviews</div>
-                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
+                    <h2 id="reviewsSectionHeading" style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
                         We're new, and we value your voice</h2>
-                    <p>Yo7 Foods is brand new, so there's nothing here to show off yet, honestly. If you shop with us, we'd genuinely like to hear how it went, good or bad, every review helps us do better.</p>
+                    <p id="reviewsSectionSub">Yo7 Foods is brand new, so there's nothing here to show off yet, honestly. If you shop with us, we'd genuinely like to hear how it went, good or bad, every review helps us do better.</p>
                 </div>
+                <!-- Populated by renderGoogleReviews() only once real review data
+                     has actually loaded from google_reviews_cache — empty and
+                     collapsed otherwise, so the honest "we're new" copy above
+                     is what shows until there's something real to display. -->
+                <div id="googleReviewsGrid" class="google-reviews-grid" style="display:none;"></div>
                 <div class="reviews-cta">
                     <a class="btn btn-outline-dark whatsapp-order-btn" href="https://wa.me/447398810052" target="_blank" rel="noopener">Leave a review on WhatsApp</a>
                     <a class="btn btn-outline-dark" href="mailto:hello@yo7foods.co.uk?subject=My%20Yo7%20Foods%20review">Email us instead</a>
@@ -8589,6 +8626,7 @@
             COMBOS.forEach((c, i) => { if (typeof comboDiscounts[i] === 'number' && !Array.isArray(data.combos_data)) c.discountPercent = comboDiscounts[i]; });
             if (typeof data.trustpilot_url === 'string') trustpilotUrl = data.trustpilot_url;
             if (typeof data.google_business_url === 'string') googleBusinessUrl = data.google_business_url;
+            if (typeof data.google_place_id === 'string') googlePlaceId = data.google_place_id;
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -8769,6 +8807,7 @@
            with no way to save it at all, reset on every refresh. */
         let trustpilotUrl = '';
         let googleBusinessUrl = '';
+        let googlePlaceId = '';
         function renderPlatformBadges() {
             const row = document.getElementById('platformBadgesRow');
             if (!row) return;
@@ -8791,8 +8830,78 @@
                 if (isHttpUrl(trustpilotUrl)) sameAs.push(trustpilotUrl);
                 if (isHttpUrl(googleBusinessUrl)) sameAs.push(googleBusinessUrl);
                 data.sameAs = sameAs;
+                if (googleReviewsData && googleReviewsData.review_count > 0) {
+                    data.aggregateRating = {
+                        '@type': 'AggregateRating',
+                        ratingValue: googleReviewsData.rating,
+                        reviewCount: googleReviewsData.review_count,
+                    };
+                }
                 el.textContent = JSON.stringify(data);
             } catch (e) { /* malformed JSON-LD would only break search-engine parsing, never the page itself */ }
+        }
+        /* ================= REAL GOOGLE REVIEWS (cached, see migration 32) =================
+           Reads whatever the refresh-google-reviews Edge Function last
+           cached — never calls Google directly from the browser (no API
+           key here, and no reason to make every visitor wait on a live
+           third-party call for content that only changes once a day at
+           most). Empty/never-fetched is a completely normal state (a
+           brand-new business with no Google reviews yet, or a site where
+           the admin hasn't set a Place ID) — renderGoogleReviews() leaves
+           the honest "we're new" copy in place for that case rather than
+           showing an empty section. */
+        let googleReviewsData = null;
+        async function loadGoogleReviews() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('google_reviews_cache').select('*').eq('id', true).maybeSingle();
+            if (error || !data) return;
+            googleReviewsData = data;
+        }
+        function renderGoogleReviews() {
+            const grid = document.getElementById('googleReviewsGrid');
+            const heading = document.getElementById('reviewsSectionHeading');
+            const sub = document.getElementById('reviewsSectionSub');
+            if (!grid) return;
+            if (!googleReviewsData || !googleReviewsData.review_count || !Array.isArray(googleReviewsData.reviews) || googleReviewsData.reviews.length === 0) {
+                grid.style.display = 'none';
+                grid.innerHTML = '';
+                // Restores the honest "we're new" copy — needed because this
+                // isn't only ever the first render: an admin can unset the
+                // Place ID, or a later Google fetch can legitimately come
+                // back with zero reviews, after this section already showed
+                // real ones. Without resetting these, the heading/summary
+                // from that earlier render would keep claiming "What people
+                // are saying" over an empty grid.
+                if (heading) heading.textContent = "We're new, and we value your voice";
+                if (sub) sub.textContent = "Yo7 Foods is brand new, so there's nothing here to show off yet, honestly. If you shop with us, we'd genuinely like to hear how it went, good or bad, every review helps us do better.";
+                return;
+            }
+            const rating = typeof googleReviewsData.rating === 'number' ? googleReviewsData.rating : null;
+            const fullStars = Math.round(rating || 0);
+            const starsHTML = '★★★★★☆☆☆☆☆'.slice(5 - fullStars, 10 - fullStars);
+            if (heading) heading.textContent = 'What people are saying';
+            if (sub) sub.innerHTML = `<span class="google-rating-summary">${rating !== null ? `<span class="stars">${starsHTML}</span><span class="score">${rating.toFixed(1)}</span>` : ''}<span class="count">from ${googleReviewsData.review_count} Google review${googleReviewsData.review_count === 1 ? '' : 's'}</span></span>`;
+            grid.style.display = 'grid';
+            grid.innerHTML = googleReviewsData.reviews.map(r => {
+                const rFull = Math.round(r.rating || 0);
+                const rStars = '★★★★★☆☆☆☆☆'.slice(5 - rFull, 10 - rFull);
+                const initial = (r.author_name || 'G').trim().charAt(0).toUpperCase();
+                const avatar = r.author_photo_url
+                    ? `<img class="grc-avatar" src="${escapeHtml(r.author_photo_url)}" alt="" referrerpolicy="no-referrer">`
+                    : `<span class="grc-avatar">${escapeHtml(initial)}</span>`;
+                return `
+    <div class="google-review-card">
+      <div class="grc-head">
+        ${avatar}
+        <div>
+          <div class="grc-name">${escapeHtml(r.author_name || 'Google user')}</div>
+          <div class="grc-time">${escapeHtml(r.relative_time || '')}</div>
+        </div>
+      </div>
+      <div class="grc-stars">${rStars}</div>
+      <div class="grc-text">${escapeHtml(r.text || '')}</div>
+    </div>`;
+            }).join('');
         }
         async function saveReviewPlatforms() {
             const btn = document.getElementById('reviewPlatformSaveBtn');
@@ -8801,14 +8910,33 @@
             const { error } = await supabaseClient.from('pricing_settings').update({
                 trustpilot_url: trustpilotUrl || null,
                 google_business_url: googleBusinessUrl || null,
+                google_place_id: googlePlaceId || null,
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
             if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
             if (error) { showToast('Couldn\'t save that: ' + error.message, 6000); return; }
             renderPlatformBadges();
             updateLocalBusinessSameAs();
-            logAdminAction('review_platforms_updated', 'pricing_settings', null, { trustpilotSet: !!trustpilotUrl, googleBusinessSet: !!googleBusinessUrl });
+            logAdminAction('review_platforms_updated', 'pricing_settings', null, { trustpilotSet: !!trustpilotUrl, googleBusinessSet: !!googleBusinessUrl, googlePlaceIdSet: !!googlePlaceId });
             showToast('Review platform links saved.');
+        }
+        // "Refresh now" bypasses the Edge Function's own 20-hour freshness
+        // guard, but only for a verified admin (checked server-side via this
+        // session's own token, see refresh-google-reviews) — lets an admin
+        // see real reviews appear right after setting a Place ID, instead of
+        // waiting for the next 06:00 UTC cron run.
+        async function refreshGoogleReviewsNow() {
+            const btn = document.getElementById('googleReviewsRefreshBtn');
+            if (!supabaseClient) { showToast('Google reviews need accounts connected first, this is preview mode right now.', 6000); return; }
+            if (!googlePlaceId) { showToast('Save a Google Place ID first, then refresh.', 5000); return; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
+            const { data, error } = await supabaseClient.functions.invoke('refresh-google-reviews', { body: { force: true } });
+            if (btn) { btn.disabled = false; btn.textContent = 'Refresh now'; }
+            if (error) { showToast('Couldn\'t reach the refresh function: ' + error.message, 6000); return; }
+            if (data?.error) { showToast(data.error, 7000); return; }
+            showToast(data?.skipped ? 'Already up to date.' : `Fetched ${data?.reviewsFetched ?? 0} review(s), rating ${data?.rating ?? '—'}.`, 6000);
+            await loadGoogleReviews();
+            renderGoogleReviews();
         }
         // This whole panel only ever exists in the DOM for a confirmed admin
         // with edit mode on, built fresh each time rather than sitting in
@@ -8825,7 +8953,15 @@
       <div class="field"><label>Trustpilot profile URL</label><input type="url" id="trustpilotUrlInput" placeholder="https://uk.trustpilot.com/review/yo7foods.co.uk" value="${escapeHtml(trustpilotUrl)}"></div>
       <div class="field"><label>Google Business profile URL</label><input type="url" id="googleBusinessUrlInput" placeholder="https://g.page/..." value="${escapeHtml(googleBusinessUrl)}"></div>
     </div>
-    <button type="button" class="btn btn-primary" id="reviewPlatformSaveBtn">Save changes</button>`;
+    <div class="field-row">
+      <div class="field"><label>Google Place ID</label><input type="text" id="googlePlaceIdInput" placeholder="ChIJ..." value="${escapeHtml(googlePlaceId)}">
+        <span class="delivery-admin-note" style="display:block;margin-top:4px;">Pulls your real Google rating and review text onto the homepage (separate from the profile URL above, which is just the link-out badge). Find yours by searching your business name at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener">Google's Place ID finder</a>.</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button type="button" class="btn btn-primary" id="reviewPlatformSaveBtn">Save changes</button>
+      <button type="button" class="btn btn-outline-dark" id="googleReviewsRefreshBtn">Refresh now</button>
+    </div>`;
             document.getElementById('trustpilotUrlInput').addEventListener('change', (e) => {
                 trustpilotUrl = e.target.value.trim();
                 renderPlatformBadges();
@@ -8834,6 +8970,10 @@
                 googleBusinessUrl = e.target.value.trim();
                 renderPlatformBadges();
             });
+            document.getElementById('googlePlaceIdInput').addEventListener('change', (e) => {
+                googlePlaceId = e.target.value.trim();
+            });
+            document.getElementById('googleReviewsRefreshBtn').addEventListener('click', refreshGoogleReviewsNow);
             document.getElementById('reviewPlatformSaveBtn').addEventListener('click', saveReviewPlatforms);
         }
 
@@ -9440,7 +9580,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.6';
+        const BUILD_VERSION = '2026-09-03.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15292,6 +15432,10 @@
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
+            loadGoogleReviews().then(() => {
+                renderGoogleReviews();
+                updateLocalBusinessSameAs();
+            });
             updateLocalBusinessSameAs();
             // renderDeliveryAdmin() at boot (below) runs before this resolves,
             // using the hardcoded defaults declared alongside deliveryWeightTiers
