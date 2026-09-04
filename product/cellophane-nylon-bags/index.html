@@ -10194,7 +10194,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.49';
+        const BUILD_VERSION = '2026-09-04.50';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15486,7 +15486,23 @@
         function getBgRemovalSegmenter() {
             if (!bgRemovalSegmenterPromise) {
                 bgRemovalSegmenterPromise = import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0')
-                    .then(({ pipeline }) => pipeline('background-removal', 'onnx-community/ormbg-ONNX', { device: 'wasm' }));
+                    .then(({ pipeline, env }) => {
+                        // Confirmed the actual failure in production: "no
+                        // available backend found. ERR: [wasm] TypeError:
+                        // Importing a module script failed." — a known
+                        // onnxruntime-web bug where its default threaded
+                        // WASM backend spins up a Worker with a module
+                        // script that fails to import (this also normally
+                        // wants SharedArrayBuffer via COOP/COEP response
+                        // headers, which GitHub Pages has no way to set at
+                        // all). Forcing single-threaded WASM sidesteps the
+                        // Worker/module-script path entirely — slower, but
+                        // this only ever runs once per admin photo upload,
+                        // never in a hot path.
+                        env.backends.onnx.wasm.numThreads = 1;
+                        env.backends.onnx.wasm.proxy = false;
+                        return pipeline('background-removal', 'onnx-community/ormbg-ONNX', { device: 'wasm' });
+                    });
             }
             return bgRemovalSegmenterPromise;
         }
