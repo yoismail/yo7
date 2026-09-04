@@ -77,8 +77,20 @@
          connect out, or frame in, real protection against a compromised or
          malicious external dependency, but it does not stop an XSS payload
          injected into the page's own inline code from running. Treat this
-         as one layer, not a substitute for careful escaping. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
+         as one layer, not a substitute for careful escaping.
+
+         wasm-unsafe-eval and the huggingface.co/hf.co/jsdelivr connect-src
+         entries are for the admin-only product-photo background-removal
+         feature (removeImageBackground, in the main script below) — it
+         loads Transformers.js from jsdelivr (already allowed in script-src
+         for its own fetch) and the actual model weights from the Hugging
+         Face Hub, whose large files are served off subdomains that vary
+         (cdn-lfs*.huggingface.co, *.hf.co), hence the wildcards rather than
+         one exact host. wasm-unsafe-eval is WebAssembly's narrow
+         equivalent of unsafe-eval — it permits compiling WASM modules
+         (what the model actually runs as) without opening up arbitrary JS
+         eval the way unsafe-eval would. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
     <!-- Referrer-Policy is normally an HTTP header, but unlike
          X-Frame-Options/frame-ancestors it's one of the few security
          controls that DOES work as a <meta> tag, which matters here
@@ -10162,7 +10174,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.46';
+        const BUILD_VERSION = '2026-09-04.47';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15410,7 +15422,7 @@
         // ever displayed at (the product page's own image is well under
         // that), and JPEG at 0.82 quality is visually close to lossless
         // while cutting most of that file size.
-        function compressImageFile(file, maxDim, quality) {
+        function compressImageFile(file, maxDim, quality, outputType) {
             return new Promise((resolve) => {
                 const img = new Image();
                 const objectUrl = URL.createObjectURL(file);
@@ -15421,8 +15433,14 @@
                     const h = Math.round(img.height * scale);
                     const canvas = document.createElement('canvas');
                     canvas.width = w; canvas.height = h;
+                    // No fillRect before drawing — the canvas starts fully
+                    // transparent, so a source image with its own alpha
+                    // channel (the output of removeImageBackground below)
+                    // keeps its transparency through this resize/re-encode
+                    // step as long as outputType supports alpha (webp/png,
+                    // not jpeg).
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality);
+                    canvas.toBlob((blob) => resolve(blob || file), outputType || 'image/jpeg', quality);
                 };
                 // If it fails to decode as an image for any reason, fall
                 // back to uploading the original file rather than blocking
@@ -15431,6 +15449,70 @@
                 img.src = objectUrl;
             });
         }
+
+        /* ================= PRODUCT PHOTO BACKGROUND REMOVAL =================
+           Runs entirely client-side (no server, no per-image cost) using
+           Transformers.js + the ormbg segmentation model — both Apache-2.0,
+           safe for a commercial site. Deliberately NOT @imgly/background-
+           removal, the more commonly-suggested option for this: that
+           library itself is AGPL-licensed, which would obligate opening up
+           this site's own source to use for free in a commercial product.
+           The library and ~a few dozen MB model download only happen the
+           first time an admin removes a background in a given browser
+           session — Transformers.js caches the model afterward (browser
+           Cache API), so later uploads in the same browser reuse it
+           without re-downloading. */
+        let bgRemovalSegmenterPromise = null;
+        function getBgRemovalSegmenter() {
+            if (!bgRemovalSegmenterPromise) {
+                bgRemovalSegmenterPromise = import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0')
+                    .then(({ pipeline }) => pipeline('background-removal', 'onnx-community/ormbg-ONNX', { device: 'wasm' }));
+            }
+            return bgRemovalSegmenterPromise;
+        }
+        // Resolves to a transparent-background PNG Blob on success. Throws
+        // on any failure (model/library failed to load, ran out of memory,
+        // etc.) — every call site catches this and falls back to uploading
+        // the original photo rather than blocking the upload entirely, both
+        // because a failed removal shouldn't cost an admin their upload,
+        // and because this can't be exercised against the real model from
+        // this environment (no network path to the CDN/model host here) —
+        // the fallback is the safety net for whatever that live testing
+        // would otherwise have caught.
+        async function removeImageBackground(blob) {
+            const { RawImage } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0');
+            const segmenter = await getBgRemovalSegmenter();
+            const rawImage = await RawImage.fromBlob(blob);
+            const out = await segmenter(rawImage);
+            const result = Array.isArray(out) ? out[0] : out;
+            return await result.toBlob();
+        }
+        // Shared by handleEditPhotoUpload and handleNewProductPhotoUpload:
+        // downscales the raw upload, then tries to remove its background,
+        // falling back to the plain compressed photo untouched if that
+        // fails for any reason (network hiccup, an old browser, running out
+        // of memory on a large image...) rather than blocking the upload
+        // entirely. onStatus(text) lets each call site show its own
+        // progress in its own preview element.
+        async function prepareProductPhotoForUpload(file, onStatus) {
+            const preCompressed = await compressImageFile(file, 1200, 0.85);
+            onStatus('Removing background…');
+            try {
+                const cutout = await removeImageBackground(preCompressed);
+                const uploadFile = await compressImageFile(cutout, 1200, 0.9, 'image/webp');
+                return { uploadFile, ext: 'webp' };
+            } catch (err) {
+                console.warn('Background removal failed, uploading the plain photo instead:', err);
+                onStatus('Uploading…');
+                // preCompressed only falls back to the original file if the
+                // browser couldn't decode it as an image at all, in which
+                // case its real type/extension has to be used instead of
+                // assuming jpg.
+                const isJpeg = preCompressed.type === 'image/jpeg';
+                const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+                return { uploadFile: preCompressed, ext, backgroundRemovalFailed: true };
+            }
+        }
         async function handleEditPhotoUpload(catSlug, idx, input) {
             const file = input.files && input.files[0];
             if (!file) return;
@@ -15438,12 +15520,9 @@
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const uploadFile = await compressImageFile(file, 1000, 0.82);
-            // compressImageFile only falls back to the original file if the
-            // browser couldn't decode it as an image at all, in which case
-            // its real type/extension has to be used instead of assuming jpg.
-            const isJpeg = uploadFile.type === 'image/jpeg';
-            const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+            const { uploadFile, ext, backgroundRemovalFailed } = await prepareProductPhotoForUpload(file, (status) => {
+                if (preview) preview.innerHTML = `<span>${status}</span>`;
+            });
             const path = `${catSlug}-${idx}-${Date.now()}.${ext}`;
             // A year-long cache: once a product photo's uploaded it almost
             // never changes in place (a new photo gets a new timestamped
@@ -15466,6 +15545,7 @@
             });
             if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000);
             else logAdminAction('product_photo_updated', 'product', product.name, { imageUrl: publicUrl });
+            if (backgroundRemovalFailed) showToast('Photo uploaded — couldn\'t remove the background automatically this time, so it\'s uploaded as-is.', 6000);
             // Update the preview in place rather than calling route(), a
             // full re-render here would regenerate the product grid and
             // close the very edit panel the person is still filling in.
@@ -15566,9 +15646,9 @@
             const preview = document.getElementById(`apf-photo-preview-${uid}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const uploadFile = await compressImageFile(file, 1000, 0.82);
-            const isJpeg = uploadFile.type === 'image/jpeg';
-            const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+            const { uploadFile, ext, backgroundRemovalFailed } = await prepareProductPhotoForUpload(file, (status) => {
+                if (preview) preview.innerHTML = `<span>${status}</span>`;
+            });
             const path = `new-${uid}-${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) {
@@ -15578,6 +15658,7 @@
             }
             const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
             newProductPhotoData[uid] = publicUrl;
+            if (backgroundRemovalFailed) showToast('Photo uploaded — couldn\'t remove the background automatically this time, so it\'s uploaded as-is.', 6000);
             if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="">`;
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
