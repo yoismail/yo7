@@ -4089,6 +4089,15 @@
             font-size: 16px;
             letter-spacing: -0.01em;
             color: #FAF9F2;
+            /* A flex item's default min-width is "auto", not 0 — it won't
+               shrink below its content's unwrapped natural width no matter
+               how little room .product-row actually has, so a sale price
+               (current + was + percent-off, three chunks) pushed the add
+               button straight out past the card's own clipped edge on a
+               narrow card instead of wrapping. min-width:0 lets it shrink
+               and wrap its spans onto a second line instead. */
+            min-width: 0;
+            flex: 1 1 auto;
         }
         /* .price-now/.price-was/.price-off are shared, global price
            classes (product detail page, cart, checkout upsell, admin...)
@@ -10176,7 +10185,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.47';
+        const BUILD_VERSION = '2026-09-04.48';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
