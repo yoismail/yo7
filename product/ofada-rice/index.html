@@ -2447,16 +2447,16 @@
         .best-seller-carousel::-webkit-scrollbar { display: none; }
         .best-seller-card {
             flex: 0 0 220px; max-width: 220px;
-            aspect-ratio: 3/4;
+            /* Not display:block/aspect-ratio directly on this flex item —
+               a fixed aspect-ratio on a flex item with no normal-flow
+               content (everything inside was position:absolute) is a known
+               failure mode in some browsers, where only the first item in
+               the row computes its height correctly and the rest collapse
+               — exactly the "only the left card shows" bug this replaced.
+               .thumb below carries its own aspect-ratio as a plain block
+               instead, which doesn't have that problem. */
             position: relative;
-            display: block;
             scroll-snap-align: start;
-            /* Full-bleed photo + dark scrim now (matching .cat-flat-card),
-               same as every other card — this used to need a fixed-light
-               background to stay visible against this section's own
-               fixed-dark backdrop, but a self-contained scrimmed tile reads
-               fine against any background, dark section included, so that
-               special-case is gone. */
             border-radius: 20px 20px 4px 4px;
             border-bottom: 4px solid var(--chartreuse);
             overflow: hidden; text-decoration: none; color: #2C1C10;
@@ -2472,7 +2472,7 @@
            good instead of just at one point in time). */
         a.best-seller-card:hover { transform: translateY(-8px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
         .best-seller-card .thumb {
-            position: absolute; inset: 0; overflow: hidden; display: flex; flex-direction: column;
+            aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
@@ -2510,15 +2510,14 @@
         /* Scrim, matching .cat-flat-scrim — a sibling of .thumb, both
            absolutely positioned against .best-seller-card itself (which
            carries the hover transform), so photo and text move together. */
+        /* Solid panel below the photo box now, not a scrim overlaid on it. */
         .best-seller-card .body {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-            padding: 34px 14px 14px;
-            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+            padding: 12px 14px 14px;
+            background: var(--aubergine-deep);
         }
         .best-seller-card h4 {
             font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2;
             margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .best-seller-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
         .best-seller-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
@@ -2526,7 +2525,7 @@
         .best-seller-card .price-was { color: rgba(250, 249, 242, 0.65); }
         .best-seller-card .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
         @media (max-width: 900px) {
-            .best-seller-card { flex-basis: 168px; max-width: 168px; aspect-ratio: 2/3; }
+            .best-seller-card { flex-basis: 168px; max-width: 168px; }
         }
 
         .new-section-head {
@@ -2553,10 +2552,13 @@
         .new-carousel::-webkit-scrollbar { display: none; }
         .new-carousel.dragging { cursor: grabbing; }
         .new-card {
+            /* Not display:block/aspect-ratio directly on this flex item —
+               see the comment on .best-seller-card for why: a fixed
+               aspect-ratio on the flex item itself (rather than a plain
+               block child) is what caused only the first card in a row to
+               size correctly in some browsers. */
             flex: 0 0 220px; max-width: 220px;
-            aspect-ratio: 3/4;
             position: relative;
-            display: block;
             border-radius: 20px 20px 4px 4px;
             border-bottom: 4px solid var(--chartreuse);
             scroll-snap-align: start;
@@ -2565,7 +2567,7 @@
             transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
         .new-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2); }
-        .new-card .thumb { position:absolute; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
+        .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
         .new-tag {
@@ -2588,17 +2590,12 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
         body.edit-mode-on .new-remove-btn { display: flex; }
-        /* Scrim, matching .cat-flat-scrim — positioned absolute against
-           .new-card itself (position:relative, see above), a sibling of
-           .thumb rather than nested inside it, since .new-card (not
-           .thumb) carries the hover transform here, so everything moves
-           together regardless of nesting. */
+        /* Solid panel below the photo box now, not a scrim overlaid on it. */
         .new-card .body {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-            padding: 34px 14px 14px;
-            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+            padding: 12px 14px 14px;
+            background: var(--aubergine-deep);
         }
-        .new-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .new-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .new-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
         .new-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
         .new-card .price .price-now.sale { color: var(--chartreuse-soft); }
@@ -2606,7 +2603,7 @@
         .new-card .price .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
 
         @media (max-width: 900px) {
-            .new-card { flex-basis: 168px; max-width: 168px; aspect-ratio: 2/3; }
+            .new-card { flex-basis: 168px; max-width: 168px; }
         }
 
         /* ================= SPECIAL OFFER SECTION ================= */
@@ -2692,10 +2689,10 @@
         .offer-carousel::-webkit-scrollbar { display: none; }
         .offer-carousel.dragging { cursor: grabbing; }
         .offer-card {
+            /* Not display:block/aspect-ratio directly on this flex item —
+               see the comment on .best-seller-card for why. */
             flex: 0 0 220px; max-width: 220px;
-            aspect-ratio: 3/4;
             position: relative;
-            display: block;
             border-radius: 20px 20px 4px 4px;
             border-bottom: 4px solid var(--chartreuse);
             scroll-snap-align: start;
@@ -2707,7 +2704,7 @@
            fix for the same reason (.offer-card-reveal.is-visible would
            otherwise win the transform property once a card settles). */
         a.offer-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(193, 85, 44, 0.22); }
-        .offer-card .thumb { position:absolute; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
+        .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         /* Edit-mode-only "take this product off special offers" control —
            same on/off mechanism as every other admin-only button on the
            site (body.edit-mode-on toggles display), and functionally just
@@ -2754,22 +2751,19 @@
                 opacity: 1;
             }
         }
-        /* Scrim, matching .cat-flat-scrim — a sibling of .thumb, both
-           absolutely positioned against .offer-card itself (which carries
-           the hover transform), so photo and text move together. */
+        /* Solid panel below the photo box now, not a scrim overlaid on it. */
         .offer-card .body {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-            padding: 34px 14px 14px;
-            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+            padding: 12px 14px 14px;
+            background: var(--aubergine-deep);
         }
-        .offer-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .offer-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .offer-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
         .offer-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
         .offer-card .price-now.sale { color: var(--chartreuse-soft); }
         .offer-card .price-was { color: rgba(250, 249, 242, 0.65); }
         .offer-card .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
         @media (max-width: 900px) {
-            .offer-card { flex-basis: 168px; max-width: 168px; aspect-ratio: 2/3; }
+            .offer-card { flex-basis: 168px; max-width: 168px; }
         }
 
         .delivery {
@@ -3942,17 +3936,12 @@
             from { opacity: 0; transform: translateY(16px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        /* Editorial tile, matching .cat-flat-card's look: full-bleed photo
-           with name/price overlaid on a scrim rather than a separate white
-           body underneath. The outer .product-card stays a plain, unstyled
-           wrapper (no radius/shadow/overflow of its own) precisely so the
-           admin edit-panel can still expand below it in normal flow without
-           being clipped — every visual treatment (rounded top / sharp
-           bottom corners, accent border, shadow, hover lift, and every
-           overlaid element: badge, scrim, add button, edit pencil) lives on
-           .product-thumb, which is the actual tile, so they all move
-           together as one unit on hover instead of the scrim/buttons being
-           left behind while just the photo lifts. */
+        /* Two stacked sections — a photo box on top (its own aspect-ratio,
+           not the whole card) and a solid info panel below it — rather
+           than a full-bleed photo with text overlaid on it. .product-card
+           is a plain wrapper; the rounded-top/sharp-bottom shell (radius,
+           accent border, shadow, hover lift) lives on .product-card-link,
+           which clips both children into one cohesive card. */
         .product-card {
             display: block;
             text-decoration: none;
@@ -3965,7 +3954,7 @@
         }
 
         .product-thumb {
-            aspect-ratio: 3/4;
+            aspect-ratio: 1/1;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -3974,17 +3963,6 @@
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             position: relative;
             overflow: hidden;
-            border-radius: 20px 20px 4px 4px;
-            border-bottom: 4px solid var(--chartreuse);
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
-        }
-        .product-card:hover .product-thumb {
-            transform: translateY(-8px);
-            box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2);
-        }
-        @media (max-width: 900px) {
-            .product-thumb { aspect-ratio: 2/3; }
         }
 
         .product-photo-img {
@@ -4009,18 +3987,6 @@
             display: block;
             transition: transform 0.5s cubic-bezier(.16,.84,.44,1);
         }
-        /* The full-bleed card tiles (.product-thumb, .new-card/.best-seller-card/
-           .offer-card/.checkout-upsell-card .thumb) crop to fill their box
-           edge-to-edge instead, matching .cat-flat-photo — unlike the base
-           rule above (shrink-to-fit, no cropping), which stays the right
-           choice for a photo shown on its own with nothing overlaid on it
-           (.pd-image, the product detail page's hero shot). */
-        .product-thumb .product-photo-img,
-        .new-card .thumb .product-photo-img,
-        .best-seller-card .thumb .product-photo-img,
-        .offer-card .thumb .product-photo-img {
-            object-fit: cover;
-        }
         .product-card:hover .product-photo-img {
             transform: scale(1.06);
         }
@@ -4028,20 +3994,6 @@
         .thumb-placeholder {
             width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-        }
-        /* On the full-bleed card tiles specifically (not .pd-image, which
-           has no scrim competing for space), biased up rather than
-           centred in the full box — a name that needs its 2 lines (or a
-           sale price wrapping onto a second line on a narrow mobile card)
-           grows the scrim tall enough to run into a truly-centred
-           placeholder otherwise, confirmed via a long product name on a
-           168px mobile tile. */
-        .product-thumb .thumb-placeholder,
-        .new-card .thumb .thumb-placeholder,
-        .best-seller-card .thumb .thumb-placeholder,
-        .offer-card .thumb .thumb-placeholder,
-        .checkout-upsell-thumb .thumb-placeholder {
-            padding-bottom: 38%;
         }
 
         .thumb-placeholder-emoji {
@@ -4087,23 +4039,13 @@
             .stock-badge.low, .stock-badge.out, .sale-badge { animation: none; }
         }
 
-        /* Name/unit/price scrim, overlaid on the tile's own photo rather
-           than sitting in a separate white body below it — matches
-           .cat-flat-scrim. Nested inside .product-thumb (which is
-           position:relative) so it's part of the same tile and moves with
-           it on hover, rather than a sibling that would be left behind
-           while just the photo lifts. */
+        /* Solid info panel below the photo box — not overlaid on it — so
+           the photo gets its own section at the top instead of the whole
+           card being one full-bleed image with text floating over it. */
         .product-body {
-            position: absolute; left: 0; right: 0; bottom: 0;
-            /* Extra right padding (vs. the other cards' scrims) reserves
-               room for the add-to-basket circle sitting over this same
-               bottom-right corner — without it, a sale price's was-price +
-               percent-off pill run under the button and clip/overlap on a
-               narrow mobile card. */
-            padding: 34px 44px 14px 14px;
-            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+            padding: 14px 14px 14px;
+            background: var(--aubergine-deep);
             color: #FAF9F2;
-            z-index: 2;
         }
 
         .product-body h4 {
@@ -4112,12 +4054,6 @@
             font-size: 14px;
             margin-bottom: 2px;
             line-height: 1.25;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-            /* Single line with ellipsis, matching .new-card/.best-seller-card/
-               .offer-card h4 — a 2-line name grows the scrim tall enough to
-               collide with the centred "Photo coming soon" placeholder text
-               on a narrow mobile card (confirmed via a long product name on
-               a 168px-wide tile). */
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
@@ -4227,33 +4163,42 @@
             margin-bottom: 8px;
         }
 
+        /* Everything that used to live on the (now-removed) full-bleed
+           .product-thumb tile — rounded top / sharp bottom corners, accent
+           border, shadow, hover lift — moves here, onto the link wrapping
+           both .product-thumb and .product-body, so the two stacked
+           sections still clip and move together as one cohesive card. */
         .product-card-link {
             display: block;
             text-decoration: none;
             color: inherit;
+            border-radius: 20px 20px 4px 4px;
+            border-bottom: 4px solid var(--chartreuse);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+        }
+        .product-card:hover .product-card-link {
+            transform: translateY(-8px);
+            box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2);
         }
 
-        /* Nested inside .product-thumb (position:relative, see above)
-           rather than the old sibling-of-the-link placement, so the add
-           button rides along with the rest of the tile on hover instead of
-           being left behind while just the photo lifts. It's inside the
-           <a> now, so its onclick needs its own preventDefault/
-           stopPropagation to stop that turning into a navigation. */
-        .card-actions {
-            position: absolute; bottom: 14px; right: 14px; z-index: 5;
-        }
-
+        /* A normal flex child of .product-row now, next to the price,
+           rather than an absolutely-positioned circle overlaid on the
+           photo — it's still inside the <a>, so its onclick still needs
+           its own preventDefault/stopPropagation to stop that turning into
+           a navigation. */
         .card-add-btn {
             width: 34px;
             height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
             border-radius: 50%;
             border: none;
             background: var(--chartreuse);
             color: var(--aubergine-deep);
-            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
             transition: background 0.2s ease, transform 0.2s ease;
         }
         .card-add-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
@@ -4793,39 +4738,37 @@
             display: block;
             text-decoration: none;
         }
-        /* Same full-bleed photo + scrim tile as every other product card
-           (see .product-thumb), scaled down for this compact 3-up strip —
-           kept square rather than the taller 3/4 used elsewhere so the
-           cross-sell strip doesn't blow out the basket panel's height, but
-           otherwise the same rounded-top/sharp-bottom/accent-border/scrim
-           treatment. Name, price and the add button all live inside
-           .checkout-upsell-scrim, nested in the tile so they move with it
-           on hover rather than being left behind. */
+        /* Photo box on top, own aspect-ratio, and a solid info panel below
+           it — not one full-bleed image with text overlaid on it. The
+           rounded-top/sharp-bottom/accent-border/shadow/hover-lift shell
+           lives on .checkout-upsell-link, clipping both sections as one
+           card, same pattern as .product-card-link. */
+        .checkout-upsell-link {
+            border-radius: 14px 14px 4px 4px;
+            border-bottom: 3px solid var(--chartreuse);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 6px 14px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
+        }
+        .checkout-upsell-card:hover .checkout-upsell-link {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.08), 0 14px 26px rgba(var(--border-rgb), 0.14);
+        }
         .checkout-upsell-thumb {
             position: relative;
             width: 100%;
             aspect-ratio: 1;
-            border-radius: 14px 14px 4px 4px;
-            border-bottom: 3px solid var(--chartreuse);
-            overflow: hidden;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--text-faint);
             font-size: 22px;
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 6px 14px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
         }
-        .checkout-upsell-card:hover .checkout-upsell-thumb {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.08), 0 14px 26px rgba(var(--border-rgb), 0.14);
-        }
-        .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .checkout-upsell-scrim {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-            padding: 20px 8px 8px;
-            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+        .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        .checkout-upsell-body {
+            padding: 8px 8px 8px;
+            background: var(--aubergine-deep);
         }
         .checkout-upsell-name {
             font-family: var(--display);
@@ -10221,7 +10164,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.44';
+        const BUILD_VERSION = '2026-09-04.45';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11874,21 +11817,19 @@
         <div class="product-thumb">
           ${stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : ''}
           ${productPhotoHTML(p, p.name)}
-          <div class="product-body">
-            <h4>${escapeHtml(p.name)}</h4>
-            <div class="product-unit">${escapeHtml(p.unit || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
-            <div class="product-row">
-              <div class="product-price">${priceHTML(p)}</div>
-            </div>
-          </div>
-          <div class="card-actions">
+          <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
+        <div class="product-body">
+          <h4>${escapeHtml(p.name)}</h4>
+          <div class="product-unit">${escapeHtml(p.unit || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
+          <div class="product-row">
+            <div class="product-price">${priceHTML(p)}</div>
             <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
-          <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          </button>
         </div>
       </a>
       <div class="edit-panel-slot"></div>
@@ -12899,14 +12840,14 @@
       <a class="checkout-upsell-link" href="#/product/${p.catSlug}/${idx}">
         <div class="checkout-upsell-thumb">
           ${productPhotoHTML(p, p.name)}
-          <div class="checkout-upsell-scrim">
-            <div class="checkout-upsell-name">${escapeHtml(p.name)}</div>
-            <div class="checkout-upsell-row">
-              <span class="checkout-upsell-price">${money(p.price)}</span>
-              <button type="button" class="checkout-upsell-add" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${escapeHtml(p.name)} to basket">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              </button>
-            </div>
+        </div>
+        <div class="checkout-upsell-body">
+          <div class="checkout-upsell-name">${escapeHtml(p.name)}</div>
+          <div class="checkout-upsell-row">
+            <span class="checkout-upsell-price">${money(p.price)}</span>
+            <button type="button" class="checkout-upsell-add" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${escapeHtml(p.name)} to basket">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
           </div>
         </div>
       </a>
