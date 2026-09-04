@@ -6556,6 +6556,24 @@
                 gap: 18px;
             }
         }
+        /* Shop by category switched from a horizontal scroll strip to a
+           wrapping grid — the most-used entry point on the page shouldn't
+           depend on someone discovering they can swipe sideways to see the
+           rest of the aisles. auto-fill/minmax sizes the columns itself
+           (2 on a phone, up to 6-7 on a wide desktop) rather than a fixed
+           breakpoint list, so it never needs revisiting as the category
+           count changes. Specificity has to beat the base .product-grid
+           flex/scroll rules above (and its own mobile gap override), same
+           reason .product-grid.cat-flat-scroll already existed. */
+        .product-grid.cat-flat-scroll {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+            overflow: visible;
+            cursor: default;
+        }
+        .product-grid.cat-flat-scroll .cat-flat-card {
+            width: 100%; max-width: none;
+        }
     </style>    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
@@ -6871,16 +6889,7 @@
                     <h2>Every aisle, one tap away</h2>
                     <p>Your favourite African ingredients, curated in one place and ready to add to your basket with ease.</p>
                 </div>
-                <div class="cat-nav-wrap">
-                    <button class="cat-nav-arrow cat-nav-arrow-prev" id="homeCatNavPrev" type="button" aria-label="Scroll categories left">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                    </button>
-                    <div class="product-grid cat-flat-scroll" id="catGrid"></div>
-                    <button class="cat-nav-arrow cat-nav-arrow-next" id="homeCatNavNext" type="button" aria-label="Scroll categories right">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                    </button>
-                </div>
-                <p class="swipe-hint">Swipe to see more</p>
+                <div class="product-grid cat-flat-scroll" id="catGrid"></div>
             </div>
         </section>
 
@@ -10050,7 +10059,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.39';
+        const BUILD_VERSION = '2026-09-03.40';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11188,7 +11197,9 @@
            capture guarantees this element keeps receiving move/up events for
            that pointer no matter what, which is exactly what this needs. */
         function initDragScroll() {
-            const grids = document.querySelectorAll('.product-grid, .new-carousel, .offer-carousel, .best-seller-carousel');
+            // .cat-flat-scroll (Shop by category) excluded — it's a wrapping
+            // grid now, not a horizontal strip, nothing to drag-scroll.
+            const grids = document.querySelectorAll('.product-grid:not(.cat-flat-scroll), .new-carousel, .offer-carousel, .best-seller-carousel');
             grids.forEach(grid => {
                 grid.setAttribute('draggable', 'false');
                 let isDown = false;
@@ -16214,12 +16225,6 @@
                 savePricingSettings();
             });
         }
-        const homeCatNavPrev = document.getElementById('homeCatNavPrev');
-        const homeCatNavNext = document.getElementById('homeCatNavNext');
-        const homeCatGrid = document.getElementById('catGrid');
-        const HOME_CAT_STEP = 320;
-        if (homeCatNavPrev && homeCatGrid) homeCatNavPrev.addEventListener('click', () => scrollCarouselStrip(homeCatGrid, -HOME_CAT_STEP));
-        if (homeCatNavNext && homeCatGrid) homeCatNavNext.addEventListener('click', () => scrollCarouselStrip(homeCatGrid, HOME_CAT_STEP));
         function scrollCarouselStrip(strip, delta) {
             if (!strip) return;
             strip.scrollBy({ left: delta, behavior: 'smooth' });
