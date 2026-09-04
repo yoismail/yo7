@@ -4795,6 +4795,19 @@
             font-size: 12px;
             color: var(--text-muted);
         }
+        /* Trust signal on the one screen where it matters most — right
+           before payment, not buried on a product page nobody re-visits
+           mid-checkout. Loads after the cart itself renders (never blocks
+           it) and quietly does nothing for a combo row, which has no
+           single underlying product to rate. */
+        .cart-rating-badge {
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+            font-size: 11.5px; color: var(--text-muted); margin-top: 4px;
+        }
+        .cart-rating-badge .crb-stars { display: inline-flex; align-items: center; gap: 1px; color: var(--orange); }
+        .cart-rating-badge .crb-stars svg { width: 11px; height: 11px; }
+        .cart-rating-badge a { color: var(--heading-mid); font-weight: 600; text-decoration: underline; cursor: pointer; }
+        .cart-rating-badge .crb-sep { color: rgba(var(--border-rgb), 0.4); }
 
         .cart-qty {
             display: flex;
@@ -6337,6 +6350,24 @@
         }
         .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
         .modal-actions .btn { padding: 10px 18px; font-size: 13px; }
+        /* Wider variant for content-heavy modals (a review list + form)
+           rather than the 440px default sized for a single confirm/cancel
+           prompt. Scrolls internally once it hits a sensible max height so
+           a product with many reviews never pushes the modal itself off
+           the top/bottom of the viewport. */
+        .modal-box-wide {
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 18px; right: 18px;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(var(--border-rgb), 0.08); color: var(--heading);
+            font-size: 18px; line-height: 1; cursor: pointer;
+        }
+        .modal-close:hover { background: rgba(var(--border-rgb), 0.16); }
         .order-admin-btn-cancel-confirm { background: #C1552C; }
         .order-admin-btn-cancel-confirm:hover { background: #a8471f; }
         .order-cancellation-reason {
@@ -7329,6 +7360,15 @@
 
     <!-- ================= CHECKOUT ================= -->
     <div id="view-checkout" class="hidden-view">
+        <div class="modal-overlay" id="checkoutReviewModal" style="display:none;">
+            <div class="modal-box modal-box-wide">
+                <button type="button" class="modal-close" id="crmCloseBtn" aria-label="Close">&times;</button>
+                <h3 id="crmProductName"></h3>
+                <div id="crmSummary"></div>
+                <div id="crmList" class="pd-reviews-list"></div>
+                <div id="crmFormWrap"></div>
+            </div>
+        </div>
         <section class="checkout-section">
             <div class="wrap">
                 <div class="checkout-steps">
@@ -10061,7 +10101,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.42';
+        const BUILD_VERSION = '2026-09-04.43';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12489,7 +12529,8 @@
                     // it existed. Looking it up live (by the same catSlug::idx
                     // every product id already encodes) fixes that without
                     // needing to change what's stored in the cart itself.
-                    const liveProduct = getProduct(item.catSlug, Number(item.id.split('::')[1]));
+                    const idx = Number(item.id.split('::')[1]);
+                    const liveProduct = getProduct(item.catSlug, idx);
                     // A plain emoji rather than the full "Photo coming soon"
                     // placeholder (label and all) used on product cards, this
                     // thumb is 52px, there's no room for that label to sit
@@ -12497,6 +12538,7 @@
                     const thumbHTML = (liveProduct && liveProduct.image)
                         ? productPhotoHTML(liveProduct, item.name)
                         : `<span style="font-size:24px;">${item.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
+                    const pKey = productKey(item.catSlug, idx);
                     return `
       <div class="cart-row">
         <div class="cart-thumb">${thumbHTML}</div>
@@ -12504,6 +12546,7 @@
           <h4>${escapeHtml(item.name)}</h4>
           <span>${escapeHtml(item.unit || '')}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
           ${item.isSubscription ? `<span class="subscription-badge">Subscription, every ${item.subscriptionFrequency} weeks</span>` : ''}
+          <div class="cart-rating-badge" data-product-key="${pKey}" data-product-name="${escapeHtml(item.name)}"></div>
         </div>
         <div class="cart-qty">
           <button type="button" onclick="changeQty(${i},-1)">&minus;</button>
@@ -12526,7 +12569,195 @@
                 loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
             }
             updateSummaries();
+            loadCartRatingsAndSales();
         }
+        /* ================= CHECKOUT: RATING + SOLD-COUNT BADGES =================
+           A compact rating/sold-count badge next to each cart line item, refreshed
+           whenever the cart view is rendered (not a live/push connection). Clicking
+           the rating opens a self-contained review modal scoped to that product,
+           kept separate from the product-detail-page review functions (pdReview*)
+           to avoid id collisions since both can exist in the DOM at once. */
+        function roundedCountLabel(n) {
+            if (n >= 1000) return Math.floor(n / 1000) + 'k+';
+            if (n >= 10) return Math.floor(n / 10) * 10 + '+';
+            return String(n);
+        }
+        const cartRatingsData = new Map(); // productKey -> { sum, count }
+        const cartSalesData = new Map(); // productKey -> unitsSold
+        async function loadCartRatingsAndSales() {
+            const badgeEls = Array.from(document.querySelectorAll('.cart-rating-badge[data-product-key]'));
+            if (!supabaseClient || badgeEls.length === 0) return;
+            const keys = [...new Set(badgeEls.map(el => el.dataset.productKey))];
+            const [reviewsRes, salesRes] = await Promise.all([
+                supabaseClient.from('product_reviews').select('product_key, rating').in('product_key', keys),
+                supabaseClient.rpc('get_units_sold', { p_product_keys: keys }),
+            ]);
+            cartRatingsData.clear();
+            cartSalesData.clear();
+            if (!reviewsRes.error && reviewsRes.data) {
+                reviewsRes.data.forEach(r => {
+                    const entry = cartRatingsData.get(r.product_key) || { sum: 0, count: 0 };
+                    entry.sum += r.rating; entry.count += 1;
+                    cartRatingsData.set(r.product_key, entry);
+                });
+            }
+            if (!salesRes.error && salesRes.data) {
+                salesRes.data.forEach(row => cartSalesData.set(row.product_key, Number(row.units_sold) || 0));
+            }
+            renderCartRatingBadges();
+        }
+        function renderCartRatingBadges() {
+            document.querySelectorAll('.cart-rating-badge[data-product-key]').forEach(el => {
+                const key = el.dataset.productKey;
+                const rating = cartRatingsData.get(key);
+                const sold = cartSalesData.get(key) || 0;
+                const parts = [];
+                if (rating && rating.count > 0) {
+                    const avg = rating.sum / rating.count;
+                    parts.push(`<span class="crb-stars">${starsHTML(avg)}</span><a class="crb-open-review">${avg.toFixed(1)} (${roundedCountLabel(rating.count)} review${rating.count === 1 ? '' : 's'})</a>`);
+                } else {
+                    parts.push('<a class="crb-open-review">Be the first to review</a>');
+                }
+                if (sold > 0) parts.push(`<span class="crb-sep">&middot;</span><span>${roundedCountLabel(sold)} sold</span>`);
+                el.innerHTML = parts.join(' ');
+            });
+        }
+        const cartListEl = document.getElementById('cartList');
+        if (cartListEl) cartListEl.addEventListener('click', (e) => {
+            const link = e.target.closest('.crb-open-review');
+            if (!link) return;
+            const badge = link.closest('.cart-rating-badge');
+            if (!badge) return;
+            const [catSlug, idxStr] = badge.dataset.productKey.split('::');
+            openCheckoutReviewModal(catSlug, Number(idxStr));
+        });
+        async function openCheckoutReviewModal(catSlug, idx) {
+            const p = getProduct(catSlug, idx);
+            document.getElementById('crmProductName').textContent = p ? p.name : '';
+            document.getElementById('crmSummary').innerHTML = '';
+            document.getElementById('crmList').innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">Loading reviews&hellip;</p>';
+            document.getElementById('crmFormWrap').innerHTML = '';
+            document.getElementById('checkoutReviewModal').style.display = 'flex';
+            await renderCrmReviews(catSlug, idx);
+        }
+        function closeCheckoutReviewModal() {
+            document.getElementById('checkoutReviewModal').style.display = 'none';
+        }
+        const crmCloseBtnEl = document.getElementById('crmCloseBtn');
+        if (crmCloseBtnEl) crmCloseBtnEl.addEventListener('click', closeCheckoutReviewModal);
+        const checkoutReviewModalEl = document.getElementById('checkoutReviewModal');
+        if (checkoutReviewModalEl) checkoutReviewModalEl.addEventListener('click', (e) => { if (e.target === checkoutReviewModalEl) closeCheckoutReviewModal(); });
+        async function renderCrmReviews(catSlug, idx) {
+            const key = productKey(catSlug, idx);
+            const summaryEl = document.getElementById('crmSummary');
+            const listEl = document.getElementById('crmList');
+            const formWrapEl = document.getElementById('crmFormWrap');
+            if (!supabaseClient) {
+                listEl.innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">Reviews aren\'t available right now.</p>';
+                return;
+            }
+            const { data, error } = await supabaseClient
+                .from('product_reviews')
+                .select('*, profiles(full_name)')
+                .eq('product_key', key)
+                .order('created_at', { ascending: false });
+            if (error) {
+                listEl.innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">Couldn\'t load reviews right now, please try again shortly.</p>';
+                return;
+            }
+            const reviews = data || [];
+            if (reviews.length > 0) {
+                const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+                summaryEl.innerHTML = `
+      <div class="pd-reviews-summary-row">
+        <span class="pd-reviews-summary-avg">${avg.toFixed(1)}</span>
+        <div>
+          <span class="pd-stars">${starsHTML(avg)}</span>
+          <div class="pd-reviews-summary-count">Based on ${reviews.length} review${reviews.length === 1 ? '' : 's'}</div>
+        </div>
+      </div>`;
+                listEl.innerHTML = reviews.map(r => {
+                    const name = (r.profiles && r.profiles.full_name) || 'Yo7 Foods customer';
+                    const dateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const isOwn = currentSupabaseUser && r.user_id === currentSupabaseUser.id;
+                    return `
+      <div class="pd-review-card">
+        <div class="pd-review-top">
+          <div>
+            <span class="pd-review-name">${escapeHtml(name)}</span>
+            <span class="pd-stars">${starsHTML(r.rating)}</span>
+          </div>
+          <span class="pd-review-date">${dateLabel}</span>
+        </div>
+        ${r.comment ? `<div class="pd-review-comment">${escapeHtml(r.comment)}</div>` : ''}
+        ${isOwn ? `<button type="button" class="pd-review-delete" onclick="deleteCrmReview('${key}')">Delete my review</button>` : ''}
+      </div>`;
+                }).join('');
+            } else {
+                summaryEl.innerHTML = '';
+                listEl.innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">No reviews on this product yet, be the first.</p>';
+            }
+            const myReview = currentSupabaseUser ? reviews.find(r => r.user_id === currentSupabaseUser.id) : null;
+            formWrapEl.innerHTML = crmReviewFormHTML(myReview);
+            wireCrmReviewForm(key, myReview, catSlug, idx);
+        }
+        function crmReviewFormHTML(myReview) {
+            if (!currentSupabaseUser) {
+                return `<p class="pd-review-prompt"><a href="#/login">Log in</a> to write a review, so we know it's from someone who's actually shopped with us.</p>`;
+            }
+            const rating = myReview ? myReview.rating : 0;
+            return `
+    <div class="pd-review-form">
+        <h3>${myReview ? 'Edit your review' : 'Write a review'}</h3>
+        <div class="star-input" id="crmReviewStarInput">
+            ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="${n <= rating ? 'filled' : ''}" aria-label="${n} star${n === 1 ? '' : 's'}">${STAR_SVG_FILLED}</button>`).join('')}
+        </div>
+        <textarea id="crmReviewComment" rows="3" placeholder="What did you think? (optional)">${myReview && myReview.comment ? escapeHtml(myReview.comment) : ''}</textarea>
+        <div class="auth-error" id="crmReviewError" role="alert" style="display:none;"></div>
+        <button type="button" class="btn btn-primary" id="crmReviewSubmitBtn" style="margin-top:12px;">${myReview ? 'Update review' : 'Submit review'}</button>
+    </div>`;
+        }
+        function wireCrmReviewForm(key, myReview, catSlug, idx) {
+            const starInput = document.getElementById('crmReviewStarInput');
+            if (!starInput) return;
+            let selectedRating = myReview ? myReview.rating : 0;
+            const buttons = Array.from(starInput.querySelectorAll('button'));
+            const paint = (n) => buttons.forEach(b => b.classList.toggle('filled', Number(b.dataset.star) <= n));
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', () => paint(Number(btn.dataset.star)));
+                btn.addEventListener('click', () => { selectedRating = Number(btn.dataset.star); paint(selectedRating); });
+            });
+            starInput.addEventListener('mouseleave', () => paint(selectedRating));
+            document.getElementById('crmReviewSubmitBtn').addEventListener('click', async () => {
+                const errEl = document.getElementById('crmReviewError');
+                errEl.style.display = 'none';
+                if (!selectedRating) { errEl.textContent = 'Pick a star rating first.'; errEl.style.display = 'block'; return; }
+                const btn = document.getElementById('crmReviewSubmitBtn');
+                btn.disabled = true;
+                const comment = document.getElementById('crmReviewComment').value.trim();
+                const { error } = await supabaseClient.from('product_reviews').upsert({
+                    product_key: key,
+                    user_id: currentSupabaseUser.id,
+                    rating: selectedRating,
+                    comment: comment || null,
+                }, { onConflict: 'product_key,user_id' });
+                btn.disabled = false;
+                if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
+                showToast(myReview ? 'Review updated.' : 'Thanks for the review!');
+                await renderCrmReviews(catSlug, idx);
+                loadCartRatingsAndSales();
+            });
+        }
+        async function deleteCrmReview(key) {
+            if (!confirm('Delete your review? This can\'t be undone.')) return;
+            const [catSlug, idxStr] = key.split('::');
+            const { error } = await supabaseClient.from('product_reviews')
+                .delete().eq('product_key', key).eq('user_id', currentSupabaseUser.id);
+            if (error) { alert('Could not delete that review: ' + error.message); return; }
+            await renderCrmReviews(catSlug, Number(idxStr));
+            loadCartRatingsAndSales();
+        }
+        window.deleteCrmReview = deleteCrmReview;
         // A short cross-sell strip at the foot of the basket panel. Doubles as
         // a fix for the panel looking broken/half-empty next to the taller
         // order-summary panel when there's only a couple of items in it.
