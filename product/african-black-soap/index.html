@@ -84,13 +84,22 @@
          feature (removeImageBackground, in the main script below) — it
          loads Transformers.js from jsdelivr (already allowed in script-src
          for its own fetch) and the actual model weights from the Hugging
-         Face Hub, whose large files are served off subdomains that vary
-         (cdn-lfs*.huggingface.co, *.hf.co), hence the wildcards rather than
-         one exact host. wasm-unsafe-eval is WebAssembly's narrow
+         Face Hub. Listed as explicit hostnames rather than *.huggingface.co/
+         *.hf.co wildcards on purpose: CSP wildcards only match ONE
+         subdomain label, but HF's real asset hosts are two-label
+         subdomains (cas-server.xethub.hf.co, us.aws.cdn.hf.co, etc,
+         published at huggingface.co/.well-known/meta.json) — *.hf.co does
+         NOT match cas-server.xethub.hf.co, so the wildcard version of this
+         silently blocked every model download (confirmed: background
+         removal failed in production with this exact set of entries
+         missing the explicit two-label hosts, despite *.hf.co/
+         *.huggingface.co being present). The *.huggingface.co/*.hf.co
+         wildcards stay too, as a hedge for any single-label host not
+         listed here explicitly. wasm-unsafe-eval is WebAssembly's narrow
          equivalent of unsafe-eval — it permits compiling WASM modules
          (what the model actually runs as) without opening up arbitrary JS
          eval the way unsafe-eval would. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://cas-server.xethub.hf.co https://cas-server.xethub-eu.hf.co https://transfer.xethub.hf.co https://transfer.xethub-eu.hf.co https://us.aws.cdn.hf.co https://us.gcp.cdn.hf.co https://cdn-lfs-us-1.hf.co https://cdn-lfs-eu-1.hf.co; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
     <!-- Referrer-Policy is normally an HTTP header, but unlike
          X-Frame-Options/frame-ancestors it's one of the few security
          controls that DOES work as a <meta> tag, which matters here
@@ -10185,7 +10194,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.48';
+        const BUILD_VERSION = '2026-09-04.49';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15513,6 +15522,13 @@
                 const uploadFile = await compressImageFile(cutout, 1200, 0.9, 'image/webp');
                 return { uploadFile, ext: 'webp' };
             } catch (err) {
+                // The real error message is surfaced in the upload toast
+                // (not just logged to the console) specifically so a
+                // non-technical admin can read/screenshot it without
+                // needing devtools open — this feature couldn't be tested
+                // against the real model from the environment it was
+                // built in, so this is the fastest path to a real error
+                // message if it doesn't work as expected in production.
                 console.warn('Background removal failed, uploading the plain photo instead:', err);
                 onStatus('Uploading…');
                 // preCompressed only falls back to the original file if the
@@ -15521,7 +15537,8 @@
                 // assuming jpg.
                 const isJpeg = preCompressed.type === 'image/jpeg';
                 const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
-                return { uploadFile: preCompressed, ext, backgroundRemovalFailed: true };
+                const backgroundRemovalError = (err && err.message) ? err.message : String(err);
+                return { uploadFile: preCompressed, ext, backgroundRemovalFailed: true, backgroundRemovalError };
             }
         }
         async function handleEditPhotoUpload(catSlug, idx, input) {
@@ -15531,7 +15548,7 @@
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const { uploadFile, ext, backgroundRemovalFailed } = await prepareProductPhotoForUpload(file, (status) => {
+            const { uploadFile, ext, backgroundRemovalFailed, backgroundRemovalError } = await prepareProductPhotoForUpload(file, (status) => {
                 if (preview) preview.innerHTML = `<span>${status}</span>`;
             });
             const path = `${catSlug}-${idx}-${Date.now()}.${ext}`;
@@ -15556,7 +15573,7 @@
             });
             if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000);
             else logAdminAction('product_photo_updated', 'product', product.name, { imageUrl: publicUrl });
-            if (backgroundRemovalFailed) showToast('Photo uploaded — couldn\'t remove the background automatically this time, so it\'s uploaded as-is.', 6000);
+            if (backgroundRemovalFailed) showToast(`Photo uploaded as-is — background removal failed: ${backgroundRemovalError}`, 9000);
             // Update the preview in place rather than calling route(), a
             // full re-render here would regenerate the product grid and
             // close the very edit panel the person is still filling in.
@@ -15657,7 +15674,7 @@
             const preview = document.getElementById(`apf-photo-preview-${uid}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const { uploadFile, ext, backgroundRemovalFailed } = await prepareProductPhotoForUpload(file, (status) => {
+            const { uploadFile, ext, backgroundRemovalFailed, backgroundRemovalError } = await prepareProductPhotoForUpload(file, (status) => {
                 if (preview) preview.innerHTML = `<span>${status}</span>`;
             });
             const path = `new-${uid}-${Date.now()}.${ext}`;
@@ -15669,7 +15686,7 @@
             }
             const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
             newProductPhotoData[uid] = publicUrl;
-            if (backgroundRemovalFailed) showToast('Photo uploaded — couldn\'t remove the background automatically this time, so it\'s uploaded as-is.', 6000);
+            if (backgroundRemovalFailed) showToast(`Photo uploaded as-is — background removal failed: ${backgroundRemovalError}`, 9000);
             if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="">`;
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
