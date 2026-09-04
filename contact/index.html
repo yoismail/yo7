@@ -443,7 +443,7 @@
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex; align-items: center; justify-content: center; font-size: 52px;
         }
-        .ep-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ep-photo-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .ep-photo-row input[type="file"] { font-size: 12px; color: var(--text-muted); max-width: 100%; }
         .ep-photo-remove {
             display: block; margin-top: 6px; background: none; border: none; color: #b34a4a;
@@ -3954,7 +3954,7 @@
             inset: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             display: block;
             transition: transform 0.5s cubic-bezier(.16,.84,.44,1);
         }
@@ -4182,7 +4182,7 @@
             overflow: hidden;
         }
 
-        .pd-image .product-photo-img { width: 100%; height: 100%; object-fit: cover; }
+        .pd-image .product-photo-img { width: 100%; height: 100%; object-fit: contain; }
 
         .pd-image .stock-badge { position: absolute; top: 16px; left: 16px; font-size: 11px; padding: 6px 13px; }
 
@@ -4708,7 +4708,7 @@
             color: var(--text-faint);
             font-size: 22px;
         }
-        .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: contain; }
         .checkout-upsell-name {
             font-family: var(--display);
             font-weight: 600;
@@ -10059,7 +10059,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.41';
+        const BUILD_VERSION = '2026-09-03.42';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11685,8 +11685,12 @@
             const emoji = (p && p.emoji) ? p.emoji : DEFAULT_ITEM_ICON_SVG;
             return `<span class="thumb-placeholder-emoji">${emoji}</span><span class="thumb-placeholder-label">Photo coming soon</span>`;
         }
-        // Renders a real photo when a product has one, cropped consistently via object-fit;
-        // falls back to the Coming Soon placeholder if there's no image yet, or if it fails to load.
+        // Renders a real photo when a product has one, shrunk to fit its
+        // card via object-fit:contain rather than cropped, so a photo
+        // whose proportions don't match the card's square slot never loses
+        // any of the product to an off-centre crop; falls back to the
+        // Coming Soon placeholder if there's no image yet, or if it fails
+        // to load.
         function productPhotoHTML(p, altText) {
             if (p.image) {
                 return `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(altText)}" loading="lazy" decoding="async" class="product-photo-img"
