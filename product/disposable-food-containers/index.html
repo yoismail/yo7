@@ -9359,8 +9359,8 @@
             const row = document.getElementById('platformBadgesRow');
             if (!row) return;
             const badges = [];
-            if (isHttpUrl(trustpilotUrl)) badges.push(`<a class="platform-badge platform-badge-trustpilot" href="${escapeHtml(trustpilotUrl)}" target="_blank" rel="noopener">★ Trustpilot</a>`);
-            if (isHttpUrl(googleBusinessUrl)) badges.push(`<a class="platform-badge platform-badge-google" href="${escapeHtml(googleBusinessUrl)}" target="_blank" rel="noopener">G Google</a>`);
+            if (isHttpUrl(trustpilotUrl)) badges.push(`<a class="platform-badge platform-badge-trustpilot" href="${escapeHtml(trustpilotUrl)}" target="_blank" rel="noopener">★ Leave a review on Trustpilot</a>`);
+            if (isHttpUrl(googleBusinessUrl)) badges.push(`<a class="platform-badge platform-badge-google" href="${escapeHtml(googleBusinessUrl)}" target="_blank" rel="noopener">G Leave a review on Google</a>`);
             row.innerHTML = badges.join('');
         }
         // The static LocalBusiness JSON-LD in <head> ships with just
@@ -10164,7 +10164,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.45';
+        const BUILD_VERSION = '2026-09-04.46';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
