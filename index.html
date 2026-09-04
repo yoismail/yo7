@@ -10058,7 +10058,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-03.40';
+        const BUILD_VERSION = '2026-09-03.41';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14798,6 +14798,12 @@
         <div class="edit-panel">
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
+              <label>Product name</label>
+              <input type="text" id="ep-productname-${catSlug}-${idx}" value="${escapeHtml(product.name)}">
+            </div>
+          </div>
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div>
               <label>Product photo</label>
               <div class="ep-photo-row">
                 <div class="ep-photo-preview" id="ep-photo-preview-${catSlug}-${idx}">${product.image ? `<img src="${product.image}" alt="">` : `<span>${product.emoji || DEFAULT_ITEM_ICON_SVG}</span>`}</div>
@@ -14987,11 +14993,23 @@
             // what actually settles a "you charged me the wrong price"
             // dispute instead of just confirming a change happened.
             const before = {
+                name: product.name,
                 price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
                 weight: typeof product.weight === 'number' ? product.weight : null,
                 unitOverride: product.unitOverride || null, description: product.description || null,
                 weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
             };
+            // Unlike every optional field below, a product can never be
+            // saved with a blank name — there's nowhere in the catalogue,
+            // cart, or an existing order that tolerates one — so an empty
+            // or unchanged value just leaves the name as it was rather than
+            // silently wiping it or blocking the rest of the save.
+            const nameEl = document.getElementById(`ep-productname-${catSlug}-${idx}`);
+            if (nameEl) {
+                const nameVal = nameEl.value.trim();
+                if (nameVal) product.name = nameVal;
+                else nameEl.value = product.name;
+            }
             const priceEl = document.getElementById(`ep-price-${catSlug}-${idx}`);
             const priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
             const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`)?.value ?? '';
@@ -15039,6 +15057,7 @@
             if (!supabaseClient) return { ok: true };
             const { error } = await supabaseClient.from('product_overrides').upsert({
                 product_key: productKey(catSlug, idx),
+                name: product.name,
                 price: product.price,
                 sale_price: product.salePrice != null ? product.salePrice : null,
                 stock: product.stock,
@@ -15050,12 +15069,14 @@
             });
             if (error) return { ok: false, error };
             const after = {
+                name: product.name,
                 price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
                 weight: typeof product.weight === 'number' ? product.weight : null,
                 unitOverride: product.unitOverride || null, description: product.description || null,
                 weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
             };
             const changes = diffFields(before, after, [
+                { key: 'name', label: 'Name' },
                 { key: 'price', label: 'Price', format: money },
                 { key: 'salePrice', label: 'Sale price', format: money },
                 { key: 'stock', label: 'Stock', format: stockLabel },
@@ -15486,6 +15507,7 @@
                 const cat = findCategory(catSlug);
                 const product = cat && cat.products[parseInt(idxStr, 10)];
                 if (!product) return;
+                if (row.name) product.name = row.name;
                 if (row.image_url) product.image = row.image_url;
                 if (row.price != null) product.price = row.price;
                 if (row.sale_price != null) product.salePrice = row.sale_price; else delete product.salePrice;
