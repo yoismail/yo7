@@ -396,7 +396,7 @@
 
         .card-edit-btn {
             display: none;
-            position: absolute; bottom: 10px; right: 10px; z-index: 4;
+            position: absolute; top: 10px; right: 10px; z-index: 4;
             width: 30px; height: 30px; border-radius: 50%; border: none;
             background: var(--aubergine); color: var(--cream);
             align-items: center; justify-content: center;
@@ -404,7 +404,6 @@
         }
         .card-edit-btn svg { width: 14px; height: 14px; }
         body.edit-mode-on .card-edit-btn { display: flex; }
-        body.edit-mode-on .product-card { position: relative; }
 
         .edit-panel {
             padding: 14px 18px 18px; background: rgba(225,225,0,0.06); border-top: 1px dashed rgba(225,225,0,0.35);
@@ -2448,16 +2447,21 @@
         .best-seller-carousel::-webkit-scrollbar { display: none; }
         .best-seller-card {
             flex: 0 0 220px; max-width: 220px;
+            aspect-ratio: 3/4;
+            position: relative;
+            display: block;
             scroll-snap-align: start;
-            /* Fixed light, not var(--card-bg) — this section's own
-               background is fixed-dark regardless of site theme (see
-               above), so the card needs to stay a fixed light tile too,
-               or a dark-mode visitor would get a dark card lost against a
-               dark section instead of the intended spotlight contrast. */
-            background: #FFFDF7; border: none; border-radius: 0;
+            /* Full-bleed photo + dark scrim now (matching .cat-flat-card),
+               same as every other card — this used to need a fixed-light
+               background to stay visible against this section's own
+               fixed-dark backdrop, but a self-contained scrimmed tile reads
+               fine against any background, dark section included, so that
+               special-case is gone. */
+            border-radius: 20px 20px 4px 4px;
+            border-bottom: 4px solid var(--chartreuse);
             overflow: hidden; text-decoration: none; color: #2C1C10;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
         /* Tag-qualified (a.best-seller-card, not just .best-seller-card) so
            this reliably outranks .bs-card-reveal.is-visible's own transform
@@ -2466,9 +2470,9 @@
            hovered — so without this bump it silently wins the moment a
            card finishes its entrance reveal, cancelling the hover lift for
            good instead of just at one point in time). */
-        a.best-seller-card:hover { transform: translateY(-7px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
+        a.best-seller-card:hover { transform: translateY(-8px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
         .best-seller-card .thumb {
-            aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
+            position: absolute; inset: 0; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
@@ -2503,23 +2507,26 @@
             }
         }
         .best-seller-rank svg { width: 11px; height: 11px; flex-shrink: 0; }
-        .best-seller-card .body { padding: 12px 14px 14px; }
-        .best-seller-card h4 {
-            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #2C1C10;
-            margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        /* Scrim, matching .cat-flat-scrim — a sibling of .thumb, both
+           absolutely positioned against .best-seller-card itself (which
+           carries the hover transform), so photo and text move together. */
+        .best-seller-card .body {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+            padding: 34px 14px 14px;
+            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
         }
-        .best-seller-card .cat { font-size: 10.5px; color: #8a7d6f; margin-bottom: 6px; }
-        /* .price-now.sale and .price-was normally read var(--heading-mid)/
-           var(--text-faint), tuned for light text on the page's own
-           theme-reactive background — this card's background is fixed
-           light regardless of theme (see .best-seller-card above), so in
-           dark mode those variables would resolve to their pale, dark-page
-           values here and go low-contrast. Pinned to fixed colours that
-           work against this card's fixed light background either way. */
-        .best-seller-card .price-now.sale { color: var(--chartreuse-rich); }
-        .best-seller-card .price-was { color: #8a7d6f; }
+        .best-seller-card h4 {
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2;
+            margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .best-seller-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
+        .best-seller-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
+        .best-seller-card .price-now.sale { color: var(--chartreuse-soft); }
+        .best-seller-card .price-was { color: rgba(250, 249, 242, 0.65); }
+        .best-seller-card .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
         @media (max-width: 900px) {
-            .best-seller-card { flex-basis: 168px; max-width: 168px; }
+            .best-seller-card { flex-basis: 168px; max-width: 168px; aspect-ratio: 2/3; }
         }
 
         .new-section-head {
@@ -2546,14 +2553,19 @@
         .new-carousel::-webkit-scrollbar { display: none; }
         .new-carousel.dragging { cursor: grabbing; }
         .new-card {
-            flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
+            flex: 0 0 220px; max-width: 220px;
+            aspect-ratio: 3/4;
+            position: relative;
+            display: block;
+            border-radius: 20px 20px 4px 4px;
+            border-bottom: 4px solid var(--chartreuse);
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
-            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
-        .new-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16); }
-        .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
+        .new-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2); }
+        .new-card .thumb { position:absolute; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
         .new-tag {
@@ -2576,13 +2588,25 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
         body.edit-mode-on .new-remove-btn { display: flex; }
-        .new-card .body { padding: 12px 14px 14px; }
-        .new-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .new-card .cat { font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
-        .new-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--ink); }
+        /* Scrim, matching .cat-flat-scrim — positioned absolute against
+           .new-card itself (position:relative, see above), a sibling of
+           .thumb rather than nested inside it, since .new-card (not
+           .thumb) carries the hover transform here, so everything moves
+           together regardless of nesting. */
+        .new-card .body {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+            padding: 34px 14px 14px;
+            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+        }
+        .new-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .new-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
+        .new-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
+        .new-card .price .price-now.sale { color: var(--chartreuse-soft); }
+        .new-card .price .price-was { color: rgba(250, 249, 242, 0.65); }
+        .new-card .price .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
 
         @media (max-width: 900px) {
-            .new-card { flex-basis: 168px; max-width: 168px; }
+            .new-card { flex-basis: 168px; max-width: 168px; aspect-ratio: 2/3; }
         }
 
         /* ================= SPECIAL OFFER SECTION ================= */
@@ -2668,17 +2692,22 @@
         .offer-carousel::-webkit-scrollbar { display: none; }
         .offer-carousel.dragging { cursor: grabbing; }
         .offer-card {
-            flex: 0 0 220px; max-width: 220px; background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
+            flex: 0 0 220px; max-width: 220px;
+            aspect-ratio: 3/4;
+            position: relative;
+            display: block;
+            border-radius: 20px 20px 4px 4px;
+            border-bottom: 4px solid var(--chartreuse);
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
-            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
         /* Tag-qualified — see the comment on a.best-seller-card:hover, same
            fix for the same reason (.offer-card-reveal.is-visible would
            otherwise win the transform property once a card settles). */
-        a.offer-card:hover { transform: translateY(-7px); box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(193, 85, 44, 0.22); }
-        .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
+        a.offer-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(193, 85, 44, 0.22); }
+        .offer-card .thumb { position:absolute; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         /* Edit-mode-only "take this product off special offers" control —
            same on/off mechanism as every other admin-only button on the
            site (body.edit-mode-on toggles display), and functionally just
@@ -2725,11 +2754,22 @@
                 opacity: 1;
             }
         }
-        .offer-card .body { padding: 12px 14px 14px; }
-        .offer-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .offer-card .cat { font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
+        /* Scrim, matching .cat-flat-scrim — a sibling of .thumb, both
+           absolutely positioned against .offer-card itself (which carries
+           the hover transform), so photo and text move together. */
+        .offer-card .body {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+            padding: 34px 14px 14px;
+            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+        }
+        .offer-card h4 { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; margin-bottom: 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .offer-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
+        .offer-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
+        .offer-card .price-now.sale { color: var(--chartreuse-soft); }
+        .offer-card .price-was { color: rgba(250, 249, 242, 0.65); }
+        .offer-card .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
         @media (max-width: 900px) {
-            .offer-card { flex-basis: 168px; max-width: 168px; }
+            .offer-card { flex-basis: 168px; max-width: 168px; aspect-ratio: 2/3; }
         }
 
         .delivery {
@@ -3902,30 +3942,30 @@
             from { opacity: 0; transform: translateY(16px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        /* Editorial tile, matching .cat-flat-card's look: full-bleed photo
+           with name/price overlaid on a scrim rather than a separate white
+           body underneath. The outer .product-card stays a plain, unstyled
+           wrapper (no radius/shadow/overflow of its own) precisely so the
+           admin edit-panel can still expand below it in normal flow without
+           being clipped — every visual treatment (rounded top / sharp
+           bottom corners, accent border, shadow, hover lift, and every
+           overlaid element: badge, scrim, add button, edit pencil) lives on
+           .product-thumb, which is the actual tile, so they all move
+           together as one unit on hover instead of the scrim/buttons being
+           left behind while just the photo lifts. */
         .product-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
-            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
-            animation: cardFadeUp 0.45s cubic-bezier(.16,.84,.44,1) both;
-            animation-delay: var(--card-delay, 0s);
             display: block;
             text-decoration: none;
             color: var(--ink);
+            animation: cardFadeUp 0.45s cubic-bezier(.16,.84,.44,1) both;
+            animation-delay: var(--card-delay, 0s);
         }
         @media (prefers-reduced-motion: reduce) {
             .product-card { animation: none; }
         }
 
-        .product-card:hover {
-            transform: translateY(-7px);
-            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
-        }
-
         .product-thumb {
-            aspect-ratio: 1/1;
+            aspect-ratio: 3/4;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -3934,6 +3974,17 @@
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             position: relative;
             overflow: hidden;
+            border-radius: 20px 20px 4px 4px;
+            border-bottom: 4px solid var(--chartreuse);
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+        }
+        .product-card:hover .product-thumb {
+            transform: translateY(-8px);
+            box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2);
+        }
+        @media (max-width: 900px) {
+            .product-thumb { aspect-ratio: 2/3; }
         }
 
         .product-photo-img {
@@ -3958,6 +4009,18 @@
             display: block;
             transition: transform 0.5s cubic-bezier(.16,.84,.44,1);
         }
+        /* The full-bleed card tiles (.product-thumb, .new-card/.best-seller-card/
+           .offer-card/.checkout-upsell-card .thumb) crop to fill their box
+           edge-to-edge instead, matching .cat-flat-photo — unlike the base
+           rule above (shrink-to-fit, no cropping), which stays the right
+           choice for a photo shown on its own with nothing overlaid on it
+           (.pd-image, the product detail page's hero shot). */
+        .product-thumb .product-photo-img,
+        .new-card .thumb .product-photo-img,
+        .best-seller-card .thumb .product-photo-img,
+        .offer-card .thumb .product-photo-img {
+            object-fit: cover;
+        }
         .product-card:hover .product-photo-img {
             transform: scale(1.06);
         }
@@ -3965,6 +4028,20 @@
         .thumb-placeholder {
             width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+        }
+        /* On the full-bleed card tiles specifically (not .pd-image, which
+           has no scrim competing for space), biased up rather than
+           centred in the full box — a name that needs its 2 lines (or a
+           sale price wrapping onto a second line on a narrow mobile card)
+           grows the scrim tall enough to run into a truly-centred
+           placeholder otherwise, confirmed via a long product name on a
+           168px mobile tile. */
+        .product-thumb .thumb-placeholder,
+        .new-card .thumb .thumb-placeholder,
+        .best-seller-card .thumb .thumb-placeholder,
+        .offer-card .thumb .thumb-placeholder,
+        .checkout-upsell-thumb .thumb-placeholder {
+            padding-bottom: 38%;
         }
 
         .thumb-placeholder-emoji {
@@ -4010,38 +4087,69 @@
             .stock-badge.low, .stock-badge.out, .sale-badge { animation: none; }
         }
 
+        /* Name/unit/price scrim, overlaid on the tile's own photo rather
+           than sitting in a separate white body below it — matches
+           .cat-flat-scrim. Nested inside .product-thumb (which is
+           position:relative) so it's part of the same tile and moves with
+           it on hover, rather than a sibling that would be left behind
+           while just the photo lifts. */
         .product-body {
-            padding: 13px 15px 4px;
+            position: absolute; left: 0; right: 0; bottom: 0;
+            /* Extra right padding (vs. the other cards' scrims) reserves
+               room for the add-to-basket circle sitting over this same
+               bottom-right corner — without it, a sale price's was-price +
+               percent-off pill run under the button and clip/overlap on a
+               narrow mobile card. */
+            padding: 34px 44px 14px 14px;
+            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+            color: #FAF9F2;
+            z-index: 2;
         }
 
         .product-body h4 {
             font-family: var(--display);
             font-weight: 700;
             font-size: 14px;
-            color: var(--heading);
             margin-bottom: 2px;
             line-height: 1.25;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            /* Single line with ellipsis, matching .new-card/.best-seller-card/
+               .offer-card h4 — a 2-line name grows the scrim tall enough to
+               collide with the centred "Photo coming soon" placeholder text
+               on a narrow mobile card (confirmed via a long product name on
+               a 168px-wide tile). */
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         .product-unit {
             font-size: 11.5px;
-            color: var(--text-muted);
+            color: rgba(250, 249, 242, 0.75);
             margin-bottom: 7px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         .product-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 8px;
         }
 
         .product-price {
             font-family: var(--display);
             font-weight: 700;
-            font-size: 17.5px;
+            font-size: 16px;
             letter-spacing: -0.01em;
-            color: var(--ink);
+            color: #FAF9F2;
         }
+        /* .price-now/.price-was/.price-off are shared, global price
+           classes (product detail page, cart, checkout upsell, admin...)
+           tuned for a light background — this scrim is always dark
+           regardless of site theme, so it needs its own fixed-light
+           overrides rather than inheriting those. */
+        .product-body .price-now.sale { color: var(--chartreuse-soft); }
+        .product-body .price-was { color: rgba(250, 249, 242, 0.65); }
+        .product-body .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
 
         .price-now { font-family: var(--display); font-weight: 700; }
         .price-now.sale { color: var(--heading-mid); }
@@ -4125,34 +4233,31 @@
             color: inherit;
         }
 
+        /* Nested inside .product-thumb (position:relative, see above)
+           rather than the old sibling-of-the-link placement, so the add
+           button rides along with the rest of the tile on hover instead of
+           being left behind while just the photo lifts. It's inside the
+           <a> now, so its onclick needs its own preventDefault/
+           stopPropagation to stop that turning into a navigation. */
         .card-actions {
-            padding: 0 15px 15px;
+            position: absolute; bottom: 14px; right: 14px; z-index: 5;
         }
-        /* Leaves clear room for the floating edit-pencil (bottom-right of
-           the card, see .card-edit-btn) so it doesn't sit on top of the
-           button's own label now that there's only one action row. */
-        body.edit-mode-on .card-actions { padding-right: 46px; }
 
         .card-add-btn {
-            width: 100%;
+            width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 10px 6px;
-            border-radius: 10px;
+            border-radius: 50%;
             border: none;
             background: var(--chartreuse);
             color: var(--aubergine-deep);
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 12.5px;
-            letter-spacing: 0;
-            white-space: nowrap;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
             transition: background 0.2s ease, transform 0.2s ease;
         }
-        .card-add-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-        .card-add-btn:hover { background: var(--chartreuse-soft); }
+        .card-add-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .card-add-btn:hover { background: var(--chartreuse-soft); transform: scale(1.08); }
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
@@ -4682,60 +4787,74 @@
             gap: 14px;
         }
         .checkout-upsell-card {
-            background: var(--section-alt-bg);
-            border-radius: 14px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: block;
         }
         .checkout-upsell-link {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: block;
             text-decoration: none;
         }
+        /* Same full-bleed photo + scrim tile as every other product card
+           (see .product-thumb), scaled down for this compact 3-up strip —
+           kept square rather than the taller 3/4 used elsewhere so the
+           cross-sell strip doesn't blow out the basket panel's height, but
+           otherwise the same rounded-top/sharp-bottom/accent-border/scrim
+           treatment. Name, price and the add button all live inside
+           .checkout-upsell-scrim, nested in the tile so they move with it
+           on hover rather than being left behind. */
         .checkout-upsell-thumb {
             position: relative;
             width: 100%;
             aspect-ratio: 1;
-            border-radius: 10px;
+            border-radius: 14px 14px 4px 4px;
+            border-bottom: 3px solid var(--chartreuse);
             overflow: hidden;
-            background: var(--card-bg);
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--text-faint);
             font-size: 22px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 6px 14px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
         }
-        .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        .checkout-upsell-card:hover .checkout-upsell-thumb {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.08), 0 14px 26px rgba(var(--border-rgb), 0.14);
+        }
+        .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .checkout-upsell-scrim {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+            padding: 20px 8px 8px;
+            background: linear-gradient(to top, rgba(6, 20, 0, 0.88) 0%, rgba(6, 20, 0, 0.55) 55%, rgba(6, 20, 0, 0) 100%);
+        }
         .checkout-upsell-name {
             font-family: var(--display);
             font-weight: 600;
-            font-size: 12px;
-            line-height: 1.3;
-            color: var(--heading);
+            font-size: 11px;
+            line-height: 1.25;
+            color: #FAF9F2;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            margin-bottom: 4px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .checkout-upsell-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-top: auto;
             gap: 6px;
         }
         .checkout-upsell-price {
             font-family: var(--display);
             font-weight: 700;
-            font-size: 12.5px;
-            color: var(--ink);
+            font-size: 12px;
+            color: #FAF9F2;
         }
         .checkout-upsell-add {
-            width: 25px;
-            height: 25px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             border: none;
             background: var(--chartreuse);
@@ -4745,10 +4864,11 @@
             justify-content: center;
             cursor: pointer;
             flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
             transition: background 0.2s ease, transform 0.2s ease;
         }
         .checkout-upsell-add:hover { background: var(--chartreuse-soft); transform: scale(1.08); }
-        .checkout-upsell-add svg { width: 13px; height: 13px; }
+        .checkout-upsell-add svg { width: 11px; height: 11px; }
         @media (max-width: 480px) {
             .checkout-upsell-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -10098,7 +10218,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.43';
+        const BUILD_VERSION = '2026-09-04.44';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11751,24 +11871,23 @@
         <div class="product-thumb">
           ${stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : ''}
           ${productPhotoHTML(p, p.name)}
-        </div>
-        <div class="product-body">
-          <h4>${escapeHtml(p.name)}</h4>
-          <div class="product-unit">${escapeHtml(p.unit || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
-          <div class="product-row">
-            <div class="product-price">${priceHTML(p)}</div>
+          <div class="product-body">
+            <h4>${escapeHtml(p.name)}</h4>
+            <div class="product-unit">${escapeHtml(p.unit || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
+            <div class="product-row">
+              <div class="product-price">${priceHTML(p)}</div>
+            </div>
           </div>
+          <div class="card-actions">
+            <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+          <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
         </div>
       </a>
-      <div class="card-actions">
-        <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} onclick="${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          ${outOfStock ? 'Out of stock' : 'Add to basket'}
-        </button>
-      </div>
-      <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-      </button>
       <div class="edit-panel-slot"></div>
     </div>`;
         }
@@ -12775,15 +12894,19 @@
                 return `
     <div class="checkout-upsell-card">
       <a class="checkout-upsell-link" href="#/product/${p.catSlug}/${idx}">
-        <div class="checkout-upsell-thumb">${productPhotoHTML(p, p.name)}</div>
-        <div class="checkout-upsell-name">${escapeHtml(p.name)}</div>
+        <div class="checkout-upsell-thumb">
+          ${productPhotoHTML(p, p.name)}
+          <div class="checkout-upsell-scrim">
+            <div class="checkout-upsell-name">${escapeHtml(p.name)}</div>
+            <div class="checkout-upsell-row">
+              <span class="checkout-upsell-price">${money(p.price)}</span>
+              <button type="button" class="checkout-upsell-add" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${escapeHtml(p.name)} to basket">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
       </a>
-      <div class="checkout-upsell-row">
-        <span class="checkout-upsell-price">${money(p.price)}</span>
-        <button type="button" class="checkout-upsell-add" onclick="quickAdd('${p.catSlug}', ${idx}); renderCartList();" aria-label="Add ${escapeHtml(p.name)} to basket">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-      </div>
     </div>`;
             }).join('');
         }
