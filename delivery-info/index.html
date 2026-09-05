@@ -6877,7 +6877,7 @@
                     <use href="#seal-mark" />
                 </svg>
                 <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.14s">taste</span> <span class="stretch-word" style="animation-delay:0.28s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.42s">home,</span> <span class="stretch-word" style="animation-delay:0.56s">delivered</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">fresh</span>.</h1>
-                <p class="hero-sub">Real African &amp; Caribbean groceries — the brands you grew up with, delivered UK-wide or ready to collect.</p>
+                <p class="hero-sub">Real African &amp; Caribbean groceries: the brands you grew up with, delivered UK-wide or ready to collect.</p>
                 <div class="cta-row">
                     <a class="btn btn-primary" href="#/shop">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -10191,7 +10191,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.56';
+        const BUILD_VERSION = '2026-09-05.57';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11894,7 +11894,7 @@
         // This factory paints only a page's worth at a time per grid, with
         // a "See more" button to reveal the next batch.
         const GRID_PAGE_SIZE = 12;
-        function createPaginatedGrid(gridId, emptyId, loadMoreId, loadMoreBtnId) {
+        function createPaginatedGrid(gridId, emptyId, loadMoreId, loadMoreBtnId, pageSize = GRID_PAGE_SIZE) {
             const state = { items: [], visible: 0 };
             function paint() {
                 const grid = document.getElementById(gridId);
@@ -11914,17 +11914,21 @@
                 }
             }
             document.getElementById(loadMoreBtnId).addEventListener('click', () => {
-                state.visible = Math.min(state.visible + GRID_PAGE_SIZE, state.items.length);
+                state.visible = Math.min(state.visible + pageSize, state.items.length);
                 paint();
             });
             return function render(items) {
                 state.items = items;
-                state.visible = Math.min(GRID_PAGE_SIZE, items.length);
+                state.visible = Math.min(pageSize, items.length);
                 paint();
             };
         }
         const renderProductGridPaginated = createPaginatedGrid('productGrid', 'emptyState', 'productGridLoadMore', 'productGridLoadMoreBtn');
-        const renderShopAllGridPaginated = createPaginatedGrid('shopAllGrid', 'shopAllEmptyState', 'shopAllLoadMore', 'shopAllLoadMoreBtn');
+        // 24 rather than the shared default — the "Shop every aisle" flat
+        // catalogue is the one listing customers land on with no category
+        // filter already narrowing things down, so it benefits from a bigger
+        // first screenful before asking for a click.
+        const renderShopAllGridPaginated = createPaginatedGrid('shopAllGrid', 'shopAllEmptyState', 'shopAllLoadMore', 'shopAllLoadMoreBtn', 24);
 
         /* ================= RENDER: CATEGORY / SEARCH PAGE ================= */
         let currentCategorySlug = null;
