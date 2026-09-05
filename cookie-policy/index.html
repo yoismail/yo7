@@ -10181,7 +10181,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.53';
+        const BUILD_VERSION = '2026-09-05.54';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11283,9 +11283,14 @@
                 }
                 (Array.isArray(p.weightVariants) ? p.weightVariants : []).forEach((v, variantIdx) => {
                     if (typeof v.salePrice !== 'number' || v.salePrice >= v.price) return;
+                    // unitOverride explicitly cleared, not just left to the
+                    // ...p spread — effectiveUnit() prefers it over .unit, so
+                    // without this every variant card would show the base
+                    // product's own unit override (e.g. "1.8kg") instead of
+                    // this specific size, no matter what v.label actually is.
                     items.push({
                         ...p, idx, weightVariants: undefined, variantIdx,
-                        id: p.id + '::' + v.label, unit: v.label,
+                        id: p.id + '::' + v.label, unit: v.label, unitOverride: undefined,
                         price: v.price, salePrice: v.salePrice,
                         weight: (typeof v.weight === 'number') ? v.weight : p.weight,
                     });
@@ -11871,7 +11876,7 @@
             const variant = Array.isArray(p.weightVariants) ? p.weightVariants[variantIdx] : null;
             if (!variant) { addToCart(p, 1); return; }
             const toAdd = {
-                ...p, price: variant.price, unit: variant.label,
+                ...p, price: variant.price, unit: variant.label, unitOverride: undefined,
                 salePrice: (typeof variant.salePrice === 'number' && variant.salePrice < variant.price) ? variant.salePrice : undefined,
                 id: p.id + '::' + variant.label, weight: (typeof variant.weight === 'number' ? variant.weight : p.weight),
             };
@@ -12512,7 +12517,7 @@
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
             let toAdd = variant
                 ? {
-                    ...pdCurrent, price: variant.price, unit: variant.label,
+                    ...pdCurrent, price: variant.price, unit: variant.label, unitOverride: undefined,
                     salePrice: (typeof variant.salePrice === 'number' && variant.salePrice < variant.price) ? variant.salePrice : undefined,
                     id: pdCurrent.id + '::' + variant.label, weight: (typeof variant.weight === 'number' ? variant.weight : pdCurrent.weight),
                 }
