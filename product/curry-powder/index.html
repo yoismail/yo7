@@ -450,11 +450,13 @@
         }
         .ep-variants-list { display: flex; flex-direction: column; gap: 5px; margin: 6px 0 8px; }
         .ep-variant-row {
-            display: flex; justify-content: space-between; align-items: center; gap: 8px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.12); border-radius: 6px;
             padding: 6px 10px; font-size: 12px; color: var(--text-body);
         }
+        .ep-variant-row input { flex: 1 1 78px; min-width: 60px; }
         .ep-variant-row button {
+            flex: 0 0 auto;
             background: none; border: none; color: #b34a4a; font-size: 11px; font-weight: 600; cursor: pointer; padding: 2px 4px;
         }
         .ep-variant-add-row { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -10181,7 +10183,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.52';
+        const BUILD_VERSION = '2026-09-05.53';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15205,15 +15207,14 @@
         // Shared by the edit panel's first render and renderVariantsList()'s
         // in-place refresh after add/remove, so the two never drift apart.
         function variantsListHTML(product, catSlug, idx) {
-            return (product.weightVariants || []).map((v, vi) => {
-                const onSale = typeof v.salePrice === 'number' && v.salePrice < v.price;
-                const priceText = onSale ? `${money(v.salePrice)} <s style="color:var(--text-faint);">${money(v.price)}</s>` : money(v.price);
-                return `
+            return (product.weightVariants || []).map((v, vi) => `
               <div class="ep-variant-row">
-                <span>${escapeHtml(v.label)}, ${priceText}${typeof v.weight === 'number' ? `, ${v.weight}kg delivery weight` : ' <em>(no delivery weight set)</em>'}</span>
+                <input type="text" value="${escapeHtml(v.label)}" placeholder="Label, e.g. 5kg" onchange="updateWeightVariant('${catSlug}', ${idx}, ${vi}, 'label', this.value)">
+                <input type="number" step="0.01" min="0" value="${v.price}" placeholder="Price (£)" onchange="updateWeightVariant('${catSlug}', ${idx}, ${vi}, 'price', this.value)">
+                <input type="number" step="0.01" min="0" value="${typeof v.salePrice === 'number' ? v.salePrice : ''}" placeholder="Sale price (£, optional)" onchange="updateWeightVariant('${catSlug}', ${idx}, ${vi}, 'salePrice', this.value)">
+                <input type="number" step="0.01" min="0" value="${typeof v.weight === 'number' ? v.weight : ''}" placeholder="Weight (kg)" onchange="updateWeightVariant('${catSlug}', ${idx}, ${vi}, 'weight', this.value)">
                 <button type="button" onclick="removeWeightVariant('${catSlug}', ${idx}, ${vi})">Remove</button>
-              </div>`;
-            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>';
+              </div>`).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:0;">No weight options set, this product just sells at its single price above.</p>';
         }
         function renderVariantsList(catSlug, idx) {
             const cat = findCategory(catSlug);
@@ -15272,6 +15273,46 @@
             triggerEditPanelSave(catSlug, idx);
         }
         window.addWeightVariant = addWeightVariant;
+        // Editing an already-added variant used to mean removing it and
+        // re-typing everything into the add row from scratch — the row only
+        // ever rendered its label/price/weight as plain text next to a
+        // Remove button, with no field to change any of it in place. This
+        // mirrors addWeightVariant's own validation per field, reverting the
+        // display (not the underlying value) on an invalid entry so a bad
+        // edit doesn't silently corrupt what's already saved.
+        function updateWeightVariant(catSlug, idx, variantIdx, field, rawValue) {
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            const variant = product.weightVariants && product.weightVariants[variantIdx];
+            if (!variant) return;
+            if (field === 'label') {
+                const label = rawValue.trim();
+                if (!label) { renderVariantsList(catSlug, idx); return; }
+                variant.label = label;
+            } else if (field === 'price') {
+                const price = parseFloat(rawValue);
+                if (isNaN(price) || price < 0) { renderVariantsList(catSlug, idx); return; }
+                variant.price = price;
+                if (typeof variant.salePrice === 'number' && variant.salePrice >= price) delete variant.salePrice;
+            } else if (field === 'salePrice') {
+                if (rawValue === '') { delete variant.salePrice; }
+                else {
+                    const sp = parseFloat(rawValue);
+                    if (isNaN(sp) || sp < 0 || sp >= variant.price) { renderVariantsList(catSlug, idx); return; }
+                    variant.salePrice = sp;
+                }
+            } else if (field === 'weight') {
+                if (rawValue === '') { delete variant.weight; }
+                else {
+                    const w = parseFloat(rawValue);
+                    if (isNaN(w) || w < 0 || !confirmReasonableWeight(w)) { renderVariantsList(catSlug, idx); return; }
+                    variant.weight = w;
+                }
+            }
+            renderVariantsList(catSlug, idx);
+            triggerEditPanelSave(catSlug, idx);
+        }
+        window.updateWeightVariant = updateWeightVariant;
         function removeWeightVariant(catSlug, idx, variantIdx) {
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
