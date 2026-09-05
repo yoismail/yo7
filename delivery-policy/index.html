@@ -4432,6 +4432,23 @@
             margin-bottom: 28px;
         }
 
+        .pd-delivery-window {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 14px;
+        }
+
+        .pd-delivery-window svg {
+            width: 16px;
+            height: 16px;
+            color: var(--chartreuse);
+            flex-shrink: 0;
+        }
+
         .pd-meta {
             display: flex;
             gap: 26px;
@@ -7364,6 +7381,10 @@
                             <button class="btn btn-primary" id="pdBuyNow" type="button">Buy now</button>
                         </div>
                         <a href="#/checkout" class="continue-shopping-link" id="pdContinueCheckoutLink" style="display:none;">Continue to checkout &rarr;</a>
+                        <div class="pd-delivery-window" id="pdDeliveryWindow" title="An estimate; timing is carried out by a third-party courier and can vary.">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v5h-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            <span id="pdDeliveryWindowText"></span>
+                        </div>
                         <div class="pd-meta">
                             <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     stroke-linecap="round">
@@ -10197,7 +10218,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.58';
+        const BUILD_VERSION = '2026-09-05.59';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12129,6 +12150,30 @@
             const el = document.getElementById('productJsonLd');
             if (el) el.remove();
         }
+        // A live "order within Xh Ym to get it by [day]" estimate for the
+        // product page, so a customer can see roughly when to expect an
+        // item without having to visit Delivery Info first. Reuses the same
+        // 10am same/next-day dispatch cutoff populateDeliverySlots() (in
+        // checkout) already uses, then adds the 24-48h transit window
+        // already promised on the Delivery Info page and FAQ, so this can't
+        // quietly promise something faster than what's stated elsewhere.
+        function deliveryWindowText() {
+            const now = new Date();
+            const pastCutoff = now.getHours() >= 10;
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const arriveBy = new Date(now);
+            arriveBy.setDate(now.getDate() + (pastCutoff ? 1 : 0) + 2);
+            const arriveByLabel = `${dayNames[arriveBy.getDay()]} ${arriveBy.getDate()} ${monthNames[arriveBy.getMonth()]}`;
+            if (pastCutoff) return `Order now, get it by ${arriveByLabel}`;
+            const cutoff = new Date(now);
+            cutoff.setHours(10, 0, 0, 0);
+            const msLeft = cutoff - now;
+            const hrs = Math.floor(msLeft / 3600000);
+            const mins = Math.floor((msLeft % 3600000) / 60000);
+            const countdown = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+            return `Order within ${countdown} to get it by ${arriveByLabel}`;
+        }
         function renderProductPage(catSlug, idx) {
             const p = getProduct(catSlug, Number(idx));
             const cat = findCategory(catSlug);
@@ -12171,6 +12216,11 @@
             badge.className = 'stock-badge ' + stock;
             badge.textContent = stockLabel(stock);
             document.getElementById('pdStockText').textContent = stockLabel(stock);
+            const deliveryWindowEl = document.getElementById('pdDeliveryWindow');
+            if (deliveryWindowEl) {
+                deliveryWindowEl.style.display = stock === 'out' ? 'none' : 'flex';
+                document.getElementById('pdDeliveryWindowText').textContent = deliveryWindowText();
+            }
 
             const onSaleNow = typeof p.salePrice === 'number' && p.salePrice < p.price;
             document.getElementById('pdSaleBadge').style.display = onSaleNow ? 'block' : 'none';
