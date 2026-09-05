@@ -10136,6 +10136,14 @@
             return changes.map(c => `${escapeHtml(c.label)}: ${escapeHtml(c.from)} → ${escapeHtml(c.to)}`).join(', ');
         }
         function unitOverrideLabel(u) { return u ? `${u.qty}${u.measure || ''}` : null; }
+        // The admin edit panel's "Unit pricing: quantity/measure" fields save
+        // to product.unitOverride, but every customer-facing spot that shows
+        // a product's size reads the plain catalogue product.unit string
+        // instead — so setting an override there used to save fine but never
+        // visibly change anything, which is exactly what "isn't updating"
+        // looks like from the admin side. This is the single place that
+        // decides which one wins, used everywhere a product's unit is shown.
+        function effectiveUnit(p) { return (p.unitOverride && p.unitOverride.qty > 0) ? unitOverrideLabel(p.unitOverride) : p.unit; }
         function variantSummary(variants) { return variants.map(v => `${v.label} ${money(v.price)}`).join(', '); }
         let deliveryInfo = null;
         let lastOrder = null;
@@ -10173,7 +10181,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.51';
+        const BUILD_VERSION = '2026-09-05.52';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10385,7 +10393,7 @@
             const wasOnSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
             if (existing) { existing.qty += qty; }
             else {
-                const entry = { id: product.id, code: product.code, name: product.name, unit: product.unit, price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
+                const entry = { id: product.id, code: product.code, name: product.name, unit: effectiveUnit(product), price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
                 if (product.isCombo) { entry.isCombo = true; entry.comboItems = product.comboItems; }
                 if (typeof product.weight === 'number') { entry.weight = product.weight; }
                 if (product.isSubscription) { entry.isSubscription = true; entry.subscriptionFrequency = product.subscriptionFrequency; }
@@ -10804,7 +10812,7 @@
         <input type="checkbox" id="dish-item-${idx}" ${checked ? 'checked' : ''} ${outOfStock ? 'disabled' : ''} onchange="toggleDishItem(${idx})">
         <label for="dish-item-${idx}">
           <span>${escapeHtml(p.name)}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
-          ${p.unit ? `<span class="dish-builder-unit">${escapeHtml(p.unit)}</span>` : ''}
+          ${effectiveUnit(p) ? `<span class="dish-builder-unit">${escapeHtml(effectiveUnit(p))}</span>` : ''}
         </label>
         <span class="price">${money(effectivePrice(p))}</span>
       </div>`;
@@ -11832,7 +11840,7 @@
         </div>
         <div class="product-body">
           <h4>${escapeHtml(p.name)}</h4>
-          <div class="product-unit">${escapeHtml(p.unit || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
+          <div class="product-unit">${escapeHtml(effectiveUnit(p) || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
             <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
@@ -12145,7 +12153,7 @@
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
             document.getElementById('pdName').textContent = p.name;
             document.getElementById('pdCode').textContent = p.code ? `Product code: ${p.code}` : '';
-            document.getElementById('pdUnit').textContent = p.unit;
+            document.getElementById('pdUnit').textContent = effectiveUnit(p);
             const reviewWaBtn = document.getElementById('pdReviewWhatsappBtn');
             const reviewEmailBtn = document.getElementById('pdReviewEmailBtn');
             if (reviewWaBtn) reviewWaBtn.href = `https://wa.me/447398810052?text=${encodeURIComponent(`Hi Yo7 Foods! I'd like to leave a review for ${p.name}: `)}`;
@@ -12452,7 +12460,7 @@
         function updatePdPrice() {
             if (!pdCurrent) return;
             const variant = (pdSelectedVariant !== null && pdCurrent.weightVariants) ? pdCurrent.weightVariants[pdSelectedVariant] : null;
-            document.getElementById('pdUnit').textContent = variant ? variant.label : pdCurrent.unit;
+            document.getElementById('pdUnit').textContent = variant ? variant.label : effectiveUnit(pdCurrent);
             let unit = variant ? effectiveVariantPrice(variant) : effectivePrice(pdCurrent);
             if (pdPurchaseType === 'subscribe') unit = unit * (1 - subscriptionDiscountPct / 100);
             const total = unit * pdQty;
@@ -12471,7 +12479,7 @@
             // The base pack is its own selectable pill too, not just the
             // variants — otherwise picking a variant has no way back.
             const basePill = `
-      <button type="button" class="pd-variant-pill ${pdSelectedVariant === null ? 'active' : ''}" onclick="selectPdVariant(null)">${escapeHtml(p.unit || '')}, ${money(effectivePrice(p))}</button>`;
+      <button type="button" class="pd-variant-pill ${pdSelectedVariant === null ? 'active' : ''}" onclick="selectPdVariant(null)">${escapeHtml(effectiveUnit(p) || '')}, ${money(effectivePrice(p))}</button>`;
             const variantPills = p.weightVariants.map((v, i) => {
                 const onSale = typeof v.salePrice === 'number' && v.salePrice < v.price;
                 const priceText = onSale ? `${money(v.salePrice)} <s class="pd-variant-pill-was">${money(v.price)}</s>` : money(v.price);
