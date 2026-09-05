@@ -10218,7 +10218,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.60';
+        const BUILD_VERSION = '2026-09-05.61';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11567,34 +11567,13 @@
            Arrivals / Offers carousels' slower one-card-at-a-time advance)
            is untouched. */
 
-        // Native `behavior: 'smooth'` is what this used to glide with, but
-        // its actual duration/easing is left entirely up to the browser —
-        // Firefox in particular takes noticeably longer than Chrome for the
-        // same distance, and neither reliably reads as the snappy, modern
-        // glide a one-card auto-advance should have. Driving scrollLeft by
-        // hand on a fixed, fast ease-out curve instead makes the motion
-        // consistent everywhere. scroll-snap-type on these strips is
-        // `proximity`, not `mandatory`, so it doesn't fight a scroll already
-        // landing right on a card boundary the way it would with a hard snap.
-        function smoothScrollStripTo(strip, target, duration = 420) {
-            const start = strip.scrollLeft;
-            const change = target - start;
-            if (Math.abs(change) < 1) return;
-            const startTime = performance.now();
-            const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
-            function step(now) {
-                const t = Math.min(1, (now - startTime) / duration);
-                strip.scrollLeft = start + change * easeOutCubic(t);
-                if (t < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
         // A slower, more deliberate cousin of the removed continuous glide:
         // instead of an ambient continuous drift, this waits, then glides
-        // exactly one card over (see smoothScrollStripTo above) and wraps
-        // back to the start once it runs out of room. Pause/resume/
-        // visibility handling mirrors the continuous version so both feel
-        // consistent when a visitor interacts with either kind of strip.
+        // exactly one card over using the browser's own smooth scroll (so it
+        // settles cleanly on each card's scroll-snap point) and wraps back to
+        // the start once it runs out of room. Pause/resume/visibility
+        // handling mirrors the continuous version so both feel consistent
+        // when a visitor interacts with either kind of strip.
         function initCarouselPeriodicJump(stripId, intervalMs = 3800) {
             const strip = document.getElementById(stripId);
             if (!strip) return;
@@ -11633,13 +11612,13 @@
                 const max = strip.scrollWidth - strip.clientWidth;
                 if (max <= 1) return;
                 if (strip.scrollLeft >= max - 4) {
-                    smoothScrollStripTo(strip, 0);
+                    strip.scrollTo({ left: 0, behavior: 'smooth' });
                     return;
                 }
                 const firstCard = strip.firstElementChild;
                 const gap = parseFloat(getComputedStyle(strip).columnGap) || 18;
                 const step = firstCard ? firstCard.getBoundingClientRect().width + gap : strip.clientWidth * 0.8;
-                smoothScrollStripTo(strip, Math.min(strip.scrollLeft + step, max));
+                strip.scrollBy({ left: step, behavior: 'smooth' });
             }, intervalMs);
         }
         const BEST_SELLER_STAR_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
