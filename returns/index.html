@@ -77,29 +77,8 @@
          connect out, or frame in, real protection against a compromised or
          malicious external dependency, but it does not stop an XSS payload
          injected into the page's own inline code from running. Treat this
-         as one layer, not a substitute for careful escaping.
-
-         wasm-unsafe-eval and the huggingface.co/hf.co/jsdelivr connect-src
-         entries are for the admin-only product-photo background-removal
-         feature (removeImageBackground, in the main script below) — it
-         loads Transformers.js from jsdelivr (already allowed in script-src
-         for its own fetch) and the actual model weights from the Hugging
-         Face Hub. Listed as explicit hostnames rather than *.huggingface.co/
-         *.hf.co wildcards on purpose: CSP wildcards only match ONE
-         subdomain label, but HF's real asset hosts are two-label
-         subdomains (cas-server.xethub.hf.co, us.aws.cdn.hf.co, etc,
-         published at huggingface.co/.well-known/meta.json) — *.hf.co does
-         NOT match cas-server.xethub.hf.co, so the wildcard version of this
-         silently blocked every model download (confirmed: background
-         removal failed in production with this exact set of entries
-         missing the explicit two-label hosts, despite *.hf.co/
-         *.huggingface.co being present). The *.huggingface.co/*.hf.co
-         wildcards stay too, as a hedge for any single-label host not
-         listed here explicitly. wasm-unsafe-eval is WebAssembly's narrow
-         equivalent of unsafe-eval — it permits compiling WASM modules
-         (what the model actually runs as) without opening up arbitrary JS
-         eval the way unsafe-eval would. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://cas-server.xethub.hf.co https://cas-server.xethub-eu.hf.co https://transfer.xethub.hf.co https://transfer.xethub-eu.hf.co https://us.aws.cdn.hf.co https://us.gcp.cdn.hf.co https://cdn-lfs-us-1.hf.co https://cdn-lfs-eu-1.hf.co; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
+         as one layer, not a substitute for careful escaping. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
     <!-- Referrer-Policy is normally an HTTP header, but unlike
          X-Frame-Options/frame-ancestors it's one of the few security
          controls that DOES work as a <meta> tag, which matters here
@@ -10192,7 +10171,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-04.50';
+        const BUILD_VERSION = '2026-09-05.51';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15453,12 +15432,21 @@
                     canvas.width = w; canvas.height = h;
                     // No fillRect before drawing — the canvas starts fully
                     // transparent, so a source image with its own alpha
-                    // channel (the output of removeImageBackground below)
-                    // keeps its transparency through this resize/re-encode
-                    // step as long as outputType supports alpha (webp/png,
-                    // not jpeg).
+                    // channel survives this resize/re-encode step, as long
+                    // as the chosen output format actually supports alpha.
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    canvas.toBlob((blob) => resolve(blob || file), outputType || 'image/jpeg', quality);
+                    // JPEG has no alpha channel at all — re-encoding a photo
+                    // that's already had its background removed (a PNG/WebP
+                    // with real transparency) through JPEG silently flattens
+                    // every transparent pixel to a solid colour (black, in
+                    // most browsers) instead of leaving it see-through. Only
+                    // default to JPEG for formats that could never carry
+                    // transparency in the first place; anything that could
+                    // re-encodes to WebP instead, which keeps the alpha
+                    // channel and still compresses well.
+                    const sourceCanHaveAlpha = file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/gif';
+                    const resolvedOutputType = outputType || (sourceCanHaveAlpha ? 'image/webp' : 'image/jpeg');
+                    canvas.toBlob((blob) => resolve(blob || file), resolvedOutputType, quality);
                 };
                 // If it fails to decode as an image for any reason, fall
                 // back to uploading the original file rather than blocking
@@ -15468,92 +15456,17 @@
             });
         }
 
-        /* ================= PRODUCT PHOTO BACKGROUND REMOVAL =================
-           Runs entirely client-side (no server, no per-image cost) using
-           Transformers.js + the ormbg segmentation model — both Apache-2.0,
-           safe for a commercial site. Deliberately NOT @imgly/background-
-           removal, the more commonly-suggested option for this: that
-           library itself is AGPL-licensed, which would obligate opening up
-           this site's own source to use for free in a commercial product.
-           The library and ~a few dozen MB model download only happen the
-           first time an admin removes a background in a given browser
-           session — Transformers.js caches the model afterward (browser
-           Cache API), so later uploads in the same browser reuse it
-           without re-downloading. */
-        let bgRemovalSegmenterPromise = null;
-        function getBgRemovalSegmenter() {
-            if (!bgRemovalSegmenterPromise) {
-                bgRemovalSegmenterPromise = import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0')
-                    .then(({ pipeline, env }) => {
-                        // Confirmed the actual failure in production: "no
-                        // available backend found. ERR: [wasm] TypeError:
-                        // Importing a module script failed." — a known
-                        // onnxruntime-web bug where its default threaded
-                        // WASM backend spins up a Worker with a module
-                        // script that fails to import (this also normally
-                        // wants SharedArrayBuffer via COOP/COEP response
-                        // headers, which GitHub Pages has no way to set at
-                        // all). Forcing single-threaded WASM sidesteps the
-                        // Worker/module-script path entirely — slower, but
-                        // this only ever runs once per admin photo upload,
-                        // never in a hot path.
-                        env.backends.onnx.wasm.numThreads = 1;
-                        env.backends.onnx.wasm.proxy = false;
-                        return pipeline('background-removal', 'onnx-community/ormbg-ONNX', { device: 'wasm' });
-                    });
-            }
-            return bgRemovalSegmenterPromise;
-        }
-        // Resolves to a transparent-background PNG Blob on success. Throws
-        // on any failure (model/library failed to load, ran out of memory,
-        // etc.) — every call site catches this and falls back to uploading
-        // the original photo rather than blocking the upload entirely, both
-        // because a failed removal shouldn't cost an admin their upload,
-        // and because this can't be exercised against the real model from
-        // this environment (no network path to the CDN/model host here) —
-        // the fallback is the safety net for whatever that live testing
-        // would otherwise have caught.
-        async function removeImageBackground(blob) {
-            const { RawImage } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0');
-            const segmenter = await getBgRemovalSegmenter();
-            const rawImage = await RawImage.fromBlob(blob);
-            const out = await segmenter(rawImage);
-            const result = Array.isArray(out) ? out[0] : out;
-            return await result.toBlob();
-        }
-        // Shared by handleEditPhotoUpload and handleNewProductPhotoUpload:
-        // downscales the raw upload, then tries to remove its background,
-        // falling back to the plain compressed photo untouched if that
-        // fails for any reason (network hiccup, an old browser, running out
-        // of memory on a large image...) rather than blocking the upload
-        // entirely. onStatus(text) lets each call site show its own
-        // progress in its own preview element.
-        async function prepareProductPhotoForUpload(file, onStatus) {
-            const preCompressed = await compressImageFile(file, 1200, 0.85);
-            onStatus('Removing background…');
-            try {
-                const cutout = await removeImageBackground(preCompressed);
-                const uploadFile = await compressImageFile(cutout, 1200, 0.9, 'image/webp');
-                return { uploadFile, ext: 'webp' };
-            } catch (err) {
-                // The real error message is surfaced in the upload toast
-                // (not just logged to the console) specifically so a
-                // non-technical admin can read/screenshot it without
-                // needing devtools open — this feature couldn't be tested
-                // against the real model from the environment it was
-                // built in, so this is the fastest path to a real error
-                // message if it doesn't work as expected in production.
-                console.warn('Background removal failed, uploading the plain photo instead:', err);
-                onStatus('Uploading…');
-                // preCompressed only falls back to the original file if the
-                // browser couldn't decode it as an image at all, in which
-                // case its real type/extension has to be used instead of
-                // assuming jpg.
-                const isJpeg = preCompressed.type === 'image/jpeg';
-                const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
-                const backgroundRemovalError = (err && err.message) ? err.message : String(err);
-                return { uploadFile: preCompressed, ext, backgroundRemovalFailed: true, backgroundRemovalError };
-            }
+        // Extension to use for a compressed upload, matching whatever
+        // format compressImageFile actually resolved to (jpg for a photo,
+        // webp for anything re-encoded to keep its alpha channel — see
+        // compressImageFile) — falls back to the original file's own
+        // extension only in the rare case compressImageFile couldn't
+        // decode the image at all and returned it untouched.
+        function extensionForUpload(uploadFile, originalFile) {
+            if (uploadFile.type === 'image/jpeg') return 'jpg';
+            if (uploadFile.type === 'image/webp') return 'webp';
+            if (uploadFile.type === 'image/png') return 'png';
+            return (originalFile.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
         }
         async function handleEditPhotoUpload(catSlug, idx, input) {
             const file = input.files && input.files[0];
@@ -15562,9 +15475,8 @@
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const { uploadFile, ext, backgroundRemovalFailed, backgroundRemovalError } = await prepareProductPhotoForUpload(file, (status) => {
-                if (preview) preview.innerHTML = `<span>${status}</span>`;
-            });
+            const uploadFile = await compressImageFile(file, 1000, 0.82);
+            const ext = extensionForUpload(uploadFile, file);
             const path = `${catSlug}-${idx}-${Date.now()}.${ext}`;
             // A year-long cache: once a product photo's uploaded it almost
             // never changes in place (a new photo gets a new timestamped
@@ -15587,7 +15499,6 @@
             });
             if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000);
             else logAdminAction('product_photo_updated', 'product', product.name, { imageUrl: publicUrl });
-            if (backgroundRemovalFailed) showToast(`Photo uploaded as-is — background removal failed: ${backgroundRemovalError}`, 9000);
             // Update the preview in place rather than calling route(), a
             // full re-render here would regenerate the product grid and
             // close the very edit panel the person is still filling in.
@@ -15688,9 +15599,8 @@
             const preview = document.getElementById(`apf-photo-preview-${uid}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const { uploadFile, ext, backgroundRemovalFailed, backgroundRemovalError } = await prepareProductPhotoForUpload(file, (status) => {
-                if (preview) preview.innerHTML = `<span>${status}</span>`;
-            });
+            const uploadFile = await compressImageFile(file, 1000, 0.82);
+            const ext = extensionForUpload(uploadFile, file);
             const path = `new-${uid}-${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) {
@@ -15700,7 +15610,6 @@
             }
             const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
             newProductPhotoData[uid] = publicUrl;
-            if (backgroundRemovalFailed) showToast(`Photo uploaded as-is — background removal failed: ${backgroundRemovalError}`, 9000);
             if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="">`;
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
