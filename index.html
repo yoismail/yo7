@@ -10134,15 +10134,25 @@
             if (!changes || !changes.length) return '';
             return changes.map(c => `${escapeHtml(c.label)}: ${escapeHtml(c.from)} → ${escapeHtml(c.to)}`).join(', ');
         }
-        function unitOverrideLabel(u) { return u ? `${u.qty}${u.measure || ''}` : null; }
-        // The admin edit panel's "Unit pricing: quantity/measure" fields save
-        // to product.unitOverride, but every customer-facing spot that shows
-        // a product's size reads the plain catalogue product.unit string
-        // instead — so setting an override there used to save fine but never
-        // visibly change anything, which is exactly what "isn't updating"
-        // looks like from the admin side. This is the single place that
-        // decides which one wins, used everywhere a product's unit is shown.
-        function effectiveUnit(p) { return (p.unitOverride && p.unitOverride.qty > 0) ? unitOverrideLabel(p.unitOverride) : p.unit; }
+        // unitOverride used to only ever be a {qty, measure} pair (from the
+        // old two-field "Unit pricing: quantity/measure" form), which could
+        // only ever produce a bare "1.8kg" — no room for the descriptive
+        // word a real catalogue unit has ("1.8kg bag", "500ml jar"). The
+        // edit panel now saves a single free-text label instead, so this
+        // reads either shape: a plain string going forward, or the old
+        // {qty, measure} object for anything saved before that change.
+        function unitOverrideLabel(u) {
+            if (!u) return null;
+            if (typeof u === 'string') return u.trim() || null;
+            return (typeof u.qty === 'number' && u.qty > 0) ? `${u.qty}${u.measure || ''}` : null;
+        }
+        // Every customer-facing spot that shows a product's size reads the
+        // plain catalogue product.unit string — so before this existed,
+        // setting a unit override saved fine but never visibly changed
+        // anything, which is exactly what "isn't updating" looks like from
+        // the admin side. This is the single place that decides which one
+        // wins, used everywhere a product's unit is shown.
+        function effectiveUnit(p) { return unitOverrideLabel(p.unitOverride) || p.unit; }
         function variantSummary(variants) { return variants.map(v => `${v.label} ${money(v.price)}`).join(', '); }
         let deliveryInfo = null;
         let lastOrder = null;
@@ -10180,7 +10190,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.54';
+        const BUILD_VERSION = '2026-09-05.55';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10188,26 +10198,6 @@
             return (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
         }
 
-        /* ================= UNIT QUANTITY PARSING =================
-           Pulls a numeric quantity + measure out of a unit string (e.g.
-           "5kg bag" -> {qty:5, measure:'kg'}). Used by edit mode to
-           pre-fill the unit-override qty/measure fields from whatever
-           unit text a product already has (see the edit panel below);
-           the on-page per-kg/per-litre price this used to also drive was
-           removed at the customer's request. */
-        function parseUnitQuantity(unitStr) {
-            if (!unitStr) return null;
-            const s = unitStr.toLowerCase();
-            let m = s.match(/(\d+(?:\.\d+)?)\s*kg\b/);
-            if (m) return { qty: parseFloat(m[1]), measure: 'kg' };
-            m = s.match(/(\d+(?:\.\d+)?)\s*g\b/);
-            if (m) return { qty: parseFloat(m[1]) / 1000, measure: 'kg' };
-            m = s.match(/(\d+(?:\.\d+)?)\s*l\b/);
-            if (m) return { qty: parseFloat(m[1]), measure: 'l' };
-            m = s.match(/(\d+(?:\.\d+)?)\s*ml\b/);
-            if (m) return { qty: parseFloat(m[1]) / 1000, measure: 'l' };
-            return null;
-        }
         function priceHTML(p, size) {
             const variants = Array.isArray(p.weightVariants) ? p.weightVariants : [];
             if (variants.length) {
@@ -15116,7 +15106,6 @@
             currentEditSlot = slot;
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
-            const currentUnitInfo = (product.unitOverride && product.unitOverride.qty > 0) ? product.unitOverride : parseUnitQuantity(product.unit);
             slot.innerHTML = `
         <div class="edit-panel">
           <div class="ep-row" style="grid-template-columns:1fr;">
@@ -15169,20 +15158,13 @@
               <input type="number" step="0.01" min="0" id="ep-weight-${catSlug}-${idx}" placeholder="e.g. 5 for a 5kg bag" value="${typeof product.weight === 'number' ? product.weight : ''}">
             </div>
           </div>
-          <div class="ep-row">
+          <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
-              <label>Unit pricing: quantity</label>
-              <input type="number" step="0.01" min="0" id="ep-unitqty-${catSlug}-${idx}" placeholder="e.g. 5 for a 5kg bag" value="${currentUnitInfo ? currentUnitInfo.qty : ''}">
-            </div>
-            <div>
-              <label>Unit pricing: measure</label>
-              <select id="ep-unitmeasure-${catSlug}-${idx}">
-                <option value="kg" ${!currentUnitInfo || currentUnitInfo.measure === 'kg' ? 'selected' : ''}>kg</option>
-                <option value="l" ${currentUnitInfo && currentUnitInfo.measure === 'l' ? 'selected' : ''}>litre</option>
-              </select>
+              <label>Pack size / unit label (optional, leave blank to use the default)</label>
+              <input type="text" id="ep-unitlabel-${catSlug}-${idx}" placeholder="${escapeHtml(product.unit || '')}" value="${escapeHtml(unitOverrideLabel(product.unitOverride) || '')}">
             </div>
           </div>
-          <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">Leave quantity blank for items sold by count (per piece, per bird, pack of X), no unit price is required for those.</p>
+          <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">This is the size/pack text shown to customers everywhere, e.g. "1.5kg bag" or "500ml jar" — it doesn't affect delivery pricing, that's the Weight field above.</p>
           <div class="ep-variants-block">
             <label>Weight options (optional, one product with several sizes, e.g. 2kg / 5kg / 10kg / 20kg, instead of a separate product per size)</label>
             <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${variantsListHTML(product, catSlug, idx)}</div>
@@ -15376,8 +15358,7 @@
             const priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
             const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`)?.value ?? '';
             const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`)?.value;
-            const unitQtyVal = document.getElementById(`ep-unitqty-${catSlug}-${idx}`)?.value ?? '';
-            const unitMeasureVal = document.getElementById(`ep-unitmeasure-${catSlug}-${idx}`)?.value;
+            const unitLabelVal = document.getElementById(`ep-unitlabel-${catSlug}-${idx}`)?.value.trim() ?? '';
 
             if (!isNaN(priceVal) && priceVal >= 0) product.price = priceVal;
             if (saleVal === '' ) { delete product.salePrice; }
@@ -15403,11 +15384,8 @@
                 if (!isNaN(wv) && wv >= 0 && confirmReasonableWeight(wv)) product.weight = wv;
             }
 
-            if (unitQtyVal === '') { delete product.unitOverride; }
-            else {
-                const qtyNum = parseFloat(unitQtyVal);
-                if (!isNaN(qtyNum) && qtyNum > 0) product.unitOverride = { qty: qtyNum, measure: unitMeasureVal };
-            }
+            if (unitLabelVal === '') { delete product.unitOverride; }
+            else { product.unitOverride = unitLabelVal; }
 
             const descEl = document.getElementById(`ep-desc-${catSlug}-${idx}`);
             if (descEl) {
