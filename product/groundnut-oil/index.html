@@ -15,7 +15,7 @@
     <meta property="og:image" content="https://yo7foods.co.uk/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Yo7 Foods — Fresh African &amp; Caribbean groceries, delivered with modern convenience.">
+    <meta property="og:image:alt" content="Yo7 Foods: fresh African &amp; Caribbean groceries, delivered with modern convenience.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Groundnut Oil | Yo7 Foods">
     <meta name="twitter:description" content="Groundnut Oil, from Yo7 Foods' Oils aisle.">
@@ -6858,7 +6858,7 @@
     <div class="edit-mode-banner" id="editModeBanner">
         <div class="wrap emb-inner">
             <span class="emb-dot"></span>
-            <span><strong>Edit mode is on.</strong> Product edits save for real — click Save on a product's edit panel to make a change live for every customer, not just this tab.</span>
+            <span><strong>Edit mode is on.</strong> Product edits save for real: click Save on a product's edit panel to make a change live for every customer, not just this tab.</span>
             <span class="emb-version" id="editModeBannerVersion"></span>
             <button type="button" id="editModeBannerClose">Exit edit mode</button>
         </div>
@@ -9874,6 +9874,12 @@
             const parts = sorted.map(t => `${t.label.toLowerCase()}: ${money(t.fee)}`);
             const freeNote = freeRule ? ` Free once your order reaches ${money(freeRule.value)}.` : '';
             el.textContent = `Priced by order weight, ${parts.join(', ')}.${freeNote} Pickup is always free. Your exact fee is shown at checkout before you pay.`;
+            // The "New Here?" FAQ answer quotes these same figures — without
+            // this call it only ever showed whatever was hardcoded at ship
+            // time, so an admin changing a tier fee here updated the
+            // Delivery Info page but silently left the FAQ page quoting the
+            // old price. No-ops if the FAQ page isn't the one on screen.
+            renderFAQ();
         }
         function renderDeliveryAdmin() {
             const tiersList = document.getElementById('deliveryWeightTiersList');
@@ -10193,7 +10199,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.57';
+        const BUILD_VERSION = '2026-09-05.58';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10434,7 +10440,7 @@
         function bundleItemRowHTML(p, outOfStock) {
             const weightVal = typeof p.weight === 'number' ? p.weight : '';
             const weightDisplay = (currentIsAdmin && editModeOn) ? `
-      <span class="bundle-item-weight-edit" title="Weight (kg) — used for delivery pricing">
+      <span class="bundle-item-weight-edit" title="Weight (kg), used for delivery pricing">
         <input type="number" step="0.01" min="0" value="${weightVal}" placeholder="kg" onchange="saveBundleItemWeight('${p.catSlug}', ${p.idx}, this)">
         <span>kg</span>
       </span>` : (typeof p.weight === 'number' ? `<span class="bundle-item-weight">${fmtWeight(p.weight)}</span>` : '');
@@ -13130,7 +13136,7 @@
                         discountCode: appliedDiscount ? appliedDiscount.code : undefined,
                         fulfilmentMethod,
                         customerEmail: currentSupabaseUser ? currentSupabaseUser.email : undefined,
-                        orderDescription: `Yo7 Foods order — ${cart.length} item${cart.length === 1 ? '' : 's'}`,
+                        orderDescription: `Yo7 Foods order, ${cart.length} item${cart.length === 1 ? '' : 's'}`,
                         // Lets the server write a pending_checkouts row (see
                         // migration 33 + stripe-webhook) the moment the
                         // PaymentIntent exists, so an order can still be
@@ -13473,7 +13479,7 @@
                 // the background — see supabase-payment-setup-guide.md — so
                 // for now this is an honest "we don't know yet" rather than
                 // an order that might not actually be paid for.
-                showToast("Your payment is still being confirmed. We'll be in touch as soon as it clears — no need to try again.", 9000);
+                showToast("Your payment is still being confirmed. We'll be in touch as soon as it clears, no need to try again.", 9000);
                 window.location.hash = '#/';
             } else {
                 showToast("That payment didn't go through. Please try again.", 7000);
@@ -14013,7 +14019,7 @@
             switch (entry.action) {
                 case 'product_updated': {
                     const summary = entry.details && changeSummary(entry.details.changes);
-                    return summary ? `${who} updated ${label} — ${summary}` : `${who} updated ${label}`;
+                    return summary ? `${who} updated ${label}: ${summary}` : `${who} updated ${label}`;
                 }
                 case 'product_created': return `${who} added ${label}${entry.details && entry.details.catName ? ` to ${escapeHtml(entry.details.catName)}` : ''}`;
                 case 'product_photo_updated': return `${who} updated the photo for ${label}`;
@@ -14021,7 +14027,7 @@
                 case 'bundle_updated': case 'combo_updated': {
                     const kind = entry.action === 'bundle_updated' ? 'bundle' : 'combo';
                     const summary = entry.details && changeSummary(entry.details.changes);
-                    return summary ? `${who} updated ${kind} ${label} — ${summary}` : `${who} updated ${kind} ${label}`;
+                    return summary ? `${who} updated ${kind} ${label}: ${summary}` : `${who} updated ${kind} ${label}`;
                 }
                 case 'bundle_removed': return `${who} removed bundle ${label}`;
                 case 'combo_removed': return `${who} removed combo ${label}`;
@@ -14037,16 +14043,16 @@
                     const from = d.fromStatus ? (ORDER_STATUS_LABELS[d.fromStatus] || d.fromStatus) : null;
                     const to = ORDER_STATUS_LABELS[d.toStatus] || d.toStatus || '';
                     const transition = (d.statusChanged && from) ? `"${escapeHtml(from)}" → "${escapeHtml(to)}"` : `"${escapeHtml(to)}" (comment only, status unchanged)`;
-                    const note = d.comment ? ` — comment shown to customer: "${escapeHtml(d.comment)}"` : '';
+                    const note = d.comment ? `, comment shown to customer: "${escapeHtml(d.comment)}"` : '';
                     return `${who} updated order ${label}: ${transition}${note}`;
                 }
                 case 'order_cancelled': {
                     const reason = entry.details && entry.details.reason;
-                    return `${who} cancelled order ${label}${reason ? ` — reason shown to customer: "${escapeHtml(reason)}"` : ''}`;
+                    return `${who} cancelled order ${label}${reason ? `, reason shown to customer: "${escapeHtml(reason)}"` : ''}`;
                 }
                 case 'loyalty_settings_updated': return `${who} updated loyalty reward settings`;
                 case 'admin_added': return `${who} made ${label} an admin`;
-                default: return `${who} — ${escapeHtml(entry.action)}${label ? ' (' + label + ')' : ''}`;
+                default: return `${who}: ${escapeHtml(entry.action)}${label ? ' (' + label + ')' : ''}`;
             }
         }
         function activityLogTimeLabel(iso) {
@@ -14920,7 +14926,7 @@
             const dropdownName = document.getElementById('accountDropdownName');
             if (dropdownName) { dropdownName.textContent = greeting; dropdownName.classList.add('visible'); }
             accountBtn.setAttribute('href', '#');
-            accountBtn.setAttribute('aria-label', 'Account menu — signed in as ' + name.split(' ')[0]);
+            accountBtn.setAttribute('aria-label', 'Account menu, signed in as ' + name.split(' ')[0]);
             accountBtn.classList.add('is-logged-in');
             accountCaret.style.display = 'inline-block';
             const orderHistoryLink = document.getElementById('orderHistoryLink');
@@ -15015,7 +15021,7 @@
                 .channel('admin-new-orders')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
                     const orderNumber = payload.new && payload.new.order_number;
-                    showToast('🔔 New order has been placed' + (orderNumber ? ' — ' + orderNumber : ''), 6000);
+                    showToast('🔔 New order has been placed' + (orderNumber ? ': ' + orderNumber : ''), 6000);
                     if (window.location.hash === '#/admin' || window.location.hash === '#/admin/orders') renderAdminOrders();
                 })
                 .subscribe();
@@ -15171,7 +15177,7 @@
               <input type="text" id="ep-unitlabel-${catSlug}-${idx}" placeholder="${escapeHtml(product.unit || '')}" value="${escapeHtml(unitOverrideLabel(product.unitOverride) || '')}">
             </div>
           </div>
-          <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">This is the size/pack text shown to customers everywhere, e.g. "1.5kg bag" or "500ml jar" — it doesn't affect delivery pricing, that's the Weight field above.</p>
+          <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">This is the size/pack text shown to customers everywhere, e.g. "1.5kg bag" or "500ml jar". It doesn't affect delivery pricing; that's the Weight field above.</p>
           <div class="ep-variants-block">
             <label>Weight options (optional, one product with several sizes, e.g. 2kg / 5kg / 10kg / 20kg, instead of a separate product per size)</label>
             <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${variantsListHTML(product, catSlug, idx)}</div>
@@ -16014,9 +16020,23 @@
         window.addEventListener('hashchange', () => mobileMenu.classList.remove('open'));
 
         /* ================= GUIDE / FAQ ================= */
+        // A plain string here would go stale the moment an admin changed a
+        // delivery tier's fee in the delivery rules panel — this FAQ answer
+        // used to quote fixed figures that only ever matched whatever was
+        // true when the page shipped. Computed fresh from the same
+        // deliveryWeightTiers/deliveryThresholdRules the Delivery Info page
+        // itself reads (see renderDeliveryFeeInfo), so the two can't drift
+        // apart the way they did before.
+        function deliveryFaqAnswer() {
+            const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
+            const parts = sorted.map(t => `${t.label.toLowerCase()} is ${money(t.fee)}`);
+            const freeRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price');
+            const freeNote = freeRule ? ` It's free once your order reaches ${money(freeRule.value)}.` : '';
+            return `Delivery is priced by the total weight of your order rather than a flat rate, ${parts.join(', ')}.${freeNote} There's no minimum order for delivery or pickup.`;
+        }
         const FAQS = [
             { q: 'What areas do you deliver to?', a: 'We deliver to every UK postcode. Use the postcode checker on the Delivery Information page to double-check the format of yours.' },
-            { q: 'How much is delivery, and is there a minimum order?', a: 'Delivery is priced by the total weight of your order rather than a flat rate, up to 10kg is £7.99, up to 20kg is £11.99, and above that is £15.99, and it\'s free once your order reaches £50. There\'s no minimum order for delivery or pickup.' },
+            { q: 'How much is delivery, and is there a minimum order?', a: deliveryFaqAnswer },
             { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 10am are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
@@ -16024,6 +16044,7 @@
             { q: 'Do I need an account to order?', a: 'Yes, a free account is required to complete checkout, it\'s what lets you (and us) track your order afterwards in Order History. You can browse and build a basket without one, you\'re only asked to log in or sign up when you\'re ready to check out, and it only takes a few seconds.' },
             { q: 'How do I get in touch if I have a problem with my order?', a: 'WhatsApp is the fastest way, there\'s a button on the Contact page and a floating button on every page. We read every message.' },
         ];
+        function faqAnswerText(f) { return typeof f.a === 'function' ? f.a() : f.a; }
         function renderFAQ() {
             const list = document.getElementById('faqList');
             if (!list) return;
@@ -16033,7 +16054,7 @@
         <span>${f.q}</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
-      <div class="faq-a"><p>${f.a}</p></div>
+      <div class="faq-a"><p>${faqAnswerText(f)}</p></div>
     </div>`).join('');
         }
         function toggleFaq(i) {
@@ -16059,7 +16080,7 @@
                 mainEntity: FAQS.map(f => ({
                     '@type': 'Question',
                     name: f.q,
-                    acceptedAnswer: { '@type': 'Answer', text: f.a },
+                    acceptedAnswer: { '@type': 'Answer', text: faqAnswerText(f) },
                 })),
             });
             document.head.appendChild(el);
