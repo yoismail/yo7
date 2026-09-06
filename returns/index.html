@@ -7651,10 +7651,6 @@
                                         <div class="field"><label>Postcode</label><input type="text" required id="dPostcode"
                                                 placeholder="CO1 1AA"></div>
                                     </div>
-                                    <div class="field"><label>Delivery day</label>
-                                        <select id="dSlotDay"></select>
-                                        <div class="field-note">Orders placed before 10am are usually delivered the same day or next day, depending on your area.</div>
-                                    </div>
                                     <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
                                 </div>
@@ -7762,8 +7758,7 @@
                             <div class="invoice-mark"><svg viewBox="65 25 875 900">
                                     <use href="#seal-mark" />
                                 </svg> Yo7 Foods</div>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">African Food Store, Essex &amp;
-                                Suffolk</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">African Food Store, Ipswich</div>
                         </div>
                         <div class="invoice-meta">
                             Invoice <strong id="invNumber"></strong><br>
@@ -10368,7 +10363,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.70';
+        const BUILD_VERSION = '2026-09-06.71';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12490,10 +12485,10 @@
         // A live "order within Xh Ym to get it by [day]" estimate for the
         // product page, so a customer can see roughly when to expect an
         // item without having to visit Delivery Info first. Reuses the same
-        // 10am same/next-day dispatch cutoff populateDeliverySlots() (in
-        // checkout) already uses, then adds the 24-48h transit window
-        // already promised on the Delivery Info page and FAQ, so this can't
-        // quietly promise something faster than what's stated elsewhere.
+        // 10am same/next-day dispatch cutoff already stated on the Delivery
+        // Info page and FAQ, then adds the 24-48h transit window already
+        // promised there, so this can't quietly promise something faster
+        // than what's stated elsewhere.
         function deliveryWindowText() {
             const now = new Date();
             const pastCutoff = now.getHours() >= 10;
@@ -13480,7 +13475,6 @@
                 town: fulfilmentMethod === 'pickup' ? 'Ipswich' : document.getElementById('dTown').value.trim(),
                 postcode: fulfilmentMethod === 'pickup' ? 'IP4 2NY' : document.getElementById('dPostcode').value.trim(),
                 notes: fulfilmentMethod === 'pickup' ? 'Collecting in store' : document.getElementById('dNotes').value.trim(),
-                slotDay: fulfilmentMethod === 'delivery' ? document.getElementById('dSlotDay').value : null,
             };
             showCheckoutStep('payment');
             initStripePayment();
@@ -13685,28 +13679,6 @@
             });
             paymentElement.mount('#stripePaymentElement');
             paymentElement.on('ready', () => { placeOrderBtn.disabled = false; });
-        }
-
-        /* ================= DELIVERY SLOTS =================
-           Real upcoming days, not a vague "next-day" promise. Today is only
-           offered before the same cutoff already stated in the FAQ (orders
-           before 10am go out same/next day) — after that it's not genuinely
-           available, so it isn't offered as a false option. */
-        function populateDeliverySlots() {
-            const select = document.getElementById('dSlotDay');
-            if (!select) return;
-            const now = new Date();
-            const pastCutoff = now.getHours() >= 10;
-            const days = [];
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            for (let i = pastCutoff ? 1 : 0; days.length < 5; i++) {
-                const d = new Date(now);
-                d.setDate(now.getDate() + i);
-                const label = (i === 0 ? 'Today, ' : i === 1 ? 'Tomorrow, ' : '') + `${dayNames[d.getDay()]} ${d.getDate()} ${monthNames[d.getMonth()]}`;
-                days.push({ value: d.toISOString().slice(0, 10), label });
-            }
-            select.innerHTML = days.map(d => `<option value="${d.value}">${d.label}</option>`).join('');
         }
 
         document.getElementById('paymentForm').addEventListener('submit', async (e) => {
@@ -14895,10 +14867,9 @@
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const di = lastOrder.delivery_info || {};
             const isPickup = lastOrder.fulfilment === 'pickup';
-            const slotLine = (!isPickup && di.slotDay) ? `<br>${new Date(di.slotDay).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}` : '';
             document.getElementById('invAddress').innerHTML = isPickup
                 ? `${escapeHtml(di.name || '')}<br>Collecting in store: 7 Lancaster Road<br>Ipswich, IP4 2NY<br>${escapeHtml(di.phone || '')}`
-                : `${escapeHtml(di.name || '')}<br>${escapeHtml(di.address || '')}<br>${escapeHtml(di.town || '')} ${escapeHtml(di.postcode || '')}<br>${escapeHtml(di.phone || '')}${slotLine}`;
+                : `${escapeHtml(di.name || '')}<br>${escapeHtml(di.address || '')}<br>${escapeHtml(di.town || '')} ${escapeHtml(di.postcode || '')}<br>${escapeHtml(di.phone || '')}`;
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
@@ -17001,7 +16972,6 @@
         renderCatGrid();
         renderBundles();
         renderDeliveryAdmin();
-        populateDeliverySlots();
         loadLoyaltySettings().then(syncLoyaltyState);
         // Loads real, admin-configured delivery/subscription/bundle rates
         // for every visitor (not just when an admin opens edit mode) —
