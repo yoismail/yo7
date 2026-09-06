@@ -10314,7 +10314,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.66';
+        const BUILD_VERSION = '2026-09-06.67';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11373,26 +11373,39 @@
             if (cat && cat.products[0]) cat.products[0].isBestSeller = true;
         });
         // Populated by loadRealBestSellers() from actual order data (last 30
-        // days, by units sold). Null until that resolves (or if it finds no
-        // real sales yet), in which case bestSellerItems() falls back to the
+        // days, by units sold). Holds {catSlug, idx} refs, not snapshotted
+        // product objects — getProduct() returns a fresh shallow copy each
+        // call, so a snapshot taken here would freeze whatever image/price
+        // happened to be in the catalog at the moment this RPC resolved.
+        // That's a real race: applyProductOverrides() (which merges in an
+        // admin's saved image/price) does two sequential round trips and
+        // often loses the race to this RPC's one, which used to lock in
+        // "no image, base price" forever with nothing ever re-syncing it.
+        // Reading refs and calling getProduct() fresh in bestSellerItems()
+        // instead means every render reflects whatever's actually in
+        // CATEGORIES right now, overrides included, no matter which finished
+        // loading first. Null until this resolves (or if it finds no real
+        // sales yet), in which case bestSellerItems() falls back to the
         // curated isBestSeller flags above rather than showing nothing.
         let realBestSellers = null;
         function bestSellerItems() {
-            if (realBestSellers && realBestSellers.length > 0) return realBestSellers;
+            if (realBestSellers && realBestSellers.length > 0) {
+                return realBestSellers.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            }
             return allProducts().filter(p => p.isBestSeller).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
         }
         async function loadRealBestSellers() {
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.rpc('get_best_sellers', { p_days: 30, p_limit: 12 });
             if (error || !Array.isArray(data) || data.length === 0) return;
-            const items = data
+            const refs = data
                 .map(row => {
                     const [catSlug, idxStr] = String(row.product_id).split('::');
-                    return getProduct(catSlug, Number(idxStr));
+                    return { catSlug, idx: Number(idxStr) };
                 })
-                .filter(Boolean);
-            if (items.length === 0) return;
-            realBestSellers = items;
+                .filter(ref => !!getProduct(ref.catSlug, ref.idx));
+            if (refs.length === 0) return;
+            realBestSellers = refs;
             renderBestSellersSpotlight();
             renderBestSellersPage();
         }
