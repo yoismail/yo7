@@ -1994,12 +1994,6 @@
             padding: 11px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
         }
 
-        .combos-section { background: #FAF2E3; padding: 64px 0 60px; }
-        .combos-section h2 { color: #2C1C10 !important; }
-        .combos-section .new-section-head p { color: #6b5c4f; }
-        .combos-section .view-all-btn { color: #2C1C10; background: rgba(44, 28, 16, 0.05); }
-        .combos-section .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
-
         .build-bundle-promo { background: #FAF2E3; padding: 48px 0; }
         .build-bundle-promo-inner {
             display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
@@ -4449,21 +4443,6 @@
             flex-shrink: 0;
         }
 
-        /* Same gentle opacity pulse as .emb-dot (the edit-mode banner's
-           attention dot) rather than a hard on/off flash — a real blink to
-           fully transparent reads as a broken/flickering element and is
-           genuinely hard to read mid-dip; this stays legible throughout the
-           cycle while still clearly catching the eye. Skipped entirely for
-           anyone who's asked their OS for less motion. */
-        @keyframes deliveryWindowBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-        @media (prefers-reduced-motion: no-preference) {
-            .pd-delivery-window {
-                animation: deliveryWindowBlink 1.4s ease-in-out infinite;
-            }
-        }
 
         .pd-meta {
             display: flex;
@@ -7037,46 +7016,30 @@
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
-                        <div class="section-eyebrow">Shop by meal</div>
+                        <div class="section-eyebrow">Meal sets</div>
                         <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
                             Perfectly paired ingredients</h2>
-                        <p>Premium products grouped by meal, making it effortless to cook authentic dishes with confidence. Add the whole set in one tap, or pick and choose.</p>
+                        <p>Curated bundles and combos for authentic African cooking, grouped by meal for convenience. Add the whole set in one tap, or pick and choose.</p>
                     </div>
                     <a class="view-all-btn" href="#/bundles">
                         View all
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                 </div>
-                <div class="product-grid bundles-scroll" id="bundlesGrid"></div>
+                <div class="product-grid bundles-scroll combos-scroll" id="mealSetsGrid"></div>
                 <p class="swipe-hint">Swipe to see more</p>
-                <button type="button" class="add-bundle-btn" id="addBundleBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                    Add a bundle
-                </button>
-                <div id="addBundleSlot"></div>
-            </div>
-        </section>
-
-        <section class="combos-section">
-            <div class="wrap">
-                <div class="new-section-head reveal">
-                    <div>
-                        <div class="section-eyebrow">Bundle</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
-                            Premium combo bundles</h2>
-                        <p>Curated meal sets crafted for convenience, flavour, and authentic African cooking. Swipe or drag to browse.</p>
-                    </div>
-                    <a class="view-all-btn" href="#/combos">
-                        View all
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                    </a>
+                <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                    <button type="button" class="add-bundle-btn" id="addBundleBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        Add a bundle
+                    </button>
+                    <button type="button" class="add-bundle-btn" id="addComboBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        Add a combo
+                    </button>
+                    <a href="#/combos" style="font-family:var(--display); font-weight:700; font-size:13px; color:var(--text-muted); text-decoration:underline;">View all combos</a>
                 </div>
-                <div class="product-grid combos-scroll" id="combosGrid"></div>
-                <p class="swipe-hint">Swipe to see more</p>
-                <button type="button" class="add-bundle-btn" id="addComboBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                    Add a combo
-                </button>
+                <div id="addBundleSlot"></div>
                 <div id="addComboSlot"></div>
             </div>
         </section>
@@ -7439,6 +7402,10 @@
                             <span class="payment-badge payment-badge-paypal">PayPal</span>
                             <span class="payment-badge payment-badge-clearpay">Clearpay</span>
                             <span class="payment-badge payment-badge-paybybank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6"/></svg>Pay by Bank</span>
+                        </div>
+                        <div class="related-strip" id="fbtStrip" style="display:none;">
+                            <h3>Frequently bought together</h3>
+                            <div class="related-grid" id="fbtGrid"></div>
                         </div>
                         <div class="related-strip">
                             <h3>More from this aisle</h3>
@@ -10240,7 +10207,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.63';
+        const BUILD_VERSION = '2026-09-06.64';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10672,10 +10639,23 @@
         }
         window.saveBundleEdit = saveBundleEdit;
 
-        function renderBundles() {
-            const grid = document.getElementById('bundlesGrid');
+        // The homepage used to show bundles and combos as two consecutive,
+        // near-identical sections (same card markup, same "add the whole
+        // set in one tap" pitch, just different admin-managed arrays) —
+        // merged into one shared grid here since a shopper never
+        // distinguished them anyway. BUNDLES and COMBOS themselves stay
+        // completely separate (own admin CRUD, own cart id scheme,
+        // own "view all" page); only this homepage render is combined,
+        // so renderBundles()/renderCombos() both call it after whichever
+        // array actually changed.
+        function renderMealSetsHome() {
+            const grid = document.getElementById('mealSetsGrid');
             if (!grid) return;
-            grid.innerHTML = BUNDLES.map((bundle, bi) => bundleCardHTML(bundle, bi)).join('');
+            const cards = BUNDLES.map((b, bi) => bundleCardHTML(b, bi)).concat(COMBOS.map((c, ci) => comboCardHTML(c, ci)));
+            grid.innerHTML = cards.join('') || '<p style="font-size:13px; color:var(--text-muted);">No meal sets advertised yet.</p>';
+        }
+        function renderBundles() {
+            renderMealSetsHome();
             renderBundlesViewAllPage();
         }
         function renderBundlesViewAllPage() {
@@ -11020,8 +11000,7 @@
         }
         window.addComboToCart = addComboToCart;
         function renderCombos() {
-            const grid = document.getElementById('combosGrid');
-            if (grid) grid.innerHTML = COMBOS.map((c, i) => comboCardHTML(c, i)).join('') || '<p style="font-size:13px; color:var(--text-muted);">No combos advertised yet.</p>';
+            renderMealSetsHome();
             renderCombosViewAllPage();
         }
         function renderCombosViewAllPage() {
@@ -12214,6 +12193,7 @@
                 document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; Not found`;
                 ['pdCatTag', 'pdCode', 'pdUnit', 'pdPrice', 'pdDesc'].forEach(id => document.getElementById(id).textContent = '');
                 document.getElementById('relatedGrid').innerHTML = '';
+                document.getElementById('fbtStrip').style.display = 'none';
                 return;
             }
             const stock = p.stock || 'in';
@@ -12279,6 +12259,40 @@
             renderGrid(related, 'relatedGrid');
             renderProductDetailsSection(p, catSlug);
             renderProductReviews(catSlug, Number(idx));
+            loadFrequentlyBoughtTogether(catSlug, idx);
+        }
+
+        // Real co-purchase data (see get_frequently_bought_together in the
+        // setup notes) rather than another hand-curated list — an admin
+        // would otherwise have to keep pairings fresh by hand the same way
+        // bundles/combos already need, and get it wrong for products they
+        // don't personally think to pair. Hidden entirely rather than
+        // showing a half-empty strip when there isn't enough order history
+        // yet for a real pairing (a brand new store, or a rarely-bought
+        // item) — nothing here is invented to fill the gap.
+        async function loadFrequentlyBoughtTogether(catSlug, idx) {
+            const stripEl = document.getElementById('fbtStrip');
+            if (!stripEl) return;
+            stripEl.style.display = 'none';
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.rpc('get_frequently_bought_together', {
+                p_product_id: `${catSlug}::${idx}`, p_limit: 6,
+            });
+            // The visitor may have already moved on to a different product
+            // while this was in flight — pdCurrent no longer matching means
+            // these results belong to a page that isn't showing anymore.
+            if (!pdCurrent || pdCurrent.catSlug !== catSlug || String(pdCurrent.idx) !== String(idx)) return;
+            if (error || !Array.isArray(data) || data.length === 0) return;
+            const items = data
+                .map(row => {
+                    const [rCatSlug, rIdxStr] = String(row.product_id).split('::');
+                    return getProduct(rCatSlug, Number(rIdxStr));
+                })
+                .filter(Boolean)
+                .filter(rp => rp.stock !== 'out');
+            if (items.length === 0) return;
+            stripEl.style.display = '';
+            renderGrid(items, 'fbtGrid');
         }
 
         /* ================= REVIEWS & RATINGS ================= */
