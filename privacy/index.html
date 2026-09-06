@@ -7070,30 +7070,24 @@
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
-                        <div class="section-eyebrow">Meal sets</div>
+                        <div class="section-eyebrow">Combo deals</div>
                         <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
                             Perfectly paired ingredients</h2>
-                        <p>Curated bundles and combos for authentic African cooking, grouped by meal for convenience. Add the whole set in one tap, or pick and choose.</p>
+                        <p>Curated combos for authentic African cooking, grouped by meal for convenience. Add the whole set in one tap.</p>
                     </div>
-                    <a class="view-all-btn" href="#/bundles">
+                    <a class="view-all-btn" href="#/combos">
                         View all
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                 </div>
-                <div class="product-grid bundles-scroll combos-scroll" id="mealSetsGrid"></div>
+                <div class="product-grid combos-scroll" id="mealSetsGrid"></div>
                 <p class="swipe-hint">Swipe to see more</p>
                 <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-                    <button type="button" class="add-bundle-btn" id="addBundleBtn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                        Add a bundle
-                    </button>
                     <button type="button" class="add-bundle-btn" id="addComboBtn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                         Add a combo
                     </button>
-                    <a href="#/combos" style="font-family:var(--display); font-weight:700; font-size:13px; color:var(--text-muted); text-decoration:underline;">View all combos</a>
                 </div>
-                <div id="addBundleSlot"></div>
                 <div id="addComboSlot"></div>
             </div>
         </section>
@@ -9275,6 +9269,63 @@
             });
         }
 
+        // One-time cleanup for retiring the separate "Bundles" concept in
+        // favour of just "Combo deals" (bundles and combos were identical
+        // from a shopper's view, and the word "bundle" already means
+        // something different in the Build a Bundle tool). Deliberately
+        // additive-only: copies whatever is currently in BUNDLES into
+        // COMBOS so the same deals keep selling, then flips a flag so this
+        // never runs twice. BUNDLES itself, bundles_data, its `bundle::N`
+        // cart id resolution, and its admin CRUD are never touched or
+        // cleared here, so a basket or a past order that already has a
+        // bundle item in it keeps resolving exactly as before.
+        // Called from refreshAdminStatus() once currentIsAdmin is confirmed
+        // true, rather than from loadPricingSettings() (which runs on its
+        // own timeline for every visitor) — re-reads pricing_settings fresh
+        // instead of trusting BUNDLES/COMBOS to already be loaded, so it
+        // can't race that separate load.
+        // Boot calls refreshAdminStatus() twice for an unrelated reason (see
+        // restoreSupabaseSession), which would otherwise fire this twice on
+        // the one boot where the migration actually has work to do — this
+        // guard just stops the redundant round-trip/duplicate toast, since
+        // the outcome converges correctly either way (both calls would read
+        // the same pre-migration data and write the same result).
+        let retiringBundlesInFlight = false;
+        async function retireBundlesIntoCombos() {
+            if (!supabaseClient || !currentIsAdmin || retiringBundlesInFlight) return;
+            retiringBundlesInFlight = true;
+            try {
+                const { data, error } = await supabaseClient.from('pricing_settings').select('*').eq('id', true).maybeSingle();
+                if (error || !data || data.bundles_retired) return;
+                const bundles = Array.isArray(data.bundles_data) ? data.bundles_data : BUNDLES;
+                if (!bundles.length) {
+                    await supabaseClient.from('pricing_settings').update({ bundles_retired: true }).eq('id', true);
+                    return;
+                }
+                const combos = Array.isArray(data.combos_data) ? [...data.combos_data] : [...COMBOS];
+                const migrated = bundles.map(b => ({
+                    name: b.name,
+                    description: b.tagline || '',
+                    discountPercent: b.discountPercent || 0,
+                    items: b.items || [],
+                }));
+                combos.push(...migrated);
+                const { error: saveError } = await supabaseClient.from('pricing_settings').update({
+                    combos_data: combos,
+                    bundles_retired: true,
+                    updated_at: new Date().toISOString(),
+                }).eq('id', true);
+                if (saveError) return;
+                COMBOS.length = 0;
+                COMBOS.push(...combos);
+                renderCombos();
+                logAdminAction('bundles_retired_into_combos', 'pricing_settings', null, { migratedCount: migrated.length });
+                showToast(`Moved ${migrated.length} existing bundle${migrated.length === 1 ? '' : 's'} into combo deals.`);
+            } finally {
+                retiringBundlesInFlight = false;
+            }
+        }
+
         function resolveWeightTierFee(weight) {
             const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
             const tier = sorted.find(t => weight <= t.maxWeight);
@@ -10263,7 +10314,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.65';
+        const BUILD_VERSION = '2026-09-06.66';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10696,18 +10747,20 @@
         window.saveBundleEdit = saveBundleEdit;
 
         // The homepage used to show bundles and combos as two consecutive,
-        // near-identical sections (same card markup, same "add the whole
-        // set in one tap" pitch, just different admin-managed arrays) —
-        // merged into one shared grid here since a shopper never
-        // distinguished them anyway. BUNDLES and COMBOS themselves stay
-        // completely separate (own admin CRUD, own cart id scheme,
-        // own "view all" page); only this homepage render is combined,
-        // so renderBundles()/renderCombos() both call it after whichever
-        // array actually changed.
+        // near-identical sections, then as one merged grid of both — retired
+        // down to combos-only per the decision to stop selling two
+        // identically-shaped deals under two different names (confusing
+        // next to the separate "Build a bundle" tool, which uses the word
+        // "bundle" for something else entirely). BUNDLES itself, its admin
+        // CRUD, its `bundle::N` cart id scheme, and its "view all" page are
+        // all left completely untouched (see retireBundlesIntoCombos) so a
+        // past order or a basket that already has a bundle item keeps
+        // resolving exactly as before, it just can't be added to from here
+        // going forward.
         function renderMealSetsHome() {
             const grid = document.getElementById('mealSetsGrid');
             if (!grid) return;
-            const cards = BUNDLES.map((b, bi) => bundleCardHTML(b, bi)).concat(COMBOS.map((c, ci) => comboCardHTML(c, ci)));
+            const cards = COMBOS.map((c, ci) => comboCardHTML(c, ci));
             grid.innerHTML = cards.join('') || '<p style="font-size:13px; color:var(--text-muted);">No meal sets advertised yet.</p>';
         }
         function renderBundles() {
@@ -15160,6 +15213,10 @@
                     try { wantEdit = localStorage.getItem('yo7-edit-mode') === '1'; } catch (e) {}
                     if (wantEdit) setEditMode(true);
                 }
+                // Fire-and-forget: a no-op after the first time it runs (see
+                // retireBundlesIntoCombos), cheap enough to just check on
+                // every admin session rather than track its own timing.
+                retireBundlesIntoCombos();
             } else unsubscribeAdminOrderNotifications();
             syncAdminNavLink();
         }
