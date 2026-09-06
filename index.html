@@ -405,6 +405,17 @@
         .card-edit-btn svg { width: 14px; height: 14px; }
         body.edit-mode-on .card-edit-btn { display: flex; }
 
+        .cat-edit-btn {
+            display: none;
+            position: absolute; top: 8px; right: 8px; z-index: 5;
+            width: 28px; height: 28px; border-radius: 50%; border: none;
+            background: var(--aubergine); color: var(--cream);
+            align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+        }
+        .cat-edit-btn svg { width: 13px; height: 13px; }
+        body.edit-mode-on .cat-edit-btn { display: flex; }
+
         .edit-panel {
             padding: 14px 18px 18px; background: rgba(225,225,0,0.06); border-top: 1px dashed rgba(225,225,0,0.35);
         }
@@ -8996,6 +9007,32 @@
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
+    <div class="modal-overlay" id="categoryEditModal" style="display:none;">
+        <div class="modal-box">
+            <button type="button" class="modal-close" aria-label="Close" onclick="closeCategoryEditModal()">&times;</button>
+            <h3>Edit category</h3>
+            <div class="sub" id="catEditCatName"></div>
+            <div>
+                <label>Category photo</label>
+                <div class="ep-photo-row">
+                    <div class="ep-photo-preview" id="catEditPhotoPreview"></div>
+                    <div>
+                        <input type="file" accept="image/*" id="catEditPhotoInput" onchange="handleCategoryPhotoUpload(this)">
+                        <button type="button" class="ep-photo-remove" id="catEditPhotoRemoveBtn" style="display:none;" onclick="removeCategoryPhoto()">Remove photo</button>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:14px;">
+                <label>Description</label>
+                <textarea id="catEditTagline" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline-dark" onclick="closeCategoryEditModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCategoryEdit()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Not a granular accept/reject consent tool, there's nothing optional
          to consent to (see #/cookie-policy): just an honest, dismissible
          notice about the strictly-necessary cookies Stripe sets at
@@ -9426,6 +9463,22 @@
         const ICON_SEARCH = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>';
         function findGroup(slug) { return GROUPS.find(g => g.slug === slug); }
         function groupForCategory(catSlug) { return GROUPS.find(g => g.categories.includes(catSlug)); }
+        // Admin-set category photo/description, keyed by category slug —
+        // loaded from pricing_settings.category_overrides (see
+        // loadPricingSettings) and merged onto CATEGORIES in place, the
+        // same override pattern product_overrides already uses for
+        // products, just small enough here to live alongside the other
+        // pricing_settings blobs (dish_templates_data etc.) rather than
+        // needing its own table.
+        let CATEGORY_OVERRIDES = {};
+        function applyCategoryOverrides() {
+            CATEGORIES.forEach(c => {
+                const o = CATEGORY_OVERRIDES[c.slug];
+                if (!o) return;
+                if (typeof o.tagline === 'string' && o.tagline) c.tagline = o.tagline;
+                if (typeof o.image === 'string' && o.image) c.image = o.image;
+            });
+        }
         function renderHeroGlimpse() {
             const row = document.getElementById('heroGlimpseRow');
             if (!row) return;
@@ -9490,6 +9543,10 @@
             // old "Add dish (this tab only)" button label), gone the moment
             // the page refreshed. Persisted the same way now.
             if (Array.isArray(data.dish_templates_data)) { DISH_TEMPLATES.length = 0; DISH_TEMPLATES.push(...data.dish_templates_data); }
+            if (data.category_overrides && typeof data.category_overrides === 'object') {
+                CATEGORY_OVERRIDES = data.category_overrides;
+                applyCategoryOverrides();
+            }
             const bundleDiscounts = data.bundle_discounts || {};
             BUNDLES.forEach((b, i) => { if (typeof bundleDiscounts[i] === 'number' && !Array.isArray(data.bundles_data)) b.discountPercent = bundleDiscounts[i]; });
             const comboDiscounts = data.combo_discounts || {};
@@ -9516,6 +9573,7 @@
                 bundles_data: BUNDLES,
                 combos_data: COMBOS,
                 dish_templates_data: DISH_TEMPLATES,
+                category_overrides: CATEGORY_OVERRIDES,
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
             if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000);
@@ -10573,7 +10631,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.81';
+        const BUILD_VERSION = '2026-09-06.82';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10815,12 +10873,19 @@
         function renderCatGrid() {
             document.getElementById('catGrid').innerHTML = CATEGORIES.map((c, i) => {
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
-                const thumbBlock = photoClass
-                    ? `<span class="cat-flat-photo ${photoClass}"></span>`
-                    : `<span class="cat-flat-photo cat-flat-photo-emoji"><span>${c.emoji}</span></span>`;
+                const thumbBlock = c.image
+                    ? `<span class="cat-flat-photo" style="background-image:url('${escapeHtml(c.image)}'); background-size:cover; background-position:center;"></span>`
+                    : photoClass
+                        ? `<span class="cat-flat-photo ${photoClass}"></span>`
+                        : `<span class="cat-flat-photo cat-flat-photo-emoji"><span>${c.emoji}</span></span>`;
                 return `
     <a class="cat-flat-card cat-tile-reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.05).toFixed(2)}s">
-      <div class="thumb">${thumbBlock}</div>
+      <div class="thumb">
+        ${thumbBlock}
+        <button class="cat-edit-btn" type="button" aria-label="Edit category" onclick="event.preventDefault(); event.stopPropagation(); openCategoryEdit('${c.slug}');">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
       <div class="cat-flat-scrim">
         <h3>${c.name.replace(/&amp;/g, '&')}</h3>
         <div class="cat-flat-meta">
@@ -10837,6 +10902,79 @@
             // makes this re-render after boot too.
             observeContainerReveals(document.getElementById('catGrid'), '.cat-tile-reveal');
         }
+
+        /* ================= CATEGORY EDIT (edit mode) ================= */
+        let categoryEditSlug = null;
+        function openCategoryEdit(slug) {
+            const cat = findCategory(slug);
+            if (!cat) return;
+            categoryEditSlug = slug;
+            document.getElementById('catEditCatName').textContent = cat.name.replace(/&amp;/g, '&');
+            document.getElementById('catEditTagline').value = cat.tagline || '';
+            const preview = document.getElementById('catEditPhotoPreview');
+            preview.innerHTML = cat.image ? `<img src="${escapeHtml(cat.image)}" alt="">` : `<span>${cat.emoji}</span>`;
+            document.getElementById('catEditPhotoRemoveBtn').style.display = cat.image ? 'block' : 'none';
+            document.getElementById('categoryEditModal').style.display = 'flex';
+        }
+        window.openCategoryEdit = openCategoryEdit;
+        function closeCategoryEditModal() {
+            document.getElementById('categoryEditModal').style.display = 'none';
+            categoryEditSlug = null;
+        }
+        window.closeCategoryEditModal = closeCategoryEditModal;
+        async function handleCategoryPhotoUpload(input) {
+            const file = input.files && input.files[0];
+            if (!file || !categoryEditSlug) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            const preview = document.getElementById('catEditPhotoPreview');
+            if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
+            const cat = findCategory(categoryEditSlug);
+            preview.innerHTML = '<span>Uploading…</span>';
+            const uploadFile = await compressImageFile(file, 1200, 0.85);
+            const ext = extensionForUpload(uploadFile, file);
+            const path = `category-${categoryEditSlug}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) {
+                showToast('Could not upload that photo: ' + uploadError.message, 6000);
+                preview.innerHTML = cat.image ? `<img src="${escapeHtml(cat.image)}" alt="">` : `<span>${cat.emoji}</span>`;
+                return;
+            }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            cat.image = publicUrl;
+            CATEGORY_OVERRIDES[categoryEditSlug] = { ...(CATEGORY_OVERRIDES[categoryEditSlug] || {}), image: publicUrl };
+            await savePricingSettings();
+            preview.innerHTML = `<img src="${publicUrl}" alt="">`;
+            document.getElementById('catEditPhotoRemoveBtn').style.display = 'block';
+            renderCatGrid();
+            logAdminAction('category_photo_updated', 'category', cat.name.replace(/&amp;/g, '&'), { imageUrl: publicUrl });
+        }
+        window.handleCategoryPhotoUpload = handleCategoryPhotoUpload;
+        async function removeCategoryPhoto() {
+            if (!categoryEditSlug) return;
+            const cat = findCategory(categoryEditSlug);
+            delete cat.image;
+            if (CATEGORY_OVERRIDES[categoryEditSlug]) delete CATEGORY_OVERRIDES[categoryEditSlug].image;
+            await savePricingSettings();
+            document.getElementById('catEditPhotoPreview').innerHTML = `<span>${cat.emoji}</span>`;
+            document.getElementById('catEditPhotoRemoveBtn').style.display = 'none';
+            renderCatGrid();
+            logAdminAction('category_photo_removed', 'category', cat.name.replace(/&amp;/g, '&'), {});
+        }
+        window.removeCategoryPhoto = removeCategoryPhoto;
+        async function saveCategoryEdit() {
+            if (!categoryEditSlug) { closeCategoryEditModal(); return; }
+            const cat = findCategory(categoryEditSlug);
+            const tagline = document.getElementById('catEditTagline').value.trim();
+            if (!tagline) { showToast('Give the category a description.'); return; }
+            cat.tagline = tagline;
+            CATEGORY_OVERRIDES[categoryEditSlug] = { ...(CATEGORY_OVERRIDES[categoryEditSlug] || {}), tagline };
+            await savePricingSettings();
+            logAdminAction('category_updated', 'category', cat.name.replace(/&amp;/g, '&'), { tagline });
+            closeCategoryEditModal();
+            renderCatGrid();
+            showToast(`Updated "${cat.name.replace(/&amp;/g, '&')}".`);
+        }
+        window.saveCategoryEdit = saveCategoryEdit;
 
         // Shared by both bundleCardHTML (Shop by meal) and comboCardHTML
         // (Bundle deals) — a bundle/combo's weight is never its own field,
@@ -12611,6 +12749,17 @@
             document.getElementById('groupResultCount').textContent = `${cats.length} categor${cats.length === 1 ? 'y' : 'ies'}`;
             document.getElementById('groupCatGrid').innerHTML = cats.map((c, i) => {
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
+                if (c.image) {
+                    return `
+    <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
+      <div class="group-card-photo" style="background-image:url('${escapeHtml(c.image)}'); background-size:cover; background-position:center;"></div>
+      <div class="group-card-body">
+        <h3>${c.name}</h3>
+        <p>${c.tagline}</p>
+        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
+      </div>
+    </a>`;
+                }
                 if (photoClass) {
                     return `
     <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
