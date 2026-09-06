@@ -2121,6 +2121,16 @@
             padding: 22px 28px; background: var(--section-alt-bg);
             border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
         }
+        .dish-builder-header > div { flex: 1; min-width: 0; }
+        .dish-edit-btn {
+            display: none;
+            flex-shrink: 0;
+            background: none; border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            color: var(--heading); border-radius: 10px; padding: 7px 14px;
+            font-family: var(--display); font-weight: 600; font-size: 12px; cursor: pointer;
+        }
+        body.edit-mode-on .dish-edit-btn { display: block; }
+        .dish-builder-edit-form { max-width: 780px; }
         .dish-builder-header .emoji {
             width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
@@ -8438,6 +8448,7 @@
                         <button type="button" class="btn btn-primary btn-block" id="dishBuilderAddBtn">Add selected to basket</button>
                     </div>
                 </div>
+                <div id="dishEditSlot"></div>
                 <div class="dish-builder-empty" id="dishBuilderEmpty">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                     <p>Pick a dish above to get started.</p>
@@ -9238,6 +9249,11 @@
             // for a project that hasn't run that migration yet.
             if (Array.isArray(data.bundles_data)) { BUNDLES.length = 0; BUNDLES.push(...data.bundles_data); }
             if (Array.isArray(data.combos_data)) { COMBOS.length = 0; COMBOS.push(...data.combos_data); }
+            // Same reasoning as bundles_data/combos_data above — a dish
+            // template used to only ever live in this tab's memory (see the
+            // old "Add dish (this tab only)" button label), gone the moment
+            // the page refreshed. Persisted the same way now.
+            if (Array.isArray(data.dish_templates_data)) { DISH_TEMPLATES.length = 0; DISH_TEMPLATES.push(...data.dish_templates_data); }
             const bundleDiscounts = data.bundle_discounts || {};
             BUNDLES.forEach((b, i) => { if (typeof bundleDiscounts[i] === 'number' && !Array.isArray(data.bundles_data)) b.discountPercent = bundleDiscounts[i]; });
             const comboDiscounts = data.combo_discounts || {};
@@ -9263,6 +9279,7 @@
                 combo_discounts: comboDiscounts,
                 bundles_data: BUNDLES,
                 combos_data: COMBOS,
+                dish_templates_data: DISH_TEMPLATES,
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
             if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000);
@@ -10316,7 +10333,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.67';
+        const BUILD_VERSION = '2026-09-06.68';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10642,7 +10659,7 @@
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setBundleDiscount(${bi}, this.value)">
       </div>
       <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add bundle to basket</button>
-      <button type="button" class="bundle-edit-btn" onclick="openBundleEdit(${bi})">Edit bundle</button>
+      <button type="button" class="bundle-edit-btn" onclick="openBundleEdit(${bi}, this)">Edit bundle</button>
     </div>`;
         }
         function setBundleDiscount(bi, value) {
@@ -10667,10 +10684,17 @@
            to find. A bundle still needs at least 2 items, same rule as
            creating one (see saveNewBundle). */
         let bundleEditNewItems = null;
-        function openBundleEdit(bi) {
+        function openBundleEdit(bi, btnEl) {
             const bundle = BUNDLES[bi];
-            const card = document.getElementById(`bundleCard-${bi}`);
-            if (!card) return;
+            // Looked up via the clicked button's own card rather than
+            // document.getElementById('bundleCard-N') — that id can exist
+            // more than once on the page at a time (e.g. the same bundle
+            // rendered both on the homepage grid and its "view all" page),
+            // and getElementById always returns whichever copy comes first
+            // in the DOM, silently editing the wrong (possibly hidden) card
+            // no matter which one was actually clicked.
+            const card = btnEl ? btnEl.closest('.bundle-card') : document.getElementById(`bundleCard-${bi}`);
+            if (!card || !bundle) return;
             bundleEditNewItems = [...(bundle.items || [])];
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
@@ -10912,11 +10936,14 @@
         window.selectDish = selectDish;
         function removeDish(e, i) {
             e.stopPropagation();
+            const removed = DISH_TEMPLATES[i];
             DISH_TEMPLATES.splice(i, 1);
             if (activeDishIndex === i) { activeDishIndex = null; }
             else if (activeDishIndex !== null && activeDishIndex > i) { activeDishIndex--; }
             renderDishPicker();
             renderDishBuilder();
+            savePricingSettings();
+            if (removed) logAdminAction('dish_removed', 'dish', removed.name, null);
         }
         window.removeDish = removeDish;
         function renderDishBuilder() {
@@ -10938,7 +10965,8 @@
         <div>
           <h3>${escapeHtml(dish.name)}</h3>
           <span>${dish.items.length} suggested ingredient${dish.items.length === 1 ? '' : 's'}</span>
-        </div>`;
+        </div>
+        <button type="button" class="dish-edit-btn" onclick="openDishEdit(${activeDishIndex})">Edit dish</button>`;
             }
             const list = document.getElementById('dishBuilderList');
             list.innerHTML = dish.items.map((ref, idx) => {
@@ -10983,6 +11011,114 @@
             showToast(`Added ${added} item${added > 1 ? 's' : ''} for ${dish.name} to your basket.`);
         }
 
+        /* ================= EDIT AN EXISTING DISH (edit mode) =================
+           Mirrors openBundleEdit/openComboEdit — a dish previously had no
+           way to rename, re-emoji, or add/remove ingredients from one that
+           already existed (only a brand new one, or removing it outright),
+           so there was no "Save changes" to find here either. */
+        let dishEditNewItems = null;
+        // Unlike openBundleEdit/openComboEdit (which swap out one card's
+        // innerHTML inside a grid that's fully rebuilt from scratch on
+        // cancel/save), the dish builder panel's header/list/summary are
+        // static elements with their own persistent ids (dishBuilderAddBtn's
+        // click listener, in particular, is attached once at boot, not
+        // re-attached on every render) — replacing the panel's own innerHTML
+        // here would destroy those and break "Add selected to basket" the
+        // moment an edit was cancelled or saved. Renders into the sibling
+        // #dishEditSlot instead, hiding (not clearing) the panel underneath.
+        function openDishEdit(i) {
+            const dish = DISH_TEMPLATES[i];
+            const panel = document.getElementById('dishBuilderPanel');
+            const slot = document.getElementById('dishEditSlot');
+            if (!panel || !slot || !dish) return;
+            panel.style.display = 'none';
+            dishEditNewItems = [...(dish.items || [])];
+            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            slot.innerHTML = `
+      <div class="dish-builder-edit-form add-product-form">
+        <h3>Edit dish</h3>
+        <div class="apf-row">
+          <div><label>Dish name</label><input type="text" id="de-name" value="${escapeHtml(dish.name)}"></div>
+          <div><label>Emoji</label><input type="text" id="de-emoji" placeholder="e.g. 🍲" maxlength="4"></div>
+        </div>
+        <div>
+          <label>Suggested ingredients (at least 1)</label>
+          <div id="de-items-list" class="delivery-rule-list"></div>
+          <div class="apf-row">
+            <div><select id="de-item-cat"></select></div>
+            <div><select id="de-item-product"></select></div>
+          </div>
+          <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToDishEdit()">Add ingredient</button>
+        </div>
+        <div class="apf-actions">
+          <button class="apf-save" type="button" onclick="saveDishEdit(${i})">Save changes</button>
+          <button class="apf-cancel" type="button" onclick="cancelDishEdit();">Cancel</button>
+        </div>
+      </div>`;
+            document.getElementById('de-item-cat').innerHTML = catOptions;
+            populateDishEditProductSelect();
+            document.getElementById('de-item-cat').addEventListener('change', populateDishEditProductSelect);
+            renderDishEditItemsList();
+        }
+        window.openDishEdit = openDishEdit;
+        function cancelDishEdit() {
+            dishEditNewItems = null;
+            document.getElementById('dishEditSlot').innerHTML = '';
+            renderDishBuilder();
+        }
+        window.cancelDishEdit = cancelDishEdit;
+        function populateDishEditProductSelect() {
+            const catSlug = document.getElementById('de-item-cat').value;
+            const cat = findCategory(catSlug);
+            document.getElementById('de-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+        }
+        function renderDishEditItemsList() {
+            document.getElementById('de-items-list').innerHTML = dishEditNewItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item ? item.name : '?')}</span><button type="button" class="rule-remove-btn" onclick="dishEditNewItems.splice(${i},1); renderDishEditItemsList();">Remove</button></div>`;
+            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No ingredients added yet.</p>';
+        }
+        window.renderDishEditItemsList = renderDishEditItemsList;
+        function addItemToDishEdit() {
+            const catSlug = document.getElementById('de-item-cat').value;
+            const idx = parseInt(document.getElementById('de-item-product').value, 10);
+            if (!getProduct(catSlug, idx)) return;
+            dishEditNewItems.push({ catSlug, idx });
+            renderDishEditItemsList();
+        }
+        window.addItemToDishEdit = addItemToDishEdit;
+        function saveDishEdit(i) {
+            const name = document.getElementById('de-name').value.trim();
+            const emojiInput = document.getElementById('de-emoji').value.trim();
+            if (!name) { showToast('Give the dish a name.'); return; }
+            if (dishEditNewItems.length < 1) { showToast('Add at least one ingredient.'); return; }
+            const before = DISH_TEMPLATES[i];
+            const itemNamesBefore = (before.items || []).map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
+            DISH_TEMPLATES[i] = {
+                name,
+                emoji: emojiInput || before.emoji,
+                items: [...dishEditNewItems],
+            };
+            const itemNamesAfter = DISH_TEMPLATES[i].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
+            dishEditNewItems = null;
+            // The selection set is indices into the dish's own items array —
+            // stale once that array's been rebuilt above, so re-select
+            // everything fresh rather than risk pointing at the wrong item.
+            if (activeDishIndex === i) dishSelectedItems = new Set(DISH_TEMPLATES[i].items.map((_, idx) => idx));
+            document.getElementById('dishEditSlot').innerHTML = '';
+            renderDishPicker();
+            renderDishBuilder();
+            savePricingSettings();
+            const changes = diffFields(
+                { name: before.name, items: itemNamesBefore },
+                { name, items: itemNamesAfter },
+                [{ key: 'name', label: 'Name' }, { key: 'items', label: 'Items' }]
+            );
+            logAdminAction('dish_updated', 'dish', name, { changes });
+            showToast(`Updated "${name}".`);
+        }
+        window.saveDishEdit = saveDishEdit;
+
         /* ================= ADD A DISH (edit mode) ================= */
         let newDishItems = [];
         function openAddDishForm() {
@@ -11007,7 +11143,7 @@
             <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToNewDish()">Add ingredient</button>
           </div>
           <div class="apf-actions">
-            <button class="apf-save" type="button" onclick="saveNewDish()">Add dish (this tab only)</button>
+            <button class="apf-save" type="button" onclick="saveNewDish()">Add dish</button>
             <button class="apf-cancel" type="button" onclick="document.getElementById('addDishSlot').innerHTML=''; newDishItems=[];">Cancel</button>
           </div>
         </div>`;
@@ -11042,10 +11178,13 @@
             const emoji = document.getElementById('adf-emoji').value.trim() || DEFAULT_DISH_ICON_SVG;
             if (!name) { showToast('Give the dish a name.'); return; }
             if (newDishItems.length < 1) { showToast('Add at least one ingredient.'); return; }
+            const itemNames = newDishItems.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).join(', ');
             DISH_TEMPLATES.push({ name, emoji, items: [...newDishItems] });
             document.getElementById('addDishSlot').innerHTML = '';
             newDishItems = [];
             renderDishPicker();
+            savePricingSettings();
+            logAdminAction('dish_created', 'dish', name, { items: itemNames });
             showToast(`Added "${name}".`);
         }
         window.saveNewDish = saveNewDish;
@@ -11076,7 +11215,7 @@
       ${items.length
                 ? `<button class="bundle-add-btn" type="button" onclick="addComboToCart(${ci})">Add combo to basket</button>`
                 : (combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : '')}
-      <button type="button" class="combo-edit-btn" onclick="openComboEdit(${ci})">Edit combo</button>
+      <button type="button" class="combo-edit-btn" onclick="openComboEdit(${ci}, this)">Edit combo</button>
     </div>`;
         }
         function setComboDiscount(ci, value) {
@@ -11141,9 +11280,17 @@
 
         /* ================= EDIT AN EXISTING COMBO (edit mode) ================= */
         let comboEditNewItems = null; // working copy of items while a combo is being edited
-        function openComboEdit(ci) {
+        function openComboEdit(ci, btnEl) {
             const combo = COMBOS[ci];
-            const card = document.getElementById(`comboCard-${ci}`);
+            // Same reasoning as openBundleEdit: comboCard-N is rendered both
+            // on the homepage's Combo deals grid and the #/combos "view all"
+            // page at once, so document.getElementById would always grab
+            // the homepage's copy — clicking "Edit combo" on the view-all
+            // page edited a hidden element and looked completely
+            // unresponsive. Using the clicked button's own ancestor card
+            // fixes it regardless of which page it was clicked from.
+            const card = btnEl ? btnEl.closest('.combo-card') : document.getElementById(`comboCard-${ci}`);
+            if (!card || !combo) return;
             comboEditNewItems = [...(combo.items || [])];
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
@@ -16761,6 +16908,15 @@
         loadPricingSettings().then(() => {
             renderBundles();
             renderCombos();
+            // Same reasoning as renderBundles()/renderCombos() just above —
+            // if a visitor is already sitting on #/build-bundle when this
+            // resolves (most obviously: a hard refresh while already there),
+            // route() already fired once before this data existed and won't
+            // fire again on its own, since the hash never actually changes.
+            // Without this, a dish added moments ago would look lost on
+            // refresh even though it saved correctly.
+            renderDishPicker();
+            renderDishBuilder();
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
