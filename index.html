@@ -2064,45 +2064,101 @@
 
         /* ================= BUILD A BUNDLE ================= */
         .dish-picker {
-            display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+            gap: 14px; margin-bottom: 36px;
         }
         .dish-pill {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 20px; border-radius: 999px;
-            background: var(--card-bg); border: 1.5px solid rgba(var(--border-rgb), 0.12);
-            font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading);
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            padding: 24px 12px 18px; border-radius: 18px; text-align: center;
+            background: var(--card-bg); border: 1.5px solid rgba(var(--border-rgb), 0.1);
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             cursor: pointer;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1), border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
         }
-        .dish-pill .emoji { font-size: 18px; }
-        .dish-pill.active { background: var(--aubergine); border-color: var(--aubergine); color: var(--cream); }
+        .dish-pill:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 22px 38px rgba(var(--border-rgb), 0.14);
+            border-color: rgba(var(--border-rgb), 0.2);
+        }
+        .dish-pill .emoji {
+            width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--chartreuse); color: var(--aubergine-deep); font-size: 20px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .dish-pill .emoji svg { width: 22px; height: 22px; }
+        .dish-pill.active {
+            background: var(--aubergine); border-color: var(--aubergine); color: var(--cream);
+            box-shadow: 0 6px 16px rgba(6, 59, 0, 0.28);
+        }
+        .dish-pill.active .emoji { background: var(--chartreuse); color: var(--aubergine-deep); }
         .dish-pill-remove {
             display: none;
-            width: 18px; height: 18px; border-radius: 50%; border: none;
+            position: absolute; top: 10px; right: 10px;
+            width: 20px; height: 20px; border-radius: 50%; border: none;
             background: rgba(179,74,74,0.14); color: #b34a4a; font-size: 12px; line-height: 1; cursor: pointer;
+            align-items: center; justify-content: center;
         }
-        body.edit-mode-on .dish-pill-remove { display: inline-flex; align-items: center; justify-content: center; }
+        body.edit-mode-on .dish-pill-remove { display: flex; }
 
-        .dish-builder-empty { padding: 40px 0; text-align: center; color: var(--text-muted); font-size: 14px; }
+        .dish-builder-empty {
+            display: flex; flex-direction: column; align-items: center; gap: 14px;
+            padding: 56px 24px; text-align: center; color: var(--text-muted); font-size: 14px;
+            background: var(--card-bg); border: 1.5px dashed rgba(var(--border-rgb), 0.18); border-radius: 20px;
+        }
+        .dish-builder-empty svg { width: 40px; height: 40px; color: var(--chartreuse-rich); opacity: 0.75; }
         .dish-builder-panel {
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
-            padding: 24px; max-width: 520px;
+            display: grid; grid-template-columns: 1fr 260px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 20px;
+            overflow: hidden; max-width: 780px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 18px 36px rgba(var(--border-rgb), 0.06);
         }
-        .dish-builder-list { display: flex; flex-direction: column; margin-bottom: 18px; }
+        .dish-builder-header {
+            grid-column: 1 / -1;
+            display: flex; align-items: center; gap: 14px;
+            padding: 22px 28px; background: var(--section-alt-bg);
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .dish-builder-header .emoji {
+            width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--chartreuse); color: var(--aubergine-deep); font-size: 20px;
+        }
+        .dish-builder-header .emoji svg { width: 21px; height: 21px; }
+        .dish-builder-header h3 { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); }
+        .dish-builder-header span { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+        .dish-builder-list { display: flex; flex-direction: column; padding: 8px 28px; margin-bottom: 0; }
         .dish-builder-row {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 6px; border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 10px; transition: background 0.2s ease;
         }
+        .dish-builder-row:hover { background: rgba(var(--border-rgb), 0.025); }
         .dish-builder-row:last-child { border-bottom: none; }
-        .dish-builder-row input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; }
+        .dish-builder-row input[type="checkbox"] { width: 19px; height: 19px; flex-shrink: 0; accent-color: var(--chartreuse-rich); cursor: pointer; }
         .dish-builder-row label { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--text-body); cursor: pointer; }
         .dish-builder-row label em { color: #b34a4a; font-style: normal; font-size: 12px; }
         .dish-builder-unit { font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
-        .dish-builder-row .price { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); }
-        .dish-builder-summary { border-top: 1px solid rgba(var(--border-rgb), 0.1); padding-top: 16px; }
+        .dish-builder-row .price { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); flex-shrink: 0; }
+        .dish-builder-summary {
+            background: var(--section-alt-bg); padding: 22px 24px;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            border-left: 1px solid rgba(var(--border-rgb), 0.08);
+        }
         .dish-builder-total-row {
-            display: flex; justify-content: space-between; align-items: baseline;
-            font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading);
-            margin-bottom: 14px;
+            display: flex; flex-direction: column; gap: 3px;
+            font-family: var(--display); font-weight: 700; color: var(--heading);
+            margin-bottom: 16px;
+        }
+        .dish-builder-total-row span:first-child {
+            font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+        }
+        .dish-builder-total-row span:last-child { font-size: 26px; }
+        @media (max-width: 700px) {
+            .dish-builder-panel { grid-template-columns: 1fr; max-width: 100%; }
+            .dish-builder-summary { border-left: none; border-top: 1px solid rgba(var(--border-rgb), 0.08); }
         }
 
         /* Shop by group (homepage) gets its own warm yellow treatment,
@@ -8375,6 +8431,7 @@
             <div class="wrap">
                 <div class="dish-picker" id="dishPicker"></div>
                 <div id="dishBuilderPanel" class="dish-builder-panel" style="display:none;">
+                    <div class="dish-builder-header" id="dishBuilderHeader"></div>
                     <div class="dish-builder-list" id="dishBuilderList"></div>
                     <div class="dish-builder-summary">
                         <div class="dish-builder-total-row">
@@ -8385,6 +8442,7 @@
                     </div>
                 </div>
                 <div class="dish-builder-empty" id="dishBuilderEmpty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                     <p>Pick a dish above to get started.</p>
                 </div>
 
@@ -10204,7 +10262,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.64';
+        const BUILD_VERSION = '2026-09-06.65';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10815,8 +10873,17 @@
                 return;
             }
             empty.style.display = 'none';
-            panel.style.display = 'block';
+            panel.style.display = 'grid';
             const dish = DISH_TEMPLATES[activeDishIndex];
+            const header = document.getElementById('dishBuilderHeader');
+            if (header) {
+                header.innerHTML = `
+        <span class="emoji">${dish.emoji}</span>
+        <div>
+          <h3>${escapeHtml(dish.name)}</h3>
+          <span>${dish.items.length} suggested ingredient${dish.items.length === 1 ? '' : 's'}</span>
+        </div>`;
+            }
             const list = document.getElementById('dishBuilderList');
             list.innerHTML = dish.items.map((ref, idx) => {
                 const p = getProduct(ref.catSlug, ref.idx);
