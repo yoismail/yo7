@@ -438,7 +438,12 @@
             display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 10px;
         }
         .ep-photo-preview {
-            width: 140px; height: 140px; border-radius: 14px; overflow: hidden; flex-shrink: 0;
+            /* max-width/aspect-ratio instead of a fixed height — a narrow
+               product card's edit panel (mobile grids can go below 140px
+               wide) had no way to shrink this box, so it silently overflowed
+               the card (masked by the site's overflow-x:hidden, so it just
+               looked clipped/cut off rather than scrolling). */
+            width: 140px; max-width: 100%; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; flex-shrink: 0;
             background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex; align-items: center; justify-content: center; font-size: 52px;
         }
@@ -1679,7 +1684,7 @@
             padding: 64px 0 90px;
         }
         .legal-section { padding: 56px 0 90px; }
-        .legal-content { max-width: 68ch; }
+        .legal-content { max-width: 68ch; margin: 0 auto; }
         .legal-content h2 {
             font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--heading);
             margin: 32px 0 12px;
@@ -2067,6 +2072,15 @@
             display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
             gap: 14px; margin-bottom: 36px;
         }
+        /* Uncapped auto-fill at the base 132px minimum stretched to ~10-11
+           thin columns of tiny tiles on a wide desktop monitor — fine on
+           mobile (where it never gets past 2-3 columns anyway), but read as
+           cluttered rather than curated once there was enough width for
+           that many. Only widened for larger viewports so mobile is
+           untouched. */
+        @media (min-width: 900px) {
+            .dish-picker { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+        }
         .dish-pill {
             position: relative;
             display: flex; flex-direction: column; align-items: center; gap: 12px;
@@ -2361,11 +2375,21 @@
         @media (max-width: 520px) {
             .group-card-grid { grid-template-columns: 1fr; }
         }
+        /* Fixed at 5 columns from 901px all the way past .wrap's own
+           1600px cap — a very large monitor just got a slightly wider
+           version of the same 5 cards instead of using the extra room. One
+           more column once there's genuinely enough width for it. */
+        @media (min-width: 1600px) {
+            .group-card-grid { grid-template-columns: repeat(6, 1fr); }
+        }
 
         .cat-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 18px;
+        }
+        @media (min-width: 1600px) {
+            .cat-grid { grid-template-columns: repeat(6, 1fr); }
         }
         .group-preview { margin-top: 10px; font-size: 15px; letter-spacing: 3px; opacity: 0.85; }
         .group-count {
@@ -4907,7 +4931,10 @@
         }
         .checkout-upsell-add:hover { background: var(--chartreuse-soft); transform: scale(1.08); }
         .checkout-upsell-add svg { width: 11px; height: 11px; }
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
+            /* Was 480px — between 481-640px, 3 fixed columns squeezed each
+               upsell card (aspect-ratio thumbnail + a 2-line title) into
+               visibly cramped ~150px-wide cards. */
             .checkout-upsell-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
@@ -9401,7 +9428,7 @@
         let discountsLoadedForAdmin = false;
         async function loadDiscountsFromSupabase() {
             if (!supabaseClient) return;
-            const { data, error } = await supabaseClient.from('discount_codes').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('discount_codes').select('*').order('created_at', { ascending: false }).limit(200);
             if (error) { console.error('Could not load discount codes:', error.message); return; }
             discounts = (data || []).map(d => ({
                 id: d.id, name: d.name, code: d.code, type: d.type, value: d.value,
@@ -9605,7 +9632,7 @@
                 const rStars = '★★★★★☆☆☆☆☆'.slice(5 - rFull, 10 - rFull);
                 const initial = (r.author_name || 'G').trim().charAt(0).toUpperCase();
                 const avatar = r.author_photo_url
-                    ? `<img class="grc-avatar" src="${escapeHtml(r.author_photo_url)}" alt="" referrerpolicy="no-referrer">`
+                    ? `<img class="grc-avatar" src="${escapeHtml(r.author_photo_url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
                     : `<span class="grc-avatar">${escapeHtml(initial)}</span>`;
                 return `
     <div class="google-review-card">
@@ -10340,7 +10367,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.69';
+        const BUILD_VERSION = '2026-09-06.70';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11730,12 +11757,26 @@
            order they show in. Same product-photos storage bucket everything
            else already uploads to (under an adverts/ path), so no new
            bucket/policy setup is needed beyond the one new table. */
+        // Seeded synchronously from whatever was cached last time, so the
+        // very first renderAdvertCarousel() call at boot (before the
+        // Supabase round trip below has any chance to resolve) already
+        // knows whether to show the section. Without this, every single
+        // page load rendered the section hidden, then — a network round
+        // trip later — popped a full-width banner in ABOVE the hero,
+        // visibly shoving the hero and everything below it down. The cache
+        // can only go stale if an admin changes the banners between visits,
+        // which self-corrects the moment loadAdvertBanners() below resolves.
         let advertBanners = [];
+        try {
+            const cached = JSON.parse(localStorage.getItem('yo7-advert-banners-cache') || 'null');
+            if (Array.isArray(cached)) advertBanners = cached;
+        } catch (e) {}
         async function loadAdvertBanners() {
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.from('advert_banners').select('*').order('sort_order', { ascending: true });
             if (error || !Array.isArray(data)) return;
             advertBanners = data;
+            try { localStorage.setItem('yo7-advert-banners-cache', JSON.stringify(data)); } catch (e) {}
             renderAdvertCarousel();
         }
         function renderAdvertCarousel() {
@@ -12325,7 +12366,14 @@
       </div>
     </a>`;
             }).join('');
-            observeReveals();
+            // Scoped to just this grid's own cards, not the global
+            // observeReveals() — that one re-queries .reveal across the
+            // ENTIRE document (every view ever rendered stays in the DOM,
+            // just hidden), so calling it here on every group-page visit
+            // re-observed hundreds of already-settled elements from other
+            // pages and created a brand-new IntersectionObserver each time,
+            // compounding the longer a session went on.
+            observeContainerReveals(document.getElementById('groupCatGrid'), '.reveal');
         }
         function matchesQuery(p, q) {
             return p.name.toLowerCase().includes(q) ||
@@ -12357,7 +12405,7 @@
             renderShopAllPills();
             filterShopAll();
             const input = document.getElementById('shopAllSearchInput');
-            input.oninput = filterShopAll;
+            input.oninput = debounce(filterShopAll, 120);
         }
         function renderShopAllPills() {
             const pills = [{ slug: 'all', name: 'All' }, ...CATEGORIES];
@@ -12614,7 +12662,8 @@
                 .from('product_reviews')
                 .select('*, profiles(full_name)')
                 .eq('product_key', key)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(200);
             if (error) {
                 listEl.innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">Couldn\'t load reviews right now, please try again shortly.</p>';
                 return;
@@ -13024,7 +13073,7 @@
                 loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
             }
             updateSummaries();
-            loadCartRatingsAndSales();
+            scheduleLoadCartRatingsAndSales();
         }
         /* ================= CHECKOUT: RATING + SOLD-COUNT BADGES =================
            A compact rating/sold-count badge next to each cart line item, refreshed
@@ -13039,12 +13088,23 @@
         }
         const cartRatingsData = new Map(); // productKey -> { sum, count }
         const cartSalesData = new Map(); // productKey -> unitsSold
+        // renderCartList() runs on every qty +/- click, and used to kick off
+        // two fresh Supabase calls each time with nothing cancelling the
+        // previous pair — rapid clicking piled up a growing stack of
+        // concurrent, unordered requests that could race and overwrite this
+        // data with a stale response. Debounced the same way cartSyncTimer
+        // already handles rapid cart edits elsewhere.
+        let cartRatingsLoadTimer = null;
+        function scheduleLoadCartRatingsAndSales() {
+            clearTimeout(cartRatingsLoadTimer);
+            cartRatingsLoadTimer = setTimeout(loadCartRatingsAndSales, 350);
+        }
         async function loadCartRatingsAndSales() {
             const badgeEls = Array.from(document.querySelectorAll('.cart-rating-badge[data-product-key]'));
             if (!supabaseClient || badgeEls.length === 0) return;
             const keys = [...new Set(badgeEls.map(el => el.dataset.productKey))];
             const [reviewsRes, salesRes] = await Promise.all([
-                supabaseClient.from('product_reviews').select('product_key, rating').in('product_key', keys),
+                supabaseClient.from('product_reviews').select('product_key, rating').in('product_key', keys).limit(2000),
                 supabaseClient.rpc('get_units_sold', { p_product_keys: keys }),
             ]);
             cartRatingsData.clear();
@@ -13115,7 +13175,8 @@
                 .from('product_reviews')
                 .select('*, profiles(full_name)')
                 .eq('product_key', key)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(200);
             if (error) {
                 listEl.innerHTML = '<p style="color:var(--text-muted); font-size:13.5px;">Couldn\'t load reviews right now, please try again shortly.</p>';
                 return;
@@ -14544,7 +14605,8 @@
             if (userIds.length) {
                 const { data: priorOrders } = await supabaseClient
                     .from('orders').select('user_id')
-                    .in('user_id', userIds).lt('created_at', start.toISOString());
+                    .in('user_id', userIds).lt('created_at', start.toISOString())
+                    .limit(5000);
                 (priorOrders || []).forEach(o => returningIds.add(o.user_id));
             }
 
@@ -16255,8 +16317,19 @@
         }
         async function applyProductOverrides() {
             if (!supabaseClient) return;
-            await loadCustomProducts();
-            const { data, error } = await supabaseClient.from('product_overrides').select('*');
+            // These two reads are independent, so fetched in parallel to cut
+            // the network latency roughly in half rather than paying for
+            // two round trips back to back — but still PROCESSED in this
+            // order: loadCustomProducts() finishes inserting admin-added
+            // products into cat.products[idx] (synchronously, before its
+            // own promise resolves) before the override loop below runs,
+            // since an override targeting a custom product's slot would be
+            // silently dropped (product undefined) if applied first.
+            const [, overridesRes] = await Promise.all([
+                loadCustomProducts(),
+                supabaseClient.from('product_overrides').select('*'),
+            ]);
+            const { data, error } = overridesRes;
             if (error || !data) return;
             data.forEach(row => {
                 const [catSlug, idxStr] = String(row.product_key).split('::');
@@ -16365,13 +16438,26 @@
             resultsEl.classList.add('open');
         }
 
+        // Small debounce helper — searchProducts()/allProducts() rebuild the
+        // whole catalog array plus a DOM rewrite on every call, which is
+        // fine at the current catalog size but is exactly the kind of
+        // per-keystroke work that gets janky as the catalog grows. A short
+        // delay is imperceptible to a typer but collapses a fast typist's
+        // burst of keystrokes into one rebuild instead of one per key.
+        function debounce(fn, waitMs) {
+            let timer = null;
+            return function (...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), waitMs);
+            };
+        }
         function wireLiveSearch(inputId, resultsId, onNavigate) {
             const input = document.getElementById(inputId);
             const results = document.getElementById(resultsId);
-            input.addEventListener('input', () => {
+            input.addEventListener('input', debounce(() => {
                 const items = searchProducts(input.value);
                 renderSearchDropdown(results, items, input.value);
-            });
+            }, 120));
             input.addEventListener('focus', () => {
                 if (input.value.trim()) renderSearchDropdown(results, searchProducts(input.value), input.value);
             });
@@ -16895,6 +16981,7 @@
             if (slides.length < 2) return;
             let current = 0;
             setInterval(() => {
+                if (document.hidden) return;
                 const next = (current + 1) % slides.length;
                 slides[current].classList.remove('active');
                 slides[next].classList.add('active');
@@ -16903,6 +16990,13 @@
         }
 
         /* ================= INIT ================= */
+        // Called first, ahead of everything else: it only needs the
+        // theme-toggle button and the data-theme attribute the <head>
+        // script already applied before first paint, no catalog/Supabase
+        // dependency. Left until the end of boot, the toggle icon (sun vs
+        // moon) stayed out of sync with the already-correct dark/light page
+        // for the entire rest of this script's run.
+        initThemeToggle();
         renderCatGrid();
         renderBundles();
         renderDeliveryAdmin();
@@ -16979,7 +17073,6 @@
         renderCombos();
         const addComboBtn = document.getElementById('addComboBtn');
         if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
-        renderHeroGlimpse();
         const whatsappOrderBtn = document.getElementById('whatsappOrderBtn');
         if (whatsappOrderBtn) whatsappOrderBtn.addEventListener('click', sendCartViaWhatsApp);
         const whatsappListSendBtn = document.getElementById('whatsappListSendBtn');
@@ -17095,14 +17188,17 @@
                 showToast("You're on the list! Check your inbox for a welcome email.", 5000);
             });
         }
-        renderNewCarousel();
-        renderBestSellersSpotlight();
+        // renderHeroGlimpse/renderOfferCarousel/renderNewCarousel/
+        // renderBestSellersSpotlight used to also be called explicitly here
+        // at boot — redundant, since route() (below) always hits the home
+        // branch on a fresh load and calls all four itself. That meant every
+        // page load rebuilt these sections' innerHTML twice in a row for no
+        // reason. loadRealBestSellers() still needs its own call: it's an
+        // async data fetch that re-renders on its own once it resolves.
         loadRealBestSellers();
         renderPlatformBadges();
-        renderOfferCarousel();
         renderAdvertCarousel();
         loadAdvertBanners();
-        initThemeToggle();
         initCookieNotice();
         initDragScroll();
         observeReveals();
