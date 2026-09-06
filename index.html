@@ -10237,7 +10237,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.62';
+        const BUILD_VERSION = '2026-09-06.63';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16731,11 +16731,15 @@
         initCarouselPeriodicJump('newCarousel');
         initCarouselPeriodicJump('offerCarousel');
         initCarouselPeriodicJump('advertCarousel', 5000);
-        // Best sellers, Shop by category, Bundles, and Shop-by-meal are all
-        // manual/swipe/arrow-driven only, no auto-scroll — Best sellers and
-        // Shop by category used to have a continuous ambient auto-scroll
-        // here, removed on request (it read as distracting rather than
-        // lively, and fought a visitor trying to browse at their own pace).
+        initCarouselPeriodicJump('bestSellerCarousel');
+        // Shop by category, Bundles, and Shop-by-meal stay manual/swipe/
+        // arrow-driven only, no auto-scroll — Best sellers and Shop by
+        // category used to have a continuous ambient auto-scroll here,
+        // removed on request (it read as distracting rather than lively,
+        // and fought a visitor trying to browse at their own pace); Best
+        // Sellers later got the same slower, one-card periodic jump New
+        // Arrivals/Special Offers use instead, which doesn't have that
+        // problem since it pauses immediately on any touch/scroll/click.
         /* ================= NEWSLETTER =================
            Actually saves the address now (see
            supabase-migration-18-newsletter-signup.sql) instead of just
