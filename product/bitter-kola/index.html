@@ -10365,7 +10365,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.72';
+        const BUILD_VERSION = '2026-09-06.73';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14298,12 +14298,17 @@
                 : 'No payment reference on file for this order.';
             document.getElementById('aodBillingAddress').textContent = 'Not collected separately in the current checkout, delivery address is the only address on file.';
             const items = Array.isArray(order.items) ? order.items : [];
-            document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => `
+            document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => {
+                const unitLine = i.isCombo
+                    ? [escapeHtml(i.unit || 'Combo'), typeof i.weight === 'number' && i.weight > 0 ? `${i.weight}kg` : ''].filter(Boolean).join(' · ') + (i.comboItems ? `<br>Includes: ${i.comboItems.map(escapeHtml).join(', ')}` : '')
+                    : escapeHtml(i.unit || '');
+                return `
     <tr>
-        <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.map(escapeHtml).join(', ')}` : escapeHtml(i.unit || '')}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
+        <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${unitLine}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
         <td class="qty">&times;${i.qty}</td>
         <td class="line-total">${money((i.price || 0) * i.qty)}</td>
-    </tr>`).join('');
+    </tr>`;
+            }).join('');
             document.getElementById('aodSubtotal').textContent = money(order.subtotal || 0);
             document.getElementById('aodDeliveryFee').textContent = order.delivery_fee ? money(order.delivery_fee) : 'Free';
             if (order.discount) {
