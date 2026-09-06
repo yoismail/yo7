@@ -1355,6 +1355,27 @@
             font-size: clamp(120px, 22vw, 340px);
             color: var(--ink);
             opacity: var(--hero-watermark-op);
+            /* Same idea as .hero-watermark's tilt-breathe-glow at the
+               opposite corner, tuned for this mark's shape: it bleeds off
+               the bottom-left rather than sitting centred like the seal,
+               so the origin sits near that anchored corner instead of the
+               middle — a rotation around the centre would swing the
+               already-mostly-offscreen text in a way that reads as
+               drifting rather than breathing. A slightly different
+               duration and a negative delay (starts mid-cycle) keep the
+               two corners from pulsing in obvious lockstep. */
+            transform-origin: 15% 100%;
+            animation: heroTextWatermarkLive 7.5s ease-in-out infinite;
+            animation-delay: -2.4s;
+        }
+        @keyframes heroTextWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: var(--hero-watermark-op); }
+            32% { transform: rotate(2.5deg) scale(1.025); }
+            60% { transform: rotate(-3.5deg) scale(1.05); opacity: calc(var(--hero-watermark-op) + 0.08); }
+            84% { transform: rotate(-1deg) scale(1.015); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-text-watermark { animation: none; }
         }
         /* .shop-header (About Us intro) is a fixed white/light panel in
            both themes (see .shop-header-story), so this uses a fixed faded
@@ -10681,7 +10702,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.87';
+        const BUILD_VERSION = '2026-09-06.88';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
