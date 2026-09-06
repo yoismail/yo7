@@ -1717,12 +1717,12 @@
         }
         .about-story-grid {
             display: grid;
-            grid-template-columns: 0.85fr 1.15fr;
-            gap: 64px;
+            grid-template-columns: auto 1fr;
+            gap: 48px;
             align-items: center;
             margin-bottom: 72px;
         }
-        .about-seal { width: 110px; height: 110px; }
+        .about-seal { width: clamp(120px, 9vw, 160px); height: clamp(120px, 9vw, 160px); flex-shrink: 0; }
         .about-story-grid h2 {
             font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.6vw, 36px);
             letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 20px; color: var(--heading);
@@ -10661,7 +10661,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.84';
+        const BUILD_VERSION = '2026-09-06.85';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
