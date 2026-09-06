@@ -2117,6 +2117,18 @@
         }
         body.edit-mode-on .dish-pill-remove { display: flex; }
 
+        .dish-icon-picker { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 12px; }
+        .dish-icon-option {
+            width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--chartreuse); color: var(--aubergine-deep);
+            border: 2px solid transparent; cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .dish-icon-option svg { width: 19px; height: 19px; }
+        .dish-icon-option:hover { transform: translateY(-2px); }
+        .dish-icon-option.selected { border-color: var(--aubergine); box-shadow: 0 0 0 2px var(--chartreuse-soft); }
+
         .dish-builder-empty {
             display: flex; flex-direction: column; align-items: center; gap: 14px;
             padding: 56px 24px; text-align: center; color: var(--text-muted); font-size: 14px;
@@ -10365,7 +10377,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.78';
+        const BUILD_VERSION = '2026-09-06.79';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -10408,6 +10420,25 @@
         // every other icon on the site, rather than a platform emoji.
         const DEFAULT_ITEM_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5h17l-1.6 9.3a2 2 0 0 1-2 1.7H7.1a2 2 0 0 1-2-1.7L3.5 9.5Z"/><path d="M7.5 9.5 9 4M16.5 9.5 15 4"/><path d="M8.5 13v5M12 13v5M15.5 13v5"/></svg>';
         const DEFAULT_DISH_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>';
+        // A small curated set of on-brand line-art glyphs an admin picks
+        // from when adding/editing a dish, instead of typing a raw emoji
+        // character — keeps every dish icon in the same custom stroke
+        // style as the rest of the site (see DEFAULT_ITEM_ICON_SVG above)
+        // rather than whatever emoji font the admin's own device happens
+        // to render.
+        const DISH_ICON_LIBRARY = [
+            { label: 'Bowl', svg: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><path d="M9.5 5c-.6.6-.6 1.2 0 1.8M14.5 5c-.6.6-.6 1.2 0 1.8"/></svg>' },
+            { label: 'Bowl of rice', svg: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>' },
+            { label: 'Bowl of beans', svg: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9.3" cy="12.6" rx="1.3" ry=".9" transform="rotate(20 9.3 12.6)"/><ellipse cx="12.5" cy="13.4" rx="1.3" ry=".9" transform="rotate(-15 12.5 13.4)"/><ellipse cx="15.1" cy="12.1" rx="1.3" ry=".9" transform="rotate(25 15.1 12.1)"/></svg>' },
+            { label: 'Pot', svg: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.8h14v3a7 6.2 0 0 1-14 0v-3Z"/><path d="M4.3 11.6c-.9-.1-1.4.6-1.2 1.5M19.7 11.6c.9-.1 1.4.6 1.2 1.5"/><path d="M12 8.3V6"/></svg>' },
+            { label: 'Pot of greens', svg: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.8h14v3a7 6.2 0 0 1-14 0v-3Z"/><path d="M4.3 11.6c-.9-.1-1.4.6-1.2 1.5M19.7 11.6c.9-.1 1.4.6 1.2 1.5"/><path d="M9 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9ZM15 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9Z"/></svg>' },
+            { label: 'Skewer', svg: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11h4.3M17.2 11H21.5"/><rect x="6.3" y="8" width="5" height="6" rx="1.6"/><rect x="12.7" y="8" width="5" height="6" rx="1.6"/><path d="M9 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3ZM15 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3Z"/></svg>' },
+            { label: 'Wok', svg: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5c0 4.5 3.8 7.8 9 7.8s9-3.3 9-7.8"/><path d="M2 10.5h20"/><path d="M18.2 6 21.5 3.3"/><ellipse cx="17" cy="7" rx="1.5" ry="1" transform="rotate(-30 17 7)"/><ellipse cx="8" cy="13.2" rx=".8" ry="1.1" transform="rotate(-20 8 13.2)"/><ellipse cx="11" cy="14.3" rx=".8" ry="1.1" transform="rotate(10 11 14.3)"/><ellipse cx="14" cy="13.6" rx=".8" ry="1.1" transform="rotate(-10 14 13.6)"/></svg>' },
+            { label: 'Plate', svg: DEFAULT_DISH_ICON_SVG },
+        ];
+        function dishIconPickerHTML(selectedSvg, handlerName) {
+            return DISH_ICON_LIBRARY.map((ic, i) => `<button type="button" class="dish-icon-option${ic.svg === selectedSvg ? ' selected' : ''}" title="${escapeHtml(ic.label)}" aria-label="${escapeHtml(ic.label)}" onclick="${handlerName}(${i})">${ic.svg}</button>`).join('');
+        }
         function allProducts() {
             return CATEGORIES.flatMap(c => c.products.map((p, i) => ({ ...p, id: c.slug + '::' + i, catSlug: c.slug, catName: c.name, emoji: c.emoji })));
         }
@@ -11066,6 +11097,7 @@
            already existed (only a brand new one, or removing it outright),
            so there was no "Save changes" to find here either. */
         let dishEditNewItems = null;
+        let dishEditIconSvg = null;
         // Unlike openBundleEdit/openComboEdit (which swap out one card's
         // innerHTML inside a grid that's fully rebuilt from scratch on
         // cancel/save), the dish builder panel's header/list/summary are
@@ -11082,13 +11114,15 @@
             if (!panel || !slot || !dish) return;
             panel.style.display = 'none';
             dishEditNewItems = [...(dish.items || [])];
+            dishEditIconSvg = dish.emoji;
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             slot.innerHTML = `
       <div class="dish-builder-edit-form add-product-form">
         <h3>Edit dish</h3>
-        <div class="apf-row">
-          <div><label>Dish name</label><input type="text" id="de-name" value="${escapeHtml(dish.name)}"></div>
-          <div><label>Emoji</label><input type="text" id="de-emoji" placeholder="e.g. 🍲" maxlength="4"></div>
+        <div><label>Dish name</label><input type="text" id="de-name" value="${escapeHtml(dish.name)}"></div>
+        <div>
+          <label>Icon</label>
+          <div class="dish-icon-picker" id="de-icon-picker"></div>
         </div>
         <div>
           <label>Suggested ingredients (at least 1)</label>
@@ -11108,10 +11142,17 @@
             populateDishEditProductSelect();
             document.getElementById('de-item-cat').addEventListener('change', populateDishEditProductSelect);
             renderDishEditItemsList();
+            document.getElementById('de-icon-picker').innerHTML = dishIconPickerHTML(dishEditIconSvg, 'selectEditDishIcon');
         }
         window.openDishEdit = openDishEdit;
+        function selectEditDishIcon(i) {
+            dishEditIconSvg = DISH_ICON_LIBRARY[i].svg;
+            document.getElementById('de-icon-picker').innerHTML = dishIconPickerHTML(dishEditIconSvg, 'selectEditDishIcon');
+        }
+        window.selectEditDishIcon = selectEditDishIcon;
         function cancelDishEdit() {
             dishEditNewItems = null;
+            dishEditIconSvg = null;
             document.getElementById('dishEditSlot').innerHTML = '';
             renderDishBuilder();
         }
@@ -11138,18 +11179,18 @@
         window.addItemToDishEdit = addItemToDishEdit;
         function saveDishEdit(i) {
             const name = document.getElementById('de-name').value.trim();
-            const emojiInput = document.getElementById('de-emoji').value.trim();
             if (!name) { showToast('Give the dish a name.'); return; }
             if (dishEditNewItems.length < 1) { showToast('Add at least one ingredient.'); return; }
             const before = DISH_TEMPLATES[i];
             const itemNamesBefore = (before.items || []).map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             DISH_TEMPLATES[i] = {
                 name,
-                emoji: emojiInput || before.emoji,
+                emoji: dishEditIconSvg || before.emoji,
                 items: [...dishEditNewItems],
             };
             const itemNamesAfter = DISH_TEMPLATES[i].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             dishEditNewItems = null;
+            dishEditIconSvg = null;
             // The selection set is indices into the dish's own items array —
             // stale once that array's been rebuilt above, so re-select
             // everything fresh rather than risk pointing at the wrong item.
@@ -11170,17 +11211,20 @@
 
         /* ================= ADD A DISH (edit mode) ================= */
         let newDishItems = [];
+        let newDishIconSvg = DEFAULT_DISH_ICON_SVG;
         function openAddDishForm() {
             const slot = document.getElementById('addDishSlot');
             if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newDishItems = []; return; }
             newDishItems = [];
+            newDishIconSvg = DEFAULT_DISH_ICON_SVG;
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             slot.innerHTML = `
         <div class="add-product-form">
           <h3>Add a new dish</h3>
-          <div class="apf-row">
-            <div><label>Dish name</label><input type="text" id="adf-name" placeholder="e.g. Egusi Soup"></div>
-            <div><label>Emoji</label><input type="text" id="adf-emoji" placeholder="e.g. 🍲" maxlength="4"></div>
+          <div><label>Dish name</label><input type="text" id="adf-name" placeholder="e.g. Egusi Soup"></div>
+          <div>
+            <label>Icon</label>
+            <div class="dish-icon-picker" id="adf-icon-picker"></div>
           </div>
           <div>
             <label>Suggested ingredients</label>
@@ -11200,8 +11244,14 @@
             populateAdfProductSelect();
             document.getElementById('adf-item-cat').addEventListener('change', populateAdfProductSelect);
             renderNewDishItemsList();
+            document.getElementById('adf-icon-picker').innerHTML = dishIconPickerHTML(newDishIconSvg, 'selectNewDishIcon');
         }
         window.openAddDishForm = openAddDishForm;
+        function selectNewDishIcon(i) {
+            newDishIconSvg = DISH_ICON_LIBRARY[i].svg;
+            document.getElementById('adf-icon-picker').innerHTML = dishIconPickerHTML(newDishIconSvg, 'selectNewDishIcon');
+        }
+        window.selectNewDishIcon = selectNewDishIcon;
         function populateAdfProductSelect() {
             const catSlug = document.getElementById('adf-item-cat').value;
             const cat = findCategory(catSlug);
@@ -11224,7 +11274,7 @@
         window.addItemToNewDish = addItemToNewDish;
         function saveNewDish() {
             const name = document.getElementById('adf-name').value.trim();
-            const emoji = document.getElementById('adf-emoji').value.trim() || DEFAULT_DISH_ICON_SVG;
+            const emoji = newDishIconSvg || DEFAULT_DISH_ICON_SVG;
             if (!name) { showToast('Give the dish a name.'); return; }
             if (newDishItems.length < 1) { showToast('Add at least one ingredient.'); return; }
             const itemNames = newDishItems.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).join(', ');
