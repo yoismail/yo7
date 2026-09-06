@@ -4497,10 +4497,16 @@
             align-items: center;
             gap: 7px;
             flex-wrap: wrap;
-            font-size: 13px;
-            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--chartreuse-rich);
             margin-top: 14px;
         }
+        /* chartreuse-rich reads well on the light card backgrounds this
+           sits on by default, but goes muddy against a dark card — swap to
+           the brighter chartreuse-soft (already used for sale-price text on
+           dark cards elsewhere) once dark mode is actually on. */
+        [data-theme="dark"] .pd-delivery-window { color: var(--chartreuse-soft); }
 
         .pd-delivery-window svg {
             width: 16px;
@@ -9502,7 +9508,11 @@
             if (!row) return;
             const badges = [];
             if (isHttpUrl(trustpilotUrl)) badges.push(`<a class="platform-badge platform-badge-trustpilot" href="${escapeHtml(trustpilotUrl)}" target="_blank" rel="noopener">★ Leave a review on Trustpilot</a>`);
-            if (isHttpUrl(googleBusinessUrl)) badges.push(`<a class="platform-badge platform-badge-google" href="${escapeHtml(googleBusinessUrl)}" target="_blank" rel="noopener">G Leave a review on Google</a>`);
+            // A bare "G" character in front of the label read as a stray
+            // letter rather than a logo (there's no single-character
+            // Google glyph the way "★" reads as a rating star for
+            // Trustpilot) — a real, if minimal, Google "G" mark instead.
+            if (isHttpUrl(googleBusinessUrl)) badges.push(`<a class="platform-badge platform-badge-google" href="${escapeHtml(googleBusinessUrl)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>Leave a review on Google</a>`);
             row.innerHTML = badges.join('');
         }
         // The static LocalBusiness JSON-LD in <head> ships with just
@@ -10330,7 +10340,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.68';
+        const BUILD_VERSION = '2026-09-06.69';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
