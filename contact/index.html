@@ -1949,8 +1949,13 @@
         .bundle-card h3 {
             font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px;
         }
-        .bundle-card .bundle-tagline {
-            font-size: 13px; color: var(--text-muted); margin-bottom: 16px;
+        /* Unscoped (not ".bundle-card .bundle-tagline") because this same
+           div is reused by comboCardHTML on .combo-card — scoping it to
+           .bundle-card left combo descriptions unstyled, falling back to
+           the browser's default 16px/full-ink text and visually
+           overpowering the item list below it. */
+        .bundle-tagline {
+            font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;
         }
         .bundle-items {
             display: flex; flex-direction: column; margin-bottom: 16px;
@@ -2076,7 +2081,6 @@
             box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
         }
         .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px; }
-        .combo-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
         .combo-card .btn { width: 100%; text-align: center; }
         .combo-remove-btn {
             display: none;
@@ -10677,7 +10681,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.86';
+        const BUILD_VERSION = '2026-09-06.87';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
