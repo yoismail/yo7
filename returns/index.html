@@ -10363,10 +10363,18 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.74';
+        const BUILD_VERSION = '2026-09-06.75';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
+        // A combo's included-items list holds {name, unit} objects so admin
+        // order processing can see pack size/weight per item, not just a
+        // name. Orders placed before this existed stored plain name
+        // strings, so this stays tolerant of both shapes indefinitely,
+        // historical orders still need to render correctly.
+        function comboItemLabel(it) {
+            return (it && typeof it === 'object') ? `${it.name}${it.unit ? ` (${it.unit})` : ''}` : it;
+        }
         // Fisher-Yates, doesn't mutate the input array.
         function shuffleArray(arr) {
             const a = arr.slice();
@@ -11289,7 +11297,7 @@
                 catSlug: null,
                 emoji: DEFAULT_DISH_ICON_SVG,
                 isCombo: true,
-                comboItems: added.map(p => p.name),
+                comboItems: added.map(p => ({ name: p.name, unit: effectiveUnit(p) })),
                 weight: totalWeight,
             };
             addToCart(comboItem, 1);
@@ -11525,7 +11533,7 @@
                 catSlug: null,
                 emoji: DEFAULT_DISH_ICON_SVG,
                 isCombo: true,
-                comboItems: added.map(p => p.name),
+                comboItems: added.map(p => ({ name: p.name, unit: effectiveUnit(p) })),
                 weight: totalWeight,
             };
             addToCart(comboItem, 1);
@@ -13025,7 +13033,7 @@
         <div class="cart-info">
           <h4>${escapeHtml(item.name)}</h4>
           <span>${escapeHtml(item.unit || '')}</span>
-          <span class="combo-included">Includes: ${(item.comboItems || []).map(escapeHtml).join(', ')}</span>
+          <span class="combo-included">Includes: ${(item.comboItems || []).map(it => escapeHtml(comboItemLabel(it))).join(', ')}</span>
         </div>
         <div class="cart-qty cart-qty-locked" title="Combo pricing is fixed, quantities inside can't be adjusted separately">Combo</div>
         <div class="cart-price">${money(item.price * item.qty)}</div>
@@ -14312,7 +14320,7 @@
             const items = Array.isArray(order.items) ? order.items : [];
             document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => {
                 const unitLine = i.isCombo
-                    ? [escapeHtml(i.unit || 'Combo'), typeof i.weight === 'number' && i.weight > 0 ? `${i.weight}kg` : ''].filter(Boolean).join(' · ') + (i.comboItems ? `<br>Includes: ${i.comboItems.map(escapeHtml).join(', ')}` : '')
+                    ? [escapeHtml(i.unit || 'Combo'), typeof i.weight === 'number' && i.weight > 0 ? `${i.weight}kg` : ''].filter(Boolean).join(' · ') + (i.comboItems ? `<br>Includes: ${i.comboItems.map(it => escapeHtml(comboItemLabel(it))).join(', ')}` : '')
                     : escapeHtml(i.unit || '');
                 return `
     <tr>
@@ -14892,7 +14900,7 @@
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
-      <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.map(escapeHtml).join(', ')}` : escapeHtml(i.unit || '')}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
+      <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.map(it => escapeHtml(comboItemLabel(it))).join(', ')}` : escapeHtml(i.unit || '')}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
       <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
       <td class="inv-qty">${i.qty}</td>
       <td class="inv-line-total">${money(i.price * i.qty)}</td>
@@ -15130,7 +15138,7 @@
             setText(10, 'normal', ink);
             order.items.forEach(item => {
                 const nameLines = pdf.splitTextToSize(item.name, colItemWidth);
-                const subLine = item.isCombo && item.comboItems ? `Includes: ${item.comboItems.join(', ')}`
+                const subLine = item.isCombo && item.comboItems ? `Includes: ${item.comboItems.map(comboItemLabel).join(', ')}`
                     : item.isSubscription ? `Subscription, every ${item.subscriptionFrequency} weeks`
                     : item.unit;
                 const subLines = subLine ? pdf.splitTextToSize(subLine, colItemWidth) : [];
