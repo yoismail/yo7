@@ -6678,7 +6678,7 @@
         .admin-order-detail-row dd { margin: 0; text-align: right; color: var(--text-body); }
         .admin-order-detail-note { font-size: 12.5px; color: var(--text-faint); margin-top: 4px; }
         .admin-order-items-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-        .admin-order-items-table td { padding: 8px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.07); }
+        .admin-order-items-table td { padding: 8px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.07); vertical-align: top; }
         .admin-order-items-table tr:last-child td { border-bottom: none; }
         .admin-order-items-table .qty { color: var(--text-muted); text-align: center; width: 50px; }
         .admin-order-items-table .line-total { text-align: right; font-weight: 600; white-space: nowrap; }
@@ -10362,7 +10362,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.71';
+        const BUILD_VERSION = '2026-09-06.72';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14297,7 +14297,7 @@
             const items = Array.isArray(order.items) ? order.items : [];
             document.getElementById('aodItemsTable').querySelector('tbody').innerHTML = items.map(i => `
     <tr>
-        <td>${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}</td>
+        <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.map(escapeHtml).join(', ')}` : escapeHtml(i.unit || '')}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
         <td class="qty">&times;${i.qty}</td>
         <td class="line-total">${money((i.price || 0) * i.qty)}</td>
     </tr>`).join('');
