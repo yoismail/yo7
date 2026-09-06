@@ -2443,6 +2443,25 @@
         .advert-section {
             background: #000;
             line-height: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.45s cubic-bezier(.2,.7,.3,1);
+        }
+        /* Grows into place instead of snapping in at full height the
+           moment loadAdvertBanners() resolves — a visitor with no cached
+           banner data yet (first-ever visit, private browsing, cleared
+           storage) used to see the whole page shove down instantly the
+           moment the fetch landed, which read as a freeze/jump if it
+           happened mid-scroll. The target height approximates the
+           section's real rendered height (21:7 desktop, 4:3 mobile, see
+           .advert-slide below) so the animation looks like a natural
+           grow rather than needing to be hard-capped by an oversized
+           value. A cache hit still adds this class in the very first
+           frame (before any paint happens), so returning visitors see no
+           transition at all, exactly as before this fix. */
+        .advert-section.is-visible { max-height: 34vw; }
+        @media (max-width: 700px) {
+            .advert-section.is-visible { max-height: 76vw; }
         }
         .advert-carousel {
             display: flex; gap: 2px;
@@ -10634,7 +10653,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.82';
+        const BUILD_VERSION = '2026-09-06.83';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12186,8 +12205,8 @@
             const strip = document.getElementById('advertCarousel');
             if (!section || !strip) return;
             const canManage = currentIsAdmin && editModeOn;
-            if (advertBanners.length === 0 && !canManage) { section.style.display = 'none'; return; }
-            section.style.display = '';
+            if (advertBanners.length === 0 && !canManage) { section.classList.remove('is-visible'); return; }
+            section.classList.add('is-visible');
             const slides = advertBanners.map(b => `
     <div class="advert-slide">
       <img src="${escapeHtml(b.image_url)}" alt="Advertisement" loading="lazy">
