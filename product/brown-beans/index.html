@@ -4449,6 +4449,22 @@
             flex-shrink: 0;
         }
 
+        /* Same gentle opacity pulse as .emb-dot (the edit-mode banner's
+           attention dot) rather than a hard on/off flash — a real blink to
+           fully transparent reads as a broken/flickering element and is
+           genuinely hard to read mid-dip; this stays legible throughout the
+           cycle while still clearly catching the eye. Skipped entirely for
+           anyone who's asked their OS for less motion. */
+        @keyframes deliveryWindowBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .pd-delivery-window {
+                animation: deliveryWindowBlink 1.4s ease-in-out infinite;
+            }
+        }
+
         .pd-meta {
             display: flex;
             gap: 26px;
@@ -7514,6 +7530,10 @@
                                 Prefer WhatsApp? Order this basket instead
                             </button>
                             <a href="#/shop" class="continue-shopping-link">Continue shopping</a>
+                            <div class="pd-delivery-window" id="cartDeliveryWindow" title="An estimate; timing is carried out by a third-party courier and can vary.">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v5h-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                <span id="cartDeliveryWindowText"></span>
+                            </div>
                             <div class="cart-trust-strip">
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -10220,7 +10240,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-05.61';
+        const BUILD_VERSION = '2026-09-06.62';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12984,6 +13004,11 @@
             ['sumDeliveryLabel', 'sumDeliveryLabel2', 'sumDeliveryLabel3'].forEach(id => document.getElementById(id).textContent = label);
             ['sumTotal', 'sumTotal2', 'sumTotal3'].forEach(id => document.getElementById(id).textContent = money(total));
             document.getElementById('payButtonTotal').textContent = money(total);
+            const cartDeliveryWindowEl = document.getElementById('cartDeliveryWindow');
+            if (cartDeliveryWindowEl) {
+                cartDeliveryWindowEl.style.display = cart.length ? 'flex' : 'none';
+                if (cart.length) document.getElementById('cartDeliveryWindowText').textContent = deliveryWindowText();
+            }
 
             const showDiscount = appliedDiscount && discountAmount > 0;
             [['sumDiscountRow', 'sumDiscountLabel', 'sumDiscount'], ['sumDiscountRow2', 'sumDiscountLabel2', 'sumDiscount2'], ['sumDiscountRow3', 'sumDiscountLabel3', 'sumDiscount3']].forEach(([rowId, labelId, amountId]) => {
