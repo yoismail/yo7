@@ -10362,10 +10362,19 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.73';
+        const BUILD_VERSION = '2026-09-06.74';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
+        // Fisher-Yates, doesn't mutate the input array.
+        function shuffleArray(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
         function effectivePrice(p) {
             return (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
         }
@@ -11832,7 +11841,11 @@
         window.removeAdvertBanner = removeAdvertBanner;
 
         function renderOfferCarousel() {
-            const items = offerItems();
+            // Shuffled per render — the strip only shows a handful of cards
+            // before a customer has to scroll, so a fixed catalog order
+            // would mean the same few products dominate visibility on every
+            // visit while the rest of the sale never gets seen.
+            const items = shuffleArray(offerItems());
             const strip = document.getElementById('offerCarousel');
             if (!strip) return;
             if (items.length === 0) {
@@ -11864,7 +11877,8 @@
             observeContainerReveals(strip, '.offer-card-reveal');
         }
         function renderNewCarousel() {
-            const items = newArrivalsItems();
+            // Shuffled for the same reason as renderOfferCarousel() above.
+            const items = shuffleArray(newArrivalsItems());
 
             const cardHTML = items.map(p => `
     <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
