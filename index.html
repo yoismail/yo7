@@ -392,15 +392,9 @@
            emoji glyph (which renders in its own fixed multi-colour artwork
            no CSS can touch) — an SVG icon replaces it, on this one icon
            only (the checkmark elsewhere on the ticker stays its own
-           colour). Light yellow rather than the chartreuse used for the
-           bullets/checkmark, so it still reads as its own distinct
-           highlight. --orange itself (the site's edit-mode-bar colour, a
-           bright yellow despite the name) tested nearly invisible against
-           the ticker's own pale background at icon size — this is a
-           deeper gold chosen for the same light-yellow feel while staying
-           visible on a light background. */
-        .trust-bar-icon-accent { color: #D4A017; }
-        [data-theme="dark"] .trust-bar-icon-accent { color: #E8C34A; }
+           colour). Uses the actual --orange brand token rather than a
+           hand-picked shade. */
+        .trust-bar-icon-accent { color: var(--orange); }
         .trust-sep { color: var(--chartreuse-rich); font-weight: 700; }
         @media (max-width: 520px) {
             .trust-bar-set { font-size: 11.5px; padding: 5px 16px; gap: 7px; }
@@ -10841,7 +10835,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.14';
+        const BUILD_VERSION = '2026-09-07.15';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
