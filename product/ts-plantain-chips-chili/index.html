@@ -5644,6 +5644,11 @@
             height: 26px;
         }
 
+        /* Matches .nav-mark/.footer-mark's own "7" accent. */
+        .invoice-mark .accent {
+            color: var(--chartreuse);
+        }
+
         .invoice-meta {
             text-align: right;
             font-size: 12.5px;
@@ -7854,7 +7859,7 @@
                         <div>
                             <div class="invoice-mark"><svg viewBox="65 25 875 900">
                                     <use href="#seal-mark" />
-                                </svg> Yo7 Foods</div>
+                                </svg> Yo<span class="accent">7</span> Foods</div>
                             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">African Food Store, Ipswich</div>
                         </div>
                         <div class="invoice-meta">
@@ -10729,7 +10734,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.1';
+        const BUILD_VERSION = '2026-09-07.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15601,8 +15606,19 @@
             pdf.addImage(SEAL_MARK_PNG, 'PNG', sealCx - sealR, sealCy - sealR - 4, sealR * 2, sealR * 2 + 4);
 
 
+            // Drawn as three separate runs (not one pdf.text('Yo7 Foods',...))
+            // so the "7" can carry the same chartreuse accent every other
+            // "Yo7" wordmark on the site uses (nav, footer, og-image) —
+            // jsPDF has no way to color part of a single text() call.
             setText(19, 'bold', accent);
-            pdf.text('Yo7 Foods', margin + sealR * 2 + 10, y + 18);
+            const wordmarkX = margin + sealR * 2 + 10, wordmarkY = y + 18;
+            pdf.text('Yo', wordmarkX, wordmarkY);
+            const yoWidth = pdf.getTextWidth('Yo');
+            setText(19, 'bold', chartreuse);
+            pdf.text('7', wordmarkX + yoWidth, wordmarkY);
+            const sevenWidth = pdf.getTextWidth('7');
+            setText(19, 'bold', accent);
+            pdf.text(' Foods', wordmarkX + yoWidth + sevenWidth, wordmarkY);
             setText(9, 'normal', muted);
             pdf.text('African Food Store, Ipswich', margin + sealR * 2 + 10, y + 32);
 
