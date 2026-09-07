@@ -7770,6 +7770,7 @@
                             <div class="summary-row summary-row-weight"><span>Total weight</span><span id="sumWeight2">0kg</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel2">Delivery</span><span id="sumDelivery2">£3.50</span></div>
                             <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
+                            <div class="delivery-fee-note" id="deliveryEtaNote2"></div>
                             <div class="summary-row discount-row" id="sumDiscountRow2" style="display:none;"><span id="sumDiscountLabel2">Discount</span><span id="sumDiscount2">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow2" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty2">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal2">£0.00</span></div>
@@ -7808,6 +7809,7 @@
                             <div class="summary-row summary-row-weight"><span>Total weight</span><span id="sumWeight3">0kg</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel3">Delivery</span><span id="sumDelivery3">£3.50</span></div>
                             <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
+                            <div class="delivery-fee-note" id="deliveryEtaNote3"></div>
                             <div class="summary-row discount-row" id="sumDiscountRow3" style="display:none;"><span id="sumDiscountLabel3">Discount</span><span id="sumDiscount3">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow3" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty3">-£0.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal3">£0.00</span></div>
@@ -7861,6 +7863,7 @@
 
                     <div class="invoice-section-title">Delivered to</div>
                     <div class="invoice-addr" id="invAddress"></div>
+                    <div class="delivery-fee-note" id="invDeliveryEta" style="display:none;"></div>
 
                     <div class="invoice-section-title">Order</div>
                     <table class="invoice-table">
@@ -8398,7 +8401,7 @@
                         </svg>
                         <div>
                             <h4>Delivery window</h4>
-                            <p>Most local orders arrive within 24 to 48 hours of confirmation.</p>
+                            <p>Local delivery (Suffolk): most orders arrive within 1&ndash;2 working days of confirmation. Standard delivery (everywhere else in the UK): 2&ndash;3 working days.</p>
                         </div>
                     </div>
                     <div class="dinfo-card">
@@ -9747,6 +9750,28 @@
             return { fee, region: null };
         }
 
+        /* ================= DELIVERY WINDOW (local vs standard) =================
+           Suffolk's postal area is "IP" (the shop's own address, 7 Lancaster
+           Road, Ipswich, is IP4 2NY) — matched on the outward code prefix so
+           "IP1 1AA" and "ip4  2ny" both count, but "CO1 1AA" (Colchester,
+           Essex) or anything else doesn't. Local orders (within Suffolk) get
+           a tighter 1-2 working day window; everywhere else in the UK is the
+           standard 2-3 working day window. */
+        const LOCAL_DELIVERY_WINDOW = '1-2 working days';
+        const STANDARD_DELIVERY_WINDOW = '2-3 working days';
+        function isSuffolkPostcode(postcode) {
+            return /^\s*IP\d/i.test(postcode || '');
+        }
+        function deliveryEtaLabel(postcode) {
+            return isSuffolkPostcode(postcode) ? 'Local delivery (Suffolk)' : 'Standard delivery';
+        }
+        function deliveryEtaWindow(postcode) {
+            return isSuffolkPostcode(postcode) ? LOCAL_DELIVERY_WINDOW : STANDARD_DELIVERY_WINDOW;
+        }
+        function deliveryEtaText(postcode) {
+            return `${deliveryEtaLabel(postcode)}: most orders arrive within ${deliveryEtaWindow(postcode)} of confirmation.`;
+        }
+
         /* ================= DISCOUNT ENGINE =================
            Codes are matched case-insensitively. Each discount can restrict
            itself to a date range, a minimum order, and specific qualifying
@@ -10702,7 +10727,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-06.88';
+        const BUILD_VERSION = '2026-09-07.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12972,29 +12997,30 @@
             const el = document.getElementById('productJsonLd');
             if (el) el.remove();
         }
-        // A live "order within Xh Ym to get it by [day]" estimate for the
-        // product page, so a customer can see roughly when to expect an
-        // item without having to visit Delivery Info first. Reuses the same
-        // 10am same/next-day dispatch cutoff already stated on the Delivery
-        // Info page and FAQ, then adds the 24-48h transit window already
-        // promised there, so this can't quietly promise something faster
-        // than what's stated elsewhere.
+        // A live "order within Xh Ym for same-day dispatch" estimate for the
+        // product page and cart drawer, so a customer can see roughly when
+        // to expect an item without having to visit Delivery Info first.
+        // Reuses the same 10am same/next-day dispatch cutoff already stated
+        // on the Delivery Info page and FAQ. Deliberately doesn't name a
+        // specific arrival date here (the way it used to) — this renders
+        // before a delivery postcode has been entered anywhere, so it has
+        // no way to know whether local (1-2 working day) or standard (2-3
+        // working day) applies; naming one specific date would mean
+        // guessing, and guessing wrong here would contradict whatever
+        // checkout correctly works out once the real postcode is known.
         function deliveryWindowText() {
             const now = new Date();
             const pastCutoff = now.getHours() >= 10;
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const arriveBy = new Date(now);
-            arriveBy.setDate(now.getDate() + (pastCutoff ? 1 : 0) + 2);
-            const arriveByLabel = `${dayNames[arriveBy.getDay()]} ${arriveBy.getDate()} ${monthNames[arriveBy.getMonth()]}`;
-            if (pastCutoff) return `Order now, get it by ${arriveByLabel}`;
+            const dispatch = pastCutoff ? 'next-day dispatch' : 'same-day dispatch';
+            const arrival = `arrives in ${LOCAL_DELIVERY_WINDOW} locally, ${STANDARD_DELIVERY_WINDOW} further out`;
+            if (pastCutoff) return `Order now for ${dispatch} — ${arrival}`;
             const cutoff = new Date(now);
             cutoff.setHours(10, 0, 0, 0);
             const msLeft = cutoff - now;
             const hrs = Math.floor(msLeft / 3600000);
             const mins = Math.floor((msLeft % 3600000) / 60000);
             const countdown = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
-            return `Order within ${countdown} to get it by ${arriveByLabel}`;
+            return `Order within ${countdown} for ${dispatch} — ${arrival}`;
         }
         function renderProductPage(catSlug, idx) {
             const p = getProduct(catSlug, Number(idx));
@@ -13857,6 +13883,20 @@
                 cartDeliveryWindowEl.style.display = cart.length ? 'flex' : 'none';
                 if (cart.length) document.getElementById('cartDeliveryWindowText').textContent = deliveryWindowText();
             }
+            // Only shown once a real postcode is being collected (delivery,
+            // not pickup) — pickup already has its own "ready within 2
+            // hours" note in the form itself, a working-days window would
+            // be misleading right next to it.
+            ['deliveryEtaNote2', 'deliveryEtaNote3'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (fulfilmentMethod === 'delivery') {
+                    el.style.display = 'block';
+                    el.textContent = deliveryEtaText(postcode);
+                } else {
+                    el.style.display = 'none';
+                }
+            });
 
             const showDiscount = appliedDiscount && discountAmount > 0;
             [['sumDiscountRow', 'sumDiscountLabel', 'sumDiscount'], ['sumDiscountRow2', 'sumDiscountLabel2', 'sumDiscount2'], ['sumDiscountRow3', 'sumDiscountLabel3', 'sumDiscount3']].forEach(([rowId, labelId, amountId]) => {
@@ -15366,6 +15406,11 @@
                 ? `${escapeHtml(di.name || '')}<br>Collecting in store: 7 Lancaster Road<br>Ipswich, IP4 2NY<br>${escapeHtml(di.phone || '')}`
                 : `${escapeHtml(di.name || '')}<br>${escapeHtml(di.address || '')}<br>${escapeHtml(di.town || '')} ${escapeHtml(di.postcode || '')}<br>${escapeHtml(di.phone || '')}`;
             document.getElementById('invDeliveryLabel').textContent = isPickup ? 'Pickup' : 'Delivery';
+            const invDeliveryEtaEl = document.getElementById('invDeliveryEta');
+            if (invDeliveryEtaEl) {
+                invDeliveryEtaEl.style.display = isPickup ? 'none' : 'block';
+                if (!isPickup) invDeliveryEtaEl.textContent = deliveryEtaText(di.postcode);
+            }
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
       <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.map(it => escapeHtml(comboItemLabel(it))).join(', ')}` : escapeHtml(i.unit || '')}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
@@ -16656,7 +16701,13 @@
             el.textContent = message;
             el.style.display = message ? 'block' : 'none';
         }
-        function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+        // Stricter than a bare "has an @ and a dot" check: rejects a
+        // trailing/leading dot, consecutive dots, and a single-character
+        // TLD (".c"), all of which the old regex let through as "valid".
+        // This still can't confirm an address is real/deliverable, only a
+        // real inbox opening a confirmation link can do that, this just
+        // catches obvious typos before they ever reach Supabase.
+        function isValidEmail(v) { return /^[^\s@]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(v); }
 
         // Sends a customer back to checkout after logging in if that's what
         // bounced them to the login/signup page in the first place, home
@@ -16970,7 +17021,7 @@
         const FAQS = [
             { q: 'What areas do you deliver to?', a: 'We deliver to every UK postcode. Use the postcode checker on the Delivery Information page to double-check the format of yours.' },
             { q: 'How much is delivery, and is there a minimum order?', a: deliveryFaqAnswer },
-            { q: 'How long does delivery take?', a: 'Most local orders arrive within 24 to 48 hours of your order being confirmed. Orders placed before 10am are usually out the same or next day.' },
+            { q: 'How long does delivery take?', a: 'Local delivery (Suffolk) usually arrives within 1-2 working days of your order being confirmed. Standard delivery (everywhere else in the UK) is 2-3 working days. Orders placed before 10am are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
             { q: 'What if an item is out of stock?', a: 'Out-of-stock items are clearly marked and can\'t be added to your basket. Stock is genuinely limited when it says low, so it\'s worth ordering sooner rather than later.' },
             { q: 'Is payment on the site secure?', a: 'Yes. Checkout runs through Stripe, a PCI-compliant payment processor used by major retailers worldwide, your card details are handled directly by Stripe and never touch our own servers.' },
