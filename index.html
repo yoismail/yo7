@@ -78,7 +78,7 @@
          malicious external dependency, but it does not stop an XSS payload
          injected into the page's own inline code from running. Treat this
          as one layer, not a substitute for careful escaping. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://api.postcodes.io https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
     <!-- Referrer-Policy is normally an HTTP header, but unlike
          X-Frame-Options/frame-ancestors it's one of the few security
          controls that DOES work as a <meta> tag, which matters here
@@ -10780,7 +10780,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.6';
+        const BUILD_VERSION = '2026-09-07.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
