@@ -10781,7 +10781,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.8';
+        const BUILD_VERSION = '2026-09-07.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13613,7 +13613,16 @@
                     const thumbHTML = (liveProduct && liveProduct.image)
                         ? productPhotoHTML(liveProduct, item.name)
                         : `<span style="font-size:24px;">${item.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
+                    // Reviews stay scoped to the base product (a review is
+                    // about the product, not the specific weight bought), but
+                    // the sold count needs to tell weight variants apart — a
+                    // ::sub<N> subscription suffix is stripped so a variant's
+                    // one-time and subscription sales still count together,
+                    // but a different weight variant's own id (with its own
+                    // ::<label> suffix) never gets folded into another
+                    // variant's, or the base product's, total.
                     const pKey = productKey(item.catSlug, idx);
+                    const salesKey = item.id.replace(/::sub\d+$/, '');
                     return `
       <div class="cart-row">
         <div class="cart-thumb">${thumbHTML}</div>
@@ -13621,7 +13630,7 @@
           <h4>${escapeHtml(item.name)}</h4>
           <span>${escapeHtml(item.unit || '')}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
           ${item.isSubscription ? `<span class="subscription-badge">Subscription, every ${item.subscriptionFrequency} weeks</span>` : ''}
-          <div class="cart-rating-badge" data-product-key="${pKey}" data-product-name="${escapeHtml(item.name)}"></div>
+          <div class="cart-rating-badge" data-product-key="${pKey}" data-sales-key="${escapeHtml(salesKey)}" data-product-name="${escapeHtml(item.name)}"></div>
         </div>
         <div class="cart-qty">
           <button type="button" onclick="changeQty(${i},-1)">&minus;</button>
@@ -13674,9 +13683,10 @@
             const badgeEls = Array.from(document.querySelectorAll('.cart-rating-badge[data-product-key]'));
             if (!supabaseClient || badgeEls.length === 0) return;
             const keys = [...new Set(badgeEls.map(el => el.dataset.productKey))];
+            const salesKeys = [...new Set(badgeEls.map(el => el.dataset.salesKey))];
             const [reviewsRes, salesRes] = await Promise.all([
                 supabaseClient.from('product_reviews').select('product_key, rating').in('product_key', keys).limit(2000),
-                supabaseClient.rpc('get_units_sold', { p_product_keys: keys }),
+                supabaseClient.rpc('get_units_sold', { p_product_keys: salesKeys }),
             ]);
             cartRatingsData.clear();
             cartSalesData.clear();
@@ -13696,7 +13706,7 @@
             document.querySelectorAll('.cart-rating-badge[data-product-key]').forEach(el => {
                 const key = el.dataset.productKey;
                 const rating = cartRatingsData.get(key);
-                const sold = cartSalesData.get(key) || 0;
+                const sold = cartSalesData.get(el.dataset.salesKey) || 0;
                 const parts = [];
                 if (rating && rating.count > 0) {
                     const avg = rating.sum / rating.count;
