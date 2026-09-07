@@ -10734,7 +10734,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.4';
+        const BUILD_VERSION = '2026-09-07.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14536,6 +14536,7 @@
             const { data, error } = await supabaseClient
                 .from('orders')
                 .select('*')
+                .eq('user_id', currentSupabaseUser.id)
                 .order('created_at', { ascending: false })
                 .limit(100);
             if (error) {
