@@ -342,6 +342,46 @@
             background: rgba(6, 59, 0, 0.1); border-radius: 999px; padding: 4px 10px;
         }
 
+        /* ================= COMING SOON LEAD CAPTURE =================
+           Homepage-only pre-launch banner. Same size and background as the
+           edit-mode bar above (var(--orange) background, var(--aubergine)
+           text, 10px 28px / 13px sizing) — a deliberate visual echo, not a
+           coincidence, per how this was asked for. */
+        .coming-soon-banner {
+            background: var(--orange);
+            color: var(--aubergine);
+        }
+        .csb-inner {
+            display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .csb-text { flex: 1 1 260px; }
+        .csb-text strong { font-family: var(--display); }
+        .csb-form, .csb-thanks {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0;
+        }
+        .csb-form input {
+            font-family: var(--body); font-size: 12.5px; border: none; border-radius: 8px;
+            padding: 7px 11px; background: rgba(6, 59, 0, 0.12); color: var(--aubergine);
+            min-width: 0; width: 160px;
+        }
+        .csb-form input::placeholder { color: rgba(6, 59, 0, 0.55); }
+        .csb-form input:focus { outline: 2px solid rgba(6, 59, 0, 0.35); outline-offset: 1px; }
+        .csb-form button {
+            flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 12px;
+            background: var(--aubergine); color: var(--cream); border: none; border-radius: 8px;
+            padding: 8px 14px; cursor: pointer;
+        }
+        .csb-form button:hover { background: var(--aubergine-deep); }
+        .csb-form button:disabled { opacity: 0.6; cursor: default; }
+        .csb-thanks { display: none; font-weight: 700; }
+        .coming-soon-banner.signed-up .csb-form { display: none; }
+        .coming-soon-banner.signed-up .csb-thanks { display: flex; }
+        @media (max-width: 640px) {
+            .csb-inner { padding: 10px 16px; }
+            .csb-form input { width: 42vw; max-width: 160px; }
+        }
+
         .trust-bar {
             position: fixed;
             left: 0;
@@ -7083,6 +7123,17 @@
 
     <!-- ================= HOME ================= -->
     <div id="view-home" class="hidden-view">
+        <div class="coming-soon-banner" id="comingSoonBanner">
+            <div class="wrap csb-inner">
+                <span class="csb-text"><strong>Yo7 Foods is coming to Suffolk &amp; Essex this January.</strong> Enter your email and postcode to get 10% off your first order and a notification the day our fresh delivery slots open.</span>
+                <form class="csb-form" id="comingSoonForm">
+                    <input type="email" id="csbEmail" placeholder="you@example.com" required autocomplete="email">
+                    <input type="text" id="csbPostcode" placeholder="Postcode" required autocomplete="postal-code">
+                    <button type="submit">Get 10% off</button>
+                </form>
+                <span class="csb-thanks">You're on the list! We'll be in touch in January.</span>
+            </div>
+        </div>
         <section class="advert-section" id="advertSection">
             <div class="advert-carousel" id="advertCarousel"></div>
         </section>
@@ -7091,7 +7142,7 @@
                 <use href="#seal-mark" />
             </svg>
             <div class="wrap hero-inner">
-                <div class="eyebrow">African Food Store, Ipswich</div>
+                <div class="eyebrow">African food store, Suffolk.</div>
                 <svg class="seal" viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
@@ -8854,6 +8905,11 @@
                                 <button type="button" class="btn btn-primary order-admin-btn-cancel-confirm" id="cancelOrderConfirmBtn">Cancel this order</button>
                             </div>
                         </div>
+                    </div>
+                    <div class="admin-panel-section panel-coming-soon">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></span>Coming soon sign-ups</h2>
+                        <p class="sub">Everyone who's registered interest via the homepage pre-launch banner.</p>
+                        <div id="comingSoonSignupsList"></div>
                     </div>
                     <div class="admin-panel-section panel-analytics">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/></svg></span>Business analytics</h2>
@@ -10781,7 +10837,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.9';
+        const BUILD_VERSION = '2026-09-07.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15177,6 +15233,37 @@
             if (nextBtn) nextBtn.addEventListener('click', () => { activityLogPage++; renderActivityLogPage(); });
         }
 
+        // Everyone who's registered on the pre-launch "Coming Soon" homepage
+        // banner (see supabase-migration-38-coming-soon-signups.sql). Kept
+        // deliberately simple (one page, no filters) since this is a
+        // temporary pre-launch list, not a permanent admin feature.
+        async function renderComingSoonSignups() {
+            const el = document.getElementById('comingSoonSignupsList');
+            if (!el) return;
+            if (!supabaseClient || !currentSupabaseUser || !currentIsAdmin) return;
+            el.innerHTML = '<div class="order-history-loading">Loading sign-ups…</div>';
+            const { data, error } = await supabaseClient
+                .from('coming_soon_signups')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(1000);
+            if (error) { el.innerHTML = '<div class="order-history-error">Couldn\'t load sign-ups right now, please try again shortly.</div>'; return; }
+            if (!data || data.length === 0) { el.innerHTML = '<div class="order-history-empty">No sign-ups yet.</div>'; return; }
+            el.innerHTML = `
+    <p style="font-family:var(--display); font-weight:700; margin-bottom:12px;">${data.length} sign-up${data.length === 1 ? '' : 's'}</p>
+    <div class="admin-orders-table-wrap">
+        <table class="admin-orders-table">
+            <thead><tr><th>Email</th><th>Postcode</th><th>Signed up</th></tr></thead>
+            <tbody>${data.map(s => `
+    <tr>
+        <td>${escapeHtml(s.email)}</td>
+        <td>${escapeHtml(s.postcode || '—')}</td>
+        <td>${new Date(s.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+    </tr>`).join('')}</tbody>
+        </table>
+    </div>`;
+        }
+
         // 'month' pages one calendar month at a time (the original
         // behaviour), '3month'/'6month' page in that many calendar months
         // per step, 'custom' ignores paging entirely and uses whatever
@@ -15408,6 +15495,7 @@
             renderAdminOrders();
             renderActivityLog();
             renderAnalytics(0);
+            renderComingSoonSignups();
             if (autoEnterEditMode) {
                 autoEnterEditMode = false;
                 setEditMode(true);
@@ -17880,6 +17968,50 @@
                 }
                 emailInput.value = '';
                 showToast("You're on the list! Check your inbox for a welcome email.", 5000);
+            });
+        }
+
+        /* ================= COMING SOON LEAD CAPTURE =================
+           Pre-launch homepage banner. Saves via a dedicated RPC
+           (register_coming_soon_interest — see
+           supabase-migration-38-coming-soon-signups.sql), mirroring how the
+           newsletter signup above already does this rather than a raw
+           table insert, so validation and dedup stay server-side. Format-
+           only checks here (no postcodes.io round trip like checkout) —
+           this is a low-friction marketing capture, not a delivery
+           commitment yet. Remembers a completed signup in localStorage so
+           a returning visitor on the same browser sees the thank-you state
+           instead of the form again. */
+        const comingSoonForm = document.getElementById('comingSoonForm');
+        if (comingSoonForm) {
+            const comingSoonBanner = document.getElementById('comingSoonBanner');
+            let alreadySignedUpForLaunch = false;
+            try { alreadySignedUpForLaunch = localStorage.getItem('yo7ComingSoonSignedUp') === '1'; } catch (e) { /* private browsing etc. */ }
+            if (alreadySignedUpForLaunch) comingSoonBanner.classList.add('signed-up');
+
+            comingSoonForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const emailInput = document.getElementById('csbEmail');
+                const postcodeInput = document.getElementById('csbPostcode');
+                const email = emailInput.value.trim();
+                const postcode = postcodeInput.value.trim();
+                if (!isValidEmail(email)) { showToast("That email address doesn't look right, double-check it and try again.", 4500); return; }
+                if (!isUkPostcodeFormat(postcode)) { showToast("That doesn't look like a real UK postcode, please double-check it.", 4500); return; }
+                const submitBtn = comingSoonForm.querySelector('button[type="submit"]');
+                const originalLabel = submitBtn.textContent;
+                if (!supabaseClient) {
+                    showToast("Sign-ups aren't connected in preview mode.", 4000);
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Joining…';
+                const { error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email, p_postcode: postcode });
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
+                if (error) { showToast(error.message || "Couldn't sign you up right now, please try again.", 5000); return; }
+                try { localStorage.setItem('yo7ComingSoonSignedUp', '1'); } catch (e) { /* private browsing etc. */ }
+                comingSoonBanner.classList.add('signed-up');
+                showToast("You're on the list! We'll email your code and let you know the moment we're live.", 5500);
             });
         }
         // renderHeroGlimpse/renderOfferCarousel/renderNewCarousel/
