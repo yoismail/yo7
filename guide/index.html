@@ -10732,7 +10732,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.2';
+        const BUILD_VERSION = '2026-09-07.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15704,9 +15704,43 @@
             ensureRoom(110);
             const totalsX = pageWidth - margin;
             const totalsLabelX = totalsX - 150;
+            // "Subtotal"/"Delivery"/"Total paid" always fit comfortably in
+            // the 150pt label column, but "Discount (CODE)" doesn't have a
+            // fixed length — an admin can name a code almost anything. The
+            // old version just drew both texts at their fixed x positions
+            // with no check that they'd actually leave a gap, so a longer
+            // code ran straight into the right-aligned amount with the two
+            // touching (reported from a real invoice: "Discount
+            // (WELCOME10)£3.89", no space at all). Now the label shrinks
+            // just enough to guarantee a real gap before the amount,
+            // rather than the amount ever being crowded.
             const totalRow = (label, value, opts = {}) => {
-                setText(opts.size || 10, opts.bold ? 'bold' : 'normal', opts.color || ink);
-                pdf.text(label, totalsLabelX, y);
+                const size = opts.size || 10;
+                const style = opts.bold ? 'bold' : 'normal';
+                const color = opts.color || ink;
+                setText(size, style, color);
+                const valueWidth = pdf.getTextWidth(value);
+                const minGap = 10;
+                const maxLabelWidth = (totalsX - valueWidth - minGap) - totalsLabelX;
+                let labelSize = size;
+                while (labelSize > 7 && pdf.getTextWidth(label) > maxLabelWidth) {
+                    labelSize -= 0.5;
+                    setText(labelSize, style, color);
+                }
+                // Shrinking alone still isn't guaranteed to fit — an
+                // unusually long discount code can hit the font-size floor
+                // and still be too wide. Truncate with an ellipsis as a
+                // last resort so the amount can never be crowded, no
+                // matter how long a code an admin names one.
+                let drawLabel = label;
+                if (pdf.getTextWidth(drawLabel) > maxLabelWidth) {
+                    while (drawLabel.length > 1 && pdf.getTextWidth(drawLabel + '…') > maxLabelWidth) {
+                        drawLabel = drawLabel.slice(0, -1);
+                    }
+                    drawLabel += '…';
+                }
+                pdf.text(drawLabel, totalsLabelX, y);
+                setText(size, style, color);
                 pdf.text(value, totalsX, y, { align: 'right' });
                 y += opts.gap || 16;
             };
