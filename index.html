@@ -342,46 +342,6 @@
             background: rgba(6, 59, 0, 0.1); border-radius: 999px; padding: 4px 10px;
         }
 
-        /* ================= COMING SOON LEAD CAPTURE =================
-           Homepage-only pre-launch banner. Same size and background as the
-           edit-mode bar above (var(--orange) background, var(--aubergine)
-           text, 10px 28px / 13px sizing) — a deliberate visual echo, not a
-           coincidence, per how this was asked for. */
-        .coming-soon-banner {
-            background: var(--orange);
-            color: var(--aubergine);
-        }
-        .csb-inner {
-            display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 13px;
-            flex-wrap: wrap;
-        }
-        .csb-text { flex: 1 1 260px; }
-        .csb-text strong { font-family: var(--display); }
-        .csb-form, .csb-thanks {
-            display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0;
-        }
-        .csb-form input {
-            font-family: var(--body); font-size: 12.5px; border: none; border-radius: 8px;
-            padding: 7px 11px; background: rgba(6, 59, 0, 0.12); color: var(--aubergine);
-            min-width: 0; width: 160px;
-        }
-        .csb-form input::placeholder { color: rgba(6, 59, 0, 0.55); }
-        .csb-form input:focus { outline: 2px solid rgba(6, 59, 0, 0.35); outline-offset: 1px; }
-        .csb-form button {
-            flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 12px;
-            background: var(--aubergine); color: var(--cream); border: none; border-radius: 8px;
-            padding: 8px 14px; cursor: pointer;
-        }
-        .csb-form button:hover { background: var(--aubergine-deep); }
-        .csb-form button:disabled { opacity: 0.6; cursor: default; }
-        .csb-thanks { display: none; font-weight: 700; }
-        .coming-soon-banner.signed-up .csb-form { display: none; }
-        .coming-soon-banner.signed-up .csb-thanks { display: flex; }
-        @media (max-width: 640px) {
-            .csb-inner { padding: 10px 16px; }
-            .csb-form input { width: 42vw; max-width: 160px; }
-        }
-
         .trust-bar {
             position: fixed;
             left: 0;
@@ -1595,6 +1555,49 @@
             margin-bottom: 36px;
         }
 
+        /* Pre-launch hero: a single email field is the whole point, no
+           second/competing button — everything funnels into this one
+           capture. */
+        .hero-capture-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .hero-capture-form input {
+            font-family: var(--body);
+            font-size: 16px; /* iOS Safari auto-zooms the page on focus under 16px */
+            padding: 14px 20px;
+            border-radius: 999px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            background: var(--card-bg);
+            color: var(--ink);
+            min-width: 0;
+            width: 300px;
+            max-width: 100%;
+        }
+        .hero-capture-form input:focus {
+            outline: none;
+            border-color: var(--chartreuse);
+        }
+        .hero-capture-form button:disabled {
+            opacity: 0.65;
+            cursor: default;
+            animation: none;
+        }
+        .hero-capture-thanks {
+            display: none;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--chartreuse-rich);
+            margin: 0 0 8px;
+        }
+        [data-theme="dark"] .hero-capture-thanks { color: var(--chartreuse-soft); }
+        .hero-capture-wrap.signed-up .hero-capture-form { display: none; }
+        .hero-capture-wrap.signed-up .hero-capture-thanks { display: block; }
+
         .cta-row {
             display: flex;
             gap: 16px;
@@ -1612,7 +1615,7 @@
            point and layers on a real interaction: the icon nudges
            forward, echoing "this moves you ahead". The two buttons pulse
            on slightly offset timings so they don't breathe in lockstep. */
-        .cta-row .btn-primary {
+        .cta-row .btn-primary, .hero-capture-form .btn-primary {
             animation: ctaPulseGlow 2.8s ease-in-out infinite;
         }
         .cta-row .btn-outline-dark {
@@ -1631,7 +1634,7 @@
             50% { border-color: var(--chartreuse-rich); box-shadow: 0 6px 20px rgba(144, 184, 0, 0.22); }
         }
         @media (hover: hover) and (pointer: fine) {
-            .cta-row .btn-primary:hover {
+            .cta-row .btn-primary:hover, .hero-capture-form .btn-primary:hover {
                 animation-play-state: paused;
                 box-shadow: 0 14px 36px rgba(225, 225, 0, 0.7);
             }
@@ -1644,7 +1647,7 @@
             }
         }
         @media (prefers-reduced-motion: reduce) {
-            .cta-row .btn-primary, .cta-row .btn-outline-dark { animation: none; }
+            .cta-row .btn-primary, .cta-row .btn-outline-dark, .hero-capture-form .btn-primary { animation: none; }
         }
 
         .hero-social-link {
@@ -7098,15 +7101,19 @@
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
             <div class="trust-bar-set">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg><span class="free-delivery-text">Free delivery over &pound;50</span></span>
+                <span>&#128640; Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
+                <span>Join the Launch List today to secure 10% off your first box</span>
+                <span class="trust-sep">&bull;</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Delivering across all UK postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
             <div class="trust-bar-set" aria-hidden="true">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg><span class="free-delivery-text">Free delivery over &pound;50</span></span>
+                <span>&#128640; Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
+                <span>Join the Launch List today to secure 10% off your first box</span>
+                <span class="trust-sep">&bull;</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Delivering across all UK postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
         </div>
@@ -7123,17 +7130,6 @@
 
     <!-- ================= HOME ================= -->
     <div id="view-home" class="hidden-view">
-        <div class="coming-soon-banner" id="comingSoonBanner">
-            <div class="wrap csb-inner">
-                <span class="csb-text"><strong>Yo7 Foods is coming to Suffolk &amp; Essex this January.</strong> Enter your email and postcode to get 10% off your first order and a notification the day our fresh delivery slots open.</span>
-                <form class="csb-form" id="comingSoonForm">
-                    <input type="email" id="csbEmail" placeholder="you@example.com" required autocomplete="email">
-                    <input type="text" id="csbPostcode" placeholder="Postcode" required autocomplete="postal-code">
-                    <button type="submit">Get 10% off</button>
-                </form>
-                <span class="csb-thanks">You're on the list! We'll be in touch in January.</span>
-            </div>
-        </div>
         <section class="advert-section" id="advertSection">
             <div class="advert-carousel" id="advertCarousel"></div>
         </section>
@@ -7146,19 +7142,14 @@
                 <svg class="seal" viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.14s">taste</span> <span class="stretch-word" style="animation-delay:0.28s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.42s">home,</span> <span class="stretch-word" style="animation-delay:0.56s">delivered</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">fresh</span>.</h1>
-                <p class="hero-sub">Real African &amp; Caribbean groceries: the brands you grew up with, delivered UK-wide or ready to collect.</p>
-                <div class="cta-row">
-                    <a class="btn btn-primary" href="#/shop">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round">
-                            <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
-                        </svg>
-                        Start shopping
-                    </a>
-                    <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">
-                        Browse categories
-                    </a>
+                <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.10s">Taste</span> <span class="stretch-word" style="animation-delay:0.20s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.30s">Home,</span> <span class="stretch-word" style="animation-delay:0.40s">Coming</span> <span class="stretch-word" style="animation-delay:0.50s">to</span> <span class="hero-accent stretch-word" style="animation-delay:0.60s">Suffolk</span> <span class="stretch-word" style="animation-delay:0.70s">&amp;</span> <span class="hero-accent stretch-word" style="animation-delay:0.80s">Essex</span>.</h1>
+                <p class="hero-sub">Yo7 Foods is officially launching in January 2027. We're bringing the premium African and Caribbean staples you love directly to East Anglia, with modern convenience.</p>
+                <div class="hero-capture-wrap" id="heroCaptureWrap">
+                    <form class="hero-capture-form" id="heroCaptureForm">
+                        <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
+                        <button type="submit" class="btn btn-primary">Secure 10% Off My First Order</button>
+                    </form>
+                    <p class="hero-capture-thanks" id="heroCaptureThanks">You're on the list! We'll email your code the moment we launch.</p>
                 </div>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -10837,7 +10828,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.10';
+        const BUILD_VERSION = '2026-09-07.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17971,33 +17962,30 @@
             });
         }
 
-        /* ================= COMING SOON LEAD CAPTURE =================
-           Pre-launch homepage banner. Saves via a dedicated RPC
+        /* ================= HERO PRE-LAUNCH EMAIL CAPTURE =================
+           The hero's whole CTA in this pre-launch phase — one email field,
+           one button, nothing competing with it. Saves via a dedicated RPC
            (register_coming_soon_interest — see
            supabase-migration-38-coming-soon-signups.sql), mirroring how the
            newsletter signup above already does this rather than a raw
-           table insert, so validation and dedup stay server-side. Format-
-           only checks here (no postcodes.io round trip like checkout) —
-           this is a low-friction marketing capture, not a delivery
-           commitment yet. Remembers a completed signup in localStorage so
-           a returning visitor on the same browser sees the thank-you state
-           instead of the form again. */
-        const comingSoonForm = document.getElementById('comingSoonForm');
-        if (comingSoonForm) {
-            const comingSoonBanner = document.getElementById('comingSoonBanner');
+           table insert, so validation and dedup stay server-side. Postcode
+           is optional here (the hero only ever asks for email) — the RPC's
+           second argument is simply omitted. Remembers a completed signup
+           in localStorage so a returning visitor on the same browser sees
+           the thank-you state instead of the form again. */
+        const heroCaptureForm = document.getElementById('heroCaptureForm');
+        if (heroCaptureForm) {
+            const heroCaptureWrap = document.getElementById('heroCaptureWrap');
             let alreadySignedUpForLaunch = false;
             try { alreadySignedUpForLaunch = localStorage.getItem('yo7ComingSoonSignedUp') === '1'; } catch (e) { /* private browsing etc. */ }
-            if (alreadySignedUpForLaunch) comingSoonBanner.classList.add('signed-up');
+            if (alreadySignedUpForLaunch) heroCaptureWrap.classList.add('signed-up');
 
-            comingSoonForm.addEventListener('submit', async (e) => {
+            heroCaptureForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const emailInput = document.getElementById('csbEmail');
-                const postcodeInput = document.getElementById('csbPostcode');
+                const emailInput = document.getElementById('heroCaptureEmail');
                 const email = emailInput.value.trim();
-                const postcode = postcodeInput.value.trim();
                 if (!isValidEmail(email)) { showToast("That email address doesn't look right, double-check it and try again.", 4500); return; }
-                if (!isUkPostcodeFormat(postcode)) { showToast("That doesn't look like a real UK postcode, please double-check it.", 4500); return; }
-                const submitBtn = comingSoonForm.querySelector('button[type="submit"]');
+                const submitBtn = heroCaptureForm.querySelector('button[type="submit"]');
                 const originalLabel = submitBtn.textContent;
                 if (!supabaseClient) {
                     showToast("Sign-ups aren't connected in preview mode.", 4000);
@@ -18005,12 +17993,12 @@
                 }
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Joining…';
-                const { error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email, p_postcode: postcode });
+                const { error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email });
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalLabel;
                 if (error) { showToast(error.message || "Couldn't sign you up right now, please try again.", 5000); return; }
                 try { localStorage.setItem('yo7ComingSoonSignedUp', '1'); } catch (e) { /* private browsing etc. */ }
-                comingSoonBanner.classList.add('signed-up');
+                heroCaptureWrap.classList.add('signed-up');
                 showToast("You're on the list! We'll email your code and let you know the moment we're live.", 5500);
             });
         }
