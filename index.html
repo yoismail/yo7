@@ -1603,15 +1603,24 @@
         }
         .hero-capture-thanks {
             display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            margin: 0 0 8px;
+        }
+        .hero-capture-thanks p {
             font-family: var(--display);
             font-weight: 700;
             font-size: 15px;
             color: var(--chartreuse-rich);
-            margin: 0 0 8px;
+            margin: 0;
         }
-        [data-theme="dark"] .hero-capture-thanks { color: var(--chartreuse-soft); }
+        [data-theme="dark"] .hero-capture-thanks p { color: var(--chartreuse-soft); }
         .hero-capture-wrap.signed-up .hero-capture-form { display: none; }
-        .hero-capture-wrap.signed-up .hero-capture-thanks { display: block; }
+        /* A postcode-format hint left over from before signing up shouldn't
+           linger under the thank-you message. */
+        .hero-capture-wrap.signed-up .hero-capture-hint { display: none; }
+        .hero-capture-wrap.signed-up .hero-capture-thanks { display: flex; }
 
         .cta-row {
             display: flex;
@@ -7166,7 +7175,12 @@
                         <button type="submit" class="btn btn-primary">Secure 10% Off My First Order</button>
                     </form>
                     <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
-                    <p class="hero-capture-thanks" id="heroCaptureThanks">You're on the list! We'll email your code the moment we launch.</p>
+                    <div class="hero-capture-thanks" id="heroCaptureThanks">
+                        <p>You're on the list! We'll email your code the moment we launch.</p>
+                        <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">
+                            Browse categories
+                        </a>
+                    </div>
                 </div>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -10845,7 +10859,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.16';
+        const BUILD_VERSION = '2026-09-07.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
