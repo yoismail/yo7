@@ -5225,6 +5225,16 @@
             line-height: 1.5;
         }
 
+        .field-hint {
+            font-size: 12px;
+            margin-top: 6px;
+            min-height: 15px;
+            line-height: 1.4;
+        }
+        .field-hint.checking { color: var(--text-muted); }
+        .field-hint.success { color: var(--heading-mid); }
+        .field-hint.error { color: #b34a4a; }
+
         .field input:focus,
         .field select:focus,
         .field textarea:focus {
@@ -7746,7 +7756,9 @@
                                         <div class="field"><label>Town</label><input type="text" required id="dTown"
                                                 placeholder="Ipswich"></div>
                                         <div class="field"><label>Postcode</label><input type="text" required id="dPostcode"
-                                                placeholder="CO1 1AA"></div>
+                                                placeholder="CO1 1AA" autocomplete="postal-code">
+                                            <div class="field-hint" id="dPostcodeHint"></div>
+                                        </div>
                                     </div>
                                     <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
@@ -7764,7 +7776,7 @@
                                 </div>
                                 <div style="display:flex; gap:12px; margin-top:10px;">
                                     <button class="btn btn-outline-dark" type="button" id="backToCartBtn">Back</button>
-                                    <button class="btn btn-primary btn-block" type="submit">Continue to payment</button>
+                                    <button class="btn btn-primary btn-block" type="submit" id="deliveryContinueBtn">Continue to payment</button>
                                 </div>
                             </form>
                         </div>
@@ -9779,6 +9791,40 @@
             return `${deliveryEtaLabel(postcode)}: most orders arrive within ${deliveryEtaWindow(postcode)} of confirmation.`;
         }
 
+        /* ================= POSTCODE VALIDATION =================
+           Matching the shape of a UK postcode isn't enough on its own — a
+           typo that still happens to look postcode-shaped (a transposed
+           digit, a real postcode from the wrong town) would pass format
+           checking yet silently mislabel local vs standard delivery, which
+           now also gets baked into the order and shown to admins. postcodes.io
+           is a free, keyless, ONS/Royal Mail-sourced lookup that confirms the
+           postcode genuinely exists and hands back its canonical spelling —
+           used here as the real check, with the format regex as a fallback
+           when the API can't be reached rather than a first line of defence. */
+        const UK_POSTCODE_FORMAT = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+        function isUkPostcodeFormat(postcode) {
+            return UK_POSTCODE_FORMAT.test((postcode || '').trim());
+        }
+        // ok:true = confirmed real, with the canonical spelling in `normalized`.
+        // ok:false = definitely bad (wrong shape, or postcodes.io confirmed it
+        // doesn't exist) — checkout should block on this. ok:null = couldn't
+        // reach postcodes.io to confirm either way, but the shape was fine —
+        // checkout proceeds rather than getting stuck on a third-party outage.
+        async function lookupPostcode(postcode) {
+            const clean = (postcode || '').trim();
+            if (!isUkPostcodeFormat(clean)) return { ok: false, reason: 'format' };
+            try {
+                const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(clean)}`);
+                if (res.status === 404) return { ok: false, reason: 'not_found' };
+                if (!res.ok) return { ok: null, reason: 'network' };
+                const body = await res.json();
+                if (!body || !body.result || !body.result.postcode) return { ok: null, reason: 'network' };
+                return { ok: true, normalized: body.result.postcode };
+            } catch (err) {
+                return { ok: null, reason: 'network' };
+            }
+        }
+
         /* ================= DISCOUNT ENGINE =================
            Codes are matched case-insensitively. Each discount can restrict
            itself to a date range, a minimum order, and specific qualifying
@@ -10734,7 +10780,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.5';
+        const BUILD_VERSION = '2026-09-07.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13980,7 +14026,48 @@
         }
         document.getElementById('fulfilDeliveryBtn').addEventListener('click', () => setFulfilmentMethod('delivery'));
         document.getElementById('fulfilPickupBtn').addEventListener('click', () => setFulfilmentMethod('pickup'));
-        document.getElementById('dPostcode').addEventListener('input', () => { if (fulfilmentMethod === 'delivery') updateSummaries(); });
+        const dPostcodeField = document.getElementById('dPostcode');
+        const dPostcodeHint = document.getElementById('dPostcodeHint');
+        dPostcodeField.addEventListener('input', () => {
+            if (fulfilmentMethod === 'delivery') updateSummaries();
+            // Typing again after a result was shown invalidates that result —
+            // clear the hint rather than leaving a stale ✓ or ✗ on screen for
+            // a postcode that's no longer what's in the field.
+            dPostcodeHint.textContent = '';
+            dPostcodeHint.className = 'field-hint';
+        });
+        // Real existence check, not just format — see lookupPostcode() above
+        // for why. Runs on blur so the field shows real-time feedback as
+        // someone fills the form in, and again (from the same cache) on
+        // submit as the actual gate, in case they submit without blurring
+        // (e.g. autofill + Enter).
+        let lastPostcodeCheck = { value: null, result: null };
+        async function checkPostcodeField() {
+            const raw = dPostcodeField.value.trim();
+            if (!raw) { dPostcodeHint.textContent = ''; dPostcodeHint.className = 'field-hint'; return null; }
+            if (lastPostcodeCheck.value === raw) return lastPostcodeCheck.result;
+            dPostcodeHint.textContent = 'Checking postcode…';
+            dPostcodeHint.className = 'field-hint checking';
+            const result = await lookupPostcode(raw);
+            if (dPostcodeField.value.trim() !== raw) return null; // field changed mid-check, this result is stale
+            if (result.ok === true) {
+                dPostcodeField.value = result.normalized;
+                dPostcodeHint.textContent = `Valid postcode — ${deliveryEtaLabel(result.normalized)}`;
+                dPostcodeHint.className = 'field-hint success';
+                lastPostcodeCheck = { value: result.normalized, result };
+            } else if (result.ok === false) {
+                dPostcodeHint.textContent = "That doesn't look like a real UK postcode, please check it.";
+                dPostcodeHint.className = 'field-hint error';
+                lastPostcodeCheck = { value: raw, result };
+            } else {
+                dPostcodeHint.textContent = `Couldn't fully verify this postcode right now — ${deliveryEtaLabel(raw)}`;
+                dPostcodeHint.className = 'field-hint checking';
+                lastPostcodeCheck = { value: raw, result };
+            }
+            if (fulfilmentMethod === 'delivery') updateSummaries();
+            return result;
+        }
+        dPostcodeField.addEventListener('blur', () => { if (fulfilmentMethod === 'delivery') checkPostcodeField(); });
 
         /* ================= DISCOUNT CODE ENTRY ================= */
         const applyDiscountBtn = document.getElementById('applyDiscountBtn');
@@ -14007,8 +14094,21 @@
             document.getElementById('discountCodeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyDiscountBtn.click(); } });
         }
 
-        document.getElementById('deliveryForm').addEventListener('submit', (e) => {
+        document.getElementById('deliveryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (fulfilmentMethod === 'delivery') {
+                const continueBtn = document.getElementById('deliveryContinueBtn');
+                continueBtn.disabled = true;
+                const originalLabel = continueBtn.textContent;
+                continueBtn.textContent = 'Checking postcode…';
+                const result = await checkPostcodeField();
+                continueBtn.disabled = false;
+                continueBtn.textContent = originalLabel;
+                if (result && result.ok === false) {
+                    dPostcodeField.focus();
+                    return;
+                }
+            }
             deliveryInfo = {
                 method: fulfilmentMethod,
                 name: document.getElementById('dName').value.trim(),
@@ -14348,6 +14448,7 @@
                 total: lastOrder.total,
                 delivery_name: di ? di.name : null,
                 delivery_address: di ? `${di.address}, ${di.town} ${di.postcode}` : null,
+                delivery_postcode: di ? di.postcode : null,
                 delivery_phone: di ? di.phone : null,
                 notes: di ? di.notes : null,
                 stripe_payment_intent_id: paymentIntent.id,
@@ -14627,7 +14728,7 @@
         <td class="admin-orders-total">${money(order.total)}</td>
         <td>${escapeHtml(billingName)}</td>
         <td>${escapeHtml(order.delivery_name || '—')}</td>
-        <td>${order.fulfilment_method === 'pickup' ? 'Pickup' : 'Standard Delivery'}</td>
+        <td>${order.fulfilment_method === 'pickup' ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode)}</td>
         <td><a class="admin-orders-details-link" href="#/admin/order/${order.id}">Details</a></td>
     </tr>`;
         }
@@ -14831,7 +14932,7 @@
             const phone = order.delivery_phone || profile.phone;
             document.getElementById('aodCustomerPhone').innerHTML = phone ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : '—';
             const isPickup = order.fulfilment_method === 'pickup';
-            document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : 'Standard delivery';
+            document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode);
             document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || '—');
             document.getElementById('aodNote').textContent = order.notes || 'None left at checkout.';
             document.getElementById('aodPaymentMethod').innerHTML = order.stripe_payment_intent_id
@@ -15655,6 +15756,11 @@
                 ? [di.name || '', 'Yo7 Foods, 7 Lancaster Road', 'Ipswich, IP4 2NY', di.phone || '']
                 : [di.name || '', di.address || '', `${di.town || ''}${di.postcode ? ', ' + di.postcode : ''}`, di.phone || ''];
             addrLines.filter(Boolean).forEach(line => { pdf.text(line, margin, y); y += 13; });
+            if (order.fulfilment !== 'pickup') {
+                setText(9, 'bold', accent);
+                pdf.text(deliveryEtaLabel(di.postcode), margin, y);
+                y += 13;
+            }
             y += 6;
             hr(y);
             y += 20;
@@ -15803,9 +15909,11 @@
         // Adapts a raw Supabase orders row (order history / admin) into the
         // shape buildInvoicePdfBlob() expects, the same shape lastOrder has
         // right after checkout. delivery_address is already one combined
-        // string on the DB row (not separate address/town/postcode like
-        // checkout's live deliveryInfo), so it's passed through as-is with
-        // town/postcode left blank rather than duplicated.
+        // string on the DB row (not separate address/town like checkout's
+        // live deliveryInfo), so it's passed through as-is with town left
+        // blank rather than duplicated — postcode has its own column
+        // (delivery_postcode) specifically so the local/standard delivery
+        // label stays correct here too, not just on the live checkout page.
         function invoiceOrderFromDbRow(order) {
             return {
                 number: order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()),
@@ -15821,7 +15929,7 @@
                     name: order.delivery_name || '',
                     address: order.delivery_address || '',
                     town: '',
-                    postcode: '',
+                    postcode: order.delivery_postcode || '',
                     phone: order.delivery_phone || '',
                 },
                 fulfilment: order.fulfilment_method,
