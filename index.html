@@ -7171,7 +7171,7 @@
                 <div class="hero-capture-wrap" id="heroCaptureWrap">
                     <form class="hero-capture-form" id="heroCaptureForm">
                         <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
-                        <input type="text" id="heroCapturePostcode" placeholder="Postcode (optional)" autocomplete="postal-code">
+                        <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code">
                         <button type="submit" class="btn btn-primary">Secure 10% Off My First Order</button>
                     </form>
                     <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
@@ -10859,7 +10859,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.17';
+        const BUILD_VERSION = '2026-09-07.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17994,18 +17994,20 @@
         }
 
         /* ================= HERO PRE-LAUNCH EMAIL + POSTCODE CAPTURE =================
-           The hero's whole CTA in this pre-launch phase — email is the
-           only required field, postcode is an optional add-on (so we know
-           where demand is coming from) that's validated for real when
-           given, exactly like checkout's postcode field: format check,
-           then a postcodes.io lookup via the same lookupPostcode() helper,
-           with the same fail-open behaviour if the API can't be reached.
-           A blank postcode just skips straight past all of that and
-           submits with email alone — never blocks on an empty optional
-           field. Saves via a dedicated RPC (register_coming_soon_interest
-           — see supabase-migration-38-coming-soon-signups.sql), mirroring
-           how the newsletter signup above already does this rather than a
-           raw table insert, so validation and dedup stay server-side.
+           The hero's whole CTA in this pre-launch phase. Postcode is
+           compulsory, not a nice-to-have — the point of collecting it at
+           all is knowing where demand is actually coming from, which only
+           works if it's on every signup, not just the ones who bothered
+           to fill in an optional field. Validated for real, exactly like
+           checkout's postcode field: format check, then a postcodes.io
+           lookup via the same lookupPostcode() helper, with the same
+           fail-open behaviour if the API can't be reached (a genuine
+           network hiccup shouldn't block a signup the same way a
+           confirmed-bad postcode does). Saves via a dedicated RPC
+           (register_coming_soon_interest — see
+           supabase-migration-38-coming-soon-signups.sql), mirroring how
+           the newsletter signup above already does this rather than a raw
+           table insert, so validation and dedup stay server-side.
            Remembers a completed signup in localStorage so a returning
            visitor on the same browser sees the thank-you state instead of
            the form again. */
@@ -18025,7 +18027,11 @@
             let lastHeroPostcodeCheck = { value: null, result: null };
             async function checkHeroPostcodeField() {
                 const raw = heroCapturePostcodeField.value.trim();
-                if (!raw) { heroCapturePostcodeHint.textContent = ''; heroCapturePostcodeHint.className = 'field-hint hero-capture-hint'; return null; }
+                if (!raw) {
+                    heroCapturePostcodeHint.textContent = 'Postcode is required.';
+                    heroCapturePostcodeHint.className = 'field-hint hero-capture-hint error';
+                    return { ok: false, reason: 'empty' };
+                }
                 if (lastHeroPostcodeCheck.value === raw) return lastHeroPostcodeCheck.result;
                 heroCapturePostcodeHint.textContent = 'Checking postcode…';
                 heroCapturePostcodeHint.className = 'field-hint hero-capture-hint checking';
@@ -18037,7 +18043,7 @@
                     heroCapturePostcodeHint.className = 'field-hint hero-capture-hint success';
                     lastHeroPostcodeCheck = { value: result.normalized, result };
                 } else if (result.ok === false) {
-                    heroCapturePostcodeHint.textContent = "That doesn't look like a real UK postcode — leave it blank or fix it.";
+                    heroCapturePostcodeHint.textContent = "That doesn't look like a real UK postcode, please check it.";
                     heroCapturePostcodeHint.className = 'field-hint hero-capture-hint error';
                     lastHeroPostcodeCheck = { value: raw, result };
                 } else {
@@ -18073,8 +18079,7 @@
                 }
                 submitBtn.textContent = 'Joining…';
                 const postcode = heroCapturePostcodeField.value.trim();
-                const rpcArgs = postcode ? { p_email: email, p_postcode: postcode } : { p_email: email };
-                const { error } = await supabaseClient.rpc('register_coming_soon_interest', rpcArgs);
+                const { error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email, p_postcode: postcode });
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalLabel;
                 if (error) { showToast(error.message || "Couldn't sign you up right now, please try again.", 5000); return; }
