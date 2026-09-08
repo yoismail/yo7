@@ -8401,7 +8401,7 @@
                     <div id="pdReviewsList"></div>
                     <div id="pdReviewFormWrap"></div>
                     <div class="pd-reviews-empty" id="pdReviewsFallback" style="display:none;">
-                        <p>Reviews need accounts connected first, this is preview mode right now. In the meantime:</p>
+                        <p>Reviews aren't available to load on this device right now. You're welcome to share yours with us directly in the meantime:</p>
                         <div class="reviews-cta" style="margin-top:16px;">
                             <a class="btn btn-outline-dark whatsapp-order-btn" id="pdReviewWhatsappBtn" href="https://wa.me/447398810052" target="_blank" rel="noopener">Review on WhatsApp</a>
                             <a class="btn btn-outline-dark" id="pdReviewEmailBtn" href="mailto:hello@yo7foods.co.uk">Email a review</a>
@@ -8585,9 +8585,8 @@
                                 Secure checkout
                             </div>
                             <div class="payment-note" id="paymentNotConfiguredNote" style="display:none;">
-                                <strong>Payment isn't set up yet:</strong> a Stripe publishable key needs adding to
-                                the site before checkout can take a real card. No payment method is being shown below
-                                until that's done.
+                                <strong>Card payments open when we launch in January 2027.</strong> Until then, you're
+                                welcome to message us on WhatsApp to place this order instead.
                             </div>
                             <form id="paymentForm">
                                 <div id="stripePaymentElement"></div>
@@ -8957,7 +8956,6 @@
         <section class="legal-section">
             <div class="wrap">
                 <div class="legal-content">
-                    <div class="legal-draft-note">This is a working draft, written to be genuinely accurate about how the site currently operates, not a substitute for a solicitor's review before the site goes live and starts processing real orders.</div>
                     <div class="legal-updated">Last updated: August 2026</div>
 
                     <h2>Who we are</h2>
@@ -8998,7 +8996,6 @@
         <section class="legal-section">
             <div class="wrap">
                 <div class="legal-content">
-                    <div class="legal-draft-note">This is a working draft, written to be genuinely accurate about how the site currently operates, not a substitute for a solicitor's review before the site goes live and starts processing real orders.</div>
                     <div class="legal-updated">Last updated: August 2026</div>
 
                     <h2>Who we are</h2>
@@ -9035,7 +9032,6 @@
         <section class="legal-section">
             <div class="wrap">
                 <div class="legal-content">
-                    <div class="legal-draft-note">This is a working starting point, reflecting standard practice for a food retailer, not your final confirmed policy. Please review and adjust it to match how you actually want to handle returns and refunds before the site goes live, then this note can come out.</div>
                     <div class="legal-updated">Last updated: August 2026</div>
 
                     <h2>Food and perishable items</h2>
@@ -9071,7 +9067,6 @@
         <section class="legal-section">
             <div class="wrap">
                 <div class="legal-content">
-                    <div class="legal-draft-note">This is a working starting point, reflecting standard practice for a small food retailer, not your final confirmed policy. Please review and adjust it before the site goes live, then this note can come out.</div>
                     <div class="legal-updated">Last updated: August 2026</div>
 
                     <h2>Where we deliver</h2>
@@ -9107,7 +9102,6 @@
         <section class="legal-section">
             <div class="wrap">
                 <div class="legal-content">
-                    <div class="legal-draft-note">This is a working draft, written to be genuinely accurate about how the site currently operates, not a substitute for a solicitor's review before the site goes live and starts processing real orders. If cookie-based analytics or advertising are ever added, this page and the notice on the site will be updated to match before that happens.</div>
                     <div class="legal-updated">Last updated: September 2026</div>
 
                     <h2>The short version</h2>
@@ -9474,8 +9468,7 @@
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Log in</button>
                 </form>
                 <div class="auth-switch">New to Yo7 Foods? <a href="#/signup">Create an account</a></div>
-                <div class="auth-note" id="loginAuthNote">Preview mode: accounts aren't stored permanently yet, this resets when you
-                    refresh the page.</div>
+                <div class="auth-note" id="loginAuthNote">Account sign-in isn't available right now. Please try again shortly, or contact us if you need help with an order.</div>
             </div>
         </section>
     </div>
@@ -9566,8 +9559,7 @@
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
                 </form>
                 <div class="auth-switch">Already have an account? <a href="#/login">Log in</a></div>
-                <div class="auth-note" id="signupAuthNote">Preview mode: accounts aren't stored permanently yet, this resets when you
-                    refresh the page.</div>
+                <div class="auth-note" id="signupAuthNote">Account sign-in isn't available right now. Please try again shortly, or contact us if you need help with an order.</div>
             </div>
         </section>
     </div>
@@ -11582,7 +11574,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.35';
+        const BUILD_VERSION = '2026-09-08.36';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15285,7 +15277,7 @@
             errorEl.style.display = 'none';
 
             if (!stripe || !stripeElements) {
-                errorEl.textContent = "Payment isn't set up yet on this site, so an order can't be placed.";
+                errorEl.textContent = "Card payments open when we launch in January 2027. Please message us on WhatsApp to place this order instead.";
                 errorEl.style.display = 'block';
                 return;
             }
@@ -15580,7 +15572,7 @@
             const el = document.getElementById('orderHistoryList');
             if (!el) return;
             if (!supabaseClient) {
-                el.innerHTML = '<div class="order-history-empty">Order history needs accounts connected first, this is preview mode right now.</div>';
+                el.innerHTML = '<div class="order-history-empty">We\'re unable to load your order history right now. Please try again shortly, or contact us if you need help with an order.</div>';
                 return;
             }
             if (!currentSupabaseUser) {
@@ -18041,7 +18033,7 @@
             setAuthError('forgotPasswordError', '');
             setAuthSuccess('forgotPasswordSuccess', '');
             if (!isValidEmail(email)) { setAuthError('forgotPasswordError', 'That email address doesn\'t look right, double-check it and try again.'); return; }
-            if (!supabaseClient) { setAuthError('forgotPasswordError', 'Password reset needs accounts connected first, this is preview mode right now.'); return; }
+            if (!supabaseClient) { setAuthError('forgotPasswordError', 'Password reset isn\'t available right now. Please try again shortly, or contact us for help.'); return; }
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = 'Sending…';
@@ -18063,7 +18055,7 @@
             const password = document.getElementById('rpPassword').value;
             setAuthError('resetPasswordError', '');
             setAuthSuccess('resetPasswordSuccess', '');
-            if (!supabaseClient) { setAuthError('resetPasswordError', 'Password reset needs accounts connected first, this is preview mode right now.'); return; }
+            if (!supabaseClient) { setAuthError('resetPasswordError', 'Password reset isn\'t available right now. Please try again shortly, or contact us for help.'); return; }
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = 'Updating…';
@@ -18957,7 +18949,7 @@
                 if (!supabaseClient) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalLabel;
-                    showToast("Sign-ups aren't connected in preview mode.", 4000);
+                    showToast("We couldn't add you to the list just now, please try again in a moment.", 4000);
                     return;
                 }
                 submitBtn.textContent = 'Joining…';
