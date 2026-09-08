@@ -7263,6 +7263,7 @@
         if (!location.hash) history.replaceState(null, '', location.pathname + location.search + '#/product/sea-foods/4');
     </script>
     <script type="application/ld+json" id="productJsonLd">{"@context": "https://schema.org", "@type": "Product", "name": "AQ Mackerel in Tom Sauce", "description": "AQ Mackerel in Tom Sauce, from Yo7 Foods' Sea Foods aisle.", "sku": "SEA-05", "category": "Sea Foods", "image": "https://yo7foods.co.uk/og-image.png", "url": "https://yo7foods.co.uk/product/aq-mackerel-in-tom-sauce/", "offers": {"@type": "Offer", "priceCurrency": "GBP", "price": "2.99", "availability": "https://schema.org/InStock", "url": "https://yo7foods.co.uk/product/aq-mackerel-in-tom-sauce/"}}</script>
+    <script type="application/ld+json" id="breadcrumbJsonLd">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://yo7foods.co.uk/"}, {"@type": "ListItem", "position": 2, "name": "Sea Foods", "item": "https://yo7foods.co.uk/#/category/sea-foods"}, {"@type": "ListItem", "position": 3, "name": "AQ Mackerel in Tom Sauce", "item": "https://yo7foods.co.uk/product/aq-mackerel-in-tom-sauce/"}]}</script>
 </head>
 
 <body>
@@ -11140,7 +11141,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.12';
+        const BUILD_VERSION = '2026-09-08.13';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13417,6 +13418,50 @@
         function clearProductJsonLd() {
             const el = document.getElementById('productJsonLd');
             if (el) el.remove();
+        }
+        // Generic rather than per-route: every visible ".breadcrumb" trail
+        // (Home > Category > Product, Home > Contact Us, etc.) is already
+        // built by that route's own render function by the time route()
+        // finishes, as real <a>/text nodes a visitor can see — this just
+        // reads that same trail back and mirrors it as BreadcrumbList
+        // structured data, instead of a second hand-maintained copy of
+        // every route's breadcrumb logic that could drift out of sync with
+        // what's actually on the page.
+        function updateBreadcrumbJsonLd() {
+            let el = document.getElementById('breadcrumbJsonLd');
+            const activeView = VIEWS.map(id => document.getElementById(id)).find(v => v && !v.classList.contains('hidden-view'));
+            const crumb = activeView ? activeView.querySelector('.breadcrumb') : null;
+            const items = [];
+            if (crumb) {
+                crumb.childNodes.forEach(node => {
+                    if (node.nodeType === 1 && (node.tagName === 'A' || node.tagName === 'SPAN')) {
+                        const text = node.textContent.trim();
+                        if (!text) return;
+                        const href = node.tagName === 'A' ? node.getAttribute('href') : null;
+                        const url = href ? (href === '#/' || href === '#' ? 'https://yo7foods.co.uk/' : `https://yo7foods.co.uk/${href}`) : null;
+                        items.push({ name: text, url });
+                    } else if (node.nodeType === 3) {
+                        const text = node.textContent.replace(/›/g, '').trim();
+                        if (text) items.push({ name: text, url: null });
+                    }
+                });
+            }
+            if (items.length < 2) { if (el) el.remove(); return; }
+            if (!el) {
+                el = document.createElement('script');
+                el.type = 'application/ld+json';
+                el.id = 'breadcrumbJsonLd';
+                document.head.appendChild(el);
+            }
+            el.textContent = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'BreadcrumbList',
+                itemListElement: items.map((it, i) => {
+                    const listItem = { '@type': 'ListItem', position: i + 1, name: it.name };
+                    if (it.url) listItem.item = it.url;
+                    return listItem;
+                }),
+            });
         }
         // A live "order within Xh Ym for same-day dispatch" estimate for the
         // product page and cart drawer, so a customer can see roughly when
@@ -17846,6 +17891,7 @@
                 renderNewCarousel();
                 renderBestSellersSpotlight();
             }
+            updateBreadcrumbJsonLd();
         }
         window.addEventListener('hashchange', route);
 

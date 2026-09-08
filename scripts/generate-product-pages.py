@@ -196,6 +196,31 @@ def inject_json_ld(html, json_ld_text):
     return html.replace('</head>', tag, 1)
 
 
+def build_breadcrumb_json_ld(cat_name_plain, cat_slug, name_plain, page_url):
+    # Home > Category > Product only, skipping the optional "group" level
+    # (Basic Food Items, Spices & Cooking Oils, etc.) that index.html's own
+    # updateBreadcrumbJsonLd() includes at runtime when a category belongs
+    # to one, since GROUPS isn't parsed by this script. index.html's own JS
+    # replaces this tag the instant it runs (same pattern as productJsonLd
+    # above), so a real visitor always sees the full trail — this static
+    # 3-level version is only what a crawler sees before JS executes, and
+    # omitting a level there is a simplification, not a wrong claim.
+    items = [
+        {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': f'{BASE_URL}/'},
+        {'@type': 'ListItem', 'position': 2, 'name': cat_name_plain, 'item': f'{BASE_URL}/#/category/{cat_slug}'},
+        {'@type': 'ListItem', 'position': 3, 'name': name_plain, 'item': page_url},
+    ]
+    data = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': items}
+    return json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
+
+
+def inject_breadcrumb_json_ld(html, breadcrumb_json_ld_text):
+    if html.count('</head>') != 1:
+        raise ValueError(f'Expected exactly one </head>, found {html.count("</head>")}')
+    tag = f'    <script type="application/ld+json" id="breadcrumbJsonLd">{breadcrumb_json_ld_text}</script>\n</head>'
+    return html.replace('</head>', tag, 1)
+
+
 def sitemap_url_block(loc, lastmod, changefreq, priority):
     return (f'<url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n'
             f'    <changefreq>{changefreq}</changefreq>\n    <priority>{priority}</priority>\n  </url>')
@@ -257,11 +282,13 @@ def main():
 
             title_html = f'{name_html} | Yo7 Foods'
             json_ld_text = build_json_ld(name_plain, description_plain, p['code'], cat_name_plain, page_url, price, availability)
+            breadcrumb_json_ld_text = build_breadcrumb_json_ld(cat_name_plain, cat_slug, name_plain, page_url)
 
             lines = gsp.patch_head(list(source_lines), path_slug, title_html, description_html)
             html = '\n'.join(lines)
             html = inject_route_seed_and_marker(html, cat_slug, idx, real_path)
             html = inject_json_ld(html, json_ld_text)
+            html = inject_breadcrumb_json_ld(html, breadcrumb_json_ld_text)
 
             out_dir = os.path.join(REPO_ROOT, path_slug)
             os.makedirs(out_dir, exist_ok=True)
