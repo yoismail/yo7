@@ -11138,7 +11138,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.8';
+        const BUILD_VERSION = '2026-09-08.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14434,7 +14434,7 @@
             if (dPostcodeField.value.trim() !== raw) return null; // field changed mid-check, this result is stale
             if (result.ok === true) {
                 dPostcodeField.value = result.normalized;
-                dPostcodeHint.textContent = `Valid postcode — ${deliveryEtaLabel(result.normalized)}`;
+                dPostcodeHint.textContent = `Valid postcode: ${deliveryEtaLabel(result.normalized)}`;
                 dPostcodeHint.className = 'field-hint success';
                 lastPostcodeCheck = { value: result.normalized, result };
             } else if (result.ok === false) {
@@ -14442,7 +14442,7 @@
                 dPostcodeHint.className = 'field-hint error';
                 lastPostcodeCheck = { value: raw, result };
             } else {
-                dPostcodeHint.textContent = `Couldn't fully verify this postcode right now — ${deliveryEtaLabel(raw)}`;
+                dPostcodeHint.textContent = `Couldn't fully verify this postcode right now: ${deliveryEtaLabel(raw)}`;
                 dPostcodeHint.className = 'field-hint checking';
                 lastPostcodeCheck = { value: raw, result };
             }
@@ -15310,12 +15310,12 @@
             document.getElementById('aodSubtitle').textContent = `Placed ${dateLabel}`;
             const profile = order.profiles || {};
             document.getElementById('aodCustomerName').textContent = profile.full_name || order.delivery_name || 'Unknown customer';
-            document.getElementById('aodCustomerEmail').innerHTML = profile.email ? `<a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a>` : '—';
+            document.getElementById('aodCustomerEmail').innerHTML = profile.email ? `<a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a>` : 'Not provided';
             const phone = order.delivery_phone || profile.phone;
-            document.getElementById('aodCustomerPhone').innerHTML = phone ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : '—';
+            document.getElementById('aodCustomerPhone').innerHTML = phone ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : 'Not provided';
             const isPickup = order.fulfilment_method === 'pickup';
             document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode);
-            document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || '—');
+            document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || 'Not provided');
             document.getElementById('aodNote').textContent = order.notes || 'None left at checkout.';
             document.getElementById('aodPaymentMethod').innerHTML = order.stripe_payment_intent_id
                 ? `${escapeHtml(order.payment_method_summary || 'Paid online')}<br><span style="font-size:11.5px; color:var(--text-muted);">Stripe reference: ${escapeHtml(order.stripe_payment_intent_id)}</span>`
