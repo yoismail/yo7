@@ -5540,6 +5540,12 @@
             border-radius: 20px;
             padding: 30px 28px;
             border: 1px solid rgba(var(--border-rgb), 0.08);
+            /* Every other card on the site (product, combo, category) has
+               real elevation — checkout's panels were the one place left
+               with a flat outline and no shadow, which is a big part of
+               why this page reads as a generic template next to the rest
+               of the site. */
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.07);
         }
 
         .panel h2 {
@@ -5598,7 +5604,8 @@
             position: relative;
             width: 100%;
             aspect-ratio: 1;
-            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background-size: 14px 14px, auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -6051,10 +6058,29 @@
             font-weight: 700;
             font-size: 17px;
             color: var(--ink);
-            border-top: 1px solid rgba(var(--border-rgb), 0.12);
-            margin-top: 8px;
             padding-top: 16px;
         }
+        /* A perforated "tear line" ahead of the grand total — an actual
+           paper receipt's own visual language for an order summary,
+           rather than a plain divider rule, and the same punched-circle
+           technique as the combo card's ticket seam (.combo-ticket-perf).
+           Replaces .summary-row.total's old plain border-top. */
+        .receipt-perf {
+            position: relative;
+            height: 0;
+            margin-top: 10px;
+            border-top: 2px dashed rgba(var(--border-rgb), 0.22);
+        }
+        .receipt-perf::before, .receipt-perf::after {
+            content: '';
+            position: absolute; top: 0;
+            width: 14px; height: 14px;
+            background: var(--page-bg);
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+        .receipt-perf::before { left: -14px; }
+        .receipt-perf::after { right: -14px; }
 
         .secure-badge {
             display: inline-flex; align-items: center; gap: 7px;
@@ -6081,13 +6107,19 @@
         }
         .trust-pill svg { width: 13px; height: 13px; color: var(--heading-mid); flex-shrink: 0; }
 
+        .payment-badges-label {
+            font-family: var(--display); font-weight: 600; font-size: 10.5px;
+            letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint);
+            margin: 18px 0 10px;
+        }
         .payment-badges {
-            display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 12px;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 0;
         }
         .payment-badge {
             display: flex; align-items: center; justify-content: center;
             height: 28px; padding: 0 12px; border-radius: 6px;
             background: #FFFFFF; border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
             font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.02em;
         }
         .payment-badge-visa { color: #1A1F71; font-style: italic; letter-spacing: 0; }
@@ -8240,6 +8272,7 @@
                                 48-hour replacement policy
                             </div>
                         </div>
+                        <div class="payment-badges-label">We accept</div>
                         <div class="payment-badges">
                             <span class="payment-badge payment-badge-visa">VISA</span>
                             <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
@@ -8338,6 +8371,7 @@
                             <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
                             <div class="summary-row discount-row" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Discount</span><span id="sumDiscount">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty">-£0.00</span></div>
+                            <div class="receipt-perf" aria-hidden="true"></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal">£0.00</span></div>
                             <button class="btn btn-primary btn-block" id="toDeliveryBtn" style="margin-top:20px;"
                                 type="button">Continue to delivery</button>
@@ -8364,6 +8398,7 @@
                                     Pickup available, no fee
                                 </div>
                             </div>
+                            <div class="payment-badges-label">We accept</div>
                             <div class="payment-badges">
                                 <span class="payment-badge payment-badge-visa">VISA</span>
                                 <span class="payment-badge payment-badge-mastercard"><span class="mc-circle mc-circle-1"></span><span class="mc-circle mc-circle-2"></span></span>
@@ -8440,6 +8475,7 @@
                             <div class="delivery-fee-note" id="deliveryEtaNote2"></div>
                             <div class="summary-row discount-row" id="sumDiscountRow2" style="display:none;"><span id="sumDiscountLabel2">Discount</span><span id="sumDiscount2">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow2" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty2">-£0.00</span></div>
+                            <div class="receipt-perf" aria-hidden="true"></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal2">£0.00</span></div>
                         </div>
                     </div>
@@ -8479,6 +8515,7 @@
                             <div class="delivery-fee-note" id="deliveryEtaNote3"></div>
                             <div class="summary-row discount-row" id="sumDiscountRow3" style="display:none;"><span id="sumDiscountLabel3">Discount</span><span id="sumDiscount3">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow3" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty3">-£0.00</span></div>
+                            <div class="receipt-perf" aria-hidden="true"></div>
                             <div class="summary-row total"><span>Total</span><span id="sumTotal3">£0.00</span></div>
                             <div class="cart-trust-strip">
                                 <div class="trust-pill">
@@ -11444,7 +11481,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.31';
+        const BUILD_VERSION = '2026-09-08.32';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
