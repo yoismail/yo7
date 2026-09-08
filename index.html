@@ -3892,8 +3892,11 @@
             border: 2px solid var(--page-bg);
         }
         .float-cart-badge.is-empty { display: none; }
-        .float-cart-badge.badge-pulse {
+        .float-cart-badge.badge-pulse, .cart-badge.badge-pulse {
             animation: badgePop 0.5s cubic-bezier(.34, 1.56, .64, 1), badgeRing 0.7s ease-out;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .float-cart-badge.badge-pulse, .cart-badge.badge-pulse { animation: none; }
         }
 
         .float-order {
@@ -11145,7 +11148,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.14';
+        const BUILD_VERSION = '2026-09-08.15';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11348,6 +11351,11 @@
             const n = cartCount();
             badge.textContent = n;
             badge.classList.toggle('zero', n === 0);
+            if (n > lastKnownCartCount) {
+                badge.classList.remove('badge-pulse');
+                void badge.offsetWidth; // restart the animation even if it's still mid-play from a rapid add
+                badge.classList.add('badge-pulse');
+            }
             // Lets someone already carrying items in their basket jump
             // straight to checkout from a product page they're just
             // browsing, without adding this product or hunting for the
