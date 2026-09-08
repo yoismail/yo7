@@ -1977,31 +1977,19 @@
             .hero-capture-thanks {
                 align-items: flex-start;
             }
-            /* left, not right — anchored just past the 520px text column
-               so the seal sits close to the headline instead of drifting
-               out toward the far edge of a wide viewport. clamp() so it
-               still scales down at the narrow end of this breakpoint
-               (~901px) rather than staying fixed while the column doesn't. */
+            /* Per request: the seal (crisp foreground badge) is dropped
+               from the desktop composition entirely, leaving the faded
+               background "7" watermark as the hero's only art element,
+               scaled up to fill the freed-up right side on its own. */
             .seal {
-                position: absolute;
-                top: 42%;
-                left: 620px;
-                transform: translateY(-50%);
-                width: clamp(200px, 20vw, 280px);
-                height: clamp(200px, 20vw, 280px);
-                margin: 0;
+                display: none;
             }
-            /* Back in the top-right corner, bigger — the seal moving in
-               next to the headline frees up that corner for the faded
-               background mark to take on its own scale without crowding
-               the seal (paint order/z-index still puts the seal on top
-               wherever the two happen to overlap). */
             .hero-watermark {
                 top: -6%;
                 bottom: auto;
-                right: -6%;
+                right: -8%;
                 transform: none;
-                width: min(46vw, 620px);
+                width: min(58vw, 780px);
             }
         }
 
@@ -11282,7 +11270,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.25';
+        const BUILD_VERSION = '2026-09-08.26';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
