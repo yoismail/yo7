@@ -1881,16 +1881,42 @@
         }
 
         .hero-shop-link {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
             margin-top: 4px;
             font-family: var(--display);
             font-weight: 600;
             font-size: 13.5px;
-            color: #A8481F;
-            text-decoration: underline;
-            text-underline-offset: 2px;
+            color: rgba(44, 28, 16, 0.65);
+            text-decoration: none;
         }
-        [data-theme="dark"] .hero-shop-link { color: #E0895A; }
+        [data-theme="dark"] .hero-shop-link { color: rgba(233, 230, 218, 0.65); }
+
+        /* The site's brand yellow (--orange) reads as near-invisible plain
+           text on a white background (~1.4:1 contrast) — every other use of
+           it on the site is as a filled chip/button with dark text on top
+           (the primary CTA, rank badges), never as bare text on light. Same
+           treatment here so "Start shopping" stands out as its own pill
+           rather than blending into the lead-in sentence. */
+        .hero-shop-cta {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 700;
+            color: var(--aubergine-deep);
+            background: var(--orange);
+            padding: 5px 14px;
+            border-radius: 999px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hero-shop-link:hover .hero-shop-cta {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(225, 225, 0, 0.45);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-shop-link:hover .hero-shop-cta { transform: none; }
+        }
 
         .hero-social-link {
             display: flex;
@@ -7486,7 +7512,7 @@
                         </a>
                     </div>
                 </div>
-                <a class="hero-shop-link" href="#/shop">Already know what you want? Start shopping &rarr;</a>
+                <a class="hero-shop-link" href="#/shop">Already know what you want? <span class="hero-shop-cta">Start shopping &rarr;</span></a>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -11163,7 +11189,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.17';
+        const BUILD_VERSION = '2026-09-08.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
