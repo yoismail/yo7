@@ -282,6 +282,16 @@
             display: none !important;
         }
 
+        /* Removed by boot() once the initial route has actually rendered
+           (see the JS comment where it's removed for the full story) —
+           every view above starts hidden too, so without this the footer
+           was the only thing on the page with real height while the app
+           script was still loading, appearing above the homepage instead
+           of below it. */
+        .boot-hidden {
+            display: none !important;
+        }
+
         /* Route-level page transition: plays once on the view that just
            became active, so navigating feels like an app, not a hard cut. */
         .route-view-enter {
@@ -9477,6 +9487,14 @@
         </section>
     </div>
 
+    <!-- Hidden until boot() reveals it (see boot-hidden below) -- every
+         view above starts collapsed behind .hidden-view too, but this sits
+         right after them with no view content of its own, so while the app
+         script is still loading/parsing (or waiting on the Supabase CDN
+         script, which blocks the parser) it was the first real content the
+         browser had anything to paint, appearing above the homepage it's
+         meant to follow instead of below it. -->
+    <div id="siteFooterWrap" class="boot-hidden">
     <div class="footer-curve" aria-hidden="true">
         <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z"/></svg>
     </div>
@@ -9565,6 +9583,7 @@
             </div>
         </div>
     </footer>
+    </div>
 
     <a class="float-cart" id="floatCart" href="#/checkout" aria-label="View basket">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -11268,7 +11287,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.26';
+        const BUILD_VERSION = '2026-09-08.27';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11988,6 +12007,12 @@
             dishSelectedItems = new Set(dish.items.map((_, idx) => idx));
             renderDishPicker();
             renderDishBuilder();
+            // The ingredient list renders below the dish picker row, out of
+            // view on anything shorter than a full desktop screen — nothing
+            // on screen hinted a list had even appeared, so this jumps to it
+            // the same way "Browse categories" already does elsewhere.
+            const builderPanel = document.getElementById('dishBuilderPanel');
+            if (builderPanel) builderPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         window.selectDish = selectDish;
         function removeDish(e, i) {
@@ -18646,6 +18671,12 @@
         updateCartBadge();
         handleStripeRedirectReturn();
         route();
+        // The footer starts hidden (see .boot-hidden) so it can't render
+        // above the real page while everything up to and including this
+        // route() call was still loading — now that the correct view is
+        // actually showing, it's safe to reveal.
+        const siteFooterWrap = document.getElementById('siteFooterWrap');
+        if (siteFooterWrap) siteFooterWrap.classList.remove('boot-hidden');
         syncNavSpacer();
         startHeroCarousel();
         setTimeout(syncNavSpacer, 300); // re-check once web font has likely loaded
