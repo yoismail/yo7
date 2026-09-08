@@ -5056,6 +5056,14 @@
         .pd-review-card:last-child { border-bottom: none; }
         .pd-review-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
         .pd-review-name { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); }
+        .pd-review-verified {
+            display: inline-flex; align-items: center; gap: 3px; margin-left: 7px;
+            font-family: var(--display); font-weight: 700; font-size: 10.5px; letter-spacing: 0.01em;
+            color: var(--chartreuse-rich); background: rgba(144, 184, 0, 0.14);
+            padding: 3px 8px 3px 6px; border-radius: 999px; vertical-align: middle;
+        }
+        .pd-review-verified svg { width: 11px; height: 11px; }
+        [data-theme="dark"] .pd-review-verified { color: var(--chartreuse-soft); background: rgba(166, 204, 46, 0.16); }
         .pd-review-date { font-size: 12px; color: var(--text-faint); }
         .pd-review-comment { font-size: 13.5px; color: var(--text-body); line-height: 1.55; }
         .pd-review-delete { font-size: 12px; color: #C1552C; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 6px; }
@@ -11137,7 +11145,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.13';
+        const BUILD_VERSION = '2026-09-08.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13670,6 +13678,7 @@
         <div class="pd-review-top">
           <div>
             <span class="pd-review-name">${escapeHtml(name)}</span>
+            ${r.is_verified_purchase ? '<span class="pd-review-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Verified purchase</span>' : ''}
             <span class="pd-stars">${starsHTML(r.rating)}</span>
           </div>
           <span class="pd-review-date">${dateLabel}</span>
@@ -13702,6 +13711,19 @@
         <button type="button" class="btn btn-primary" id="pdReviewSubmitBtn" style="margin-top:12px;">${myReview ? 'Update review' : 'Submit review'}</button>
     </div>`;
         }
+        // Re-checked on every review save (not cached from an earlier
+        // check), so the badge always reflects the current truth rather
+        // than a stale value from whenever the reviewer first wrote it —
+        // see has_purchased_product() (migration 41) for why this is safe
+        // to call from here: it's security definer but only ever answers
+        // for the currently authenticated caller.
+        async function checkVerifiedPurchase(key) {
+            if (!currentSupabaseUser || !supabaseClient) return false;
+            try {
+                const { data, error } = await supabaseClient.rpc('has_purchased_product', { p_user_id: currentSupabaseUser.id, p_product_key: key });
+                return error ? false : !!data;
+            } catch (e) { return false; }
+        }
         function wireReviewForm(key, myReview) {
             const starInput = document.getElementById('pdReviewStarInput');
             if (!starInput) return;
@@ -13721,12 +13743,14 @@
                 btn.disabled = true;
                 const comment = document.getElementById('pdReviewComment').value.trim();
                 const isAnonymous = document.getElementById('pdReviewAnon').checked;
+                const isVerified = await checkVerifiedPurchase(key);
                 const { error } = await supabaseClient.from('product_reviews').upsert({
                     product_key: key,
                     user_id: currentSupabaseUser.id,
                     rating: selectedRating,
                     comment: comment || null,
                     is_anonymous: isAnonymous,
+                    is_verified_purchase: isVerified,
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
@@ -13823,18 +13847,33 @@
       </div>`;
         }
         window.openAllergenEdit = openAllergenEdit;
-        function saveAllergenEdit() {
+        async function saveAllergenEdit() {
             if (!pdCurrent) return;
             const checked = Array.from(document.querySelectorAll('.allergen-check input:checked')).map(el => el.value);
             const note = document.getElementById('pdEdit-allergyNote').value.trim();
             const cat = findCategory(pdCurrent.catSlug);
             const realProduct = cat && cat.products[pdCurrent.idx];
             if (!realProduct) return;
+            const beforeAllergens = (realProduct.allergens || []).join(', ');
+            const beforeNote = realProduct.allergyNote || '';
             if (checked.length) { realProduct.allergens = checked; pdCurrent.allergens = checked; }
             else { delete realProduct.allergens; delete pdCurrent.allergens; }
             if (note) { realProduct.allergyNote = note; pdCurrent.allergyNote = note; }
             else { delete realProduct.allergyNote; delete pdCurrent.allergyNote; }
             renderProductDetailsSection(pdCurrent, pdCurrent.catSlug);
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(pdCurrent.catSlug, pdCurrent.idx),
+                allergens: checked.length ? checked : null,
+                allergy_note: note || null,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) { showToast('Could not save allergen info: ' + error.message); return; }
+            const afterAllergens = checked.join(', ');
+            const changes = [];
+            if (beforeAllergens !== afterAllergens) changes.push({ label: 'Allergens', from: beforeAllergens || 'none', to: afterAllergens || 'none' });
+            if (beforeNote !== note) changes.push({ label: 'May contain', from: beforeNote || 'none', to: note || 'none' });
+            if (changes.length) logAdminAction('product_updated', 'product', realProduct.name, { changes });
         }
         window.saveAllergenEdit = saveAllergenEdit;
         function openPdDetailEdit(key) {
@@ -13850,15 +13889,32 @@
         </div>
       </div>`;
         }
-        function savePdDetailEdit(key) {
+        const PD_DETAIL_COLUMNS = { origin: 'origin', storage: 'storage', nutrition: 'nutrition', cookingTip: 'cooking_tip' };
+        const PD_DETAIL_LABELS = { origin: 'Origin', storage: 'Storage', nutrition: 'Nutrition', cookingTip: 'Cooking suggestions' };
+        async function savePdDetailEdit(key) {
             if (!pdCurrent) return;
             const val = document.getElementById(`pdEdit-${key}`).value.trim();
             const cat = findCategory(pdCurrent.catSlug);
             const realProduct = cat && cat.products[pdCurrent.idx];
             if (!realProduct) return;
+            const before = realProduct[key] || '';
             if (val) { realProduct[key] = val; pdCurrent[key] = val; }
             else { delete realProduct[key]; delete pdCurrent[key]; }
             renderProductDetailsSection(pdCurrent, pdCurrent.catSlug);
+            if (!supabaseClient) return;
+            const column = PD_DETAIL_COLUMNS[key];
+            if (!column) return;
+            const { error } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(pdCurrent.catSlug, pdCurrent.idx),
+                [column]: val || null,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) { showToast('Could not save that: ' + error.message); return; }
+            if (before !== val) {
+                logAdminAction('product_updated', 'product', realProduct.name, {
+                    changes: [{ label: PD_DETAIL_LABELS[key] || key, from: before || 'none', to: val || 'none' }],
+                });
+            }
         }
         window.openPdDetailEdit = openPdDetailEdit;
         window.savePdDetailEdit = savePdDetailEdit;
@@ -14193,6 +14249,7 @@
         <div class="pd-review-top">
           <div>
             <span class="pd-review-name">${escapeHtml(name)}</span>
+            ${r.is_verified_purchase ? '<span class="pd-review-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Verified purchase</span>' : ''}
             <span class="pd-stars">${starsHTML(r.rating)}</span>
           </div>
           <span class="pd-review-date">${dateLabel}</span>
@@ -14245,12 +14302,14 @@
                 btn.disabled = true;
                 const comment = document.getElementById('crmReviewComment').value.trim();
                 const isAnonymous = document.getElementById('crmReviewAnon').checked;
+                const isVerified = await checkVerifiedPurchase(key);
                 const { error } = await supabaseClient.from('product_reviews').upsert({
                     product_key: key,
                     user_id: currentSupabaseUser.id,
                     rating: selectedRating,
                     comment: comment || null,
                     is_anonymous: isAnonymous,
+                    is_verified_purchase: isVerified,
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
@@ -17495,6 +17554,12 @@
                 // over both of those, not get treated as "nothing to apply".
                 if (row.is_new === true) product.isNew = true;
                 else if (row.is_new === false) product.isNew = false;
+                if (row.origin) product.origin = row.origin;
+                if (row.storage) product.storage = row.storage;
+                if (Array.isArray(row.allergens) && row.allergens.length) product.allergens = row.allergens;
+                if (row.allergy_note) product.allergyNote = row.allergy_note;
+                if (row.nutrition) product.nutrition = row.nutrition;
+                if (row.cooking_tip) product.cookingTip = row.cooking_tip;
             });
             route(); // re-render whatever's currently on screen with the real data now in hand
         }
