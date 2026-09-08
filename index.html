@@ -2478,22 +2478,117 @@
         }
 
         .combos-scroll { padding-bottom: 6px; }
-        .combos-scroll .combo-card { flex: 0 0 265px; max-width: 265px; scroll-snap-align: start; }
+        .combos-scroll .combo-card { flex: 0 0 275px; max-width: 275px; scroll-snap-align: start; }
         .combo-card {
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
-            padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
-            transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 22px;
+            padding: 26px 24px 24px; position: relative; display: flex; flex-direction: column;
+            overflow: hidden; isolation: isolate;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1), border-color 0.4s ease;
         }
+        /* Diagonal glass sheen across the top of every card, tinted or not —
+           a translucent white gradient reads as a soft highlight on a dark
+           admin-chosen bgColor and stays understated on the plain default
+           card-bg, so one rule works for both without a special case. */
+        .combo-card::before {
+            content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+            background: linear-gradient(155deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 38%);
+        }
+        /* A soft, slow-drifting glow anchored beyond the bottom-right corner
+           — the one continuous bit of motion on an otherwise static card,
+           kept subtle enough to read as ambient light rather than a
+           distraction while browsing a whole row of these. */
+        .combo-card::after {
+            content: ''; position: absolute; z-index: 0; pointer-events: none;
+            width: 200px; height: 200px; right: -70px; bottom: -70px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: comboGlowDrift 7s ease-in-out infinite;
+        }
+        @keyframes comboGlowDrift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-10px, -14px) scale(1.15); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .combo-card::after { animation: none; }
+        }
+        .combo-card > * { position: relative; z-index: 1; }
         .combo-card:hover {
-            transform: translateY(-7px);
-            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 26px 48px rgba(var(--border-rgb), 0.16);
+            transform: translateY(-9px) scale(1.015);
+            border-color: rgba(var(--border-rgb), 0.02);
+            box-shadow: 0 6px 14px rgba(var(--border-rgb), 0.08), 0 32px 56px rgba(var(--border-rgb), 0.2), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
         }
-        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px; }
+        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18.5px; color: var(--heading); letter-spacing: -0.01em; line-height: 1.25; }
         .combo-card .btn { width: 100%; text-align: center; }
+        .combo-card-head {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+        }
+        /* The icon is the linked category's own glyph (see comboCardHTML's
+           comment) inside a frosted-glass chip, so every combo gets a
+           distinct pictorial identity for free instead of the plain
+           text-only heading every card used to open with. */
+        .combo-card-icon {
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(var(--border-rgb), 0.06);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            color: var(--chartreuse-rich);
+            box-shadow: 0 2px 6px rgba(var(--border-rgb), 0.06);
+        }
+        .combo-card-icon svg { width: 21px; height: 21px; }
+        .combo-tinted .combo-card-icon {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.16);
+            color: #FAF9F2;
+        }
+        /* Bigger, bolder, and layered — a stacked "8% / off" reads as a
+           genuine badge of honour rather than the single small pill it was,
+           with its own lift and glow so it feels cut from different, shinier
+           material than the flat card behind it. */
+        .combo-card .combo-discount-badge {
+            display: flex; flex-direction: column; align-items: center; align-self: flex-start; line-height: 1;
+            background: linear-gradient(155deg, #F5F500 0%, var(--orange) 100%);
+            color: var(--aubergine-deep);
+            padding: 7px 13px 8px; border-radius: 14px; margin-bottom: 14px;
+            box-shadow: 0 4px 10px rgba(225, 225, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+        }
+        .combo-discount-pct { font-family: var(--display); font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
+        .combo-discount-label { font-family: var(--display); font-weight: 700; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; margin-top: -1px; }
+        /* Named explicitly rather than "you save X%" — a cash amount lands
+           as more real to a shopper mid-scroll than a percentage they'd
+           have to do the maths on themselves. */
+        .combo-savings {
+            display: inline-block; align-self: flex-start;
+            font-family: var(--display); font-weight: 700; font-size: 11.5px;
+            color: var(--chartreuse-rich); background: rgba(144, 184, 0, 0.14);
+            padding: 3px 10px; border-radius: 999px; margin: -10px 0 14px;
+        }
+        .combo-tinted .combo-savings { color: #FAF9F2; background: rgba(255, 255, 255, 0.16); }
+        .combo-card .combo-add-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: linear-gradient(155deg, var(--chartreuse-rich), var(--chartreuse));
+            box-shadow: 0 4px 10px rgba(144, 184, 0, 0.3);
+            position: relative; overflow: hidden;
+        }
+        .combo-card .combo-add-btn svg { width: 17px; height: 17px; flex-shrink: 0; }
+        .combo-card .combo-add-btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.65) 50%, transparent 65%);
+            background-size: 220% 100%; background-position: 160% 0; background-repeat: no-repeat;
+            pointer-events: none;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .combo-card .combo-add-btn:hover {
+                box-shadow: 0 8px 18px rgba(144, 184, 0, 0.42);
+                transform: translateY(-1px);
+            }
+            .combo-card .combo-add-btn:hover::after {
+                transition: background-position 0.65s cubic-bezier(.4, 0, .2, 1);
+                background-position: -60% 0;
+            }
+        }
         .combo-remove-btn {
             display: none;
-            position: absolute; top: 12px; right: 12px;
+            position: absolute; top: 12px; right: 12px; z-index: 2;
             width: 24px; height: 24px; border-radius: 50%;
             background: rgba(179,74,74,0.12); color: #b34a4a; border: none;
             font-size: 16px; line-height: 1; cursor: pointer;
@@ -11300,7 +11395,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.28';
+        const BUILD_VERSION = '2026-09-08.29';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12317,16 +12412,26 @@
             const rawTotal = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
             const discountPct = combo.discountPercent || 0;
             const discountedTotal = rawTotal * (1 - discountPct / 100);
+            const savings = rawTotal - discountedTotal;
             const itemRows = items.map(p => bundleItemRowHTML(p, p.stock === 'out')).join('');
             const totalRow = items.length ? (discountPct > 0
-                ? `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span><span class="bundle-was">${money(rawTotal)}</span> ${money(discountedTotal)}</span></div>`
+                ? `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span><span class="bundle-was">${money(rawTotal)}</span> ${money(discountedTotal)}</span></div>
+      <div class="combo-savings">You save ${money(savings)}</div>`
                 : `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(discountedTotal)}</span></div>`) : '';
             const bgColor = combo.bgColor || '';
+            // The same glyph a shopper already sees on the linked category's
+            // own card elsewhere on the site — free visual identity per combo
+            // with no new admin field to fill in, and it can never drift out
+            // of sync with what the combo actually links to.
+            const catIcon = combo.linkCategory ? findCategory(combo.linkCategory)?.emoji : null;
             return `
     <div class="combo-card${bgColor ? ' combo-tinted' : ''}" id="comboCard-${ci}"${bgColor ? ` style="background:${escapeHtml(bgColor)}"` : ''}>
       <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
-      ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
-      <h3>${escapeHtml(combo.name)}</h3>
+      ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge combo-discount-badge"><span class="combo-discount-pct">${discountPct}%</span><span class="combo-discount-label">off</span></div>` : ''}
+      <div class="combo-card-head">
+        ${catIcon ? `<span class="combo-card-icon">${catIcon}</span>` : ''}
+        <h3>${escapeHtml(combo.name)}</h3>
+      </div>
       <div class="bundle-tagline">${escapeHtml(combo.description || '')}</div>
       <div class="bundle-items">${itemRows}</div>
       ${totalRow}
@@ -12340,7 +12445,7 @@
         <input type="color" value="${bgColor || '#FAF9F2'}" onchange="setComboBgColor(${ci}, this.value)">
       </div>
       ${items.length
-                ? `<button class="bundle-add-btn" type="button" onclick="addComboToCart(${ci})">Add combo to basket</button>`
+                ? `<button class="bundle-add-btn combo-add-btn" type="button" onclick="addComboToCart(${ci})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg>Add combo to basket</button>`
                 : (combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : '')}
       <button type="button" class="combo-edit-btn" onclick="openComboEdit(${ci}, this)">Edit combo</button>
     </div>`;
