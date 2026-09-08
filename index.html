@@ -1935,6 +1935,12 @@
             justify-content: center;
             gap: 6px;
             margin-top: 18px;
+            /* The big faded "Yo7" watermark tracks the hero's own bottom
+               edge (see .hero-text-watermark), so this link — the last
+               piece of real content before it — was sitting right up
+               against the "Y", easy to read as part of the same shape
+               rather than its own separate, clickable line. */
+            margin-bottom: 56px;
             font-family: var(--display);
             font-weight: 600;
             font-size: 12.5px;
@@ -4369,9 +4375,16 @@
            section's "View all" link is how the rest gets seen. Mobile is
            untouched — still the original swipe strip below 901px. */
         @media (min-width: 901px) {
+            /* minmax(180px, 190px), not 1fr — a growable 1fr track stretched
+               each card to fill its share of the row on a wide screen,
+               reading as noticeably bigger than the same cards' mobile
+               size. Capping the max keeps them close to that original
+               compact size regardless of viewport width; any leftover
+               row width beyond the last full column is just left empty
+               rather than inflating the cards to fill it. */
             .offer-carousel, .new-carousel, .best-seller-carousel {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(180px, 190px));
                 gap: 18px;
                 overflow: visible;
                 cursor: default;
@@ -4385,7 +4398,7 @@
                 min-width: 0;
             }
             .offer-card, .new-card, .best-seller-card {
-                max-width: none;
+                max-width: 190px;
             }
             .offer-carousel > :nth-child(n+9),
             .new-carousel > :nth-child(n+9),
@@ -11287,7 +11300,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.27';
+        const BUILD_VERSION = '2026-09-08.28';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12009,10 +12022,19 @@
             renderDishBuilder();
             // The ingredient list renders below the dish picker row, out of
             // view on anything shorter than a full desktop screen — nothing
-            // on screen hinted a list had even appeared, so this jumps to it
-            // the same way "Browse categories" already does elsewhere.
-            const builderPanel = document.getElementById('dishBuilderPanel');
-            if (builderPanel) builderPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // on screen hinted a list had even appeared, so this jumps to it.
+            // Targets the header specifically, and offsets by the fixed
+            // nav+trust-bar height (same fix as the data-scroll-to handler
+            // above) — a plain scrollIntoView() aligns the header's top edge
+            // with the viewport's top edge, which is exactly where those
+            // fixed bars sit, so the header landed hidden behind them and
+            // the list looked like it started with no heading at all.
+            const builderHeader = document.getElementById('dishBuilderHeader');
+            if (builderHeader) {
+                const fixedHeaderHeight = parseFloat(document.body.style.paddingTop) || 0;
+                const targetY = builderHeader.getBoundingClientRect().top + window.scrollY - fixedHeaderHeight - 16;
+                window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
         }
         window.selectDish = selectDish;
         function removeDish(e, i) {
@@ -18645,13 +18667,20 @@
                 }
                 submitBtn.textContent = 'Joining…';
                 const postcode = heroCapturePostcodeField.value.trim();
-                const { error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email, p_postcode: postcode });
+                // isNewSignup distinguishes a fresh row from a repeat of an
+                // email already on the list (migration 42) — the DB is the
+                // source of truth here, not the localStorage flag below, so
+                // this is correct even from a browser/device that's never
+                // signed up before but whose email already has.
+                const { data: isNewSignup, error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email, p_postcode: postcode });
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalLabel;
                 if (error) { showToast(error.message || "Couldn't sign you up right now, please try again.", 5000); return; }
                 try { localStorage.setItem('yo7ComingSoonSignedUp', '1'); } catch (e) { /* private browsing etc. */ }
                 heroCaptureWrap.classList.add('signed-up');
-                showToast("You're on the list! We'll email your code and let you know the moment we're live.", 5500);
+                showToast(isNewSignup
+                    ? "You're on the list! We'll email your code and let you know the moment we're live."
+                    : "You're already on the list, we'll email you the moment we launch.", 5500);
             });
         }
         // renderHeroGlimpse/renderOfferCarousel/renderNewCarousel/
