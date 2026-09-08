@@ -6621,6 +6621,7 @@
             border-radius: 20px;
             border: 1px solid rgba(var(--border-rgb), 0.08);
             padding: 30px 28px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.07);
         }
 
         .contact-panel h2 {
@@ -6803,6 +6804,7 @@
             padding: 34px;
             margin-bottom: 30px;
             align-items: center;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.07);
         }
         .pc-left h2 { font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--heading); margin-bottom: 6px; }
         .pc-left p { font-size: 14px; color: var(--text-muted); margin-bottom: 18px; }
@@ -6839,6 +6841,7 @@
         .areas-strip {
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.1);
             border-radius: 22px; padding: 30px 32px; color: var(--ink);
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.07);
         }
         .areas-title {
             font-family: var(--display); font-weight: 500; font-size: 12.5px; letter-spacing: 0.15em;
@@ -6925,26 +6928,44 @@
             display: flex;
             gap: 14px;
             align-items: flex-start;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.05);
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
+        }
+        .dinfo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 3px 8px rgba(var(--border-rgb), 0.06), 0 18px 34px rgba(var(--border-rgb), 0.1);
         }
 
-        .dinfo-card svg {
-            width: 22px;
-            height: 22px;
-            color: var(--heading-mid);
+        /* Same tinted circular badge + per-card accent rotation as the
+           About Us value cards and the product detail info cards
+           (.about-value-card svg / .pd-detail-card .label svg) — this
+           page has exactly 5 cards too, so the same 5-colour rotation
+           applies cleanly. */
+        .dinfo-card svg, .dinfo-card .pound-icon {
+            width: 18px;
+            height: 18px;
             flex-shrink: 0;
-            margin-top: 2px;
+            margin-top: 0;
+            padding: 8px;
+            box-sizing: content-box;
+            border-radius: 50%;
+            background: var(--value-accent-tint, rgba(114, 148, 0, 0.14));
+            color: var(--value-accent, var(--chartreuse-rich));
         }
-
-        .pound-icon {
+        .dinfo-card .pound-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-family: var(--display);
             font-weight: 700;
-            font-size: 22px;
+            font-size: 15px;
             line-height: 1;
-            color: var(--heading-mid);
-            flex-shrink: 0;
-            width: 22px;
-            margin-top: 1px;
         }
+        .dinfo-card:nth-child(5n+1) svg, .dinfo-card:nth-child(5n+1) .pound-icon { --value-accent: var(--chartreuse-rich); --value-accent-tint: rgba(114, 148, 0, 0.14); }
+        .dinfo-card:nth-child(5n+2) svg, .dinfo-card:nth-child(5n+2) .pound-icon { --value-accent: var(--aubergine-mid); --value-accent-tint: rgba(38, 98, 16, 0.12); }
+        .dinfo-card:nth-child(5n+3) svg, .dinfo-card:nth-child(5n+3) .pound-icon { --value-accent: #9a7f00; --value-accent-tint: rgba(154, 127, 0, 0.14); }
+        .dinfo-card:nth-child(5n+4) svg, .dinfo-card:nth-child(5n+4) .pound-icon { --value-accent: #C1552C; --value-accent-tint: rgba(193, 85, 44, 0.12); }
+        .dinfo-card:nth-child(5n+5) svg, .dinfo-card:nth-child(5n+5) .pound-icon { --value-accent: #9D6B11; --value-accent-tint: rgba(157, 107, 17, 0.14); }
 
         .dinfo-card h4 {
             font-family: var(--display);
@@ -6965,6 +6986,7 @@
             border-radius: 20px;
             border: 1px solid rgba(var(--border-rgb), 0.08);
             padding: 30px 30px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.07);
         }
 
         .dinfo-list h2 {
@@ -11562,7 +11584,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.34';
+        const BUILD_VERSION = '2026-09-08.35';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
