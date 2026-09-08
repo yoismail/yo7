@@ -5341,6 +5341,7 @@
             border-radius: 16px;
             padding: 28px;
             text-align: center;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.05);
         }
         .pd-reviews-empty p { color: var(--text-muted); font-size: 14px; max-width: 46ch; margin: 0 auto; }
 
@@ -5386,6 +5387,7 @@
             margin-top: 24px; padding: 20px;
             background: var(--section-alt-bg); border: 1px solid rgba(var(--border-rgb), 0.08);
             border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.05);
         }
         .pd-review-form h3 { font-family: var(--display); font-size: 15px; margin: 0 0 12px; }
         .star-input { display: inline-flex; gap: 3px; }
@@ -5414,6 +5416,12 @@
             border: 1px solid rgba(var(--border-rgb), 0.08);
             border-radius: 14px;
             padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.05);
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
+        }
+        .pd-detail-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 3px 8px rgba(var(--border-rgb), 0.06), 0 18px 34px rgba(var(--border-rgb), 0.1);
         }
         .pd-detail-card .label {
             display: flex;
@@ -5426,7 +5434,23 @@
             color: var(--heading);
             margin-bottom: 8px;
         }
-        .pd-detail-card .label svg { width: 17px; height: 17px; color: var(--heading-mid); flex-shrink: 0; }
+        /* Same small tinted circular badge + per-card accent rotation as
+           the About Us value cards (.about-value-card svg), rather than a
+           bare stroke icon — one consistent icon-badge language reused
+           across the site instead of a one-off. Cards always render in a
+           fixed order (origin, storage, allergy, nutrition, cooking), so
+           nth-child colour-coding is stable. */
+        .pd-detail-card .label svg {
+            width: 15px; height: 15px; flex-shrink: 0;
+            padding: 7px; box-sizing: content-box; border-radius: 50%;
+            background: var(--value-accent-tint, rgba(114, 148, 0, 0.14));
+            color: var(--value-accent, var(--chartreuse-rich));
+        }
+        .pd-detail-card:nth-child(5n+1) svg { --value-accent: var(--chartreuse-rich); --value-accent-tint: rgba(114, 148, 0, 0.14); }
+        .pd-detail-card:nth-child(5n+2) svg { --value-accent: var(--aubergine-mid); --value-accent-tint: rgba(38, 98, 16, 0.12); }
+        .pd-detail-card:nth-child(5n+3) svg { --value-accent: #9a7f00; --value-accent-tint: rgba(154, 127, 0, 0.14); }
+        .pd-detail-card:nth-child(5n+4) svg { --value-accent: #C1552C; --value-accent-tint: rgba(193, 85, 44, 0.12); }
+        .pd-detail-card:nth-child(5n+5) svg { --value-accent: #9D6B11; --value-accent-tint: rgba(157, 107, 17, 0.14); }
         .pd-detail-card .body {
             font-size: 13.5px;
             color: var(--text-body);
@@ -11534,7 +11558,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.33';
+        const BUILD_VERSION = '2026-09-08.34';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
