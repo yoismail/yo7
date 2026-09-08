@@ -1990,15 +1990,18 @@
                 height: clamp(200px, 20vw, 280px);
                 margin: 0;
             }
-            /* Kept small and tight to the top corner so it stays clear of
-               the seal now centred lower down — two "7" marks overlapping
-               reads as clutter, not a deliberate composition, regardless of
-               how each looks alone. */
+            /* Centred on the same point as the seal rather than tucked in
+               a separate corner: bigger and heavily faded, so it reads as
+               one deliberate composition (a large soft emblem with the
+               crisp seal sitting on top of it, seal is later in paint
+               order/z-index so it's always the sharp foreground layer)
+               instead of two same-weight marks competing for attention. */
             .hero-watermark {
-                top: -4%;
+                top: 50%;
                 bottom: auto;
-                right: -2%;
-                width: min(20vw, 300px);
+                right: -6%;
+                transform: translateY(-50%);
+                width: min(38vw, 520px);
             }
         }
 
@@ -11281,7 +11284,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.22';
+        const BUILD_VERSION = '2026-09-08.23';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
