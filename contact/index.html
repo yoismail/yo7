@@ -1983,21 +1983,22 @@
                viewport instead of staying fixed while the column doesn't. */
             .seal {
                 position: absolute;
-                top: 4px;
+                top: 50%;
                 right: 44px;
+                transform: translateY(-50%);
                 width: clamp(200px, 20vw, 280px);
                 height: clamp(200px, 20vw, 280px);
                 margin: 0;
             }
-            /* Anchored to the bottom (not top, cancelled below) so it sits
-               well clear of the seal above it instead of stacking behind it
-               — two "7" marks layered concentrically read as clutter, not
-               a deliberate composition, regardless of how each looks alone. */
+            /* Kept small and tight to the top corner so it stays clear of
+               the seal now centred lower down — two "7" marks overlapping
+               reads as clutter, not a deliberate composition, regardless of
+               how each looks alone. */
             .hero-watermark {
-                top: auto;
-                bottom: -8%;
-                right: -4%;
-                width: min(24vw, 340px);
+                top: -4%;
+                bottom: auto;
+                right: -2%;
+                width: min(20vw, 300px);
             }
         }
 
@@ -11278,7 +11279,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.21';
+        const BUILD_VERSION = '2026-09-08.22';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
