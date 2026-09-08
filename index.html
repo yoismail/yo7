@@ -1872,9 +1872,9 @@
             font-weight: 600;
             font-size: 13.5px;
             color: var(--chartreuse-rich);
-            text-decoration: none;
+            text-decoration: underline;
+            text-underline-offset: 2px;
         }
-        .hero-shop-link:hover { text-decoration: underline; }
         [data-theme="dark"] .hero-shop-link { color: var(--chartreuse-soft); }
 
         .hero-social-link {
@@ -11138,7 +11138,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.6';
+        const BUILD_VERSION = '2026-09-08.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
