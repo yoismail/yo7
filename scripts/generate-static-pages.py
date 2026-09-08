@@ -26,43 +26,58 @@ Usage:
 Run from anywhere; paths below are relative to the repo root the script
 lives in.
 """
+import json
 import os
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE = os.path.join(REPO_ROOT, 'index.html')
 BASE_URL = 'https://yo7foods.co.uk'
 
-# slug -> (hash route, <title>, meta description)
+# slug -> (hash route, <title>, meta description, breadcrumb label)
 # og:title/twitter:title and og:description/twitter:description reuse the
-# same title/description below — no reason for them to diverge here.
+# same title/description below — no reason for them to diverge here. The
+# breadcrumb label is the plain-text second crumb ("Home > <label>") as
+# index.html's own route() actually renders it for this page — usually the
+# same as the <title> minus " | Yo7 Foods", but not always (e.g. guide's
+# <h1> reads "New Here?", not the fuller SEO title), so it's kept explicit
+# here rather than derived from the title.
 PAGES = [
     ('about', '#/about',
      'About Us | Yo7 Foods',
-     "Yo7 Foods brings real African and Caribbean groceries to UK households. Read our story, our mission, and what we stand for."),
+     "Yo7 Foods brings real African and Caribbean groceries to UK households. Read our story, our mission, and what we stand for.",
+     'About Us'),
     ('delivery-info', '#/delivery-info',
      'Delivery Information | Yo7 Foods',
-     "UK-wide delivery or pickup in Ipswich. Check your postcode, delivery fees by weight, and how long delivery takes."),
+     "UK-wide delivery or pickup in Ipswich. Check your postcode, delivery fees by weight, and how long delivery takes.",
+     'Delivery Information'),
     ('guide', '#/guide',
      'FAQs &amp; New Here? | Yo7 Foods',
-     "New to Yo7 Foods? How ordering works, plus answers to common questions about delivery, payment, and stock."),
+     "New to Yo7 Foods? How ordering works, plus answers to common questions about delivery, payment, and stock.",
+     'New Here?'),
     ('contact', '#/contact',
      'Contact Us | Yo7 Foods',
-     "Get in touch with Yo7 Foods: WhatsApp, email, opening hours, and our Ipswich address for pickup."),
+     "Get in touch with Yo7 Foods: WhatsApp, email, opening hours, and our Ipswich address for pickup.",
+     'Contact Us'),
     ('privacy', '#/privacy',
      'Privacy Policy | Yo7 Foods',
-     "How Yo7 Foods collects, uses, and protects your personal information."),
+     "How Yo7 Foods collects, uses, and protects your personal information.",
+     'Privacy Policy'),
     ('terms', '#/terms',
      'Terms &amp; Conditions | Yo7 Foods',
-     "The terms and conditions for shopping with Yo7 Foods."),
+     "The terms and conditions for shopping with Yo7 Foods.",
+     'Terms & Conditions'),
     ('returns', '#/returns',
      'Returns &amp; Refunds Policy | Yo7 Foods',
-     "Our policy on damaged, incorrect, or unsatisfactory orders, including replacements and refunds."),
+     "Our policy on damaged, incorrect, or unsatisfactory orders, including replacements and refunds.",
+     'Returns & Refunds Policy'),
     ('delivery-policy', '#/delivery-policy',
      'Delivery Policy | Yo7 Foods',
-     "Delivery terms, timelines, and responsibilities for orders placed with Yo7 Foods."),
+     "Delivery terms, timelines, and responsibilities for orders placed with Yo7 Foods.",
+     'Delivery Policy'),
     ('cookie-policy', '#/cookie-policy',
      'Cookie Policy | Yo7 Foods',
-     "How Yo7 Foods uses cookies, including the strictly-necessary ones used to process payments securely."),
+     "How Yo7 Foods uses cookies, including the strictly-necessary ones used to process payments securely.",
+     'Cookie Policy'),
 ]
 
 # The exact homepage-wide values currently in index.html's <head>. If any
@@ -119,15 +134,35 @@ def inject_route_seed(html, hash_route):
     return html.replace(marker, replacement, 1)
 
 
+def build_breadcrumb_json_ld(breadcrumb_label, page_url):
+    items = [
+        {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': f'{BASE_URL}/'},
+        {'@type': 'ListItem', 'position': 2, 'name': breadcrumb_label, 'item': page_url},
+    ]
+    data = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': items}
+    # json.dumps won't escape "<", so guard against a literal "</script"
+    # substring ever being able to close the <script> tag early.
+    return json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
+
+
+def inject_breadcrumb_json_ld(html, breadcrumb_json_ld_text):
+    if html.count('</head>') != 1:
+        raise ValueError(f'Expected exactly one </head>, found {html.count("</head>")}')
+    tag = f'    <script type="application/ld+json" id="breadcrumbJsonLd">{breadcrumb_json_ld_text}</script>\n</head>'
+    return html.replace('</head>', tag, 1)
+
+
 def main():
     with open(SOURCE, 'r', encoding='utf-8') as f:
         source_html = f.read()
     source_lines = source_html.split('\n')
 
-    for slug, hash_route, title, description in PAGES:
+    for slug, hash_route, title, description, breadcrumb_label in PAGES:
         lines = patch_head(list(source_lines), slug, title, description)
         html = '\n'.join(lines)
         html = inject_route_seed(html, hash_route)
+        breadcrumb_json_ld_text = build_breadcrumb_json_ld(breadcrumb_label, f'{BASE_URL}/{slug}/')
+        html = inject_breadcrumb_json_ld(html, breadcrumb_json_ld_text)
 
         out_dir = os.path.join(REPO_ROOT, slug)
         os.makedirs(out_dir, exist_ok=True)
