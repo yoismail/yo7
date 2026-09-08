@@ -2180,6 +2180,24 @@
         }
 
         .about-block { margin-bottom: 72px; }
+        /* A small brand-accent marker between narrative sections, echoing
+           the chartreuse dot used elsewhere as a divider (the trust-bar
+           ticker's separators) — so the run of "Our story / mission /
+           values / promise / vision" blocks reads as one connected brand
+           story instead of a stack of separate cards split by plain
+           empty margin. */
+        .about-divider {
+            display: flex;
+            justify-content: center;
+            margin: 0 auto 40px;
+        }
+        .about-divider-mark {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--chartreuse-rich);
+            box-shadow: 0 0 0 7px rgba(144, 184, 0, 0.13);
+        }
         .about-block-alt {
             background: var(--section-alt-bg, var(--card-bg));
             border-radius: 24px;
@@ -2804,11 +2822,17 @@
             font-size: 12px;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            background: var(--orange);
+            /* Same gradient stops as the combo card's wax-seal stamp
+               (.combo-stamp) — a small "stamped label" instead of a flat
+               colour swatch, so this pill (used sitewide as a section
+               kicker, About Us alone repeats it 6 times) reads as part of
+               the same deliberate brand family rather than a generic tag. */
+            background: linear-gradient(155deg, #FFEB3B 0%, var(--orange) 100%);
             color: var(--aubergine-deep);
             padding: 5px 14px;
             border-radius: 999px;
             margin-bottom: 14px;
+            box-shadow: 0 3px 8px rgba(225, 225, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
         }
 
         .shop-section .section-head h2 {
@@ -6969,6 +6993,12 @@
         .guide-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 60px; }
         .guide-step {
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px; padding: 26px 24px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
+        }
+        .guide-step:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.07), 0 22px 40px rgba(var(--border-rgb), 0.12);
         }
         .guide-step .num {
             width: 34px; height: 34px; border-radius: 50%; background: var(--chartreuse); color: var(--aubergine-deep);
@@ -6979,14 +7009,30 @@
         .guide-step p { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
 
         .faq-title { font-family: var(--display); font-weight: 700; font-size: 24px; color: var(--heading); margin-bottom: 22px; }
-        .faq-item { background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+        .faq-item {
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 8px 18px rgba(var(--border-rgb), 0.05);
+            transition: box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .faq-item.open {
+            border-color: rgba(144, 184, 0, 0.35);
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 24px rgba(144, 184, 0, 0.13);
+        }
         .faq-q {
             width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px;
             padding: 18px 20px; background: none; border: none; text-align: left;
             font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--heading);
         }
-        .faq-q svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform 0.25s ease; color: var(--heading-mid); }
-        .faq-item.open .faq-q svg { transform: rotate(45deg); }
+        /* A filled circular chip instead of a bare stroke glyph — matches
+           the site's other icon-button affordances (card-add-btn,
+           checkout-upsell-add) rather than a plain unstyled "+". */
+        .faq-q svg {
+            width: 14px; height: 14px; flex-shrink: 0; padding: 7px; box-sizing: content-box;
+            border-radius: 50%; background: rgba(144, 184, 0, 0.1);
+            transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+            color: var(--heading-mid);
+        }
+        .faq-item.open .faq-q svg { transform: rotate(45deg); background: var(--chartreuse); color: var(--aubergine-deep); }
         .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
         .faq-item.open .faq-a { max-height: 300px; }
         .faq-a p { padding: 0 20px 18px; font-size: 13.5px; color: var(--text-body); line-height: 1.6; }
@@ -8722,6 +8768,7 @@
                     </div>
                 </div>
 
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
                 <div class="about-prose about-block">
                     <div class="section-eyebrow">Our story</div>
                     <h2>Freshness, completeness, everyday nourishment</h2>
@@ -8730,6 +8777,7 @@
                     <p>We are proud to serve both African communities who want a taste of home and new customers discovering African flavours for the first time.</p>
                 </div>
 
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
                 <div class="about-mission about-block">
                     <div class="section-eyebrow">Our mission</div>
                     <h2>To bring African groceries the clarity, freshness, authenticity, and trust every customer deserves.</h2>
@@ -8742,6 +8790,7 @@
                     <p class="about-mission-note">Whether you're buying garri, spices, palm oil, or fresh produce, Yo7 Foods ensures every product meets the highest quality standards.</p>
                 </div>
 
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
                 <div class="about-block">
                     <div class="about-mission" style="margin-bottom:32px;">
                         <div class="section-eyebrow">What makes us different</div>
@@ -8776,6 +8825,7 @@
                     </div>
                 </div>
 
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
                 <div class="about-block about-block-alt">
                     <div class="about-mission" style="margin-bottom:32px;">
                         <div class="section-eyebrow">Our values</div>
@@ -8810,6 +8860,7 @@
                     </div>
                 </div>
 
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
                 <div class="about-prose about-block" style="max-width:56ch;">
                     <div class="section-eyebrow">Our promise</div>
                     <h2>We promise to deliver</h2>
@@ -8822,11 +8873,13 @@
                     <p style="text-align:center; margin-top:28px;">Yo7 Foods is here to make African groceries simple, modern, and accessible, without losing the soul of the food we love.</p>
                 </div>
 
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
                 <div class="about-mission about-block">
                     <div class="section-eyebrow">Our vision</div>
                     <h2>To become the UK's most trusted African grocery brand, a place where tradition meets innovation, and culture meets convenience.</h2>
                 </div>
 
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
                 <div class="about-thanks">
                     <svg class="about-thanks-watermark" viewBox="65 25 875 900" aria-hidden="true">
                         <use href="#seal-mark" />
@@ -11481,7 +11534,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.32';
+        const BUILD_VERSION = '2026-09-08.33';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
