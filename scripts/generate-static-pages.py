@@ -37,8 +37,8 @@ BASE_URL = 'https://yo7foods.co.uk'
 # same title/description below — no reason for them to diverge here.
 PAGES = [
     ('about', '#/about',
-     'About Us | Yo7 Foods &mdash; Fresh African &amp; Caribbean Groceries',
-     "Yo7 Foods brings authentic African and Caribbean groceries to UK households with modern convenience &mdash; our story, mission, and values."),
+     'About Us | Yo7 Foods',
+     "Yo7 Foods brings real African and Caribbean groceries to UK households. Read our story, our mission, and what we stand for."),
     ('delivery-info', '#/delivery-info',
      'Delivery Information | Yo7 Foods',
      "UK-wide delivery or pickup in Ipswich. Check your postcode, delivery fees by weight, and how long delivery takes."),
@@ -47,7 +47,7 @@ PAGES = [
      "New to Yo7 Foods? How ordering works, plus answers to common questions about delivery, payment, and stock."),
     ('contact', '#/contact',
      'Contact Us | Yo7 Foods',
-     "Get in touch with Yo7 Foods &mdash; WhatsApp, email, opening hours, and our Ipswich address for pickup."),
+     "Get in touch with Yo7 Foods: WhatsApp, email, opening hours, and our Ipswich address for pickup."),
     ('privacy', '#/privacy',
      'Privacy Policy | Yo7 Foods',
      "How Yo7 Foods collects, uses, and protects your personal information."),
@@ -56,7 +56,7 @@ PAGES = [
      "The terms and conditions for shopping with Yo7 Foods."),
     ('returns', '#/returns',
      'Returns &amp; Refunds Policy | Yo7 Foods',
-     "Our policy on damaged, incorrect, or unsatisfactory orders &mdash; replacements and refunds."),
+     "Our policy on damaged, incorrect, or unsatisfactory orders, including replacements and refunds."),
     ('delivery-policy', '#/delivery-policy',
      'Delivery Policy | Yo7 Foods',
      "Delivery terms, timelines, and responsibilities for orders placed with Yo7 Foods."),
@@ -70,8 +70,8 @@ PAGES = [
 # was written and its line-index assumptions below need updating first —
 # replace_line() raises rather than silently writing a broken page.
 OLD_TITLE = 'Yo7 Foods | Fresh African &amp; Caribbean Groceries, Ipswich'
-OLD_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Authentic flavours, premium quality, trusted by households everywhere.'
-OLD_TWITTER_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Authentic flavours, premium quality.'
+OLD_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Real ingredients and family favourites, trusted by households everywhere.'
+OLD_TWITTER_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Real ingredients, familiar flavours.'
 
 
 def patch_head(lines, path_slug, title, description):
