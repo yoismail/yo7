@@ -1956,6 +1956,46 @@
             color: var(--ink);
         }
 
+        /* Desktop-only: below this the hero is the mobile-tuned centred
+           stack (unchanged). Above it, centering the same stack just left
+           a huge dead gap either side and made the seal read as a small
+           afterthought badge — this shifts the copy into a real left
+           column with its own max-width, and gives the seal + watermark
+           the freed-up right side as a deliberate art moment instead. */
+        @media (min-width: 901px) {
+            .hero-inner {
+                align-items: flex-start;
+                text-align: left;
+            }
+            .hero h1 {
+                max-width: 520px;
+                margin: 6px 0 20px;
+            }
+            .hero-capture-hint {
+                text-align: left;
+            }
+            .hero-capture-thanks {
+                align-items: flex-start;
+            }
+            /* clamp() rather than a fixed size: at the narrow end of this
+               breakpoint (~901px) a 280px badge would eat into the 520px
+               text column's clearance, so the seal scales down with the
+               viewport instead of staying fixed while the column doesn't. */
+            .seal {
+                position: absolute;
+                top: 4px;
+                right: 44px;
+                width: clamp(200px, 20vw, 280px);
+                height: clamp(200px, 20vw, 280px);
+                margin: 0;
+            }
+            .hero-watermark {
+                top: -2%;
+                right: 0;
+                width: min(30vw, 420px);
+            }
+        }
+
         /* ================= STORY ================= */
         .story {
             position: relative;
@@ -4309,6 +4349,47 @@
         .cat-flat-card:hover .cat-flat-arrow { opacity: 1; transform: translateX(0); }
         .swipe-hint {
             text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 4px;
+        }
+
+        /* Desktop: these three homepage strips (special offers, new
+           arrivals, best sellers) were a horizontal-scroll row with a
+           "swipe to see more" hint that makes no sense to a mouse user and
+           left most of the wide screen empty. Wraps them into an actual
+           grid that uses the width instead, capped to the first 8 cards via
+           nth-child rather than a JS change — same items the JS already
+           rendered (shuffled for offers/new-arrivals, ranked for best
+           sellers), just a hard cut instead of scrolling for more; each
+           section's "View all" link is how the rest gets seen. Mobile is
+           untouched — still the original swipe strip below 901px. */
+        @media (min-width: 901px) {
+            .offer-carousel, .new-carousel, .best-seller-carousel {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 18px;
+                overflow: visible;
+                cursor: default;
+                padding: 4px 2px 10px;
+                /* .offer-carousel/.new-carousel already had this in their
+                   base (flex-row) rules; .best-seller-carousel's didn't,
+                   which the flex-row layout tolerated but grid's auto-fill
+                   doesn't — without a resolvable width to fill, it collapses
+                   to a single column instead of spreading across the row. */
+                flex: 1;
+                min-width: 0;
+            }
+            .offer-card, .new-card, .best-seller-card {
+                max-width: none;
+            }
+            .offer-carousel > :nth-child(n+9),
+            .new-carousel > :nth-child(n+9),
+            .best-seller-carousel > :nth-child(n+9) {
+                display: none;
+            }
+            .offer-section .swipe-hint,
+            .new-section .swipe-hint,
+            .best-sellers-section .swipe-hint {
+                display: none;
+            }
         }
 
         @media (max-width: 900px) {
@@ -11192,7 +11273,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.19';
+        const BUILD_VERSION = '2026-09-08.20';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
