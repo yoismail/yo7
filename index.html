@@ -170,7 +170,7 @@
             --heading-mid: #B9CC8E;
             --heading-deep: #DCE8C0;
             --text-muted: #B0A89D;
-            --text-faint: #837A6E;
+            --text-faint: #948A7C;
             --text-body: #E3DDD2;
             --thumb-grad-1: #2A2015;
             --thumb-grad-2: #201810;
@@ -689,11 +689,17 @@
             background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
             display:flex; align-items:center; justify-content:center;
             font-size: 10px; font-weight: 700; color: var(--text-faint); text-align:center;
+            position: relative; overflow: hidden;
         }
+        .search-result-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .search-result-info { flex: 1; min-width: 0; }
         .search-result-info .name { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .search-result-info .cat { font-size: 11.5px; color: var(--text-muted); }
-        .search-result-price { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); flex-shrink: 0; }
+        .search-result-price {
+            font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right;
+        }
+        .search-result-price .price-was { margin-left: 0; }
         .search-see-all {
             display: block; text-align: center; padding: 12px; font-family: var(--display); font-weight: 700;
             font-size: 12.5px; color: var(--heading-mid); text-decoration: none; background: rgba(225,225,0,0.06);
@@ -1089,7 +1095,17 @@
                 letter-spacing: 0.2em;
             }
 
-            .nav-account {
+            /* Signed-out only: "Sign up / Log in" is too long a string to
+               keep on the bar at this width, so it collapses to just the
+               icon, same as always. Signed-in mobile visitors used to get
+               the same treatment — icon only, with the "Hi, Jane" greeting
+               and account options hidden behind a tap on that icon. Now the
+               greeting stays on the bar (see .nav-account.is-logged-in
+               right below) so it's visible without a click; tapping it
+               still opens the same dropdown for order history/log out/etc.
+               Desktop (>900px, well clear of this breakpoint) already
+               showed the greeting inline and is untouched. */
+            .nav-account:not(.is-logged-in) {
                 width: 34px;
                 height: 34px;
                 padding: 0;
@@ -1097,13 +1113,29 @@
                 border-radius: 11px;
             }
 
-            .nav-account span#accountLabel,
-            .account-caret {
+            .nav-account:not(.is-logged-in) span#accountLabel,
+            .nav-account:not(.is-logged-in) .account-caret {
                 display: none !important;
             }
 
-            .account-dropdown-name.visible {
-                display: block;
+            .nav-account.is-logged-in {
+                padding: 7px 10px 7px 8px;
+                gap: 6px;
+                max-width: 130px;
+            }
+
+            .nav-account.is-logged-in span#accountLabel {
+                font-size: 11.5px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 74px;
+            }
+
+            .nav-account.is-logged-in .account-caret {
+                display: inline-block !important;
+                width: 10px !important;
+                height: 10px !important;
             }
 
             .icon-btn,
@@ -1619,6 +1651,28 @@
             margin: 0;
         }
         [data-theme="dark"] .hero-capture-thanks p { color: var(--chartreuse-soft); }
+        /* A calm, continuous breathing pulse — border and shadow only, no
+           shimmer — so this secondary action reads as smooth and inviting
+           without competing with the primary CTA's own signature effect. */
+        .hero-capture-thanks .btn-outline-dark {
+            animation: browseCatPulse 2.6s ease-in-out infinite;
+        }
+        @keyframes browseCatPulse {
+            0%, 100% { border-color: rgba(var(--border-rgb), 0.18); box-shadow: 0 0 0 rgba(144, 184, 0, 0); transform: scale(1); }
+            50% { border-color: var(--chartreuse-rich); box-shadow: 0 10px 26px rgba(144, 184, 0, 0.28); transform: scale(1.02); }
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .hero-capture-thanks .btn-outline-dark:hover {
+                animation-play-state: paused;
+                border-color: var(--chartreuse-rich);
+                box-shadow: 0 12px 30px rgba(144, 184, 0, 0.32);
+                transform: translateY(-2px);
+            }
+        }
+        .hero-capture-thanks .btn-outline-dark:active { transform: scale(0.97); }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-capture-thanks .btn-outline-dark { animation: none; }
+        }
         .hero-capture-wrap.signed-up .hero-capture-form { display: none; }
         /* A postcode-format hint left over from before signing up shouldn't
            linger under the thank-you message. */
@@ -1716,6 +1770,18 @@
         @media (prefers-reduced-motion: reduce) {
             .hero-capture-form .btn-primary::after { animation: none; display: none; }
         }
+
+        .hero-shop-link {
+            display: inline-block;
+            margin-top: 4px;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--chartreuse-rich);
+            text-decoration: none;
+        }
+        .hero-shop-link:hover { text-decoration: underline; }
+        [data-theme="dark"] .hero-shop-link { color: var(--chartreuse-soft); }
 
         .hero-social-link {
             display: flex;
@@ -1846,11 +1912,16 @@
             line-height: 1.55;
             margin-bottom: 32px;
         }
+        /* Centred at every width now, matching .about-mission/.about-prose
+           right below it — this used to be a left-aligned two-column grid
+           (icon left, text right) on desktop only, the one section on the
+           page that didn't match the centred treatment everywhere else. */
         .about-story-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 48px;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            text-align: center;
+            gap: 24px;
             margin-bottom: 72px;
         }
         .about-seal { width: clamp(120px, 9vw, 160px); height: clamp(120px, 9vw, 160px); flex-shrink: 0; }
@@ -1858,7 +1929,7 @@
             font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.6vw, 36px);
             letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 20px; color: var(--heading);
         }
-        .about-story-grid p { font-size: 16px; color: var(--text-body); max-width: 56ch; }
+        .about-story-grid p { font-size: 16px; color: var(--text-body); max-width: 60ch; margin-left: auto; margin-right: auto; }
         .about-story-grid p+p { margin-top: 14px; }
 
         .about-mission {
@@ -1949,6 +2020,27 @@
             font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.03em;
             color: var(--aubergine-deep); background: var(--chartreuse);
             padding: 8px 16px; border-radius: 999px;
+            transition: opacity 0.55s cubic-bezier(.16,.84,.44,1), transform 0.55s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s ease;
+        }
+        /* Overrides the generic .reveal rise-in with a rise+scale "pop" that
+           suits a small pill better, staggered per tag via the inline
+           transition-delay already on each span — a one-shot scroll-into-view
+           effect (handled by the sitewide observeReveals(), not a
+           scroll-linked one), plus a lightweight hover lift as an ongoing
+           micro-interaction. Transform-only in both cases so neither costs a
+           repaint. */
+        .about-mission-tag.reveal { opacity: 0; transform: translateY(14px) scale(0.82); }
+        .about-mission-tag.reveal.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+        .about-mission-tag:hover {
+            transform: translateY(-3px) scale(1.06);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+        }
+        [data-theme="dark"] .about-mission-tag:hover {
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .about-mission-tag.reveal { opacity: 1; transform: none; transition: none; }
+            .about-mission-tag:hover { transform: none; }
         }
         .about-mission p.about-mission-note {
             font-size: 15px; color: var(--text-body); max-width: 56ch; margin: 0 auto;
@@ -2014,9 +2106,6 @@
         }
 
         @media (max-width: 760px) {
-            .about-story-grid { grid-template-columns: 1fr; text-align: center; gap: 28px; }
-            .about-story-grid p { max-width: none; margin-left: auto; margin-right: auto; }
-            .about-seal { margin: 0 auto; }
             .about-prose p { text-align: left; }
             .about-block-alt { padding: 40px 22px; border-radius: 18px; }
         }
@@ -2228,6 +2317,39 @@
             font-weight: 600; font-size: 12px; cursor: pointer;
         }
         body.edit-mode-on .combo-edit-btn, body.edit-mode-on .bundle-edit-btn { display: block; }
+        .combo-color-edit input[type="color"] {
+            width: 34px; height: 26px; padding: 2px; border-radius: 6px; cursor: pointer;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16); background: var(--card-bg);
+        }
+        /* A combo card with an admin-chosen bgColor: every text/edit element
+           inside gets an off-white treatment instead of the default
+           heading-ink/muted-grey pairing, which reads as invisible-to-barely-
+           legible against a deep custom background. Scoped to .combo-tinted
+           (not .combo-card generally) so the plain, unthemed cards — and the
+           separate "Shop by meal" .bundle-card, which reuses several of
+           these same unscoped classes — are unaffected. */
+        .combo-tinted { border-color: rgba(255, 255, 255, 0.1); }
+        .combo-tinted h3,
+        .combo-tinted .bundle-total-row,
+        .combo-tinted .bundle-weight-total strong,
+        .combo-tinted .bundle-item-row > span:first-child,
+        .combo-tinted .bundle-item-row > span:last-child { color: #FAF9F2; }
+        .combo-tinted .bundle-tagline,
+        .combo-tinted .bundle-discount-edit,
+        .combo-tinted .bundle-weight-total { color: rgba(250, 249, 242, 0.72); }
+        .combo-tinted .bundle-was { color: rgba(250, 249, 242, 0.55); }
+        .combo-tinted .bundle-item-row { border-bottom-color: rgba(255, 255, 255, 0.14); }
+        .combo-tinted .bundle-item-row > span:first-child::before { background: var(--chartreuse); }
+        .combo-tinted .bundle-item-row.out-of-stock,
+        .combo-tinted .bundle-item-row.out-of-stock > span:first-child,
+        .combo-tinted .bundle-item-row.out-of-stock > span:last-child { color: rgba(250, 249, 242, 0.45); }
+        .combo-tinted .bundle-item-row.out-of-stock > span:first-child::before { background: rgba(250, 249, 242, 0.45); }
+        .combo-tinted .bundle-discount-edit input,
+        .combo-tinted .combo-color-edit input[type="color"] {
+            background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.24); color: #FAF9F2;
+        }
+        .combo-tinted .combo-edit-btn { color: rgba(250, 249, 242, 0.75); border-color: rgba(255, 255, 255, 0.24); }
+        .combo-tinted .bundle-weight-total.zero-weight strong { color: #FF9466; }
 
         /* ================= BUILD A BUNDLE ================= */
         .dish-picker {
@@ -2740,16 +2862,13 @@
             border-bottom: 4px solid var(--chartreuse);
             overflow: hidden; text-decoration: none; color: #2C1C10;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
         }
-        /* Tag-qualified (a.best-seller-card, not just .best-seller-card) so
-           this reliably outranks .bs-card-reveal.is-visible's own transform
-           (equal class-specificity otherwise, and that rule is unconditional
-           — active any time a card has settled into view, not just while
-           hovered — so without this bump it silently wins the moment a
-           card finishes its entrance reveal, cancelling the hover lift for
-           good instead of just at one point in time). */
-        a.best-seller-card:hover { transform: translateY(-8px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
+        /* transform only, no box-shadow transition — animating box-shadow
+           forces a repaint every frame (it isn't compositor-only like
+           transform is), which is exactly the kind of scroll-time cost
+           that read as jank/hang when hovering a card mid-swipe. */
+        a.best-seller-card:hover { transform: translateY(-8px); }
         .best-seller-card .thumb {
             aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
@@ -2758,11 +2877,10 @@
         /* Bright yellow pill badge — the site's own accent colour
            (var(--orange), same pairing as the section-eyebrow pills)
            rather than an invented gold, ties this to the rest of the
-           brand instead of introducing a one-off hue. Pops in once, a
-           beat after the card's own entrance, when .bs-card-reveal
-           settles into view (no continuous animation — a previous
-           version glow-pulsed forever, which read as gimmicky rather
-           than premium; nothing moves once this settles). */
+           brand instead of introducing a one-off hue. Renders in place
+           immediately (no pop-in) now that the carousel drops all
+           scroll-triggered animation — see the comment above
+           .cat-tile-reveal for why. */
         .best-seller-rank {
             position: absolute; top: 10px; left: 10px; z-index: 3;
             display: flex; align-items: center; gap: 4px;
@@ -2770,13 +2888,6 @@
             font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
             padding: 5px 11px 5px 9px; border-radius: 999px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), 0 0 0 2px #FFFDF7;
-            transform: scale(0.7);
-            opacity: 0;
-            transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
-        }
-        .bs-card-reveal.is-visible .best-seller-rank {
-            transform: scale(1);
-            opacity: 1;
         }
         @media (prefers-reduced-motion: reduce) {
             .best-seller-rank {
@@ -2844,9 +2955,11 @@
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
         }
-        .new-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2); }
+        /* transform only, no box-shadow transition — see the comment on
+           a.best-seller-card:hover for why. */
+        .new-card:hover { transform: translateY(-8px); }
         .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
@@ -2982,12 +3095,11 @@
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
         }
-        /* Tag-qualified — see the comment on a.best-seller-card:hover, same
-           fix for the same reason (.offer-card-reveal.is-visible would
-           otherwise win the transform property once a card settles). */
-        a.offer-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(193, 85, 44, 0.22); }
+        /* transform only, no box-shadow transition — see the comment on
+           a.best-seller-card:hover for why. */
+        a.offer-card:hover { transform: translateY(-8px); }
         .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         /* Edit-mode-only "take this product off special offers" control —
            same on/off mechanism as every other admin-only button on the
@@ -3274,6 +3386,16 @@
         .step:nth-child(1) .step-num { --step-accent: var(--chartreuse-rich); --step-accent-tint: rgba(114, 148, 0, 0.14); }
         .step:nth-child(2) .step-num { --step-accent: var(--aubergine-mid); --step-accent-tint: rgba(38, 98, 16, 0.12); }
         .step:nth-child(3) .step-num { --step-accent: #9a7f00; --step-accent-tint: rgba(154, 127, 0, 0.14); }
+        /* The light-mode accents above are dark, saturated colours chosen to
+           read clearly against a near-white tint background. In dark mode
+           that same low-opacity tint composites down to a colour barely
+           different from the page's own near-black background, so the dark
+           accent text sitting on it reads as dark-on-dark — this swaps both
+           the text and the tint's base hue for brighter, dark-surface-tuned
+           values per step. */
+        [data-theme="dark"] .step:nth-child(1) .step-num { --step-accent: var(--chartreuse-soft); --step-accent-tint: rgba(166, 204, 46, 0.18); }
+        [data-theme="dark"] .step:nth-child(2) .step-num { --step-accent: var(--heading-mid); --step-accent-tint: rgba(38, 98, 16, 0.2); }
+        [data-theme="dark"] .step:nth-child(3) .step-num { --step-accent: #E8C34A; --step-accent-tint: rgba(154, 127, 0, 0.2); }
 
         .step h3 {
             font-family: var(--display);
@@ -3578,31 +3700,29 @@
             }
         }
 
-        /* Best Sellers / Shop by category / Special Offer card entrances —
-           a bit more pronounced than the plain fade-up .reveal uses
-           everywhere else (scale in as well as fade+rise), reserved for
-           these sections specifically so their scroll-into-view moment
-           reads as more deliberate than the rest of the homepage.
-           Re-observed per render via observeContainerReveals() rather than
-           the global one-shot observeReveals() — see the comment on that
-           function. */
-        .bs-card-reveal,
-        .cat-tile-reveal,
-        .offer-card-reveal {
+        /* Shop by category tile entrance — fade+rise+scale as tiles scroll
+           into view. Best Sellers and Special Offers used to get the same
+           treatment (bs-card-reveal / offer-card-reveal), but a per-card
+           scroll-triggered animation on a horizontally-scrolling carousel
+           meant every swipe fired a fresh batch of opacity/transform
+           transitions mid-drag — exactly the kind of scroll-time work that
+           reads as jank/hang on a slower device, so those two carousels
+           now render fully visible immediately instead; only this one
+           (a normal vertically-scrolled grid, not swiped) keeps the
+           reveal. Re-observed per render via observeContainerReveals()
+           rather than the global one-shot observeReveals() — see the
+           comment on that function. */
+        .cat-tile-reveal {
             opacity: 0;
             transform: translateY(24px) scale(0.94);
             transition: opacity 0.6s cubic-bezier(.16,.84,.44,1), transform 0.6s cubic-bezier(.16,.84,.44,1);
         }
-        .bs-card-reveal.is-visible,
-        .cat-tile-reveal.is-visible,
-        .offer-card-reveal.is-visible {
+        .cat-tile-reveal.is-visible {
             opacity: 1;
             transform: translateY(0) scale(1);
         }
         @media (prefers-reduced-motion: reduce) {
-            .bs-card-reveal,
-            .cat-tile-reveal,
-            .offer-card-reveal {
+            .cat-tile-reveal {
                 opacity: 1;
                 transform: none;
                 transition: none;
@@ -4867,6 +4987,11 @@
         }
         .pd-review-prompt { font-size: 13.5px; color: var(--text-muted); }
         .pd-review-prompt a { color: var(--heading-mid); font-weight: 600; }
+        .pd-review-anon-toggle {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 12px; font-size: 13px; color: var(--text-muted); cursor: pointer;
+        }
+        .pd-review-anon-toggle input { width: 15px; height: 15px; accent-color: var(--chartreuse-rich); cursor: pointer; }
 
         .pd-detail-card {
             background: var(--card-bg);
@@ -5680,7 +5805,7 @@
         }
 
         .empty-cart p {
-            color: #7a6f68;
+            color: var(--text-muted);
             font-size: 14px;
             margin-bottom: 20px;
         }
@@ -6169,6 +6294,20 @@
             color: #8a4a26;
         }
 
+        /* Same dark-on-dark problem as .step-num just above: these
+           low-opacity tints and their matching text colour were both tuned
+           for a light page behind them, so in dark mode the tint composites
+           to near-black and the text (already a dark, saturated shade)
+           disappears into it. */
+        [data-theme="dark"] .open-badge {
+            background: rgba(166, 204, 46, 0.18);
+            color: var(--chartreuse-soft);
+        }
+        [data-theme="dark"] .open-badge.closed {
+            background: rgba(232, 185, 138, 0.18);
+            color: var(--warn-text);
+        }
+
         .open-badge .dot {
             width: 7px;
             height: 7px;
@@ -6470,14 +6609,14 @@
         .auth-box .sub {
             text-align: center;
             font-size: 13.5px;
-            color: #7a6f68;
+            color: var(--text-muted);
             margin-bottom: 28px;
         }
 
         .auth-switch {
             text-align: center;
             font-size: 13.5px;
-            color: #7a6f68;
+            color: var(--text-muted);
             margin-top: 20px;
         }
 
@@ -7225,6 +7364,7 @@
                         </a>
                     </div>
                 </div>
+                <a class="hero-shop-link" href="#/shop">Already know what you want? Start shopping &rarr;</a>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -7435,7 +7575,7 @@
                     <div class="section-eyebrow">How it works</div>
                     <h2
                         style="font-family:var(--display); font-weight:700; font-size:clamp(28px,4vw,38px); color: var(--heading); letter-spacing:-0.01em;">
-                        Shop the premium way, simple and seamless</h2>
+                        From your everyday staples to the ingredients you miss from home: find them, order them, and have them delivered.</h2>
                 </div>
                 <div class="section-divider reveal" style="margin-bottom:52px;"></div>
                 <div class="steps">
@@ -8163,10 +8303,10 @@
                     <div class="section-eyebrow">Our mission</div>
                     <h2>To elevate African groceries to a premium standard, with clarity, freshness, authenticity, and trust at the heart of everything we do.</h2>
                     <div class="about-mission-tags">
-                        <span class="about-mission-tag">Easy to shop</span>
-                        <span class="about-mission-tag">Easy to understand</span>
-                        <span class="about-mission-tag">Easy to enjoy</span>
-                        <span class="about-mission-tag">Easy to trust</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.05s">Easy to shop</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.15s">Easy to understand</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.25s">Easy to enjoy</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.35s">Easy to trust</span>
                     </div>
                     <p class="about-mission-note">Whether you're buying garri, spices, palm oil, or fresh produce, Yo7 Foods ensures every product meets the highest quality standards.</p>
                 </div>
@@ -10902,7 +11042,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.1';
+        const BUILD_VERSION = '2026-09-08.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11571,11 +11711,11 @@
            browse the relevant aisle. Reuses the .product-grid class purely
            for its already-working horizontal drag-scroll behaviour. */
         let COMBOS = [
-            { name: 'Rice Night Combo', discountPercent: 8, items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }], description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice' },
-            { name: 'Suya Night Combo', discountPercent: 8, items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }], description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat' },
-            { name: 'Soup Pot Combo', discountPercent: 10, items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'root-vegetables', idx: 0 }, { catSlug: 'seasoning', idx: 2 }], description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables' },
-            { name: 'Snack Attack Combo', discountPercent: 5, items: [{ catSlug: 'snacks-confectionary', idx: 0 }, { catSlug: 'snacks-confectionary', idx: 1 }], description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary' },
-            { name: 'Fry-Up Combo', discountPercent: 5, items: [{ catSlug: 'tropical-foods', idx: 0 }, { catSlug: 'oils', idx: 1 }], description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods' },
+            { name: 'Rice Night Combo', discountPercent: 8, items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }], description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice', bgColor: '#4A2B12' },
+            { name: 'Suya Night Combo', discountPercent: 8, items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }], description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat', bgColor: '#5C1F1F' },
+            { name: 'Soup Pot Combo', discountPercent: 10, items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'root-vegetables', idx: 0 }, { catSlug: 'seasoning', idx: 2 }], description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables', bgColor: '#4A1942' },
+            { name: 'Snack Attack Combo', discountPercent: 5, items: [{ catSlug: 'snacks-confectionary', idx: 0 }, { catSlug: 'snacks-confectionary', idx: 1 }], description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary', bgColor: '#3A2250' },
+            { name: 'Fry-Up Combo', discountPercent: 5, items: [{ catSlug: 'tropical-foods', idx: 0 }, { catSlug: 'oils', idx: 1 }], description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods', bgColor: '#1F3A30' },
         ];
 
         /* ================= BUILD A BUNDLE =================
@@ -11903,8 +12043,9 @@
             const totalRow = items.length ? (discountPct > 0
                 ? `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span><span class="bundle-was">${money(rawTotal)}</span> ${money(discountedTotal)}</span></div>`
                 : `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(discountedTotal)}</span></div>`) : '';
+            const bgColor = combo.bgColor || '';
             return `
-    <div class="combo-card" id="comboCard-${ci}">
+    <div class="combo-card${bgColor ? ' combo-tinted' : ''}" id="comboCard-${ci}"${bgColor ? ` style="background:${escapeHtml(bgColor)}"` : ''}>
       <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
       ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
       <h3>${escapeHtml(combo.name)}</h3>
@@ -11916,12 +12057,28 @@
         <label>Combo discount %</label>
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setComboDiscount(${ci}, this.value)">
       </div>` : ''}
+      <div class="bundle-discount-edit combo-color-edit">
+        <label>Card colour</label>
+        <input type="color" value="${bgColor || '#FAF9F2'}" onchange="setComboBgColor(${ci}, this.value)">
+      </div>
       ${items.length
                 ? `<button class="bundle-add-btn" type="button" onclick="addComboToCart(${ci})">Add combo to basket</button>`
                 : (combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : '')}
       <button type="button" class="combo-edit-btn" onclick="openComboEdit(${ci}, this)">Edit combo</button>
     </div>`;
         }
+        function setComboBgColor(ci, value) {
+            const before = COMBOS[ci].bgColor || '';
+            COMBOS[ci].bgColor = value;
+            renderCombos();
+            savePricingSettings();
+            if (before !== value) {
+                logAdminAction('combo_updated', 'combo', COMBOS[ci].name, {
+                    changes: [{ label: 'Card colour', from: before || 'default', to: value }],
+                });
+            }
+        }
+        window.setComboBgColor = setComboBgColor;
         function setComboDiscount(ci, value) {
             const before = COMBOS[ci].discountPercent || 0;
             const pct = parseFloat(value);
@@ -12055,6 +12212,7 @@
                 description: document.getElementById('cce-desc').value.trim(),
                 linkCategory: document.getElementById('cce-link').value || null,
                 items: [...comboEditNewItems],
+                bgColor: before.bgColor,
             };
             const itemNamesAfter = COMBOS[ci].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             comboEditNewItems = null;
@@ -12521,7 +12679,7 @@
             const cardHTML = items.map((p, i) => {
                 const pct = Math.round((1 - p.salePrice / p.price) * 100);
                 return `
-    <a class="offer-card offer-card-reveal" href="#/product/${p.catSlug}/${p.idx}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
+    <a class="offer-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="offer-tag">${pct}% off</span>
         <button type="button" class="offer-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromOffer('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from special offers">&times;</button>
@@ -12535,12 +12693,6 @@
     </a>`;
             }).join('');
             strip.innerHTML = cardHTML;
-            // Re-observed per render — see the same comment on
-            // renderBestSellersSpotlight()'s observeContainerReveals() call;
-            // this strip re-renders every time a visitor lands back on home
-            // too (renderHeroGlimpse()'s neighbouring comment), not just at
-            // boot.
-            observeContainerReveals(strip, '.offer-card-reveal');
         }
         function renderNewCarousel() {
             // Shuffled for the same reason as renderOfferCarousel() above.
@@ -12635,7 +12787,7 @@
                 return;
             }
             strip.innerHTML = items.map((p, i) => `
-    <a class="best-seller-card bs-card-reveal" href="#/product/${p.catSlug}/${p.idx}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
+    <a class="best-seller-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="best-seller-rank">${BEST_SELLER_STAR_SVG}#${i + 1}</span>
         ${productPhotoHTML(p, p.name)}
@@ -12646,12 +12798,6 @@
         <div class="price">${priceHTML(p)}</div>
       </div>
     </a>`).join('');
-            // Re-observed on every call (not the global one-shot
-            // observeReveals()) — this strip can re-render after boot once
-            // real order data loads, and a stale single observer pass would
-            // leave those later cards stuck invisible with nothing left
-            // watching them.
-            observeContainerReveals(strip, '.bs-card-reveal');
         }
         function renderNewArrivalsPage() {
             const items = newArrivalsItems();
@@ -13375,7 +13521,7 @@
         </div>
       </div>`;
                 listEl.innerHTML = reviews.map(r => {
-                    const name = (r.profiles && r.profiles.full_name) || 'Yo7 Foods customer';
+                    const name = r.is_anonymous ? 'Yo7 Foods customer' : ((r.profiles && r.profiles.full_name) || 'Yo7 Foods customer');
                     const dateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                     const isOwn = currentSupabaseUser && r.user_id === currentSupabaseUser.id;
                     return `
@@ -13410,6 +13556,7 @@
             ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="${n <= rating ? 'filled' : ''}" aria-label="${n} star${n === 1 ? '' : 's'}">${STAR_SVG_FILLED}</button>`).join('')}
         </div>
         <textarea id="pdReviewComment" rows="3" placeholder="What did you think? (optional)">${myReview && myReview.comment ? escapeHtml(myReview.comment) : ''}</textarea>
+        <label class="pd-review-anon-toggle"><input type="checkbox" id="pdReviewAnon" ${myReview && myReview.is_anonymous ? 'checked' : ''}> Post without my name</label>
         <div class="auth-error" id="pdReviewError" role="alert" style="display:none;"></div>
         <button type="button" class="btn btn-primary" id="pdReviewSubmitBtn" style="margin-top:12px;">${myReview ? 'Update review' : 'Submit review'}</button>
     </div>`;
@@ -13432,11 +13579,13 @@
                 const btn = document.getElementById('pdReviewSubmitBtn');
                 btn.disabled = true;
                 const comment = document.getElementById('pdReviewComment').value.trim();
+                const isAnonymous = document.getElementById('pdReviewAnon').checked;
                 const { error } = await supabaseClient.from('product_reviews').upsert({
                     product_key: key,
                     user_id: currentSupabaseUser.id,
                     rating: selectedRating,
                     comment: comment || null,
+                    is_anonymous: isAnonymous,
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
@@ -13895,7 +14044,7 @@
         </div>
       </div>`;
                 listEl.innerHTML = reviews.map(r => {
-                    const name = (r.profiles && r.profiles.full_name) || 'Yo7 Foods customer';
+                    const name = r.is_anonymous ? 'Yo7 Foods customer' : ((r.profiles && r.profiles.full_name) || 'Yo7 Foods customer');
                     const dateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                     const isOwn = currentSupabaseUser && r.user_id === currentSupabaseUser.id;
                     return `
@@ -13931,6 +14080,7 @@
             ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="${n <= rating ? 'filled' : ''}" aria-label="${n} star${n === 1 ? '' : 's'}">${STAR_SVG_FILLED}</button>`).join('')}
         </div>
         <textarea id="crmReviewComment" rows="3" placeholder="What did you think? (optional)">${myReview && myReview.comment ? escapeHtml(myReview.comment) : ''}</textarea>
+        <label class="pd-review-anon-toggle"><input type="checkbox" id="crmReviewAnon" ${myReview && myReview.is_anonymous ? 'checked' : ''}> Post without my name</label>
         <div class="auth-error" id="crmReviewError" role="alert" style="display:none;"></div>
         <button type="button" class="btn btn-primary" id="crmReviewSubmitBtn" style="margin-top:12px;">${myReview ? 'Update review' : 'Submit review'}</button>
     </div>`;
@@ -13953,11 +14103,13 @@
                 const btn = document.getElementById('crmReviewSubmitBtn');
                 btn.disabled = true;
                 const comment = document.getElementById('crmReviewComment').value.trim();
+                const isAnonymous = document.getElementById('crmReviewAnon').checked;
                 const { error } = await supabaseClient.from('product_reviews').upsert({
                     product_key: key,
                     user_id: currentSupabaseUser.id,
                     rating: selectedRating,
                     comment: comment || null,
+                    is_anonymous: isAnonymous,
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
@@ -17271,15 +17423,26 @@
                 return;
             }
             const shown = items.slice(0, 6);
-            resultsEl.innerHTML = shown.map(p => `
+            const placeholderSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+            resultsEl.innerHTML = shown.map(p => {
+                // A dedicated compact image-or-icon check rather than the
+                // full productPhotoHTML() — that one's "Photo coming soon"
+                // label fallback (built for a card-sized thumb) would
+                // overflow this row's small 34px thumbnail.
+                const thumbHTML = p.image
+                    ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <span style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${placeholderSvg}</span>`
+                    : placeholderSvg;
+                return `
                 <a class="search-result-item" href="#/product/${p.catSlug}/${p.idx}">
-                    <div class="search-result-thumb"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+                    <div class="search-result-thumb">${thumbHTML}</div>
                     <div class="search-result-info">
                         <div class="name">${escapeHtml(p.name)}</div>
                         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
                     </div>
-                    <div class="search-result-price">${money(p.price)}</div>
-                </a>`).join('')
+                    <div class="search-result-price">${priceHTML(p)}</div>
+                </a>`;
+            }).join('')
                 + (items.length > shown.length
                     ? `<a class="search-see-all" href="#/search/${encodeURIComponent(query)}">See all ${items.length} results</a>`
                     : '');
