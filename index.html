@@ -1977,31 +1977,31 @@
             .hero-capture-thanks {
                 align-items: flex-start;
             }
-            /* clamp() rather than a fixed size: at the narrow end of this
-               breakpoint (~901px) a 280px badge would eat into the 520px
-               text column's clearance, so the seal scales down with the
-               viewport instead of staying fixed while the column doesn't. */
+            /* left, not right — anchored just past the 520px text column
+               so the seal sits close to the headline instead of drifting
+               out toward the far edge of a wide viewport. clamp() so it
+               still scales down at the narrow end of this breakpoint
+               (~901px) rather than staying fixed while the column doesn't. */
             .seal {
                 position: absolute;
                 top: 50%;
-                right: 44px;
+                left: 560px;
                 transform: translateY(-50%);
                 width: clamp(200px, 20vw, 280px);
                 height: clamp(200px, 20vw, 280px);
                 margin: 0;
             }
-            /* Centred on the same point as the seal rather than tucked in
-               a separate corner: bigger and heavily faded, so it reads as
-               one deliberate composition (a large soft emblem with the
-               crisp seal sitting on top of it, seal is later in paint
-               order/z-index so it's always the sharp foreground layer)
-               instead of two same-weight marks competing for attention. */
+            /* Back in the top-right corner, bigger — the seal moving in
+               next to the headline frees up that corner for the faded
+               background mark to take on its own scale without crowding
+               the seal (paint order/z-index still puts the seal on top
+               wherever the two happen to overlap). */
             .hero-watermark {
-                top: 50%;
+                top: -6%;
                 bottom: auto;
                 right: -6%;
-                transform: translateY(-50%);
-                width: min(38vw, 520px);
+                transform: none;
+                width: min(46vw, 620px);
             }
         }
 
@@ -11280,7 +11280,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.23';
+        const BUILD_VERSION = '2026-09-08.24';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
