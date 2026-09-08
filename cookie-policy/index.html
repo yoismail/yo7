@@ -1871,11 +1871,11 @@
             font-family: var(--display);
             font-weight: 600;
             font-size: 13.5px;
-            color: var(--chartreuse-rich);
+            color: #A8481F;
             text-decoration: underline;
             text-underline-offset: 2px;
         }
-        [data-theme="dark"] .hero-shop-link { color: var(--chartreuse-soft); }
+        [data-theme="dark"] .hero-shop-link { color: #E0895A; }
 
         .hero-social-link {
             display: flex;
@@ -2306,7 +2306,7 @@
         .bundle-item-weight-edit { flex-shrink: 0; display: flex; align-items: center; gap: 3px; }
         .bundle-item-weight-edit input {
             width: 52px; padding: 3px 5px; border-radius: 6px; border: 1px solid rgba(var(--border-rgb), 0.2);
-            font-size: 12px; font-family: inherit; background: var(--card-bg); color: var(--text-body);
+            font-size: 16px; font-family: inherit; background: var(--card-bg); color: var(--text-body);
         }
         .bundle-item-weight-edit span { font-size: 11px; color: var(--text-muted); }
         .bundle-item-weight { flex-shrink: 0; font-size: 11.5px; color: var(--text-muted); }
@@ -2337,7 +2337,7 @@
         }
         .bundle-discount-edit input {
             width: 56px; padding: 5px 7px; border-radius: 6px; border: 1.5px solid rgba(var(--border-rgb), 0.16);
-            font-family: var(--body); font-size: 12.5px; background: var(--card-bg); color: var(--text-body);
+            font-family: var(--body); font-size: 16px; background: var(--card-bg); color: var(--text-body);
         }
         body.edit-mode-on .bundle-discount-edit { display: flex; }
         .bundle-add-btn {
@@ -4322,7 +4322,7 @@
         .shop-all-search-wrap input {
             width: 100%; box-sizing: border-box; padding: 15px 20px 15px 48px;
             border-radius: 999px; border: 1.5px solid var(--chartreuse);
-            font-family: var(--body); font-size: 15px;
+            font-family: var(--body); font-size: 16px;
             background: var(--card-bg); color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -4923,7 +4923,7 @@
             border-radius: 6px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
             font-family: var(--body);
-            font-size: 12.5px;
+            font-size: 16px;
             background: var(--card-bg);
             color: var(--text-body);
         }
@@ -11150,7 +11150,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.15';
+        const BUILD_VERSION = '2026-09-08.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
