@@ -15,7 +15,7 @@
     <meta property="og:image" content="https://yo7foods.co.uk/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Yo7 Foods: fresh African &amp; Caribbean groceries, delivered with modern convenience.">
+    <meta property="og:image:alt" content="Yo7 Foods: fresh African &amp; Caribbean groceries, delivered UK-wide or collected in Ipswich.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Honey Beans (Oloyin) | Yo7 Foods">
     <meta name="twitter:description" content="Honey Beans (Oloyin), from Yo7 Foods' Beans aisle.">
@@ -78,7 +78,7 @@
          malicious external dependency, but it does not stop an XSS payload
          injected into the page's own inline code from running. Treat this
          as one layer, not a substitute for careful escaping. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mcxfzfvhdtcjfyjmnamr.supabase.co wss://mcxfzfvhdtcjfyjmnamr.supabase.co https://api.stripe.com https://api.postcodes.io https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com;">
     <!-- Referrer-Policy is normally an HTTP header, but unlike
          X-Frame-Options/frame-ancestors it's one of the few security
          controls that DOES work as a <meta> tag, which matters here
@@ -170,7 +170,7 @@
             --heading-mid: #B9CC8E;
             --heading-deep: #DCE8C0;
             --text-muted: #B0A89D;
-            --text-faint: #837A6E;
+            --text-faint: #948A7C;
             --text-body: #E3DDD2;
             --thumb-grad-1: #2A2015;
             --thumb-grad-2: #201810;
@@ -388,6 +388,13 @@
             color: var(--heading-mid);
             flex-shrink: 0;
         }
+        /* The rocket needs to read as a brand accent, not a generic native
+           emoji glyph (which renders in its own fixed multi-colour artwork
+           no CSS can touch) — an SVG icon replaces it, on this one icon
+           only (the checkmark elsewhere on the ticker stays its own
+           colour). Uses the actual --orange brand token rather than a
+           hand-picked shade. */
+        .trust-bar-icon-accent { color: var(--orange); }
         .trust-sep { color: var(--chartreuse-rich); font-weight: 700; }
         @media (max-width: 520px) {
             .trust-bar-set { font-size: 11.5px; padding: 5px 16px; gap: 7px; }
@@ -682,11 +689,17 @@
             background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
             display:flex; align-items:center; justify-content:center;
             font-size: 10px; font-weight: 700; color: var(--text-faint); text-align:center;
+            position: relative; overflow: hidden;
         }
+        .search-result-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .search-result-info { flex: 1; min-width: 0; }
         .search-result-info .name { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .search-result-info .cat { font-size: 11.5px; color: var(--text-muted); }
-        .search-result-price { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); flex-shrink: 0; }
+        .search-result-price {
+            font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right;
+        }
+        .search-result-price .price-was { margin-left: 0; }
         .search-see-all {
             display: block; text-align: center; padding: 12px; font-family: var(--display); font-weight: 700;
             font-size: 12.5px; color: var(--heading-mid); text-decoration: none; background: rgba(225,225,0,0.06);
@@ -749,7 +762,7 @@
             position: relative;
             width: 38px;
             height: 38px;
-            border-radius: 11px;
+            border-radius: 999px;
             border: 1px solid rgba(44, 28, 16, 0.14);
             background: rgba(44, 28, 16, 0.04);
             display: flex;
@@ -783,6 +796,86 @@
         .icon-btn svg {
             width: 18px;
             height: 18px;
+        }
+
+        /* ================= THEME SWITCH =================
+           Replaces the old plain icon-button toggle with an actual sliding
+           switch: a pill track plus a knob that carries both icons and
+           crossfades/rotates between them as it slides, rather than the
+           track and knob needing to independently agree on two fixed icon
+           positions. The nav bar itself stays the same fixed light colour
+           in both themes (see the DARK MODE comment further up), so the
+           switch's own dark-mode colouring is tuned to read against that
+           permanently-light bar, not against a dark page background. */
+        .theme-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            border-radius: 999px;
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(44, 28, 16, 0.14);
+            background: rgba(44, 28, 16, 0.06);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.3s ease, border-color 0.2s ease;
+        }
+        .theme-switch:hover {
+            border-color: rgba(44, 28, 16, 0.32);
+        }
+        .theme-switch-thumb {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--cream);
+            box-shadow: 0 2px 5px rgba(44, 28, 16, 0.28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateX(0);
+            transition: transform 0.35s cubic-bezier(.4, 0, .2, 1), box-shadow 0.3s ease;
+        }
+        .theme-switch-icon {
+            position: absolute;
+            width: 13px;
+            height: 13px;
+            transition: opacity 0.25s ease, transform 0.35s cubic-bezier(.4, 0, .2, 1);
+        }
+        .theme-switch-icon-sun {
+            color: #B85C10;
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+        .theme-switch-icon-moon {
+            color: var(--aubergine-deep);
+            opacity: 0;
+            transform: scale(0.4) rotate(-70deg);
+        }
+        [data-theme="dark"] .theme-switch {
+            background: var(--aubergine-deep);
+            border-color: var(--aubergine-mid);
+        }
+        [data-theme="dark"] .theme-switch:hover {
+            border-color: var(--chartreuse-rich);
+        }
+        [data-theme="dark"] .theme-switch-thumb {
+            transform: translateX(26px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+        }
+        [data-theme="dark"] .theme-switch-icon-sun {
+            opacity: 0;
+            transform: scale(0.4) rotate(70deg);
+        }
+        [data-theme="dark"] .theme-switch-icon-moon {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .theme-switch-thumb, .theme-switch-icon {
+                transition: none;
+            }
         }
 
         .cart-badge {
@@ -1082,7 +1175,17 @@
                 letter-spacing: 0.2em;
             }
 
-            .nav-account {
+            /* Signed-out only: "Sign up / Log in" is too long a string to
+               keep on the bar at this width, so it collapses to just the
+               icon, same as always. Signed-in mobile visitors used to get
+               the same treatment — icon only, with the "Hi, Jane" greeting
+               and account options hidden behind a tap on that icon. Now the
+               greeting stays on the bar (see .nav-account.is-logged-in
+               right below) so it's visible without a click; tapping it
+               still opens the same dropdown for order history/log out/etc.
+               Desktop (>900px, well clear of this breakpoint) already
+               showed the greeting inline and is untouched. */
+            .nav-account:not(.is-logged-in) {
                 width: 34px;
                 height: 34px;
                 padding: 0;
@@ -1090,19 +1193,49 @@
                 border-radius: 11px;
             }
 
-            .nav-account span#accountLabel,
-            .account-caret {
+            .nav-account:not(.is-logged-in) span#accountLabel,
+            .nav-account:not(.is-logged-in) .account-caret {
                 display: none !important;
             }
 
-            .account-dropdown-name.visible {
-                display: block;
+            .nav-account.is-logged-in {
+                padding: 7px 10px 7px 8px;
+                gap: 6px;
+                max-width: 130px;
+            }
+
+            .nav-account.is-logged-in span#accountLabel {
+                font-size: 11.5px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 74px;
+            }
+
+            .nav-account.is-logged-in .account-caret {
+                display: inline-block !important;
+                width: 10px !important;
+                height: 10px !important;
             }
 
             .icon-btn,
             .nav-hamburger {
                 width: 34px;
                 height: 34px;
+            }
+
+            .theme-switch {
+                width: 46px;
+                height: 25px;
+            }
+
+            .theme-switch-thumb {
+                width: 17px;
+                height: 17px;
+            }
+
+            [data-theme="dark"] .theme-switch-thumb {
+                transform: translateX(23px);
             }
         }
 
@@ -1555,6 +1688,91 @@
             margin-bottom: 36px;
         }
 
+        /* Pre-launch hero: a single email field is the whole point, no
+           second/competing button — everything funnels into this one
+           capture. */
+        .hero-capture-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .hero-capture-form input {
+            font-family: var(--body);
+            font-size: 16px; /* iOS Safari auto-zooms the page on focus under 16px */
+            padding: 14px 20px;
+            border-radius: 999px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            background: var(--card-bg);
+            color: var(--ink);
+            min-width: 0;
+            width: 240px;
+            max-width: 100%;
+        }
+        .hero-capture-form #heroCapturePostcode {
+            width: 150px;
+        }
+        .hero-capture-form input:focus {
+            outline: none;
+            border-color: var(--chartreuse);
+        }
+        .hero-capture-form button:disabled::after {
+            animation-play-state: paused;
+        }
+        .hero-capture-form button:disabled {
+            opacity: 0.65;
+            cursor: default;
+            animation: none;
+        }
+        .hero-capture-hint {
+            text-align: center;
+            margin-top: -2px;
+            margin-bottom: 8px;
+        }
+        .hero-capture-thanks {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            margin: 0 0 8px;
+        }
+        .hero-capture-thanks p {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--chartreuse-rich);
+            margin: 0;
+        }
+        [data-theme="dark"] .hero-capture-thanks p { color: var(--chartreuse-soft); }
+        /* A calm, continuous breathing pulse — border and shadow only, no
+           shimmer — so this secondary action reads as smooth and inviting
+           without competing with the primary CTA's own signature effect. */
+        .hero-capture-thanks .btn-outline-dark {
+            animation: browseCatPulse 2.6s ease-in-out infinite;
+        }
+        @keyframes browseCatPulse {
+            0%, 100% { border-color: rgba(var(--border-rgb), 0.18); box-shadow: 0 0 0 rgba(144, 184, 0, 0); transform: scale(1); }
+            50% { border-color: var(--chartreuse-rich); box-shadow: 0 10px 26px rgba(144, 184, 0, 0.28); transform: scale(1.02); }
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .hero-capture-thanks .btn-outline-dark:hover {
+                animation-play-state: paused;
+                border-color: var(--chartreuse-rich);
+                box-shadow: 0 12px 30px rgba(144, 184, 0, 0.32);
+                transform: translateY(-2px);
+            }
+        }
+        .hero-capture-thanks .btn-outline-dark:active { transform: scale(0.97); }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-capture-thanks .btn-outline-dark { animation: none; }
+        }
+        .hero-capture-wrap.signed-up .hero-capture-form { display: none; }
+        /* A postcode-format hint left over from before signing up shouldn't
+           linger under the thank-you message. */
+        .hero-capture-wrap.signed-up .hero-capture-hint { display: none; }
+        .hero-capture-wrap.signed-up .hero-capture-thanks { display: flex; }
+
         .cta-row {
             display: flex;
             gap: 16px;
@@ -1570,8 +1788,7 @@
            to the ambient glow seen on modern SaaS CTAs than a "shiny
            button" effect. Hovering pauses the breathing at its brightest
            point and layers on a real interaction: the icon nudges
-           forward, echoing "this moves you ahead". The two buttons pulse
-           on slightly offset timings so they don't breathe in lockstep. */
+           forward, echoing "this moves you ahead". */
         .cta-row .btn-primary {
             animation: ctaPulseGlow 2.8s ease-in-out infinite;
         }
@@ -1606,6 +1823,59 @@
         @media (prefers-reduced-motion: reduce) {
             .cta-row .btn-primary, .cta-row .btn-outline-dark { animation: none; }
         }
+
+        /* Hero CTA's own signature: a diagonal light sweep glinting across
+           the button on a loop (rests, then glints, rather than a
+           continuous scroll — reads as a deliberate glint, not a loading
+           bar), paired with a spring-y lift on hover and a real press on
+           click. Distinct from the older ctaPulseGlow/ctaPulseBorder pair
+           above (now unused elsewhere) so this one CTA has its own
+           identity rather than reusing a generic site-wide effect. */
+        .hero-capture-form .btn-primary {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .hero-capture-form .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.85) 48%, rgba(255, 255, 255, 0.2) 54%, transparent 68%);
+            background-size: 220% 100%;
+            background-repeat: no-repeat;
+            background-position: 160% 0;
+            animation: heroBtnShimmer 3.6s cubic-bezier(.4, 0, .2, 1) infinite;
+            pointer-events: none;
+        }
+        @keyframes heroBtnShimmer {
+            0% { background-position: 160% 0; }
+            28% { background-position: -60% 0; }
+            100% { background-position: -60% 0; }
+        }
+        .hero-capture-form .btn-primary:active {
+            transform: scale(0.97);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .hero-capture-form .btn-primary:hover {
+                transform: translateY(-2px) scale(1.02);
+                box-shadow: 0 16px 34px rgba(225, 225, 0, 0.55);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-capture-form .btn-primary::after { animation: none; display: none; }
+        }
+
+        .hero-shop-link {
+            display: inline-block;
+            margin-top: 4px;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--chartreuse-rich);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        [data-theme="dark"] .hero-shop-link { color: var(--chartreuse-soft); }
 
         .hero-social-link {
             display: flex;
@@ -1736,11 +2006,16 @@
             line-height: 1.55;
             margin-bottom: 32px;
         }
+        /* Centred at every width now, matching .about-mission/.about-prose
+           right below it — this used to be a left-aligned two-column grid
+           (icon left, text right) on desktop only, the one section on the
+           page that didn't match the centred treatment everywhere else. */
         .about-story-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 48px;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            text-align: center;
+            gap: 24px;
             margin-bottom: 72px;
         }
         .about-seal { width: clamp(120px, 9vw, 160px); height: clamp(120px, 9vw, 160px); flex-shrink: 0; }
@@ -1748,7 +2023,7 @@
             font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.6vw, 36px);
             letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 20px; color: var(--heading);
         }
-        .about-story-grid p { font-size: 16px; color: var(--text-body); max-width: 56ch; }
+        .about-story-grid p { font-size: 16px; color: var(--text-body); max-width: 60ch; margin-left: auto; margin-right: auto; }
         .about-story-grid p+p { margin-top: 14px; }
 
         .about-mission {
@@ -1839,6 +2114,27 @@
             font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: 0.03em;
             color: var(--aubergine-deep); background: var(--chartreuse);
             padding: 8px 16px; border-radius: 999px;
+            transition: opacity 0.55s cubic-bezier(.16,.84,.44,1), transform 0.55s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s ease;
+        }
+        /* Overrides the generic .reveal rise-in with a rise+scale "pop" that
+           suits a small pill better, staggered per tag via the inline
+           transition-delay already on each span — a one-shot scroll-into-view
+           effect (handled by the sitewide observeReveals(), not a
+           scroll-linked one), plus a lightweight hover lift as an ongoing
+           micro-interaction. Transform-only in both cases so neither costs a
+           repaint. */
+        .about-mission-tag.reveal { opacity: 0; transform: translateY(14px) scale(0.82); }
+        .about-mission-tag.reveal.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+        .about-mission-tag:hover {
+            transform: translateY(-3px) scale(1.06);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+        }
+        [data-theme="dark"] .about-mission-tag:hover {
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .about-mission-tag.reveal { opacity: 1; transform: none; transition: none; }
+            .about-mission-tag:hover { transform: none; }
         }
         .about-mission p.about-mission-note {
             font-size: 15px; color: var(--text-body); max-width: 56ch; margin: 0 auto;
@@ -1904,9 +2200,6 @@
         }
 
         @media (max-width: 760px) {
-            .about-story-grid { grid-template-columns: 1fr; text-align: center; gap: 28px; }
-            .about-story-grid p { max-width: none; margin-left: auto; margin-right: auto; }
-            .about-seal { margin: 0 auto; }
             .about-prose p { text-align: left; }
             .about-block-alt { padding: 40px 22px; border-radius: 18px; }
         }
@@ -2092,7 +2385,7 @@
         .combos-scroll { padding-bottom: 6px; }
         .combos-scroll .combo-card { flex: 0 0 265px; max-width: 265px; scroll-snap-align: start; }
         .combo-card {
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 0;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px;
             padding: 24px 24px 22px; position: relative; display: flex; flex-direction: column;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
             transition: transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s cubic-bezier(.16,.84,.44,1);
@@ -2118,6 +2411,39 @@
             font-weight: 600; font-size: 12px; cursor: pointer;
         }
         body.edit-mode-on .combo-edit-btn, body.edit-mode-on .bundle-edit-btn { display: block; }
+        .combo-color-edit input[type="color"] {
+            width: 34px; height: 26px; padding: 2px; border-radius: 6px; cursor: pointer;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16); background: var(--card-bg);
+        }
+        /* A combo card with an admin-chosen bgColor: every text/edit element
+           inside gets an off-white treatment instead of the default
+           heading-ink/muted-grey pairing, which reads as invisible-to-barely-
+           legible against a deep custom background. Scoped to .combo-tinted
+           (not .combo-card generally) so the plain, unthemed cards — and the
+           separate "Shop by meal" .bundle-card, which reuses several of
+           these same unscoped classes — are unaffected. */
+        .combo-tinted { border-color: rgba(255, 255, 255, 0.1); }
+        .combo-tinted h3,
+        .combo-tinted .bundle-total-row,
+        .combo-tinted .bundle-weight-total strong,
+        .combo-tinted .bundle-item-row > span:first-child,
+        .combo-tinted .bundle-item-row > span:last-child { color: #FAF9F2; }
+        .combo-tinted .bundle-tagline,
+        .combo-tinted .bundle-discount-edit,
+        .combo-tinted .bundle-weight-total { color: rgba(250, 249, 242, 0.72); }
+        .combo-tinted .bundle-was { color: rgba(250, 249, 242, 0.55); }
+        .combo-tinted .bundle-item-row { border-bottom-color: rgba(255, 255, 255, 0.14); }
+        .combo-tinted .bundle-item-row > span:first-child::before { background: var(--chartreuse); }
+        .combo-tinted .bundle-item-row.out-of-stock,
+        .combo-tinted .bundle-item-row.out-of-stock > span:first-child,
+        .combo-tinted .bundle-item-row.out-of-stock > span:last-child { color: rgba(250, 249, 242, 0.45); }
+        .combo-tinted .bundle-item-row.out-of-stock > span:first-child::before { background: rgba(250, 249, 242, 0.45); }
+        .combo-tinted .bundle-discount-edit input,
+        .combo-tinted .combo-color-edit input[type="color"] {
+            background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.24); color: #FAF9F2;
+        }
+        .combo-tinted .combo-edit-btn { color: rgba(250, 249, 242, 0.75); border-color: rgba(255, 255, 255, 0.24); }
+        .combo-tinted .bundle-weight-total.zero-weight strong { color: #FF9466; }
 
         /* ================= BUILD A BUNDLE ================= */
         .dish-picker {
@@ -2630,16 +2956,13 @@
             border-bottom: 4px solid var(--chartreuse);
             overflow: hidden; text-decoration: none; color: #2C1C10;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
         }
-        /* Tag-qualified (a.best-seller-card, not just .best-seller-card) so
-           this reliably outranks .bs-card-reveal.is-visible's own transform
-           (equal class-specificity otherwise, and that rule is unconditional
-           — active any time a card has settled into view, not just while
-           hovered — so without this bump it silently wins the moment a
-           card finishes its entrance reveal, cancelling the hover lift for
-           good instead of just at one point in time). */
-        a.best-seller-card:hover { transform: translateY(-8px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32); }
+        /* transform only, no box-shadow transition — animating box-shadow
+           forces a repaint every frame (it isn't compositor-only like
+           transform is), which is exactly the kind of scroll-time cost
+           that read as jank/hang when hovering a card mid-swipe. */
+        a.best-seller-card:hover { transform: translateY(-8px); }
         .best-seller-card .thumb {
             aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
@@ -2648,11 +2971,10 @@
         /* Bright yellow pill badge — the site's own accent colour
            (var(--orange), same pairing as the section-eyebrow pills)
            rather than an invented gold, ties this to the rest of the
-           brand instead of introducing a one-off hue. Pops in once, a
-           beat after the card's own entrance, when .bs-card-reveal
-           settles into view (no continuous animation — a previous
-           version glow-pulsed forever, which read as gimmicky rather
-           than premium; nothing moves once this settles). */
+           brand instead of introducing a one-off hue. Renders in place
+           immediately (no pop-in) now that the carousel drops all
+           scroll-triggered animation — see the comment above
+           .cat-tile-reveal for why. */
         .best-seller-rank {
             position: absolute; top: 10px; left: 10px; z-index: 3;
             display: flex; align-items: center; gap: 4px;
@@ -2660,13 +2982,6 @@
             font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.03em;
             padding: 5px 11px 5px 9px; border-radius: 999px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), 0 0 0 2px #FFFDF7;
-            transform: scale(0.7);
-            opacity: 0;
-            transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
-        }
-        .bs-card-reveal.is-visible .best-seller-rank {
-            transform: scale(1);
-            opacity: 1;
         }
         @media (prefers-reduced-motion: reduce) {
             .best-seller-rank {
@@ -2734,9 +3049,11 @@
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
         }
-        .new-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(var(--border-rgb), 0.2); }
+        /* transform only, no box-shadow transition — see the comment on
+           a.best-seller-card:hover for why. */
+        .new-card:hover { transform: translateY(-8px); }
         .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
@@ -2872,12 +3189,11 @@
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
         }
-        /* Tag-qualified — see the comment on a.best-seller-card:hover, same
-           fix for the same reason (.offer-card-reveal.is-visible would
-           otherwise win the transform property once a card settles). */
-        a.offer-card:hover { transform: translateY(-8px); box-shadow: 0 6px 16px rgba(var(--border-rgb), 0.1), 0 30px 54px rgba(193, 85, 44, 0.22); }
+        /* transform only, no box-shadow transition — see the comment on
+           a.best-seller-card:hover for why. */
+        a.offer-card:hover { transform: translateY(-8px); }
         .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); }
         /* Edit-mode-only "take this product off special offers" control —
            same on/off mechanism as every other admin-only button on the
@@ -3164,6 +3480,16 @@
         .step:nth-child(1) .step-num { --step-accent: var(--chartreuse-rich); --step-accent-tint: rgba(114, 148, 0, 0.14); }
         .step:nth-child(2) .step-num { --step-accent: var(--aubergine-mid); --step-accent-tint: rgba(38, 98, 16, 0.12); }
         .step:nth-child(3) .step-num { --step-accent: #9a7f00; --step-accent-tint: rgba(154, 127, 0, 0.14); }
+        /* The light-mode accents above are dark, saturated colours chosen to
+           read clearly against a near-white tint background. In dark mode
+           that same low-opacity tint composites down to a colour barely
+           different from the page's own near-black background, so the dark
+           accent text sitting on it reads as dark-on-dark — this swaps both
+           the text and the tint's base hue for brighter, dark-surface-tuned
+           values per step. */
+        [data-theme="dark"] .step:nth-child(1) .step-num { --step-accent: var(--chartreuse-soft); --step-accent-tint: rgba(166, 204, 46, 0.18); }
+        [data-theme="dark"] .step:nth-child(2) .step-num { --step-accent: var(--heading-mid); --step-accent-tint: rgba(38, 98, 16, 0.2); }
+        [data-theme="dark"] .step:nth-child(3) .step-num { --step-accent: #E8C34A; --step-accent-tint: rgba(154, 127, 0, 0.2); }
 
         .step h3 {
             font-family: var(--display);
@@ -3468,31 +3794,29 @@
             }
         }
 
-        /* Best Sellers / Shop by category / Special Offer card entrances —
-           a bit more pronounced than the plain fade-up .reveal uses
-           everywhere else (scale in as well as fade+rise), reserved for
-           these sections specifically so their scroll-into-view moment
-           reads as more deliberate than the rest of the homepage.
-           Re-observed per render via observeContainerReveals() rather than
-           the global one-shot observeReveals() — see the comment on that
-           function. */
-        .bs-card-reveal,
-        .cat-tile-reveal,
-        .offer-card-reveal {
+        /* Shop by category tile entrance — fade+rise+scale as tiles scroll
+           into view. Best Sellers and Special Offers used to get the same
+           treatment (bs-card-reveal / offer-card-reveal), but a per-card
+           scroll-triggered animation on a horizontally-scrolling carousel
+           meant every swipe fired a fresh batch of opacity/transform
+           transitions mid-drag — exactly the kind of scroll-time work that
+           reads as jank/hang on a slower device, so those two carousels
+           now render fully visible immediately instead; only this one
+           (a normal vertically-scrolled grid, not swiped) keeps the
+           reveal. Re-observed per render via observeContainerReveals()
+           rather than the global one-shot observeReveals() — see the
+           comment on that function. */
+        .cat-tile-reveal {
             opacity: 0;
             transform: translateY(24px) scale(0.94);
             transition: opacity 0.6s cubic-bezier(.16,.84,.44,1), transform 0.6s cubic-bezier(.16,.84,.44,1);
         }
-        .bs-card-reveal.is-visible,
-        .cat-tile-reveal.is-visible,
-        .offer-card-reveal.is-visible {
+        .cat-tile-reveal.is-visible {
             opacity: 1;
             transform: translateY(0) scale(1);
         }
         @media (prefers-reduced-motion: reduce) {
-            .bs-card-reveal,
-            .cat-tile-reveal,
-            .offer-card-reveal {
+            .cat-tile-reveal {
                 opacity: 1;
                 transform: none;
                 transition: none;
@@ -4618,6 +4942,7 @@
             font-weight: 700;
             color: var(--chartreuse-rich);
             margin-top: 14px;
+            margin-bottom: 22px;
         }
         /* chartreuse-rich reads well on the light card backgrounds this
            sits on by default, but goes muddy against a dark card — swap to
@@ -4756,6 +5081,11 @@
         }
         .pd-review-prompt { font-size: 13.5px; color: var(--text-muted); }
         .pd-review-prompt a { color: var(--heading-mid); font-weight: 600; }
+        .pd-review-anon-toggle {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 12px; font-size: 13px; color: var(--text-muted); cursor: pointer;
+        }
+        .pd-review-anon-toggle input { width: 15px; height: 15px; accent-color: var(--chartreuse-rich); cursor: pointer; }
 
         .pd-detail-card {
             background: var(--card-bg);
@@ -5225,6 +5555,16 @@
             line-height: 1.5;
         }
 
+        .field-hint {
+            font-size: 12px;
+            margin-top: 6px;
+            min-height: 15px;
+            line-height: 1.4;
+        }
+        .field-hint.checking { color: var(--text-muted); }
+        .field-hint.success { color: var(--heading-mid); }
+        .field-hint.error { color: #b34a4a; }
+
         .field input:focus,
         .field select:focus,
         .field textarea:focus {
@@ -5559,7 +5899,7 @@
         }
 
         .empty-cart p {
-            color: #7a6f68;
+            color: var(--text-muted);
             font-size: 14px;
             margin-bottom: 20px;
         }
@@ -6048,6 +6388,20 @@
             color: #8a4a26;
         }
 
+        /* Same dark-on-dark problem as .step-num just above: these
+           low-opacity tints and their matching text colour were both tuned
+           for a light page behind them, so in dark mode the tint composites
+           to near-black and the text (already a dark, saturated shade)
+           disappears into it. */
+        [data-theme="dark"] .open-badge {
+            background: rgba(166, 204, 46, 0.18);
+            color: var(--chartreuse-soft);
+        }
+        [data-theme="dark"] .open-badge.closed {
+            background: rgba(232, 185, 138, 0.18);
+            color: var(--warn-text);
+        }
+
         .open-badge .dot {
             width: 7px;
             height: 7px;
@@ -6349,14 +6703,14 @@
         .auth-box .sub {
             text-align: center;
             font-size: 13.5px;
-            color: #7a6f68;
+            color: var(--text-muted);
             margin-bottom: 28px;
         }
 
         .auth-switch {
             text-align: center;
             font-size: 13.5px;
-            color: #7a6f68;
+            color: var(--text-muted);
             margin-top: 20px;
         }
 
@@ -6967,14 +7321,16 @@
                 <a href="#/guide" id="navLinkGuide">New Here?</a>
             </div>
             <div class="nav-right">
-                <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode">
-                    <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4" />
-                        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-                    </svg>
-                    <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-                    </svg>
+                <button class="theme-switch" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Toggle dark mode">
+                    <span class="theme-switch-thumb">
+                        <svg id="themeIconSun" class="theme-switch-icon theme-switch-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4" />
+                            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                        </svg>
+                        <svg id="themeIconMoon" class="theme-switch-icon theme-switch-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+                        </svg>
+                    </span>
                 </button>
                 <a class="icon-btn nav-cart-btn" href="#/checkout" aria-label="Basket">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
@@ -7050,15 +7406,19 @@
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
             <div class="trust-bar-set">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg><span class="free-delivery-text">Free delivery over &pound;50</span></span>
+                <span><svg class="trust-bar-icon trust-bar-icon-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
+                <span>Join the Launch List today to secure 10% off your first box</span>
+                <span class="trust-sep">&bull;</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Delivering across all UK postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
             <div class="trust-bar-set" aria-hidden="true">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg><span class="free-delivery-text">Free delivery over &pound;50</span></span>
+                <span><svg class="trust-bar-icon trust-bar-icon-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We Deliver To All UK Postcodes</span>
+                <span>Join the Launch List today to secure 10% off your first box</span>
+                <span class="trust-sep">&bull;</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Delivering across all UK postcodes</span>
                 <span class="trust-sep">&bull;</span>
             </div>
         </div>
@@ -7083,24 +7443,27 @@
                 <use href="#seal-mark" />
             </svg>
             <div class="wrap hero-inner">
-                <div class="eyebrow">African Food Store, Ipswich</div>
+                <div class="eyebrow">African food store, Suffolk.</div>
                 <svg class="seal" viewBox="65 25 875 900">
                     <use href="#seal-mark" />
                 </svg>
-                <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.14s">taste</span> <span class="stretch-word" style="animation-delay:0.28s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.42s">home,</span> <span class="stretch-word" style="animation-delay:0.56s">delivered</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">fresh</span>.</h1>
-                <p class="hero-sub">Real African &amp; Caribbean groceries: the brands you grew up with, delivered UK-wide or ready to collect.</p>
-                <div class="cta-row">
-                    <a class="btn btn-primary" href="#/shop">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round">
-                            <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
-                        </svg>
-                        Start shopping
-                    </a>
-                    <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">
-                        Browse categories
-                    </a>
+                <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.10s">Taste</span> <span class="stretch-word" style="animation-delay:0.20s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.30s">Home,</span> <span class="stretch-word" style="animation-delay:0.40s">Coming</span> <span class="stretch-word" style="animation-delay:0.50s">to</span> <span class="hero-accent stretch-word" style="animation-delay:0.60s">Suffolk</span> <span class="stretch-word" style="animation-delay:0.70s">&amp;</span> <span class="hero-accent stretch-word" style="animation-delay:0.80s">Essex</span>.</h1>
+                <p class="hero-sub">Yo7 Foods launches January 2027. Real African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing, delivered across Suffolk and Essex.</p>
+                <div class="hero-capture-wrap" id="heroCaptureWrap">
+                    <form class="hero-capture-form" id="heroCaptureForm">
+                        <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
+                        <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code">
+                        <button type="submit" class="btn btn-primary">Secure 10% Off My First Order</button>
+                    </form>
+                    <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
+                    <div class="hero-capture-thanks" id="heroCaptureThanks">
+                        <p>You're on the list! We'll email your code the moment we launch.</p>
+                        <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">
+                            Browse categories
+                        </a>
+                    </div>
                 </div>
+                <a class="hero-shop-link" href="#/shop">Already know what you want? Start shopping &rarr;</a>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -7128,7 +7491,7 @@
                 <div class="new-section-head reveal">
                     <div>
                         <div class="section-eyebrow">Special offer</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Exclusive offers on premium African essentials</h2>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Exclusive offers on African &amp; Caribbean essentials</h2>
                     </div>
                     <a class="view-all-btn" href="#/special-offers">
                         View all
@@ -7153,7 +7516,7 @@
                 <div class="new-section-head reveal">
                     <div>
                         <div class="section-eyebrow">Just landed</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Fresh premium arrivals, just landed</h2>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Fresh arrivals, just landed</h2>
                     </div>
                     <a class="view-all-btn" href="#/new-arrivals">
                         View all
@@ -7202,8 +7565,8 @@
             <div class="wrap">
                 <div class="section-head reveal">
                     <div class="section-eyebrow">Shop by category</div>
-                    <h2>Every aisle, one tap away</h2>
-                    <p>Your favourite African ingredients, curated in one place and ready to add to your basket with ease.</p>
+                    <h2>Every category, from rice to spices</h2>
+                    <p>African and Caribbean groceries grouped by aisle, so you can find what you're after and add it to your basket in a couple of taps.</p>
                 </div>
                 <div class="product-grid cat-flat-scroll" id="catGrid"></div>
             </div>
@@ -7274,7 +7637,7 @@
             <div class="wrap story-inner">
                 <span class="story-quote-mark reveal" aria-hidden="true">&ldquo;</span>
                 <div class="reveal" style="transition-delay:0.1s">
-                    <h2>Quality first. Always.</h2>
+                    <h2>Real ingredients, not shortcuts.</h2>
                     <div class="story-rule"></div>
                     <p>Yo7 Foods was built on a commitment to real ingredients: rice that cooks the way it should,
                         spices that taste like home, and produce chosen for quality, not convenience.</p>
@@ -7311,7 +7674,7 @@
                     <div class="section-eyebrow">How it works</div>
                     <h2
                         style="font-family:var(--display); font-weight:700; font-size:clamp(28px,4vw,38px); color: var(--heading); letter-spacing:-0.01em;">
-                        Shop the premium way, simple and seamless</h2>
+                        From your everyday staples to the ingredients you miss from home: find them, order them, and have them delivered.</h2>
                 </div>
                 <div class="section-divider reveal" style="margin-bottom:52px;"></div>
                 <div class="steps">
@@ -7360,7 +7723,7 @@
                     <div class="about-value-card">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
                         <h3>Modernity</h3>
-                        <p>A premium experience from homepage to checkout.</p>
+                        <p>A shop that's easy on your phone, from browsing to checkout.</p>
                     </div>
                     <div class="about-value-card">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
@@ -7749,7 +8112,9 @@
                                         <div class="field"><label>Town</label><input type="text" required id="dTown"
                                                 placeholder="Ipswich"></div>
                                         <div class="field"><label>Postcode</label><input type="text" required id="dPostcode"
-                                                placeholder="CO1 1AA"></div>
+                                                placeholder="CO1 1AA" autocomplete="postal-code">
+                                            <div class="field-hint" id="dPostcodeHint"></div>
+                                        </div>
                                     </div>
                                     <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
@@ -7767,7 +8132,7 @@
                                 </div>
                                 <div style="display:flex; gap:12px; margin-top:10px;">
                                     <button class="btn btn-outline-dark" type="button" id="backToCartBtn">Back</button>
-                                    <button class="btn btn-primary btn-block" type="submit">Continue to payment</button>
+                                    <button class="btn btn-primary btn-block" type="submit" id="deliveryContinueBtn">Continue to payment</button>
                                 </div>
                             </form>
                         </div>
@@ -8021,7 +8386,7 @@
                     <div>
                         <h2>A fresh, modern take on African groceries</h2>
                         <p>Yo7 Foods was created with a simple belief: African groceries deserve a shopping experience that is fresh, modern, and world-class.</p>
-                        <p>For years, customers searching for African and Nigerian foods in the UK have had to rely on stores that feel cluttered, outdated, or difficult to navigate. We built Yo7 Foods to change that: to bring the richness of African markets into a clean, premium, and beautifully organised environment.</p>
+                        <p>For years, customers searching for African and Nigerian foods in the UK have had to rely on stores that feel cluttered, outdated, or difficult to navigate. We built Yo7 Foods to change that: to bring the richness of African markets into a clean, well-organised shop you can actually find your way around.</p>
                     </div>
                 </div>
 
@@ -8035,12 +8400,12 @@
 
                 <div class="about-mission about-block">
                     <div class="section-eyebrow">Our mission</div>
-                    <h2>To elevate African groceries to a premium standard, with clarity, freshness, authenticity, and trust at the heart of everything we do.</h2>
+                    <h2>To bring African groceries the clarity, freshness, authenticity, and trust every customer deserves.</h2>
                     <div class="about-mission-tags">
-                        <span class="about-mission-tag">Easy to shop</span>
-                        <span class="about-mission-tag">Easy to understand</span>
-                        <span class="about-mission-tag">Easy to enjoy</span>
-                        <span class="about-mission-tag">Easy to trust</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.05s">Easy to shop</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.15s">Easy to understand</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.25s">Easy to enjoy</span>
+                        <span class="about-mission-tag reveal" style="transition-delay:0.35s">Easy to trust</span>
                     </div>
                     <p class="about-mission-note">Whether you're buying garri, spices, palm oil, or fresh produce, Yo7 Foods ensures every product meets the highest quality standards.</p>
                 </div>
@@ -8048,7 +8413,7 @@
                 <div class="about-block">
                     <div class="about-mission" style="margin-bottom:32px;">
                         <div class="section-eyebrow">What makes us different</div>
-                        <h2>Built to feel premium, from homepage to doorstep</h2>
+                        <h2>Built around how you actually shop, from homepage to doorstep</h2>
                     </div>
                     <div class="about-values-grid">
                         <div class="about-value-card">
@@ -8058,7 +8423,7 @@
                         </div>
                         <div class="about-value-card">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="m21 15-5-5L5 21"/></svg>
-                            <h3>Premium product presentation</h3>
+                            <h3>Clear product presentation</h3>
                             <p>Clear images, detailed descriptions, and consistent quality.</p>
                         </div>
                         <div class="about-value-card">
@@ -8103,7 +8468,7 @@
                         <div class="about-value-card">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
                             <h3>Modernity</h3>
-                            <p>A premium experience from homepage to checkout.</p>
+                            <p>A shop that's easy on your phone, from browsing to checkout.</p>
                         </div>
                         <div class="about-value-card">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
@@ -8119,7 +8484,7 @@
                     <ul class="about-promise-list">
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Products you can trust</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Service you can rely on</li>
-                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>A shopping experience that feels premium</li>
+                        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>A shopping experience that actually works for you</li>
                         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>A brand that respects your culture and your time</li>
                     </ul>
                     <p style="text-align:center; margin-top:28px;">Yo7 Foods is here to make African groceries simple, modern, and accessible, without losing the soul of the food we love.</p>
@@ -8845,6 +9210,11 @@
                             </div>
                         </div>
                     </div>
+                    <div class="admin-panel-section panel-coming-soon">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></span>Coming soon sign-ups</h2>
+                        <p class="sub">Everyone who's registered interest via the homepage pre-launch banner.</p>
+                        <div id="comingSoonSignupsList"></div>
+                    </div>
                     <div class="admin-panel-section panel-analytics">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/></svg></span>Business analytics</h2>
                         <p class="sub">Revenue, orders, top products, customers, and delivery, over whichever period you pick.</p>
@@ -8941,7 +9311,6 @@
                                     <div class="admin-order-detail-row"><dt>Payment method</dt><dd id="aodPaymentMethod"></dd></div>
                                     <div class="admin-order-detail-row"><dt>Billing address</dt><dd id="aodBillingAddress"></dd></div>
                                 </dl>
-                                <p class="admin-order-detail-note">This checkout is currently preview-only, no real payment is taken or stored, and a separate billing address isn't collected, see the Payments Policy admin note for details.</p>
                             </div>
                             <div class="admin-order-detail-card">
                                 <h3>Items ordered</h3>
@@ -9780,6 +10149,40 @@
         }
         function deliveryEtaText(postcode) {
             return `${deliveryEtaLabel(postcode)}: most orders arrive within ${deliveryEtaWindow(postcode)} of confirmation.`;
+        }
+
+        /* ================= POSTCODE VALIDATION =================
+           Matching the shape of a UK postcode isn't enough on its own — a
+           typo that still happens to look postcode-shaped (a transposed
+           digit, a real postcode from the wrong town) would pass format
+           checking yet silently mislabel local vs standard delivery, which
+           now also gets baked into the order and shown to admins. postcodes.io
+           is a free, keyless, ONS/Royal Mail-sourced lookup that confirms the
+           postcode genuinely exists and hands back its canonical spelling —
+           used here as the real check, with the format regex as a fallback
+           when the API can't be reached rather than a first line of defence. */
+        const UK_POSTCODE_FORMAT = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+        function isUkPostcodeFormat(postcode) {
+            return UK_POSTCODE_FORMAT.test((postcode || '').trim());
+        }
+        // ok:true = confirmed real, with the canonical spelling in `normalized`.
+        // ok:false = definitely bad (wrong shape, or postcodes.io confirmed it
+        // doesn't exist) — checkout should block on this. ok:null = couldn't
+        // reach postcodes.io to confirm either way, but the shape was fine —
+        // checkout proceeds rather than getting stuck on a third-party outage.
+        async function lookupPostcode(postcode) {
+            const clean = (postcode || '').trim();
+            if (!isUkPostcodeFormat(clean)) return { ok: false, reason: 'format' };
+            try {
+                const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(clean)}`);
+                if (res.status === 404) return { ok: false, reason: 'not_found' };
+                if (!res.ok) return { ok: null, reason: 'network' };
+                const body = await res.json();
+                if (!body || !body.result || !body.result.postcode) return { ok: null, reason: 'network' };
+                return { ok: true, normalized: body.result.postcode };
+            } catch (err) {
+                return { ok: null, reason: 'network' };
+            }
         }
 
         /* ================= DISCOUNT ENGINE =================
@@ -10737,7 +11140,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-07.4';
+        const BUILD_VERSION = '2026-09-08.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -11406,11 +11809,11 @@
            browse the relevant aisle. Reuses the .product-grid class purely
            for its already-working horizontal drag-scroll behaviour. */
         let COMBOS = [
-            { name: 'Rice Night Combo', discountPercent: 8, items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }], description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice' },
-            { name: 'Suya Night Combo', discountPercent: 8, items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }], description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat' },
-            { name: 'Soup Pot Combo', discountPercent: 10, items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'root-vegetables', idx: 0 }, { catSlug: 'seasoning', idx: 2 }], description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables' },
-            { name: 'Snack Attack Combo', discountPercent: 5, items: [{ catSlug: 'snacks-confectionary', idx: 0 }, { catSlug: 'snacks-confectionary', idx: 1 }], description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary' },
-            { name: 'Fry-Up Combo', discountPercent: 5, items: [{ catSlug: 'tropical-foods', idx: 0 }, { catSlug: 'oils', idx: 1 }], description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods' },
+            { name: 'Rice Night Combo', discountPercent: 8, items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }], description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice', bgColor: '#4A2B12' },
+            { name: 'Suya Night Combo', discountPercent: 8, items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }], description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat', bgColor: '#5C1F1F' },
+            { name: 'Soup Pot Combo', discountPercent: 10, items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'root-vegetables', idx: 0 }, { catSlug: 'seasoning', idx: 2 }], description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables', bgColor: '#4A1942' },
+            { name: 'Snack Attack Combo', discountPercent: 5, items: [{ catSlug: 'snacks-confectionary', idx: 0 }, { catSlug: 'snacks-confectionary', idx: 1 }], description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary', bgColor: '#3A2250' },
+            { name: 'Fry-Up Combo', discountPercent: 5, items: [{ catSlug: 'tropical-foods', idx: 0 }, { catSlug: 'oils', idx: 1 }], description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods', bgColor: '#1F3A30' },
         ];
 
         /* ================= BUILD A BUNDLE =================
@@ -11738,8 +12141,9 @@
             const totalRow = items.length ? (discountPct > 0
                 ? `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span><span class="bundle-was">${money(rawTotal)}</span> ${money(discountedTotal)}</span></div>`
                 : `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(discountedTotal)}</span></div>`) : '';
+            const bgColor = combo.bgColor || '';
             return `
-    <div class="combo-card" id="comboCard-${ci}">
+    <div class="combo-card${bgColor ? ' combo-tinted' : ''}" id="comboCard-${ci}"${bgColor ? ` style="background:${escapeHtml(bgColor)}"` : ''}>
       <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
       ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
       <h3>${escapeHtml(combo.name)}</h3>
@@ -11751,12 +12155,28 @@
         <label>Combo discount %</label>
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setComboDiscount(${ci}, this.value)">
       </div>` : ''}
+      <div class="bundle-discount-edit combo-color-edit">
+        <label>Card colour</label>
+        <input type="color" value="${bgColor || '#FAF9F2'}" onchange="setComboBgColor(${ci}, this.value)">
+      </div>
       ${items.length
                 ? `<button class="bundle-add-btn" type="button" onclick="addComboToCart(${ci})">Add combo to basket</button>`
                 : (combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : '')}
       <button type="button" class="combo-edit-btn" onclick="openComboEdit(${ci}, this)">Edit combo</button>
     </div>`;
         }
+        function setComboBgColor(ci, value) {
+            const before = COMBOS[ci].bgColor || '';
+            COMBOS[ci].bgColor = value;
+            renderCombos();
+            savePricingSettings();
+            if (before !== value) {
+                logAdminAction('combo_updated', 'combo', COMBOS[ci].name, {
+                    changes: [{ label: 'Card colour', from: before || 'default', to: value }],
+                });
+            }
+        }
+        window.setComboBgColor = setComboBgColor;
         function setComboDiscount(ci, value) {
             const before = COMBOS[ci].discountPercent || 0;
             const pct = parseFloat(value);
@@ -11890,6 +12310,7 @@
                 description: document.getElementById('cce-desc').value.trim(),
                 linkCategory: document.getElementById('cce-link').value || null,
                 items: [...comboEditNewItems],
+                bgColor: before.bgColor,
             };
             const itemNamesAfter = COMBOS[ci].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             comboEditNewItems = null;
@@ -12135,18 +12556,20 @@
             });
             return items;
         }
-        /* ================= DARK MODE TOGGLE ================= */
+        /* ================= DARK MODE TOGGLE =================
+           The sun/moon crossfade and thumb slide are pure CSS, keyed off
+           [data-theme="dark"] (see .theme-switch-thumb / .theme-switch-icon-*),
+           so both icons stay in normal layout at all times rather than being
+           display:none/'' toggled here — that would skip the transition
+           straight to the end state instead of animating it. */
         function applyTheme(theme) {
-            const sun = document.getElementById('themeIconSun');
-            const moon = document.getElementById('themeIconMoon');
+            const toggle = document.getElementById('themeToggle');
             if (theme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
-                if (sun) sun.style.display = 'none';
-                if (moon) moon.style.display = '';
+                if (toggle) toggle.setAttribute('aria-checked', 'true');
             } else {
                 document.documentElement.removeAttribute('data-theme');
-                if (sun) sun.style.display = '';
-                if (moon) moon.style.display = 'none';
+                if (toggle) toggle.setAttribute('aria-checked', 'false');
             }
         }
         /* ================= HORIZONTAL DRAG-TO-SCROLL =================
@@ -12356,7 +12779,7 @@
             const cardHTML = items.map((p, i) => {
                 const pct = Math.round((1 - p.salePrice / p.price) * 100);
                 return `
-    <a class="offer-card offer-card-reveal" href="#/product/${p.catSlug}/${p.idx}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
+    <a class="offer-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="offer-tag">${pct}% off</span>
         <button type="button" class="offer-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromOffer('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from special offers">&times;</button>
@@ -12370,12 +12793,6 @@
     </a>`;
             }).join('');
             strip.innerHTML = cardHTML;
-            // Re-observed per render — see the same comment on
-            // renderBestSellersSpotlight()'s observeContainerReveals() call;
-            // this strip re-renders every time a visitor lands back on home
-            // too (renderHeroGlimpse()'s neighbouring comment), not just at
-            // boot.
-            observeContainerReveals(strip, '.offer-card-reveal');
         }
         function renderNewCarousel() {
             // Shuffled for the same reason as renderOfferCarousel() above.
@@ -12470,7 +12887,7 @@
                 return;
             }
             strip.innerHTML = items.map((p, i) => `
-    <a class="best-seller-card bs-card-reveal" href="#/product/${p.catSlug}/${p.idx}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
+    <a class="best-seller-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="best-seller-rank">${BEST_SELLER_STAR_SVG}#${i + 1}</span>
         ${productPhotoHTML(p, p.name)}
@@ -12481,12 +12898,6 @@
         <div class="price">${priceHTML(p)}</div>
       </div>
     </a>`).join('');
-            // Re-observed on every call (not the global one-shot
-            // observeReveals()) — this strip can re-render after boot once
-            // real order data loads, and a stale single observer pass would
-            // leave those later cards stuck invisible with nothing left
-            // watching them.
-            observeContainerReveals(strip, '.bs-card-reveal');
         }
         function renderNewArrivalsPage() {
             const items = newArrivalsItems();
@@ -13210,7 +13621,7 @@
         </div>
       </div>`;
                 listEl.innerHTML = reviews.map(r => {
-                    const name = (r.profiles && r.profiles.full_name) || 'Yo7 Foods customer';
+                    const name = r.is_anonymous ? 'Yo7 Foods customer' : ((r.profiles && r.profiles.full_name) || 'Yo7 Foods customer');
                     const dateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                     const isOwn = currentSupabaseUser && r.user_id === currentSupabaseUser.id;
                     return `
@@ -13245,6 +13656,7 @@
             ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="${n <= rating ? 'filled' : ''}" aria-label="${n} star${n === 1 ? '' : 's'}">${STAR_SVG_FILLED}</button>`).join('')}
         </div>
         <textarea id="pdReviewComment" rows="3" placeholder="What did you think? (optional)">${myReview && myReview.comment ? escapeHtml(myReview.comment) : ''}</textarea>
+        <label class="pd-review-anon-toggle"><input type="checkbox" id="pdReviewAnon" ${myReview && myReview.is_anonymous ? 'checked' : ''}> Post without my name</label>
         <div class="auth-error" id="pdReviewError" role="alert" style="display:none;"></div>
         <button type="button" class="btn btn-primary" id="pdReviewSubmitBtn" style="margin-top:12px;">${myReview ? 'Update review' : 'Submit review'}</button>
     </div>`;
@@ -13267,11 +13679,13 @@
                 const btn = document.getElementById('pdReviewSubmitBtn');
                 btn.disabled = true;
                 const comment = document.getElementById('pdReviewComment').value.trim();
+                const isAnonymous = document.getElementById('pdReviewAnon').checked;
                 const { error } = await supabaseClient.from('product_reviews').upsert({
                     product_key: key,
                     user_id: currentSupabaseUser.id,
                     rating: selectedRating,
                     comment: comment || null,
+                    is_anonymous: isAnonymous,
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
@@ -13569,7 +13983,16 @@
                     const thumbHTML = (liveProduct && liveProduct.image)
                         ? productPhotoHTML(liveProduct, item.name)
                         : `<span style="font-size:24px;">${item.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
+                    // Reviews stay scoped to the base product (a review is
+                    // about the product, not the specific weight bought), but
+                    // the sold count needs to tell weight variants apart — a
+                    // ::sub<N> subscription suffix is stripped so a variant's
+                    // one-time and subscription sales still count together,
+                    // but a different weight variant's own id (with its own
+                    // ::<label> suffix) never gets folded into another
+                    // variant's, or the base product's, total.
                     const pKey = productKey(item.catSlug, idx);
+                    const salesKey = item.id.replace(/::sub\d+$/, '');
                     return `
       <div class="cart-row">
         <div class="cart-thumb">${thumbHTML}</div>
@@ -13577,7 +14000,7 @@
           <h4>${escapeHtml(item.name)}</h4>
           <span>${escapeHtml(item.unit || '')}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
           ${item.isSubscription ? `<span class="subscription-badge">Subscription, every ${item.subscriptionFrequency} weeks</span>` : ''}
-          <div class="cart-rating-badge" data-product-key="${pKey}" data-product-name="${escapeHtml(item.name)}"></div>
+          <div class="cart-rating-badge" data-product-key="${pKey}" data-sales-key="${escapeHtml(salesKey)}" data-product-name="${escapeHtml(item.name)}"></div>
         </div>
         <div class="cart-qty">
           <button type="button" onclick="changeQty(${i},-1)">&minus;</button>
@@ -13630,9 +14053,10 @@
             const badgeEls = Array.from(document.querySelectorAll('.cart-rating-badge[data-product-key]'));
             if (!supabaseClient || badgeEls.length === 0) return;
             const keys = [...new Set(badgeEls.map(el => el.dataset.productKey))];
+            const salesKeys = [...new Set(badgeEls.map(el => el.dataset.salesKey))];
             const [reviewsRes, salesRes] = await Promise.all([
                 supabaseClient.from('product_reviews').select('product_key, rating').in('product_key', keys).limit(2000),
-                supabaseClient.rpc('get_units_sold', { p_product_keys: keys }),
+                supabaseClient.rpc('get_units_sold', { p_product_keys: salesKeys }),
             ]);
             cartRatingsData.clear();
             cartSalesData.clear();
@@ -13652,7 +14076,7 @@
             document.querySelectorAll('.cart-rating-badge[data-product-key]').forEach(el => {
                 const key = el.dataset.productKey;
                 const rating = cartRatingsData.get(key);
-                const sold = cartSalesData.get(key) || 0;
+                const sold = cartSalesData.get(el.dataset.salesKey) || 0;
                 const parts = [];
                 if (rating && rating.count > 0) {
                     const avg = rating.sum / rating.count;
@@ -13720,7 +14144,7 @@
         </div>
       </div>`;
                 listEl.innerHTML = reviews.map(r => {
-                    const name = (r.profiles && r.profiles.full_name) || 'Yo7 Foods customer';
+                    const name = r.is_anonymous ? 'Yo7 Foods customer' : ((r.profiles && r.profiles.full_name) || 'Yo7 Foods customer');
                     const dateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                     const isOwn = currentSupabaseUser && r.user_id === currentSupabaseUser.id;
                     return `
@@ -13756,6 +14180,7 @@
             ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-star="${n}" class="${n <= rating ? 'filled' : ''}" aria-label="${n} star${n === 1 ? '' : 's'}">${STAR_SVG_FILLED}</button>`).join('')}
         </div>
         <textarea id="crmReviewComment" rows="3" placeholder="What did you think? (optional)">${myReview && myReview.comment ? escapeHtml(myReview.comment) : ''}</textarea>
+        <label class="pd-review-anon-toggle"><input type="checkbox" id="crmReviewAnon" ${myReview && myReview.is_anonymous ? 'checked' : ''}> Post without my name</label>
         <div class="auth-error" id="crmReviewError" role="alert" style="display:none;"></div>
         <button type="button" class="btn btn-primary" id="crmReviewSubmitBtn" style="margin-top:12px;">${myReview ? 'Update review' : 'Submit review'}</button>
     </div>`;
@@ -13778,11 +14203,13 @@
                 const btn = document.getElementById('crmReviewSubmitBtn');
                 btn.disabled = true;
                 const comment = document.getElementById('crmReviewComment').value.trim();
+                const isAnonymous = document.getElementById('crmReviewAnon').checked;
                 const { error } = await supabaseClient.from('product_reviews').upsert({
                     product_key: key,
                     user_id: currentSupabaseUser.id,
                     rating: selectedRating,
                     comment: comment || null,
+                    is_anonymous: isAnonymous,
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
@@ -13983,7 +14410,48 @@
         }
         document.getElementById('fulfilDeliveryBtn').addEventListener('click', () => setFulfilmentMethod('delivery'));
         document.getElementById('fulfilPickupBtn').addEventListener('click', () => setFulfilmentMethod('pickup'));
-        document.getElementById('dPostcode').addEventListener('input', () => { if (fulfilmentMethod === 'delivery') updateSummaries(); });
+        const dPostcodeField = document.getElementById('dPostcode');
+        const dPostcodeHint = document.getElementById('dPostcodeHint');
+        dPostcodeField.addEventListener('input', () => {
+            if (fulfilmentMethod === 'delivery') updateSummaries();
+            // Typing again after a result was shown invalidates that result —
+            // clear the hint rather than leaving a stale ✓ or ✗ on screen for
+            // a postcode that's no longer what's in the field.
+            dPostcodeHint.textContent = '';
+            dPostcodeHint.className = 'field-hint';
+        });
+        // Real existence check, not just format — see lookupPostcode() above
+        // for why. Runs on blur so the field shows real-time feedback as
+        // someone fills the form in, and again (from the same cache) on
+        // submit as the actual gate, in case they submit without blurring
+        // (e.g. autofill + Enter).
+        let lastPostcodeCheck = { value: null, result: null };
+        async function checkPostcodeField() {
+            const raw = dPostcodeField.value.trim();
+            if (!raw) { dPostcodeHint.textContent = ''; dPostcodeHint.className = 'field-hint'; return null; }
+            if (lastPostcodeCheck.value === raw) return lastPostcodeCheck.result;
+            dPostcodeHint.textContent = 'Checking postcode…';
+            dPostcodeHint.className = 'field-hint checking';
+            const result = await lookupPostcode(raw);
+            if (dPostcodeField.value.trim() !== raw) return null; // field changed mid-check, this result is stale
+            if (result.ok === true) {
+                dPostcodeField.value = result.normalized;
+                dPostcodeHint.textContent = `Valid postcode: ${deliveryEtaLabel(result.normalized)}`;
+                dPostcodeHint.className = 'field-hint success';
+                lastPostcodeCheck = { value: result.normalized, result };
+            } else if (result.ok === false) {
+                dPostcodeHint.textContent = "That doesn't look like a real UK postcode, please check it.";
+                dPostcodeHint.className = 'field-hint error';
+                lastPostcodeCheck = { value: raw, result };
+            } else {
+                dPostcodeHint.textContent = `Couldn't fully verify this postcode right now: ${deliveryEtaLabel(raw)}`;
+                dPostcodeHint.className = 'field-hint checking';
+                lastPostcodeCheck = { value: raw, result };
+            }
+            if (fulfilmentMethod === 'delivery') updateSummaries();
+            return result;
+        }
+        dPostcodeField.addEventListener('blur', () => { if (fulfilmentMethod === 'delivery') checkPostcodeField(); });
 
         /* ================= DISCOUNT CODE ENTRY ================= */
         const applyDiscountBtn = document.getElementById('applyDiscountBtn');
@@ -14010,8 +14478,21 @@
             document.getElementById('discountCodeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyDiscountBtn.click(); } });
         }
 
-        document.getElementById('deliveryForm').addEventListener('submit', (e) => {
+        document.getElementById('deliveryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (fulfilmentMethod === 'delivery') {
+                const continueBtn = document.getElementById('deliveryContinueBtn');
+                continueBtn.disabled = true;
+                const originalLabel = continueBtn.textContent;
+                continueBtn.textContent = 'Checking postcode…';
+                const result = await checkPostcodeField();
+                continueBtn.disabled = false;
+                continueBtn.textContent = originalLabel;
+                if (result && result.ok === false) {
+                    dPostcodeField.focus();
+                    return;
+                }
+            }
             deliveryInfo = {
                 method: fulfilmentMethod,
                 name: document.getElementById('dName').value.trim(),
@@ -14351,6 +14832,7 @@
                 total: lastOrder.total,
                 delivery_name: di ? di.name : null,
                 delivery_address: di ? `${di.address}, ${di.town} ${di.postcode}` : null,
+                delivery_postcode: di ? di.postcode : null,
                 delivery_phone: di ? di.phone : null,
                 notes: di ? di.notes : null,
                 stripe_payment_intent_id: paymentIntent.id,
@@ -14539,6 +15021,7 @@
             const { data, error } = await supabaseClient
                 .from('orders')
                 .select('*')
+                .eq('user_id', currentSupabaseUser.id)
                 .order('created_at', { ascending: false })
                 .limit(100);
             if (error) {
@@ -14629,7 +15112,7 @@
         <td class="admin-orders-total">${money(order.total)}</td>
         <td>${escapeHtml(billingName)}</td>
         <td>${escapeHtml(order.delivery_name || '—')}</td>
-        <td>${order.fulfilment_method === 'pickup' ? 'Pickup' : 'Standard Delivery'}</td>
+        <td>${order.fulfilment_method === 'pickup' ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode)}</td>
         <td><a class="admin-orders-details-link" href="#/admin/order/${order.id}">Details</a></td>
     </tr>`;
         }
@@ -14829,12 +15312,12 @@
             document.getElementById('aodSubtitle').textContent = `Placed ${dateLabel}`;
             const profile = order.profiles || {};
             document.getElementById('aodCustomerName').textContent = profile.full_name || order.delivery_name || 'Unknown customer';
-            document.getElementById('aodCustomerEmail').innerHTML = profile.email ? `<a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a>` : '—';
+            document.getElementById('aodCustomerEmail').innerHTML = profile.email ? `<a href="mailto:${escapeHtml(profile.email)}">${escapeHtml(profile.email)}</a>` : 'Not provided';
             const phone = order.delivery_phone || profile.phone;
-            document.getElementById('aodCustomerPhone').innerHTML = phone ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : '—';
+            document.getElementById('aodCustomerPhone').innerHTML = phone ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : 'Not provided';
             const isPickup = order.fulfilment_method === 'pickup';
-            document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : 'Standard delivery';
-            document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || '—');
+            document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode);
+            document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || 'Not provided');
             document.getElementById('aodNote').textContent = order.notes || 'None left at checkout.';
             document.getElementById('aodPaymentMethod').innerHTML = order.stripe_payment_intent_id
                 ? `${escapeHtml(order.payment_method_summary || 'Paid online')}<br><span style="font-size:11.5px; color:var(--text-muted);">Stripe reference: ${escapeHtml(order.stripe_payment_intent_id)}</span>`
@@ -15065,6 +15548,37 @@
             const nextBtn = document.getElementById('activityLogNextPage');
             if (prevBtn) prevBtn.addEventListener('click', () => { activityLogPage--; renderActivityLogPage(); });
             if (nextBtn) nextBtn.addEventListener('click', () => { activityLogPage++; renderActivityLogPage(); });
+        }
+
+        // Everyone who's registered on the pre-launch "Coming Soon" homepage
+        // banner (see supabase-migration-38-coming-soon-signups.sql). Kept
+        // deliberately simple (one page, no filters) since this is a
+        // temporary pre-launch list, not a permanent admin feature.
+        async function renderComingSoonSignups() {
+            const el = document.getElementById('comingSoonSignupsList');
+            if (!el) return;
+            if (!supabaseClient || !currentSupabaseUser || !currentIsAdmin) return;
+            el.innerHTML = '<div class="order-history-loading">Loading sign-ups…</div>';
+            const { data, error } = await supabaseClient
+                .from('coming_soon_signups')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(1000);
+            if (error) { el.innerHTML = '<div class="order-history-error">Couldn\'t load sign-ups right now, please try again shortly.</div>'; return; }
+            if (!data || data.length === 0) { el.innerHTML = '<div class="order-history-empty">No sign-ups yet.</div>'; return; }
+            el.innerHTML = `
+    <p style="font-family:var(--display); font-weight:700; margin-bottom:12px;">${data.length} sign-up${data.length === 1 ? '' : 's'}</p>
+    <div class="admin-orders-table-wrap">
+        <table class="admin-orders-table">
+            <thead><tr><th>Email</th><th>Postcode</th><th>Signed up</th></tr></thead>
+            <tbody>${data.map(s => `
+    <tr>
+        <td>${escapeHtml(s.email)}</td>
+        <td>${escapeHtml(s.postcode || '—')}</td>
+        <td>${new Date(s.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+    </tr>`).join('')}</tbody>
+        </table>
+    </div>`;
         }
 
         // 'month' pages one calendar month at a time (the original
@@ -15298,6 +15812,7 @@
             renderAdminOrders();
             renderActivityLog();
             renderAnalytics(0);
+            renderComingSoonSignups();
             if (autoEnterEditMode) {
                 autoEnterEditMode = false;
                 setEditMode(true);
@@ -15657,6 +16172,11 @@
                 ? [di.name || '', 'Yo7 Foods, 7 Lancaster Road', 'Ipswich, IP4 2NY', di.phone || '']
                 : [di.name || '', di.address || '', `${di.town || ''}${di.postcode ? ', ' + di.postcode : ''}`, di.phone || ''];
             addrLines.filter(Boolean).forEach(line => { pdf.text(line, margin, y); y += 13; });
+            if (order.fulfilment !== 'pickup') {
+                setText(9, 'bold', accent);
+                pdf.text(deliveryEtaLabel(di.postcode), margin, y);
+                y += 13;
+            }
             y += 6;
             hr(y);
             y += 20;
@@ -15805,9 +16325,11 @@
         // Adapts a raw Supabase orders row (order history / admin) into the
         // shape buildInvoicePdfBlob() expects, the same shape lastOrder has
         // right after checkout. delivery_address is already one combined
-        // string on the DB row (not separate address/town/postcode like
-        // checkout's live deliveryInfo), so it's passed through as-is with
-        // town/postcode left blank rather than duplicated.
+        // string on the DB row (not separate address/town like checkout's
+        // live deliveryInfo), so it's passed through as-is with town left
+        // blank rather than duplicated — postcode has its own column
+        // (delivery_postcode) specifically so the local/standard delivery
+        // label stays correct here too, not just on the live checkout page.
         function invoiceOrderFromDbRow(order) {
             return {
                 number: order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()),
@@ -15823,7 +16345,7 @@
                     name: order.delivery_name || '',
                     address: order.delivery_address || '',
                     town: '',
-                    postcode: '',
+                    postcode: order.delivery_postcode || '',
                     phone: order.delivery_phone || '',
                 },
                 fulfilment: order.fulfilment_method,
@@ -17001,15 +17523,26 @@
                 return;
             }
             const shown = items.slice(0, 6);
-            resultsEl.innerHTML = shown.map(p => `
+            const placeholderSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+            resultsEl.innerHTML = shown.map(p => {
+                // A dedicated compact image-or-icon check rather than the
+                // full productPhotoHTML() — that one's "Photo coming soon"
+                // label fallback (built for a card-sized thumb) would
+                // overflow this row's small 34px thumbnail.
+                const thumbHTML = p.image
+                    ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <span style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${placeholderSvg}</span>`
+                    : placeholderSvg;
+                return `
                 <a class="search-result-item" href="#/product/${p.catSlug}/${p.idx}">
-                    <div class="search-result-thumb"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+                    <div class="search-result-thumb">${thumbHTML}</div>
                     <div class="search-result-info">
                         <div class="name">${escapeHtml(p.name)}</div>
                         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
                     </div>
-                    <div class="search-result-price">${money(p.price)}</div>
-                </a>`).join('')
+                    <div class="search-result-price">${priceHTML(p)}</div>
+                </a>`;
+            }).join('')
                 + (items.length > shown.length
                     ? `<a class="search-see-all" href="#/search/${encodeURIComponent(query)}">See all ${items.length} results</a>`
                     : '');
@@ -17763,6 +18296,102 @@
                 }
                 emailInput.value = '';
                 showToast("You're on the list! Check your inbox for a welcome email.", 5000);
+            });
+        }
+
+        /* ================= HERO PRE-LAUNCH EMAIL + POSTCODE CAPTURE =================
+           The hero's whole CTA in this pre-launch phase. Postcode is
+           compulsory, not a nice-to-have — the point of collecting it at
+           all is knowing where demand is actually coming from, which only
+           works if it's on every signup, not just the ones who bothered
+           to fill in an optional field. Validated for real, exactly like
+           checkout's postcode field: format check, then a postcodes.io
+           lookup via the same lookupPostcode() helper, with the same
+           fail-open behaviour if the API can't be reached (a genuine
+           network hiccup shouldn't block a signup the same way a
+           confirmed-bad postcode does). Saves via a dedicated RPC
+           (register_coming_soon_interest — see
+           supabase-migration-38-coming-soon-signups.sql), mirroring how
+           the newsletter signup above already does this rather than a raw
+           table insert, so validation and dedup stay server-side.
+           Remembers a completed signup in localStorage so a returning
+           visitor on the same browser sees the thank-you state instead of
+           the form again. */
+        const heroCaptureForm = document.getElementById('heroCaptureForm');
+        if (heroCaptureForm) {
+            const heroCaptureWrap = document.getElementById('heroCaptureWrap');
+            const heroCapturePostcodeField = document.getElementById('heroCapturePostcode');
+            const heroCapturePostcodeHint = document.getElementById('heroCapturePostcodeHint');
+            let alreadySignedUpForLaunch = false;
+            try { alreadySignedUpForLaunch = localStorage.getItem('yo7ComingSoonSignedUp') === '1'; } catch (e) { /* private browsing etc. */ }
+            if (alreadySignedUpForLaunch) heroCaptureWrap.classList.add('signed-up');
+
+            heroCapturePostcodeField.addEventListener('input', () => {
+                heroCapturePostcodeHint.textContent = '';
+                heroCapturePostcodeHint.className = 'field-hint hero-capture-hint';
+            });
+            let lastHeroPostcodeCheck = { value: null, result: null };
+            async function checkHeroPostcodeField() {
+                const raw = heroCapturePostcodeField.value.trim();
+                if (!raw) {
+                    heroCapturePostcodeHint.textContent = 'Postcode is required.';
+                    heroCapturePostcodeHint.className = 'field-hint hero-capture-hint error';
+                    return { ok: false, reason: 'empty' };
+                }
+                if (lastHeroPostcodeCheck.value === raw) return lastHeroPostcodeCheck.result;
+                heroCapturePostcodeHint.textContent = 'Checking postcode…';
+                heroCapturePostcodeHint.className = 'field-hint hero-capture-hint checking';
+                const result = await lookupPostcode(raw);
+                if (heroCapturePostcodeField.value.trim() !== raw) return null; // field changed mid-check, this result is stale
+                if (result.ok === true) {
+                    heroCapturePostcodeField.value = result.normalized;
+                    heroCapturePostcodeHint.textContent = 'Valid postcode';
+                    heroCapturePostcodeHint.className = 'field-hint hero-capture-hint success';
+                    lastHeroPostcodeCheck = { value: result.normalized, result };
+                } else if (result.ok === false) {
+                    heroCapturePostcodeHint.textContent = "That doesn't look like a real UK postcode, please check it.";
+                    heroCapturePostcodeHint.className = 'field-hint hero-capture-hint error';
+                    lastHeroPostcodeCheck = { value: raw, result };
+                } else {
+                    heroCapturePostcodeHint.textContent = "Couldn't fully verify this postcode right now.";
+                    heroCapturePostcodeHint.className = 'field-hint hero-capture-hint checking';
+                    lastHeroPostcodeCheck = { value: raw, result };
+                }
+                return result;
+            }
+            heroCapturePostcodeField.addEventListener('blur', () => { checkHeroPostcodeField(); });
+
+            heroCaptureForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const emailInput = document.getElementById('heroCaptureEmail');
+                const email = emailInput.value.trim();
+                if (!isValidEmail(email)) { showToast("That email address doesn't look right, double-check it and try again.", 4500); return; }
+                const submitBtn = heroCaptureForm.querySelector('button[type="submit"]');
+                const originalLabel = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Checking…';
+                const postcodeResult = await checkHeroPostcodeField();
+                if (postcodeResult && postcodeResult.ok === false) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalLabel;
+                    heroCapturePostcodeField.focus();
+                    return;
+                }
+                if (!supabaseClient) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalLabel;
+                    showToast("Sign-ups aren't connected in preview mode.", 4000);
+                    return;
+                }
+                submitBtn.textContent = 'Joining…';
+                const postcode = heroCapturePostcodeField.value.trim();
+                const { error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email, p_postcode: postcode });
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
+                if (error) { showToast(error.message || "Couldn't sign you up right now, please try again.", 5000); return; }
+                try { localStorage.setItem('yo7ComingSoonSignedUp', '1'); } catch (e) { /* private browsing etc. */ }
+                heroCaptureWrap.classList.add('signed-up');
+                showToast("You're on the list! We'll email your code and let you know the moment we're live.", 5500);
             });
         }
         // renderHeroGlimpse/renderOfferCarousel/renderNewCarousel/
