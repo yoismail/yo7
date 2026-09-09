@@ -8963,7 +8963,7 @@
 
                     <h2>What we collect</h2>
                     <p>When you place an order, we ask for your name, phone number, and (for delivery orders) your address and postcode. If you sign up for an account, we ask for your name and email. If you sign up to our newsletter, we store the email address you give us so we can send you updates, you can unsubscribe at any time.</p>
-                    <p>We don't set our own tracking or advertising cookies. We use Cloudflare Web Analytics to understand overall site traffic, this is a privacy-friendly, cookie-free service that doesn't track you individually or store any personal data in your browser. The site does store a small amount of information in your browser's local storage, your dark/light mode preference, and a record of which discount codes you've used, so a one-per-customer code can't simply be reapplied after a page refresh. When you pay, our payment processor Stripe sets a small number of its own strictly-necessary cookies (for fraud prevention and to keep your payment session secure); these are set and controlled by Stripe, not us, and are exempt from cookie consent requirements because they're essential to processing your payment.</p>
+                    <p>We don't set our own tracking or advertising cookies. We use Cloudflare Web Analytics to understand overall site traffic, this is a privacy-friendly, cookie-free service that doesn't track you individually or store any personal data in your browser. The site does store your shopping basket and your dark/light mode preference in your browser's local storage, so they're not lost between visits; discount codes are checked against our own records when applied, not tracked in your browser. If you pay with a method that sends you to another site and back (Klarna, Revolut Pay, Amazon Pay), your order details are held very briefly in session storage to survive that round trip, this clears itself when you close the tab and we delete it ourselves once your order is placed. When you pay, our payment processor Stripe sets a small number of its own strictly-necessary cookies (for fraud prevention and to keep your payment session secure); these are set and controlled by Stripe, not us, and are exempt from cookie consent requirements because they're essential to processing your payment.</p>
 
                     <h2>Payment information</h2>
                     <p>Card and every other payment method we offer, including Apple Pay, Google Pay, Klarna, Revolut Pay, Amazon Pay, PayPal, Clearpay, and Pay by Bank, are processed securely by Stripe. We never see or store your full card details, they're sent directly to Stripe over an encrypted connection. Stripe is a PCI-DSS Level 1 certified payment processor.</p>
@@ -9111,7 +9111,8 @@
                     <ul>
                         <li><strong>Payment (Stripe):</strong> when you pay, our payment processor Stripe sets a small number of its own cookies for fraud prevention and to keep your payment session secure. These are set and controlled by Stripe, not us, and are strictly necessary to processing your payment, there's no way to take payment online without them.</li>
                         <li><strong>Site analytics (Cloudflare):</strong> we use Cloudflare Web Analytics to understand overall traffic (how many people visit, which pages). It's a genuinely cookie-free, privacy-friendly service, it doesn't track you individually, doesn't use a persistent identifier, and doesn't store anything in your browser.</li>
-                        <li><strong>Local storage, not cookies:</strong> the site stores a small amount of information directly in your browser (not as a cookie) to make it work properly: your shopping basket, your dark/light mode preference, and a record of which discount codes you've used so a one-per-customer code can't simply be reapplied after a refresh. This stays on your device and is never sent anywhere.</li>
+                        <li><strong>Local storage, not cookies:</strong> the site stores a small amount of information directly in your browser (not as a cookie) to make it work properly: your shopping basket and your dark/light mode preference. This stays on your device, persists between visits so your basket isn't lost, and is never sent anywhere. Discount code usage isn't tracked this way, it's checked against our own records when you apply a code, not something stored in your browser.</li>
+                        <li><strong>Session storage, for one payment round-trip only:</strong> if you pay with a method that sends you to another site and back (Klarna, Revolut Pay, Amazon Pay), your order details (delivery address, phone, basket) are held very briefly in your browser's session storage so nothing is lost on the way back. Unlike the local storage above, this clears itself the moment you close the tab, and we delete it ourselves as soon as your order is placed.</li>
                     </ul>
 
                     <h2>Why there's no "accept/reject" banner</h2>
@@ -11575,7 +11576,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.39';
+        const BUILD_VERSION = '2026-09-08.40';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15079,17 +15080,25 @@
         // needs, saved right when the PaymentIntent is created (the total
         // is locked in at that point anyway) so it's still there no
         // matter how the customer gets back to this page.
+        // sessionStorage, not localStorage: this snapshot carries the
+        // customer's name/phone/address for the length of one payment
+        // round-trip, not something that should still be sitting in the
+        // browser a week later. sessionStorage clears itself the moment
+        // the tab closes, same round-trip survival (a same-tab redirect to
+        // Klarna/Revolut/Amazon Pay and back is still "this session"), just
+        // a much shorter real-world exposure window for the one piece of
+        // personal data briefly held client-side anywhere on this site.
         const PENDING_ORDER_KEY = 'yo7-pending-order';
         function savePendingOrderContext(ctx) {
-            try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(ctx)); }
-            catch (e) { /* localStorage unavailable — redirect-based methods just won't survive the round trip */ }
+            try { sessionStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(ctx)); }
+            catch (e) { /* sessionStorage unavailable — redirect-based methods just won't survive the round trip */ }
         }
         function loadPendingOrderContext() {
-            try { return JSON.parse(localStorage.getItem(PENDING_ORDER_KEY) || 'null'); }
+            try { return JSON.parse(sessionStorage.getItem(PENDING_ORDER_KEY) || 'null'); }
             catch (e) { return null; }
         }
         function clearPendingOrderContext() {
-            try { localStorage.removeItem(PENDING_ORDER_KEY); } catch (e) { /* nothing to do */ }
+            try { sessionStorage.removeItem(PENDING_ORDER_KEY); } catch (e) { /* nothing to do */ }
         }
 
         // A fresh PaymentIntent every time this step is entered, so the
