@@ -18498,13 +18498,18 @@
         // above put there) — never a hash — so boot and every back/forward
         // navigation need this to derive route()'s actual input back out
         // of whatever real path the address bar is showing.
+        // Assigning window.location.hash below queues an async hashchange
+        // event on top of whatever calls route() right after this — and
+        // by the time that queued event fires, route()'s own
+        // syncAddressBarToHash() has already cleared the hash back out
+        // again, so the hashchange handler would otherwise reread an
+        // empty hash and reroute to home. This flag tells that one
+        // handler invocation to skip itself.
+        let suppressNextHashchange = false;
         function syncHashFromPath() {
             const derived = pathToHash(window.location.pathname);
             if (window.location.hash !== derived) {
-                // Queues an async hashchange event on top of whatever
-                // calls route() right after this — harmless, route() is
-                // already called repeatedly elsewhere in this file (data
-                // loads re-rendering the current view) and is idempotent.
+                suppressNextHashchange = true;
                 window.location.hash = derived;
             }
         }
@@ -18627,7 +18632,10 @@
             }
             updateBreadcrumbJsonLd();
         }
-        window.addEventListener('hashchange', route);
+        window.addEventListener('hashchange', () => {
+            if (suppressNextHashchange) { suppressNextHashchange = false; return; }
+            route();
+        });
 
         /* ================= DEFENSIVE LINK HANDLING =================
            Some mobile browsers handle taps on href="#/..." links inconsistently
