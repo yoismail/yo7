@@ -624,7 +624,7 @@ begin
   returning id, unsubscribe_token into v_id, v_token;
 
   if v_id is null then
-    return; -- already subscribed and already active, nothing more to do
+    raise exception 'This email is already subscribed to our newsletter.';
   end if;
 
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
