@@ -1717,54 +1717,19 @@
             margin-bottom: 36px;
         }
 
-        /* Pre-launch hero: a single email field is the whole point, no
-           second/competing button — everything funnels into this one
-           capture. */
-        .hero-capture-form {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 8px;
-        }
-        .hero-capture-form input {
-            font-family: var(--body);
-            font-size: 16px; /* iOS Safari auto-zooms the page on focus under 16px */
-            padding: 14px 20px;
-            border-radius: 999px;
-            border: 1.5px solid rgba(var(--border-rgb), 0.18);
-            background: var(--card-bg);
-            color: var(--ink);
-            min-width: 0;
-            width: 240px;
-            max-width: 100%;
-        }
-        .hero-capture-form #heroCapturePostcode {
-            width: 150px;
-        }
-        .hero-capture-form input:focus {
-            outline: none;
-            border-color: var(--chartreuse);
-        }
-        .hero-capture-form button:disabled::after {
-            animation-play-state: paused;
-        }
-        .hero-capture-form button:disabled {
-            opacity: 0.65;
-            cursor: default;
-            animation: none;
-        }
+        /* Both of these now sit inside .footer-newsletter (a wrapping flex
+           row: icon+text, then the form) rather than the hero — flex-basis:
+           100% pushes each onto its own full-width line below that row
+           instead of squeezing in as another row item. */
         .hero-capture-hint {
-            text-align: center;
-            margin-top: -2px;
-            margin-bottom: 8px;
+            flex-basis: 100%;
+            margin-top: -6px;
         }
         .hero-capture-thanks {
             display: none;
-            flex-direction: column;
+            flex-basis: 100%;
             align-items: center;
             gap: 14px;
-            margin: 0 0 8px;
         }
         .hero-capture-thanks p {
             font-family: var(--display);
@@ -1774,29 +1739,13 @@
             margin: 0;
         }
         [data-theme="dark"] .hero-capture-thanks p { color: var(--chartreuse-soft); }
-        /* A calm, continuous breathing pulse — border and shadow only, no
-           shimmer — so this secondary action reads as smooth and inviting
-           without competing with the primary CTA's own signature effect. */
-        .hero-capture-thanks .btn-outline-dark {
-            animation: browseCatPulse 2.6s ease-in-out infinite;
-        }
-        @keyframes browseCatPulse {
-            0%, 100% { border-color: rgba(var(--border-rgb), 0.18); box-shadow: 0 0 0 rgba(144, 184, 0, 0); transform: scale(1); }
-            50% { border-color: var(--chartreuse-rich); box-shadow: 0 10px 26px rgba(144, 184, 0, 0.28); transform: scale(1.02); }
-        }
-        @media (hover: hover) and (pointer: fine) {
-            .hero-capture-thanks .btn-outline-dark:hover {
-                animation-play-state: paused;
-                border-color: var(--chartreuse-rich);
-                box-shadow: 0 12px 30px rgba(144, 184, 0, 0.32);
-                transform: translateY(-2px);
-            }
-        }
-        .hero-capture-thanks .btn-outline-dark:active { transform: scale(0.97); }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-capture-thanks .btn-outline-dark { animation: none; }
-        }
-        .hero-capture-wrap.signed-up .hero-capture-form { display: none; }
+        /* The "10% off" form moved to the footer, but the wrapper's
+           signed-up toggle (added by the same submit handler) still
+           lives here — hides the form itself, which now carries
+           .newsletter-form for its footer-card styling instead of a
+           hero-specific one, and shows the thank-you message in its
+           place. */
+        .hero-capture-wrap.signed-up .newsletter-form { display: none; }
         /* A postcode-format hint left over from before signing up shouldn't
            linger under the thank-you message. */
         .hero-capture-wrap.signed-up .hero-capture-hint { display: none; }
@@ -1853,19 +1802,20 @@
             .cta-row .btn-primary, .cta-row .btn-outline-dark { animation: none; }
         }
 
-        /* Hero CTA's own signature: a diagonal light sweep glinting across
-           the button on a loop (rests, then glints, rather than a
-           continuous scroll — reads as a deliberate glint, not a loading
-           bar), paired with a spring-y lift on hover and a real press on
-           click. Distinct from the older ctaPulseGlow/ctaPulseBorder pair
-           above (now unused elsewhere) so this one CTA has its own
-           identity rather than reusing a generic site-wide effect. */
-        .hero-capture-form .btn-primary {
+        /* Hero's primary CTA: a diagonal light sweep glinting across the
+           button on a loop (rests, then glints, rather than a continuous
+           scroll — reads as a deliberate glint, not a loading bar),
+           paired with a spring-y lift on hover and a real press on
+           click. Was scoped to .hero-capture-form .btn-primary back when
+           the hero's main CTA was the email/postcode capture form; now
+           applied directly to the Shop Now button that replaced it. */
+        .hero-shop-btn {
             position: relative;
             overflow: hidden;
             isolation: isolate;
+            margin-bottom: 8px;
         }
-        .hero-capture-form .btn-primary::after {
+        .hero-shop-btn::after {
             content: '';
             position: absolute;
             inset: 0;
@@ -1881,56 +1831,17 @@
             28% { background-position: -60% 0; }
             100% { background-position: -60% 0; }
         }
-        .hero-capture-form .btn-primary:active {
+        .hero-shop-btn:active {
             transform: scale(0.97);
         }
         @media (hover: hover) and (pointer: fine) {
-            .hero-capture-form .btn-primary:hover {
+            .hero-shop-btn:hover {
                 transform: translateY(-2px) scale(1.02);
                 box-shadow: 0 16px 34px rgba(225, 225, 0, 0.55);
             }
         }
         @media (prefers-reduced-motion: reduce) {
-            .hero-capture-form .btn-primary::after { animation: none; display: none; }
-        }
-
-        .hero-shop-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 13.5px;
-            color: rgba(44, 28, 16, 0.65);
-            text-decoration: none;
-        }
-        [data-theme="dark"] .hero-shop-link { color: rgba(233, 230, 218, 0.65); }
-
-        /* The site's brand yellow (--orange) reads as near-invisible plain
-           text on a white background (~1.4:1 contrast) — every other use of
-           it on the site is as a filled chip/button with dark text on top
-           (the primary CTA, rank badges), never as bare text on light. Same
-           treatment here so "Start shopping" stands out as its own pill
-           rather than blending into the lead-in sentence. */
-        .hero-shop-cta {
-            display: inline-flex;
-            align-items: center;
-            font-weight: 700;
-            color: var(--aubergine-deep);
-            background: var(--orange);
-            padding: 5px 14px;
-            border-radius: 999px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .hero-shop-link:hover .hero-shop-cta {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(225, 225, 0, 0.45);
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-shop-link:hover .hero-shop-cta { transform: none; }
+            .hero-shop-btn::after { animation: none; display: none; }
         }
 
         .hero-social-link {
@@ -7895,21 +7806,7 @@
                 </svg>
                 <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.10s">Taste</span> <span class="stretch-word" style="animation-delay:0.20s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.30s">Home,</span> <span class="stretch-word" style="animation-delay:0.40s">Coming</span> <span class="stretch-word" style="animation-delay:0.50s">to</span> <span class="hero-accent stretch-word" style="animation-delay:0.60s">Suffolk</span> <span class="stretch-word" style="animation-delay:0.70s">&amp;</span> <span class="hero-accent stretch-word" style="animation-delay:0.80s">Essex</span>.</h1>
                 <p class="hero-sub">Real African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing, delivered across Suffolk and Essex.</p>
-                <div class="hero-capture-wrap" id="heroCaptureWrap">
-                    <form class="hero-capture-form" id="heroCaptureForm">
-                        <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
-                        <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code">
-                        <button type="submit" class="btn btn-primary">Secure 10% Off My First Order</button>
-                    </form>
-                    <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
-                    <div class="hero-capture-thanks" id="heroCaptureThanks">
-                        <p>You're on the list! We'll email your code the moment we launch.</p>
-                        <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">
-                            Browse categories
-                        </a>
-                    </div>
-                </div>
-                <a class="hero-shop-link" href="#/shop">Already know what you want? <span class="hero-shop-cta">Start shopping &rarr;</span></a>
+                <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -9874,6 +9771,33 @@
                     <input type="email" id="newsletterEmail" placeholder="you@example.com" required>
                     <button type="submit">Subscribe</button>
                 </form>
+            </div>
+            <!-- Collects postcode alongside email, unlike the plain
+                 newsletter form above — the point is knowing where demand
+                 is actually coming from (see register_coming_soon_interest
+                 in supabase-migration-38-coming-soon-signups.sql and its
+                 admin view), not just building a mailing list. Used to be
+                 the hero's whole CTA before Shop Now took over that job;
+                 kept fully intact here, just less prominent. -->
+            <div class="footer-newsletter hero-capture-wrap" id="heroCaptureWrap">
+                <div class="footer-newsletter-text">
+                    <span class="footer-newsletter-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    </span>
+                    <div>
+                        <h4>Get 10% Off Your First Order</h4>
+                        <p>Join our launch list with your postcode and we'll email your code the moment we're live near you.</p>
+                    </div>
+                </div>
+                <form class="newsletter-form" id="heroCaptureForm">
+                    <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
+                    <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code">
+                    <button type="submit">Secure 10% Off</button>
+                </form>
+                <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
+                <div class="hero-capture-thanks" id="heroCaptureThanks">
+                    <p>You're on the list! We'll email your code the moment we're live.</p>
+                </div>
             </div>
             <div class="footer-top">
                 <div>
@@ -19231,7 +19155,7 @@
                 heroCaptureWrap.classList.add('signed-up');
                 showToast(isNewSignup
                     ? "You're on the list! We'll email your code and let you know the moment we're live."
-                    : "You're already on the list, we'll email you the moment we launch.", 5500);
+                    : "You're already on the list, we'll email you the moment we're live.", 5500);
             });
         }
         // renderHeroGlimpse/renderOfferCarousel/renderNewCarousel/
