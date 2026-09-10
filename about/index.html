@@ -9631,6 +9631,13 @@
         </header>
         <section class="orders-section">
             <div class="wrap">
+                <!-- Reuses loyaltyStatusHTML() as-is (see its definition) — the
+                     exact same status text checkout already shows, just
+                     surfaced somewhere a signed-in customer can check it
+                     without needing an active cart/checkout in progress.
+                     Hidden by default, shown by renderOrdersLoyaltyNote()
+                     (called from renderOrderHistory()) only when signed in. -->
+                <div class="loyalty-note" id="ordersLoyaltyNote" style="display:none;"></div>
                 <div id="orderHistoryList" class="order-history-list"></div>
             </div>
         </section>
@@ -15632,7 +15639,22 @@
         // customer to their own rows). Falls back to explanatory empty states
         // rather than pretending to load when accounts aren't connected yet
         // or nobody's logged in.
+        // Same loyalty-note markup/classes checkout and the order-confirm
+        // screen already use, just reused here so a signed-in customer can
+        // check their reward status without needing an active cart —
+        // loyaltyStatusHTML() itself already covers "you have a reward",
+        // "spend £X more to unlock one", and the not-logged-in case, so
+        // this needed no new backend logic, only a place to show it.
+        function renderOrdersLoyaltyNote() {
+            const el = document.getElementById('ordersLoyaltyNote');
+            if (!el) return;
+            if (!supabaseClient || !currentSupabaseUser) { el.style.display = 'none'; return; }
+            el.classList.toggle('loyalty-note-earned', !!pendingLoyaltyReward());
+            el.innerHTML = loyaltyStatusHTML();
+            el.style.display = '';
+        }
         async function renderOrderHistory() {
+            renderOrdersLoyaltyNote();
             const el = document.getElementById('orderHistoryList');
             if (!el) return;
             if (!supabaseClient) {
