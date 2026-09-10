@@ -18482,7 +18482,14 @@
             return trimmed === '' ? '' : '#' + trimmed;
         }
         function hashToCleanPath(hash) {
-            return hash ? hash.replace(/\/+$/, '') + '/' : '/';
+            // hash includes its leading "#" (e.g. "#/shop") — this has to
+            // come off first, otherwise the string below still starts
+            // with "#" and history.replaceState() resolves it as a
+            // fragment-only reference (just rewrites the hash) instead of
+            // an absolute path, silently leaving window.location.pathname
+            // stuck wherever it started.
+            const path = hash ? hash.slice(1).replace(/\/+$/, '') : '';
+            return path === '' ? '/' : path + '/';
         }
         // Called from route() itself, every single time it runs — the one
         // place every navigation (link click, back/forward, boot) already
