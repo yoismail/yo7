@@ -3328,13 +3328,25 @@
         }
         .reorder-icon {
             width: 44px; height: 44px; border-radius: 50%; background: rgba(144, 184, 0, 0.14);
-            color: var(--aubergine); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            /* var(--heading), not var(--aubergine) — aubergine is one of the
+               fixed-dark brand colours the site deliberately never swaps for
+               dark mode (see the [data-theme="dark"] block's own comment),
+               so it reads as near-invisible dark green on the dark card
+               background. --heading does swap, same token the title next
+               to it already correctly uses. */
+            color: var(--heading); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .reorder-icon svg { width: 22px; height: 22px; }
         .reorder-text { flex: 1; min-width: 180px; }
         .reorder-title { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); margin-bottom: 3px; }
         .reorder-summary { font-size: 13.5px; color: var(--text-muted); }
         .reorder-btn { white-space: nowrap; }
+        @media (max-width: 560px) {
+            /* Left to flex-wrap's default, a wrapped button lands small and
+               left-aligned under the text — a deliberate full-width CTA
+               reads better once it's stacked. */
+            .reorder-btn { width: 100%; margin-top: 2px; }
+        }
 
         /* ================= SPECIAL OFFER SECTION ================= */
         .hero-glimpse-strip { background: var(--page-bg); padding: 22px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
@@ -15771,7 +15783,7 @@
             const itemCount = items.reduce((s, it) => s + (Number(it.qty) || 1), 0);
             const previewNames = items.slice(0, 3).map(it => it.name || 'an item').join(', ');
             const summaryEl = document.getElementById('reorderSummary');
-            if (summaryEl) summaryEl.textContent = `Your last order: ${itemCount} item${itemCount === 1 ? '' : 's'} — ${previewNames}${items.length > 3 ? ', and more' : ''}`;
+            if (summaryEl) summaryEl.textContent = `Your last order had ${itemCount} item${itemCount === 1 ? '' : 's'}: ${previewNames}${items.length > 3 ? ', and more' : ''}.`;
             const btn = document.getElementById('reorderBtn');
             if (btn) btn.onclick = function () { reorderOrder(data.id, this); };
             section.style.display = '';
