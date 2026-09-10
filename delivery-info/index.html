@@ -2391,6 +2391,16 @@
         .bundle-items {
             display: flex; flex-direction: column; margin-bottom: 10px;
         }
+        /* Combo cards specifically (not the Build-a-bundle page, which
+           only ever shows one bundle at a time and has room to spare) —
+           a combo with 4+ items pushed these cards well past every other
+           card on the page. Capping the item list itself and letting it
+           scroll internally bounds every combo card to roughly the same
+           height regardless of how many items it lists, rather than the
+           card just growing taller with every item added. */
+        .combo-card .bundle-items {
+            max-height: 148px; overflow-y: auto;
+        }
         .bundle-item-row {
             display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body);
             padding: 6px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
@@ -7886,7 +7896,7 @@
                     <use href="#seal-mark" />
                 </svg>
                 <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.10s">Taste</span> <span class="stretch-word" style="animation-delay:0.20s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.30s">Home,</span> <span class="stretch-word" style="animation-delay:0.40s">Coming</span> <span class="stretch-word" style="animation-delay:0.50s">to</span> <span class="hero-accent stretch-word" style="animation-delay:0.60s">Suffolk</span> <span class="stretch-word" style="animation-delay:0.70s">&amp;</span> <span class="hero-accent stretch-word" style="animation-delay:0.80s">Essex</span>.</h1>
-                <p class="hero-sub">Yo7 Foods launches January 2027. Real African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing, delivered across Suffolk and Essex.</p>
+                <p class="hero-sub">Yo7 Foods is launching soon. Real African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing, delivered across Suffolk and Essex.</p>
                 <div class="hero-capture-wrap" id="heroCaptureWrap">
                     <form class="hero-capture-form" id="heroCaptureForm">
                         <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
@@ -8116,7 +8126,7 @@
                     </div>
                 </div>
                 <div class="reveal" style="transition-delay:0.1s">
-                    <h2>Delivering wherever you are, from January 2027</h2>
+                    <h2>Delivering wherever you are</h2>
                     <p>We'll deliver to every UK postcode, priced fairly by weight, whether you're
                         five minutes away or five hours. Orders placed before 10am will usually be out the same or next day. Pickup from Ipswich will always be free.</p>
                 </div>
@@ -8385,7 +8395,7 @@
                                     stroke-linecap="round">
                                     <rect x="3" y="7" width="15" height="13" rx="2" />
                                     <path d="M16 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2" />
-                                </svg> UK-Wide Delivery From January 2027</div>
+                                </svg> UK-Wide Delivery</div>
                         </div>
                         <div class="cart-trust-strip">
                             <div class="trust-pill">
@@ -8620,7 +8630,7 @@
                                 Secure checkout
                             </div>
                             <div class="payment-note" id="paymentNotConfiguredNote" style="display:none;">
-                                <strong>Card payments open when we launch in January 2027.</strong> Until then, you're
+                                <strong>Card payments aren't available right now.</strong> You're
                                 welcome to message us on WhatsApp to place this order instead.
                             </div>
                             <form id="paymentForm">
@@ -9041,7 +9051,7 @@
                     <p>When you complete payment for an order, that forms our contract with you straightaway, you'll see an on-screen order confirmation immediately with your order number and details.</p>
 
                     <h2>Delivery</h2>
-                    <p>We'll deliver to all UK postcodes once we launch in January 2027. Delivery is priced by the total weight of your order; the exact fee, and any current free-delivery threshold, is always shown at checkout before you pay. Pickup from our Ipswich address will be available at no charge. Delivery timing is estimated and can be affected by factors outside our control, including the delivery company itself.</p>
+                    <p>We'll deliver to all UK postcodes. Delivery is priced by the total weight of your order; the exact fee, and any current free-delivery threshold, is always shown at checkout before you pay. Pickup from our Ipswich address will be available at no charge. Delivery timing is estimated and can be affected by factors outside our control, including the delivery company itself.</p>
 
                     <h2>Discount codes</h2>
                     <p>Discount codes are subject to the conditions shown when applied, including any minimum order, date range, or per-customer usage limit. We reserve the right to withdraw or amend a code at any time.</p>
@@ -9105,10 +9115,10 @@
                     <div class="legal-updated">Last updated: August 2026</div>
 
                     <h2>Where we deliver</h2>
-                    <p>We'll deliver to every UK postcode once we launch in January 2027. Delivery is priced by the total weight of your order, not a flat rate, you can see the exact fee before you check out. Pickup from our Ipswich address will always be free.</p>
+                    <p>We'll deliver to every UK postcode. Delivery is priced by the total weight of your order, not a flat rate, you can see the exact fee before you check out. Pickup from our Ipswich address will always be free.</p>
 
                     <h2>Delivery timing</h2>
-                    <p>Once we're live in January 2027: orders placed before 10am will usually be out the same or next day, and orders placed after 10am will be treated as next-day at the earliest, this gives us time to actually prepare the order properly rather than rush it. Timings will be estimates, not guarantees, actual delivery is carried out by a third-party courier and can be affected by things outside our control (weather, courier delays, and so on).</p>
+                    <p>Orders placed before 10am will usually be out the same or next day, and orders placed after 10am will be treated as next-day at the earliest, this gives us time to actually prepare the order properly rather than rush it. Timings will be estimates, not guarantees, actual delivery is carried out by a third-party courier and can be affected by things outside our control (weather, courier delays, and so on).</p>
 
                     <h2>If you're not in when we deliver</h2>
                     <p>You can leave delivery notes at checkout (a gate code, a safe place, a preferred time) and the courier will follow them where possible. If nobody's available and there's no safe place to leave the order, the courier will typically attempt redelivery or leave a card with next steps. For perishable items, please try to make sure someone can take the delivery in reasonably promptly.</p>
@@ -9189,7 +9199,7 @@
                 </div>
 
                 <div class="areas-strip">
-                    <div class="areas-title">UK-Wide Delivery From January 2027</div>
+                    <div class="areas-title">UK-Wide Delivery</div>
                     <div class="areas-note">England, Scotland, Wales, and Northern Ireland, wherever you are, we'll get it to you. Type your postcode in below to double-check the format.</div>
                 </div>
 
@@ -9208,7 +9218,7 @@
                         </svg>
                         <div>
                             <h4>Delivery area</h4>
-                            <p>UK-wide delivery from January 2027.</p>
+                            <p>UK-wide delivery.</p>
                         </div>
                     </div>
                     <div class="dinfo-card">
@@ -9253,7 +9263,6 @@
 
                 <div class="dinfo-list">
                     <h2>Delivery conditions, worth knowing</h2>
-                    <p style="font-size:13.5px; color:var(--text-muted); margin:-10px 0 18px;">These apply once ordering opens in January 2027.</p>
                     <ul>
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
@@ -9472,7 +9481,7 @@
                     <div class="guide-step reveal" style="transition-delay:0.16s">
                         <div class="num">3</div>
                         <h3>Log in, then checkout</h3>
-                        <p>You'll need a free account to complete your order, it's how we keep it trackable in your Order History. Log in or sign up in a few seconds, confirm delivery details, pay, and get a proper invoice. We'll deliver to all UK postcodes from January 2027, or you'll be able to pick up yourself.</p>
+                        <p>You'll need a free account to complete your order, it's how we keep it trackable in your Order History. Log in or sign up in a few seconds, confirm delivery details, pay, and get a proper invoice. We'll deliver to all UK postcodes, or you'll be able to pick up yourself.</p>
                     </div>
                 </div>
 
@@ -15342,7 +15351,7 @@
             errorEl.style.display = 'none';
 
             if (!stripe || !stripeElements) {
-                errorEl.textContent = "Card payments open when we launch in January 2027. Please message us on WhatsApp to place this order instead.";
+                errorEl.textContent = "Card payments aren't available right now. Please message us on WhatsApp to place this order instead.";
                 errorEl.style.display = 'block';
                 return;
             }
@@ -18311,7 +18320,7 @@
             return `Delivery is priced by the total weight of your order rather than a flat rate, ${parts.join(', ')}.${freeNote} There's no minimum order for delivery or pickup.`;
         }
         const FAQS = [
-            { q: 'What areas do you deliver to?', a: "We'll deliver to every UK postcode once we launch in January 2027. Use the postcode checker on the Delivery Information page to double-check the format of yours." },
+            { q: 'What areas do you deliver to?', a: "We'll deliver to every UK postcode. Use the postcode checker on the Delivery Information page to double-check the format of yours." },
             { q: 'How much is delivery, and is there a minimum order?', a: deliveryFaqAnswer },
             { q: 'How long does delivery take?', a: 'Local delivery (Suffolk) usually arrives within 1-2 working days of your order being confirmed. Standard delivery (everywhere else in the UK) is 1-3 working days. Orders placed before 10am are usually out the same or next day.' },
             { q: 'Can I collect my order instead of getting it delivered?', a: 'Yes, choose pickup at checkout and there\'s no delivery fee. You\'ll get the address and opening hours on the Contact Us page.' },
@@ -18764,10 +18773,10 @@
             if (!raw) { resultEl.textContent = 'Type a postcode to check.'; resultEl.className = 'pc-result'; return; }
             const validFormat = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(raw);
             if (validFormat) {
-                resultEl.textContent = `Yes, we'll deliver there once we launch in January 2027.`;
+                resultEl.textContent = `Yes, we'll deliver there.`;
                 resultEl.className = 'pc-result yes';
             } else {
-                resultEl.textContent = `That doesn't look like a full UK postcode, but we'll deliver everywhere in the UK from January 2027, double-check it and try again.`;
+                resultEl.textContent = `That doesn't look like a full UK postcode, but we'll deliver everywhere in the UK, double-check it and try again.`;
                 resultEl.className = 'pc-result no';
             }
         }
