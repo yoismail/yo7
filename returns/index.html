@@ -2392,28 +2392,38 @@
             display: flex; flex-direction: column; margin-bottom: 16px;
         }
         .bundle-item-row {
-            display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body);
+            display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body);
             padding: 9px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
         }
         .bundle-item-row:first-child { padding-top: 0; }
         .bundle-item-row:last-child { border-bottom: none; padding-bottom: 0; }
-        /* A small colour-coded bullet plus a bolder, heading-toned name and
-           a bolder price give each row three distinct visual weights (name
-           > price > weight/dashes), so the list reads as scannable items
-           rather than one run-on paragraph of same-weight text. */
-        .bundle-item-row > span:first-child {
-            flex: 1; min-width: 0; position: relative; padding-left: 14px;
-            font-weight: 600; color: var(--heading); line-height: 1.4;
+        /* Real product photography, not a plain text list — the actual
+           thing that sells a grocery item. Same small-thumbnail pattern as
+           .search-result-thumb (image with a graceful icon fallback via
+           onerror, never a broken-image glyph), sized for a list row
+           rather than a full product card. */
+        .bundle-item-thumb {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-faint); position: relative; overflow: hidden;
         }
-        .bundle-item-row > span:first-child::before {
-            content: ''; position: absolute; left: 0; top: 0.6em; margin-top: -2.5px;
-            width: 5px; height: 5px; border-radius: 50%; background: var(--chartreuse-rich);
+        .bundle-item-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        /* A bolder, heading-toned name and a bolder price give each row two
+           distinct visual weights (name > price/weight), on top of the
+           thumbnail now doing the job the old colour-coded bullet used to.
+           :first-of-type, not :first-child — the thumb div now precedes
+           the name span, so it's no longer literally the row's first
+           child, but it is still the first <span>. */
+        .bundle-item-row > span:first-of-type {
+            flex: 1; min-width: 0;
+            font-weight: 600; color: var(--heading); line-height: 1.4;
         }
         .bundle-item-row > span:last-child { font-weight: 700; color: var(--heading); white-space: nowrap; }
         .bundle-item-row.out-of-stock { color: var(--text-muted); }
-        .bundle-item-row.out-of-stock > span:first-child,
+        .bundle-item-row.out-of-stock .bundle-item-thumb { opacity: 0.5; }
+        .bundle-item-row.out-of-stock > span:first-of-type,
         .bundle-item-row.out-of-stock > span:last-child { color: var(--text-muted); font-weight: 500; }
-        .bundle-item-row.out-of-stock > span:first-child::before { background: var(--text-muted); }
         .bundle-item-row.out-of-stock em { font-style: italic; font-size: 11.5px; }
         /* Edit-mode only: weight drives the delivery fee tier a bundle/combo
            falls into, so it needs to be fixable right here, not just by
@@ -11976,6 +11986,18 @@
         // text (it's what their delivery fee is actually based on); admins
         // in edit mode get the editable input in its place instead.
         function fmtWeight(w) { return w.toFixed(w % 1 === 0 ? 0 : 2) + 'kg'; }
+        // Small icon fallback, same onerror pattern as .search-result-thumb
+        // (a broken-image glyph is worse than a plain placeholder icon) —
+        // just a dedicated compact version, the same reasoning
+        // renderSearchDropdown's own thumbHTML comment gives for not
+        // reusing productPhotoHTML() here: its "Photo coming soon" label is
+        // built for a full card, not a 34px row thumbnail.
+        const BUNDLE_ITEM_PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+        function bundleItemThumbHTML(p) {
+            if (!p.image) return BUNDLE_ITEM_PLACEHOLDER_SVG;
+            return `<img src="${escapeHtml(p.image)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <span style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${BUNDLE_ITEM_PLACEHOLDER_SVG}</span>`;
+        }
         function bundleItemRowHTML(p, outOfStock) {
             const weightVal = typeof p.weight === 'number' ? p.weight : '';
             const weightDisplay = (currentIsAdmin && editModeOn) ? `
@@ -11985,6 +12007,7 @@
       </span>` : (typeof p.weight === 'number' ? `<span class="bundle-item-weight">${fmtWeight(p.weight)}</span>` : '');
             return `
       <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}">
+        <div class="bundle-item-thumb">${bundleItemThumbHTML(p)}</div>
         <span>${escapeHtml(p.name)}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
         ${weightDisplay}
         <span>${outOfStock ? '' : money(effectivePrice(p))}</span>
