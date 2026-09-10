@@ -9537,6 +9537,24 @@
         </section>
     </div>
 
+    <!-- Same one-click, no-login pattern as view-unsubscribe-reminder above
+         — reached only from the "Unsubscribe" link in a newsletter email,
+         the token in the URL is the whole authorization
+         (unsubscribe_newsletter() RPC). -->
+    <div id="view-unsubscribe-newsletter" class="hidden-view">
+        <section class="auth-section">
+            <div class="auth-box">
+                <svg class="seal-mini" viewBox="65 25 875 900"
+                    style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
+                    <use href="#seal-mark" />
+                </svg>
+                <h1 id="unsubNewsletterHeading">One moment…</h1>
+                <div class="sub" id="unsubNewsletterSub">Unsubscribing you from the newsletter.</div>
+                <a class="btn btn-primary btn-block btn-lg" href="#/">Back to shop</a>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= SIGN UP ================= -->
     <div id="view-signup" class="hidden-view">
         <section class="auth-section">
@@ -18259,7 +18277,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -18285,6 +18303,27 @@
             sub.textContent = `You won't get reorder reminders for ${data} anymore.`;
         }
         window.handleUnsubscribeReminder = handleUnsubscribeReminder;
+
+        // Same no-login pattern as handleUnsubscribeReminder above, for the
+        // newsletter's own "Unsubscribe" link (unsubscribe_newsletter() RPC).
+        async function handleUnsubscribeNewsletter(token) {
+            const heading = document.getElementById('unsubNewsletterHeading');
+            const sub = document.getElementById('unsubNewsletterSub');
+            if (!supabaseClient || !token) {
+                heading.textContent = "Couldn't process that link";
+                sub.textContent = 'This link looks incomplete. If you keep getting emails you don\'t want, just get in touch and we\'ll unsubscribe you.';
+                return;
+            }
+            const { data, error } = await supabaseClient.rpc('unsubscribe_newsletter', { p_token: token });
+            if (error || !data) {
+                heading.textContent = "Couldn't find that subscription";
+                sub.textContent = 'It may already be unsubscribed, or the link has expired. If emails keep arriving, get in touch and we\'ll sort it.';
+                return;
+            }
+            heading.textContent = 'Unsubscribed';
+            sub.textContent = "You won't get any more emails from the Yo7 Foods newsletter.";
+        }
+        window.handleUnsubscribeNewsletter = handleUnsubscribeNewsletter;
 
         function showView(id) {
             VIEWS.forEach(v => document.getElementById(v).classList.toggle('hidden-view', v !== id));
@@ -18362,6 +18401,9 @@
             } else if (hash.startsWith('#/unsubscribe-reminder/')) {
                 showView('view-unsubscribe-reminder');
                 handleUnsubscribeReminder(hash.replace('#/unsubscribe-reminder/', ''));
+            } else if (hash.startsWith('#/unsubscribe-newsletter/')) {
+                showView('view-unsubscribe-newsletter');
+                handleUnsubscribeNewsletter(hash.replace('#/unsubscribe-newsletter/', ''));
             } else if (hash === '#/orders') {
                 showView('view-orders');
                 renderOrderHistory();

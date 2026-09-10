@@ -605,19 +605,26 @@ CREATE OR REPLACE FUNCTION "public"."subscribe_to_newsletter"("p_email" "text", 
     AS $_$
 declare
   v_api_key text;
-  v_new_id uuid;
+  v_id uuid;
+  v_token uuid;
 begin
   if p_email is null or p_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
     raise exception 'Please enter a valid email address.';
   end if;
 
-  insert into public.newsletter_subscribers (email, source)
-  values (lower(trim(p_email)), p_source)
-  on conflict (email) do nothing
-  returning id into v_new_id;
+  -- Reactivates a previously unsubscribed row on the same email instead of
+  -- the old on conflict do nothing, which would silently no-op the form —
+  -- someone who unsubscribed and later re-signs-up via the footer form
+  -- should actually end up resubscribed.
+  insert into public.newsletter_subscribers (email, source, active)
+  values (lower(trim(p_email)), p_source, true)
+  on conflict (email) do update
+    set active = true, subscribed_at = now(), source = excluded.source
+    where newsletter_subscribers.active = false
+  returning id, unsubscribe_token into v_id, v_token;
 
-  if v_new_id is null then
-    return; -- already subscribed, nothing more to do
+  if v_id is null then
+    return; -- already subscribed and already active, nothing more to do
   end if;
 
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
@@ -640,7 +647,8 @@ begin
         '<h2 style="color:#063B00;">You''re on the list</h2>' ||
         '<p>Thanks for joining the Yo7 Family. Expect new arrivals, offers, and the occasional recipe, no spam.</p>' ||
         '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/shop" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Start shopping</a></p>' ||
-        '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
+        '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
+        '<a href="https://yo7foods.co.uk/#/unsubscribe-newsletter/' || v_token || '" style="color:#999;">Unsubscribe</a></p>' ||
         '</div>'
     )
   );
@@ -692,6 +700,23 @@ $$;
 
 
 ALTER FUNCTION "public"."sync_subscription_reminders"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."unsubscribe_newsletter"("p_token" "uuid") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  update public.newsletter_subscribers
+  set active = false
+  where unsubscribe_token = p_token and active = true;
+
+  return found;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."unsubscribe_newsletter"("p_token" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."unsubscribe_reminder"("p_token" "uuid") RETURNS "text"
@@ -878,7 +903,9 @@ CREATE TABLE IF NOT EXISTS "public"."newsletter_subscribers" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "email" "text" NOT NULL,
     "subscribed_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "source" "text"
+    "source" "text",
+    "active" boolean DEFAULT true NOT NULL,
+    "unsubscribe_token" "uuid" DEFAULT "gen_random_uuid"() NOT NULL
 );
 
 
@@ -1220,6 +1247,10 @@ CREATE INDEX "discount_redemptions_by_email" ON "public"."discount_redemptions" 
 
 
 CREATE INDEX "discount_redemptions_by_user" ON "public"."discount_redemptions" USING "btree" ("discount_id", "user_id") WHERE ("user_id" IS NOT NULL);
+
+
+
+CREATE UNIQUE INDEX "newsletter_subscribers_token_idx" ON "public"."newsletter_subscribers" USING "btree" ("unsubscribe_token");
 
 
 
@@ -1674,6 +1705,12 @@ GRANT ALL ON FUNCTION "public"."subscribe_to_newsletter"("p_email" "text", "p_so
 GRANT ALL ON FUNCTION "public"."sync_subscription_reminders"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_subscription_reminders"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_subscription_reminders"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."unsubscribe_newsletter"("p_token" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."unsubscribe_newsletter"("p_token" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."unsubscribe_newsletter"("p_token" "uuid") TO "service_role";
 
 
 
