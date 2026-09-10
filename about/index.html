@@ -18530,17 +18530,37 @@
         // fires 'hashchange' on its own (there's usually no hash at all
         // in either state to compare) — without this, the address bar
         // would move but the app wouldn't react at all.
-        window.addEventListener('popstate', () => { syncHashFromPath(); route(); });
+        window.addEventListener('popstate', route);
 
         function route() {
-            const hash = window.location.hash;
             // "#edit" is a shortcut straight into edit mode for whoever's
             // already logged in as admin, it still goes through the same
             // admin dashboard route and the same currentIsAdmin check,
             // renderAdminPage() just also flips edit mode on once that
             // check actually confirms admin, instead of stopping short at
-            // the dashboard and requiring a second click.
-            if (hash === '#edit' || hash === '#/edit') { autoEnterEditMode = true; window.location.hash = '#/admin'; return; }
+            // the dashboard and requiring a second click. Checked against
+            // the raw hash, before the reconciliation below, since that
+            // would otherwise treat this one-off shortcut as stale and
+            // overwrite it.
+            if (window.location.hash === '#edit' || window.location.hash === '#/edit') { autoEnterEditMode = true; window.location.hash = '#/admin'; return; }
+            // Dozens of other places in this file call route() with no
+            // arguments to just re-render whatever's currently on screen
+            // — an async data fetch resolving, an admin-status check
+            // settling, a live edit applying — written back when
+            // window.location.hash was always the current route's source
+            // of truth. But syncAddressBarToHash further down deliberately
+            // clears it after every render, so the address bar can show a
+            // clean path instead of a hash. That leaves window.location.hash
+            // genuinely empty between renders even while the user is on a
+            // real route like /shop/ — fine for this function's own local
+            // reasoning, but wrong for any of those other call sites if
+            // left alone: whichever fires next would read the empty hash,
+            // conclude "must be home", and silently route everyone back.
+            // Reconciling here, on every single route() call regardless of
+            // who triggered it, keeps all of those call sites correct
+            // without having to hunt down and fix each individually.
+            syncHashFromPath();
+            const hash = window.location.hash;
             syncAddressBarToHash(hash);
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
             updateActiveNavLink();
@@ -19217,10 +19237,8 @@
         handleStripeRedirectReturn();
         // A fresh load/reload/shared-link visit to a real path (e.g.
         // /shop/, or one of the pre-generated pages like /about/) has no
-        // hash at all yet — derive route()'s actual input from the real
-        // path before the very first call, same as every back/forward
-        // navigation already does via the popstate listener above.
-        syncHashFromPath();
+        // hash at all yet — route() itself derives it from the real path
+        // (see syncHashFromPath() inside it) before doing anything else.
         route();
         // The footer starts hidden (see .boot-hidden) so it can't render
         // above the real page while everything up to and including this
