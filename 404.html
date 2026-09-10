@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found | Yo7 Foods</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            --aubergine: #063B00;
+            --aubergine-deep: #042500;
+            --chartreuse: #90B800;
+            --chartreuse-rich: #729400;
+            --cream: #FAF9F2;
+            --page-bg: var(--cream);
+            --card-bg: #FFFFFF;
+            --heading: var(--aubergine);
+            --text-body: #4a3d3a;
+            --text-muted: #6b5f58;
+        }
+
+        /* Same detection as index.html's own theme-flash-prevention script
+           (see the <script> in <head> there) — defaults to light regardless
+           of OS preference, dark only if explicitly chosen via the toggle
+           on a previous visit, so this page matches whatever the site
+           itself is currently showing instead of guessing independently. */
+        [data-theme="dark"] {
+            --page-bg: #0E1A08;
+            --card-bg: #17240E;
+            --heading: #F3F1E6;
+            --text-body: #E3DDD2;
+            --text-muted: #B0A89D;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat Alternates', sans-serif;
+            background: var(--page-bg);
+            color: var(--text-body);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 48px 36px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(6, 59, 0, 0.12);
+        }
+
+        .seal {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+            display: block;
+        }
+
+        .code {
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--chartreuse-rich);
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 26px;
+            color: var(--heading);
+            margin-bottom: 12px;
+        }
+
+        p {
+            font-size: 15px;
+            line-height: 1.55;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 13px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14.5px;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(144, 184, 0, 0.28);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--heading);
+            border: 1.5px solid rgba(6, 59, 0, 0.18);
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            border-color: rgba(250, 249, 242, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(144, 184, 0, 0.1);
+        }
+    </style>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('yo7-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) { /* private browsing etc. */ }
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="card">
+        <svg class="seal" viewBox="65 25 875 900">
+            <path
+                d="M 885.91 500.00 Q 885.91 500.00 860.56 580.72 Q 835.22 661.43 796.07 741.80 Q 756.92 822.17 669.16 839.40 Q 581.40 856.62 495.87 874.70 Q 410.35 892.77 333.83 848.55 Q 257.30 804.33 214.39 731.27 Q 171.47 658.21 135.44 579.11 Q 99.41 500.00 136.18 421.25 Q 172.95 342.50 213.43 266.96 Q 253.91 191.42 336.28 167.50 Q 418.65 143.58 500.19 142.76 Q 581.72 141.95 663.68 166.97 Q 745.63 191.99 814.79 253.54 Q 883.95 315.10 884.93 407.55 Z"
+                fill="var(--chartreuse)" />
+            <path
+                d="M 811.10 500.00 Q 811.10 500.00 799.66 569.40 Q 788.22 638.80 753.14 706.12 Q 718.06 773.44 643.76 788.90 Q 569.47 804.36 499.62 806.04 Q 429.76 807.73 364.45 779.80 Q 299.14 751.87 269.30 688.67 Q 239.46 625.47 211.74 562.73 Q 184.02 500.00 195.32 429.36 Q 206.61 358.71 247.63 296.84 Q 288.64 234.96 362.97 230.13 Q 437.30 225.31 501.91 216.95 Q 566.51 208.60 621.00 244.26 Q 675.50 279.93 741.08 316.13 Q 806.65 352.32 808.88 426.16 Z"
+                fill="var(--aubergine-deep)" />
+            <text x="500" y="629" text-anchor="middle" font-family="Montserrat Alternates" font-weight="700"
+                font-size="360" fill="var(--cream)">7</text>
+        </svg>
+        <div class="code">404</div>
+        <h1>This page has wandered off</h1>
+        <p>We couldn't find the page you were looking for. It may have moved, or the link might just be broken — but
+            the shop's still exactly where you left it.</p>
+        <div class="actions">
+            <a class="btn btn-primary" href="/">Back to home</a>
+            <a class="btn btn-secondary" href="/#/shop">Browse the shop</a>
+        </div>
+    </div>
+</body>
+
+</html>
