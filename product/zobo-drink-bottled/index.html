@@ -17919,20 +17919,6 @@
             // is required, which is the normal case, not an edge case, so this
             // is the message almost everyone sees straight after signing up.
             if (data.user && !data.session) {
-                // signUp() deliberately doesn't error on an email that already
-                // has a confirmed account — that's Supabase's own anti-
-                // enumeration design, so an attacker can't use this form to
-                // probe which emails are registered. It still tells the
-                // client apart from a genuine new signup, just not via an
-                // error: an existing confirmed account comes back with an
-                // empty identities array (a real new signup always has
-                // exactly one). Without this check, someone who already has
-                // an account sees the "check your email to confirm" message
-                // and waits for a confirmation email that's never coming.
-                if (data.user.identities && data.user.identities.length === 0) {
-                    setAuthError('signupError', 'An account with this email already exists. Try logging in instead, or use "Forgot password" if you need to reset it.');
-                    return;
-                }
                 document.getElementById('signupAuthNote').style.display = 'none';
                 setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account.');
                 e.target.reset();
