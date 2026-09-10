@@ -800,6 +800,7 @@
            control in the row. */
         .nav-cart-btn {
             width: auto;
+            height: 28px;
             padding: 0 15px 0 13px;
             background: rgba(144, 184, 0, 0.16);
             border-color: var(--chartreuse);
@@ -1242,10 +1243,13 @@
 
             /* Screen's too tight here for the desktop pill treatment (icon
                + horizontal padding) alongside the rest of the bar, so the
-               cart reverts to the same compact circle as every other
-               icon-only control at this width. */
+               cart reverts to a compact circle — sized to match
+               .theme-switch's own height (25px) rather than the other
+               34px icon-only controls, so it doesn't read as the one
+               oversized control next to the toggle right beside it. */
             .nav-cart-btn {
-                width: 34px;
+                width: 25px;
+                height: 25px;
                 padding: 0;
             }
 
