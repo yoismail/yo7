@@ -3318,6 +3318,24 @@
             .new-card { flex-basis: 168px; max-width: 168px; }
         }
 
+        /* ================= REORDER SUGGESTION (signed-in, returning customers) ================= */
+        .reorder-section { padding: 20px 0 0; }
+        .reorder-card {
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+            background: var(--card-bg); border: 1.5px solid rgba(144, 184, 0, 0.3);
+            border-radius: 18px; padding: 20px 24px;
+            box-shadow: 0 10px 30px rgba(6, 59, 0, 0.08);
+        }
+        .reorder-icon {
+            width: 44px; height: 44px; border-radius: 50%; background: rgba(144, 184, 0, 0.14);
+            color: var(--aubergine); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .reorder-icon svg { width: 22px; height: 22px; }
+        .reorder-text { flex: 1; min-width: 180px; }
+        .reorder-title { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); margin-bottom: 3px; }
+        .reorder-summary { font-size: 13.5px; color: var(--text-muted); }
+        .reorder-btn { white-space: nowrap; }
+
         /* ================= SPECIAL OFFER SECTION ================= */
         .hero-glimpse-strip { background: var(--page-bg); padding: 22px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
         .hero-glimpse-title {
@@ -7901,6 +7919,24 @@
             </div>
             <div class="text-watermark hero-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         </header>
+
+        <!-- Signed-in returning customers only — hidden by default, shown by
+             loadReorderSuggestion() (called from setUser()) once their most
+             recent order is fetched. Reuses reorderOrder() as-is, the same
+             function the Order History page's own "Reorder" buttons call,
+             rather than duplicating its cart/bundle/combo re-add logic. -->
+        <section class="reorder-section" id="reorderSection" style="display:none;">
+            <div class="wrap reorder-card">
+                <div class="reorder-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </div>
+                <div class="reorder-text">
+                    <div class="reorder-title" id="reorderTitle">Welcome back!</div>
+                    <div class="reorder-summary" id="reorderSummary"></div>
+                </div>
+                <button class="btn btn-primary reorder-btn" id="reorderBtn" type="button">Reorder</button>
+            </div>
+        </section>
 
         <div class="hero-glimpse-strip">
             <div class="wrap">
@@ -15687,6 +15723,38 @@
             window.location.hash = '#/checkout';
         }
         window.reorderOrder = reorderOrder;
+        // Personalizes the homepage for a signed-in customer with at least
+        // one past order — a "Welcome back, reorder your last order?"
+        // shortcut, using that same order's real items rather than
+        // recomputing "usual" from purchase frequency, which would need a
+        // new RPC. Hidden by default (see the section's own inline
+        // style="display:none;") and only ever shown once this actually
+        // finds something to show — logged-out visitors and first-time
+        // signed-in customers with no orders yet see nothing different.
+        async function loadReorderSuggestion() {
+            const section = document.getElementById('reorderSection');
+            if (!section) return;
+            if (!supabaseClient || !currentSupabaseUser) { section.style.display = 'none'; return; }
+            const { data, error } = await supabaseClient
+                .from('orders')
+                .select('*')
+                .eq('user_id', currentSupabaseUser.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (error || !data) { section.style.display = 'none'; return; }
+            const items = Array.isArray(data.items) ? data.items : [];
+            if (items.length === 0) { section.style.display = 'none'; return; }
+            orderHistoryCache[data.id] = data;
+            const itemCount = items.reduce((s, it) => s + (Number(it.qty) || 1), 0);
+            const previewNames = items.slice(0, 3).map(it => it.name || 'an item').join(', ');
+            const summaryEl = document.getElementById('reorderSummary');
+            if (summaryEl) summaryEl.textContent = `Your last order: ${itemCount} item${itemCount === 1 ? '' : 's'} — ${previewNames}${items.length > 3 ? ', and more' : ''}`;
+            const btn = document.getElementById('reorderBtn');
+            if (btn) btn.onclick = function () { reorderOrder(data.id, this); };
+            section.style.display = '';
+        }
+        window.loadReorderSuggestion = loadReorderSuggestion;
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
         // this query to return other people's rows at all). Rendered as a
@@ -17061,6 +17129,7 @@
             if (freshSignIn && !staleOwnCartMirror) mergeGuestCartIntoAccount(); else loadAccountCart();
             refreshAdminStatus();
             subscribeMyOrders();
+            loadReorderSuggestion();
         }
         function clearUser() {
             currentUser = null;
@@ -17091,6 +17160,8 @@
             accountDropdown.classList.remove('open');
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
+            const reorderSection = document.getElementById('reorderSection');
+            if (reorderSection) reorderSection.style.display = 'none';
             const adminNavLink = document.getElementById('adminNavLink');
             if (adminNavLink) adminNavLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
