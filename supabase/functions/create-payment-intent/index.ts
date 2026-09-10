@@ -69,9 +69,15 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Swap for your real domain once this is live — restricting the
 // allowed origin means this function can only ever be called from
 // the actual site, not from a random page that copied the URL.
+//
+// The workers.dev entry is temporary, for verifying the Cloudflare
+// migration (see the site's own hosting notes) before yo7foods.co.uk's
+// DNS actually points there — remove it once that cutover is done and
+// this function is no longer being called from that domain.
 const ALLOWED_ORIGINS = new Set([
   "https://yo7foods.co.uk",
   "https://www.yo7foods.co.uk",
+  "https://yo7.ismailyomi.workers.dev",
 ]);
 
 function corsHeaders(origin: string | null) {

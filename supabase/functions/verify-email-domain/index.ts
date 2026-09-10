@@ -33,9 +33,13 @@
 // No secrets needed — this function only ever talks to Cloudflare's
 // public DNS resolver, nothing Supabase-specific to configure.
 
+// The workers.dev entry is temporary, for verifying the Cloudflare
+// migration before yo7foods.co.uk's DNS actually points there — remove
+// it once that cutover is done.
 const ALLOWED_ORIGINS = new Set([
   "https://yo7foods.co.uk",
   "https://www.yo7foods.co.uk",
+  "https://yo7.ismailyomi.workers.dev",
 ]);
 
 function corsHeaders(origin: string | null) {
