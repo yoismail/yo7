@@ -2538,7 +2538,6 @@
             opacity: 0.06; color: var(--heading);
             transform: rotate(-13deg);
         }
-        .combo-tinted .combo-ticket-watermark { opacity: 0.15; color: #FFFFFF; }
         /* The tear-line: a real perforation, not a plain divider — two
            punched notches (colour-matched to the page behind the card, cut
            by the card's own overflow:hidden) sit exactly where a ticket
@@ -2552,7 +2551,6 @@
         }
         .combo-ticket-perf::before { left: -9px; }
         .combo-ticket-perf::after { right: -9px; }
-        .combo-tinted .combo-ticket-perf { border-top-color: rgba(255, 255, 255, 0.3); }
         /* The stamp: the brand's own organic wax-seal silhouette (an
            asymmetric border-radius, not a circle) standing in for a plain
            discount pill, rotated as if pressed on slightly askew, with an
@@ -2583,7 +2581,6 @@
             color: var(--chartreuse-rich); background: rgba(144, 184, 0, 0.14);
             padding: 3px 10px; border-radius: 999px; margin: -10px 0 14px;
         }
-        .combo-tinted .combo-savings { color: #FAF9F2; background: rgba(255, 255, 255, 0.16); }
         .combo-card .combo-add-btn {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             background: linear-gradient(155deg, var(--chartreuse-rich), var(--chartreuse));
@@ -2625,39 +2622,6 @@
             font-weight: 600; font-size: 12px; cursor: pointer;
         }
         body.edit-mode-on .combo-edit-btn, body.edit-mode-on .bundle-edit-btn { display: block; }
-        .combo-color-edit input[type="color"] {
-            width: 34px; height: 26px; padding: 2px; border-radius: 6px; cursor: pointer;
-            border: 1.5px solid rgba(var(--border-rgb), 0.16); background: var(--card-bg);
-        }
-        /* A combo card with an admin-chosen bgColor: every text/edit element
-           inside gets an off-white treatment instead of the default
-           heading-ink/muted-grey pairing, which reads as invisible-to-barely-
-           legible against a deep custom background. Scoped to .combo-tinted
-           (not .combo-card generally) so the plain, unthemed cards — and the
-           separate "Shop by meal" .bundle-card, which reuses several of
-           these same unscoped classes — are unaffected. */
-        .combo-tinted { border-color: rgba(255, 255, 255, 0.1); }
-        .combo-tinted h3,
-        .combo-tinted .bundle-total-row,
-        .combo-tinted .bundle-weight-total strong,
-        .combo-tinted .bundle-item-row > span:first-child,
-        .combo-tinted .bundle-item-row > span:last-child { color: #FAF9F2; }
-        .combo-tinted .bundle-tagline,
-        .combo-tinted .bundle-discount-edit,
-        .combo-tinted .bundle-weight-total { color: rgba(250, 249, 242, 0.72); }
-        .combo-tinted .bundle-was { color: rgba(250, 249, 242, 0.55); }
-        .combo-tinted .bundle-item-row { border-bottom-color: rgba(255, 255, 255, 0.14); }
-        .combo-tinted .bundle-item-row > span:first-child::before { background: var(--chartreuse); }
-        .combo-tinted .bundle-item-row.out-of-stock,
-        .combo-tinted .bundle-item-row.out-of-stock > span:first-child,
-        .combo-tinted .bundle-item-row.out-of-stock > span:last-child { color: rgba(250, 249, 242, 0.45); }
-        .combo-tinted .bundle-item-row.out-of-stock > span:first-child::before { background: rgba(250, 249, 242, 0.45); }
-        .combo-tinted .bundle-discount-edit input,
-        .combo-tinted .combo-color-edit input[type="color"] {
-            background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.24); color: #FAF9F2;
-        }
-        .combo-tinted .combo-edit-btn { color: rgba(250, 249, 242, 0.75); border-color: rgba(255, 255, 255, 0.24); }
-        .combo-tinted .bundle-weight-total.zero-weight strong { color: #FF9466; }
 
         /* ================= BUILD A BUNDLE ================= */
         .dish-picker {
@@ -12329,11 +12293,11 @@
            browse the relevant aisle. Reuses the .product-grid class purely
            for its already-working horizontal drag-scroll behaviour. */
         let COMBOS = [
-            { name: 'Rice Night Combo', discountPercent: 8, items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }], description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice', bgColor: '#4A2B12' },
-            { name: 'Suya Night Combo', discountPercent: 8, items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }], description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat', bgColor: '#5C1F1F' },
-            { name: 'Soup Pot Combo', discountPercent: 10, items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'root-vegetables', idx: 0 }, { catSlug: 'seasoning', idx: 2 }], description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables', bgColor: '#4A1942' },
-            { name: 'Snack Attack Combo', discountPercent: 5, items: [{ catSlug: 'snacks-confectionary', idx: 0 }, { catSlug: 'snacks-confectionary', idx: 1 }], description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary', bgColor: '#3A2250' },
-            { name: 'Fry-Up Combo', discountPercent: 5, items: [{ catSlug: 'tropical-foods', idx: 0 }, { catSlug: 'oils', idx: 1 }], description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods', bgColor: '#1F3A30' },
+            { name: 'Rice Night Combo', discountPercent: 8, items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }], description: 'Rice, oil, and a rich tomato stew base for a proper dinner.', linkCategory: 'rice' },
+            { name: 'Suya Night Combo', discountPercent: 8, items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }], description: 'Beef, suya spice, and the essentials, ready for the grill or pan.', linkCategory: 'meat' },
+            { name: 'Soup Pot Combo', discountPercent: 10, items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'root-vegetables', idx: 0 }, { catSlug: 'seasoning', idx: 2 }], description: 'Everything for a hearty pot of soup, from base to garnish.', linkCategory: 'root-vegetables' },
+            { name: 'Snack Attack Combo', discountPercent: 5, items: [{ catSlug: 'snacks-confectionary', idx: 0 }, { catSlug: 'snacks-confectionary', idx: 1 }], description: 'A mix of sweet and savoury snacks for movie night.', linkCategory: 'snacks-confectionary' },
+            { name: 'Fry-Up Combo', discountPercent: 5, items: [{ catSlug: 'tropical-foods', idx: 0 }, { catSlug: 'oils', idx: 1 }], description: 'Plantain, oil, and the basics for a proper fry-up.', linkCategory: 'tropical-foods' },
         ];
 
         /* ================= BUILD A BUNDLE =================
@@ -12678,14 +12642,13 @@
                 ? `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span><span class="bundle-was">${money(rawTotal)}</span> ${money(discountedTotal)}</span></div>
       <div class="combo-savings">You save ${money(savings)}</div>`
                 : `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(discountedTotal)}</span></div>`) : '';
-            const bgColor = combo.bgColor || '';
             // The same glyph a shopper already sees on the linked category's
             // own card elsewhere on the site — free visual identity per combo
             // with no new admin field to fill in, and it can never drift out
             // of sync with what the combo actually links to.
             const catIcon = combo.linkCategory ? findCategory(combo.linkCategory)?.emoji : null;
             return `
-    <div class="combo-card combo-ticket${bgColor ? ' combo-tinted' : ''}" id="comboCard-${ci}"${bgColor ? ` style="background:${escapeHtml(bgColor)}"` : ''}>
+    <div class="combo-card combo-ticket" id="comboCard-${ci}">
       <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
       ${catIcon ? `<span class="combo-ticket-watermark" aria-hidden="true">${catIcon}</span>` : ''}
       ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge combo-stamp"><span class="combo-stamp-ring"></span><span class="combo-stamp-pct">${discountPct}%</span><span class="combo-stamp-label">off</span></div>` : ''}
@@ -12702,10 +12665,6 @@
         <label>Combo discount %</label>
         <input type="number" min="0" max="90" value="${discountPct}" onchange="setComboDiscount(${ci}, this.value)">
       </div>` : ''}
-      <div class="bundle-discount-edit combo-color-edit">
-        <label>Card colour</label>
-        <input type="color" value="${bgColor || '#FAF9F2'}" onchange="setComboBgColor(${ci}, this.value)">
-      </div>
       ${items.length
                 ? `<button class="bundle-add-btn combo-add-btn" type="button" onclick="addComboToCart(${ci})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg>Add combo to basket</button>`
                 : (combo.linkCategory ? `<a class="btn btn-primary" href="#/category/${combo.linkCategory}" draggable="false">Shop this combo</a>` : '')}
@@ -12713,18 +12672,6 @@
       </div>
     </div>`;
         }
-        function setComboBgColor(ci, value) {
-            const before = COMBOS[ci].bgColor || '';
-            COMBOS[ci].bgColor = value;
-            renderCombos();
-            savePricingSettings();
-            if (before !== value) {
-                logAdminAction('combo_updated', 'combo', COMBOS[ci].name, {
-                    changes: [{ label: 'Card colour', from: before || 'default', to: value }],
-                });
-            }
-        }
-        window.setComboBgColor = setComboBgColor;
         function setComboDiscount(ci, value) {
             const before = COMBOS[ci].discountPercent || 0;
             const pct = parseFloat(value);
@@ -12858,7 +12805,6 @@
                 description: document.getElementById('cce-desc').value.trim(),
                 linkCategory: document.getElementById('cce-link').value || null,
                 items: [...comboEditNewItems],
-                bgColor: before.bgColor,
             };
             const itemNamesAfter = COMBOS[ci].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             comboEditNewItems = null;
