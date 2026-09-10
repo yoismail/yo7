@@ -4520,16 +4520,13 @@
            section's "View all" link is how the rest gets seen. Mobile is
            untouched — still the original swipe strip below 901px. */
         @media (min-width: 901px) {
-            /* minmax(180px, 190px), not 1fr — a growable 1fr track stretched
-               each card to fill its share of the row on a wide screen,
-               reading as noticeably bigger than the same cards' mobile
-               size. Capping the max keeps them close to that original
-               compact size regardless of viewport width; any leftover
-               row width beyond the last full column is just left empty
-               rather than inflating the cards to fill it. */
+            /* minmax(180px, 1fr), matching .cat-flat-scroll (Shop by
+               category) below — columns stretch to fill the row evenly so
+               the last column's right edge lines up with the section's
+               right edge instead of leaving empty space there. */
             .offer-carousel, .new-carousel, .best-seller-carousel {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(180px, 190px));
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
                 gap: 18px;
                 overflow: visible;
                 cursor: default;
@@ -4543,7 +4540,8 @@
                 min-width: 0;
             }
             .offer-card, .new-card, .best-seller-card {
-                max-width: 190px;
+                max-width: none;
+                width: 100%;
             }
             .offer-carousel > :nth-child(n+9),
             .new-carousel > :nth-child(n+9),
