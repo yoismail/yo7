@@ -18523,8 +18523,18 @@
         // app to read, with no extra entry and no hashchange/popstate
         // side effects to guard against.
         function syncHashFromPath() {
+            // Only steps in when the hash is empty. A hash that's already
+            // set is always the fresher signal — it means a real
+            // navigation (a click, a direct location.hash assignment)
+            // just happened, and window.location.pathname simply hasn't
+            // caught up to it yet (that happens a few lines below, in
+            // syncAddressBarToHash). Reconciling unconditionally here
+            // would stomp that brand new hash right back down to
+            // whatever the not-yet-updated old path derives to, on
+            // literally every navigation.
+            if (window.location.hash) return;
             const derived = pathToHash(window.location.pathname);
-            if (window.location.hash !== derived) {
+            if (derived) {
                 history.replaceState(null, '', window.location.pathname + window.location.search + derived);
             }
         }
