@@ -18461,6 +18461,61 @@
                 if (el) el.classList.toggle('nav-link-active', active);
             });
         }
+        /* ================= CLEAN URLS =================
+           Every route on this site has always been, and still is, a hash
+           (#/shop, #/product/rice/0, ...) — every href="#/..." link,
+           every window.location.hash = '#/...' call site, and route()'s
+           own branching below are all completely untouched. What changed
+           is just the address bar: these two helpers translate between
+           that internal hash format and the real, clean path Cloudflare
+           now serves (see wrangler.jsonc's single-page-application
+           fallback), so visitors never see the # at all, while the app
+           itself keeps using the exact same routing engine it always has.
+           Trailing slash is deliberate and consistent for every non-root
+           path — it's what the 9+hundreds of pre-generated static pages
+           (about/index.html etc, served at /about/) already use, so a
+           fresh visit/reload/shared link to any app-only route (like
+           /shop/, which has no matching file) resolves the exact same
+           way Cloudflare's fallback already handles those. */
+        function pathToHash(pathname) {
+            const trimmed = pathname.replace(/\/+$/, '');
+            return trimmed === '' ? '' : '#' + trimmed;
+        }
+        function hashToCleanPath(hash) {
+            return hash ? hash.replace(/\/+$/, '') + '/' : '/';
+        }
+        // Called from route() itself, every single time it runs — the one
+        // place every navigation (link click, back/forward, boot) already
+        // passes through. Keeps location.hash as the real, unchanged
+        // internal state (this runs after route() has already captured
+        // it into a local variable), just rewrites what's actually shown.
+        function syncAddressBarToHash(hash) {
+            const clean = hashToCleanPath(hash);
+            if (window.location.pathname !== clean || window.location.hash) {
+                history.replaceState(null, '', clean + window.location.search);
+            }
+        }
+        // The reverse direction: browsers only ever remember the real,
+        // clean path for a history entry (that's what syncAddressBarToHash
+        // above put there) — never a hash — so boot and every back/forward
+        // navigation need this to derive route()'s actual input back out
+        // of whatever real path the address bar is showing.
+        function syncHashFromPath() {
+            const derived = pathToHash(window.location.pathname);
+            if (window.location.hash !== derived) {
+                // Queues an async hashchange event on top of whatever
+                // calls route() right after this — harmless, route() is
+                // already called repeatedly elsewhere in this file (data
+                // loads re-rendering the current view) and is idempotent.
+                window.location.hash = derived;
+            }
+        }
+        // Back/forward navigation changes location.pathname but never
+        // fires 'hashchange' on its own (there's usually no hash at all
+        // in either state to compare) — without this, the address bar
+        // would move but the app wouldn't react at all.
+        window.addEventListener('popstate', () => { syncHashFromPath(); route(); });
+
         function route() {
             const hash = window.location.hash;
             // "#edit" is a shortcut straight into edit mode for whoever's
@@ -18470,6 +18525,7 @@
             // check actually confirms admin, instead of stopping short at
             // the dashboard and requiring a second click.
             if (hash === '#edit' || hash === '#/edit') { autoEnterEditMode = true; window.location.hash = '#/admin'; return; }
+            syncAddressBarToHash(hash);
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
             updateActiveNavLink();
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
@@ -19143,6 +19199,12 @@
         observeReveals();
         updateCartBadge();
         handleStripeRedirectReturn();
+        // A fresh load/reload/shared-link visit to a real path (e.g.
+        // /shop/, or one of the pre-generated pages like /about/) has no
+        // hash at all yet — derive route()'s actual input from the real
+        // path before the very first call, same as every back/forward
+        // navigation already does via the popstate listener above.
+        syncHashFromPath();
         route();
         // The footer starts hidden (see .boot-hidden) so it can't render
         // above the real page while everything up to and including this
