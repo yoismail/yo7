@@ -2536,7 +2536,7 @@
         .combo-card .btn { width: 100%; text-align: center; }
         .combo-ticket-head { padding: 24px 24px 16px; }
         .combo-has-stamp h3 { padding-right: 56px; } /* clears the stamp badge overlapping this corner, only present when there's a discount to stamp */
-        .combo-ticket-body { padding: 0 24px 24px; display: flex; flex-direction: column; flex: 1; }
+        .combo-ticket-body { padding: 18px 24px 24px; display: flex; flex-direction: column; flex: 1; }
         /* The linked category's own glyph (see comboCardHTML's comment),
            oversized and bled off the corner like the faded "Yo7" watermark
            used elsewhere on the site — the same sitewide "big faded icon in
@@ -2572,8 +2572,19 @@
             background: linear-gradient(155deg, #FFEB3B 0%, var(--orange) 100%);
             border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
             color: var(--aubergine-deep);
-            transform: rotate(9deg);
             box-shadow: 0 5px 12px rgba(225, 225, 0, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.4);
+            animation: comboStampPulse 2.6s ease-in-out infinite;
+        }
+        /* Keeps the stamp's own 9deg "pressed on askew" rotation constant
+           through every frame — only scale and glow breathe, same "grows
+           and glows, doesn't spin or drift" restraint as ctaPulseGlow/
+           pillPulseGlow elsewhere on the site. */
+        @keyframes comboStampPulse {
+            0%, 100% { transform: rotate(9deg) scale(1); box-shadow: 0 5px 12px rgba(225, 225, 0, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.4); }
+            50% { transform: rotate(9deg) scale(1.08); box-shadow: 0 8px 20px rgba(225, 225, 0, 0.6), 0 0 0 5px rgba(255, 255, 255, 0.5); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .combo-stamp { animation: none; }
         }
         .combo-stamp-ring {
             position: absolute; inset: 5px; border-radius: inherit;
