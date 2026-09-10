@@ -18505,19 +18505,23 @@
         // above put there) — never a hash — so boot and every back/forward
         // navigation need this to derive route()'s actual input back out
         // of whatever real path the address bar is showing.
-        // Assigning window.location.hash below queues an async hashchange
-        // event on top of whatever calls route() right after this — and
-        // by the time that queued event fires, route()'s own
-        // syncAddressBarToHash() has already cleared the hash back out
-        // again, so the hashchange handler would otherwise reread an
-        // empty hash and reroute to home. This flag tells that one
-        // handler invocation to skip itself.
-        let suppressNextHashchange = false;
+        //
+        // This has to go through history.replaceState(), never a plain
+        // location.hash = ... assignment — assigning always pushes a
+        // brand new history entry, even from inside a popstate handler
+        // that's reacting to the user pressing Back. That silently added
+        // a duplicate entry on top of the one they'd just navigated to on
+        // every single non-home back/forward press, so repeated
+        // back/forward bounced between synthetic duplicates instead of
+        // real history. replaceState rewrites this exact entry in place —
+        // same technique syncAddressBarToHash above already uses — so
+        // window.location.hash still ends up correct for the rest of the
+        // app to read, with no extra entry and no hashchange/popstate
+        // side effects to guard against.
         function syncHashFromPath() {
             const derived = pathToHash(window.location.pathname);
             if (window.location.hash !== derived) {
-                suppressNextHashchange = true;
-                window.location.hash = derived;
+                history.replaceState(null, '', window.location.pathname + window.location.search + derived);
             }
         }
         // Back/forward navigation changes location.pathname but never
@@ -18639,10 +18643,7 @@
             }
             updateBreadcrumbJsonLd();
         }
-        window.addEventListener('hashchange', () => {
-            if (suppressNextHashchange) { suppressNextHashchange = false; return; }
-            route();
-        });
+        window.addEventListener('hashchange', route);
 
         /* ================= DEFENSIVE LINK HANDLING =================
            Some mobile browsers handle taps on href="#/..." links inconsistently
