@@ -17907,6 +17907,22 @@
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = 'Creating account…';
+            // isValidEmail() above only checks the address is well-formed —
+            // this checks the domain can actually receive mail at all (a
+            // DNS MX-record lookup, see verify-email-domain), catching a
+            // typo'd or made-up domain before an account or confirmation
+            // email is created for it. Fails open on its own error (a DNS
+            // hiccup should never block a real signup), same as the
+            // function itself does server-side.
+            try {
+                const { data: domainCheck } = await supabaseClient.functions.invoke('verify-email-domain', { body: { email } });
+                if (domainCheck && domainCheck.valid === false) {
+                    btn.disabled = false;
+                    btn.textContent = 'Create account';
+                    setAuthError('signupError', domainCheck.reason || 'That email address doesn\'t look right, double-check it and try again.');
+                    return;
+                }
+            } catch (domainCheckErr) { /* fail open, see comment above */ }
             const { data, error } = await supabaseClient.auth.signUp({
                 email, password, options: { data: { full_name: name } }
             });
