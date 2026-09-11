@@ -3748,20 +3748,23 @@
             /* Matches the footer's own background gradient's top stop
                (see footer below) so the curve blends seamlessly into it
                rather than leaving a hairline seam against a plain white. */
-            fill: #FFFCEE;
+            fill: #FFFEFA;
         }
         footer {
             position: relative;
-            /* Same warm cream-to-gold gradient as .footer-interest below
-               (the "Get 10% Off" card) — a fixed light surface regardless
-               of theme, same reasoning as the rest of this section (see
-               .footer-newsletter's own comment further down): it's
-               tuned once for a light background and stays that way in
-               both themes rather than flipping to near-black. Solid,
-               not translucent — nothing scrolls behind the footer, so
-               there was never anything for the old backdrop-filter glass
-               effect to actually reveal. */
-            background: linear-gradient(155deg, #FFFCEE, #FFF6CC);
+            /* Same cream-to-gold family as .footer-interest below (the
+               "Get 10% Off" card), just toned way down — a much subtler
+               warm tint than the card's own accent rather than matching
+               it stop-for-stop, so the base surface reads as a gentle
+               cream rather than a yellow one. Fixed light surface
+               regardless of theme, same reasoning as the rest of this
+               section (see .footer-newsletter's own comment further
+               down): tuned once for a light background and stays that
+               way in both themes rather than flipping to near-black.
+               Solid, not translucent — nothing scrolls behind the
+               footer, so there was never anything for the old
+               backdrop-filter glass effect to actually reveal. */
+            background: linear-gradient(155deg, #FFFEFA, #FFF9E5);
             color: #2C1C10;
             /* Extra bottom padding clears the floating WhatsApp/basket
                buttons (fixed, bottom:24px, 56px tall) — without it, the
