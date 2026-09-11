@@ -16664,8 +16664,19 @@
                 // resolves to something actionable, and its link to
                 // /orders still gets them to their real order regardless
                 // of what went wrong here.
+                //
+                // A genuinely weak connection doesn't always reject
+                // outright, though — a request that's sent but never gets
+                // a response just hangs, and the try/catch above alone
+                // never fires for that case since nothing ever settles.
+                // Racing the query against a timeout is what actually
+                // bounds how long a stalled fetch can leave this page
+                // stuck on "Loading your order…" before it falls through
+                // to that same no-order state.
                 try {
-                    const { data, error } = await supabaseClient.from('orders').select('*').eq('user_id', currentSupabaseUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+                    const query = supabaseClient.from('orders').select('*').eq('user_id', currentSupabaseUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out loading your order.')), 10000));
+                    const { data, error } = await Promise.race([query, timeout]);
                     if (error) throw error;
                     if (data) lastOrder = orderRowToLastOrder(data);
                 } catch (err) {
