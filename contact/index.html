@@ -3838,6 +3838,27 @@
         }
         footer .wrap { position: relative; z-index: 1; }
 
+        /* Side by side above 900px — narrower than that and each card's
+           own internal row (icon+text vs. the form) has nowhere left to
+           breathe once a card is squeezed to half-width, given the
+           form inputs' own 220px min-width (see .newsletter-form input
+           below), so it drops back to the original stacked layout. */
+        .footer-newsletter-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        @media (min-width: 900px) {
+            .footer-newsletter-grid {
+                flex-direction: row;
+                align-items: stretch;
+            }
+            .footer-newsletter-grid .footer-newsletter {
+                flex: 1;
+                min-width: 0;
+            }
+        }
         .footer-newsletter {
             position: relative;
             display: flex;
@@ -3853,6 +3874,7 @@
             box-shadow: 0 2px 6px rgba(44, 28, 16, 0.04), 0 30px 60px rgba(44, 28, 16, 0.09);
             overflow: hidden;
         }
+        .footer-newsletter-grid .footer-newsletter { margin-bottom: 0; }
         .footer-newsletter::before {
             content: '';
             position: absolute;
@@ -9940,6 +9962,7 @@
     <footer>
         <div class="text-watermark footer-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         <div class="wrap">
+            <div class="footer-newsletter-grid">
             <div class="footer-newsletter">
                 <svg class="newsletter-watermark" viewBox="65 25 875 900" aria-hidden="true">
                     <use href="#seal-mark" />
@@ -9987,6 +10010,7 @@
                     </span>
                     <p>Done. Check your email for your 10% code.</p>
                 </div>
+            </div>
             </div>
             <div class="footer-top">
                 <div>
