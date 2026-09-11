@@ -85,7 +85,7 @@ PAGES = [
 # was written and its line-index assumptions below need updating first —
 # replace_line() raises rather than silently writing a broken page.
 OLD_TITLE = 'Yo7 Foods | Fresh African &amp; Caribbean Groceries, Ipswich'
-OLD_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Join the launch list for 10% off your first order.'
+OLD_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Sign up for 10% off your first order.'
 OLD_TWITTER_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich.'
 
 
