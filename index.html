@@ -12247,6 +12247,17 @@
         function renderMealSetsHome() {
             const grid = document.getElementById('mealSetsGrid');
             if (!grid) return;
+            // Unlike the offer/new-arrivals/best-seller carousels, this
+            // section can't just hide outright when empty — "Add a combo"
+            // lives inside this same section, and an admin with zero
+            // combos still needs it visible to add the first one. Hidden
+            // from an ordinary customer only.
+            const section = grid.closest('.bundles-section');
+            if (COMBOS.length === 0 && !currentIsAdmin) {
+                if (section) section.style.display = 'none';
+                return;
+            }
+            if (section) section.style.display = '';
             const cards = COMBOS.map((c, ci) => comboCardHTML(c, ci));
             grid.innerHTML = cards.join('') || '<p style="font-size:13px; color:var(--text-muted);">No meal sets advertised yet.</p>';
         }
@@ -13320,10 +13331,12 @@
             const items = shuffleArray(offerItems());
             const strip = document.getElementById('offerCarousel');
             if (!strip) return;
+            const offerSection = strip.closest('.offer-section');
             if (items.length === 0) {
-                strip.closest('.offer-section').style.display = 'none';
+                if (offerSection) offerSection.style.display = 'none';
                 return;
             }
+            if (offerSection) offerSection.style.display = '';
             const cardHTML = items.map((p, i) => {
                 const pct = Math.round((1 - p.salePrice / p.price) * 100);
                 return `
@@ -13350,7 +13363,19 @@
         function renderNewCarousel() {
             // Shuffled for the same reason as renderOfferCarousel() above.
             const items = shuffleArray(newArrivalsItems());
-
+            const strip = document.getElementById('newCarousel');
+            if (!strip) return;
+            // Same empty-state guard renderOfferCarousel()/
+            // renderBestSellersSpotlight() already have — without it, a
+            // moment with no products flagged as new left the whole
+            // "Fresh arrivals, just landed" section visible with an empty
+            // strip underneath instead of not showing at all.
+            const newSection = strip.closest('.new-section');
+            if (items.length === 0) {
+                if (newSection) newSection.style.display = 'none';
+                return;
+            }
+            if (newSection) newSection.style.display = '';
             const cardHTML = items.map(p => `
     <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
@@ -13369,7 +13394,6 @@
         </div>
       </div>
     </a>`).join('');
-            const strip = document.getElementById('newCarousel');
             strip.innerHTML = cardHTML;
         }
         /* ================= CAROUSEL AUTO-ADVANCE =================
@@ -13440,10 +13464,12 @@
             const items = bestSellerItems();
             const strip = document.getElementById('bestSellerCarousel');
             if (!strip) return;
+            const bestSellersSection = strip.closest('.best-sellers-section');
             if (items.length === 0) {
-                strip.closest('.best-sellers-section').style.display = 'none';
+                if (bestSellersSection) bestSellersSection.style.display = 'none';
                 return;
             }
+            if (bestSellersSection) bestSellersSection.style.display = '';
             strip.innerHTML = items.map((p, i) => `
     <a class="best-seller-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
