@@ -16650,8 +16650,23 @@
         async function renderConfirmation() {
             if (!lastOrder && supabaseClient && currentSupabaseUser) {
                 document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">Loading your order…</p>';
-                const { data } = await supabaseClient.from('orders').select('*').eq('user_id', currentSupabaseUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
-                if (data) lastOrder = orderRowToLastOrder(data);
+                // Without this try/catch, a failed request here (dropped
+                // connection, RLS hiccup, anything) threw an unhandled
+                // rejection and execution never reached the code below —
+                // invoiceBox stayed stuck on "Loading your order…" forever,
+                // with no fallback message and nothing for the person to
+                // do but leave the page. Falling through to the ordinary
+                // "no order found" state on failure means the page always
+                // resolves to something actionable, and its link to
+                // /orders still gets them to their real order regardless
+                // of what went wrong here.
+                try {
+                    const { data, error } = await supabaseClient.from('orders').select('*').eq('user_id', currentSupabaseUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+                    if (error) throw error;
+                    if (data) lastOrder = orderRowToLastOrder(data);
+                } catch (err) {
+                    console.error('renderConfirmation: failed to load recent order:', err);
+                }
                 // Nothing else may have re-routed away from this view while
                 // that fetch was in flight, but double-check anyway before
                 // writing into invoiceBox below — checked against the view
