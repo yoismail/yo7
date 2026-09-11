@@ -16345,11 +16345,12 @@
     <p style="font-family:var(--display); font-weight:700; margin-bottom:12px;">${data.length} sign-up${data.length === 1 ? '' : 's'}</p>
     <div class="admin-orders-table-wrap">
         <table class="admin-orders-table">
-            <thead><tr><th>Email</th><th>Postcode</th><th>Signed up</th></tr></thead>
+            <thead><tr><th>Email</th><th>Postcode</th><th>Code emailed</th><th>Signed up</th></tr></thead>
             <tbody>${data.map(s => `
     <tr>
         <td>${escapeHtml(s.email)}</td>
         <td>${escapeHtml(s.postcode || '—')}</td>
+        <td>${s.discount_code ? escapeHtml(s.discount_code) : '—'}</td>
         <td>${new Date(s.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
     </tr>`).join('')}</tbody>
         </table>
