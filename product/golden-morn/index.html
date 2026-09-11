@@ -15638,7 +15638,8 @@
         function orderHistoryRowHTML(order) {
             const status = order.status || 'placed';
             const items = Array.isArray(order.items) ? order.items : [];
-            const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const orderCreatedAt = new Date(order.created_at);
+            const dateLabel = orderCreatedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + orderCreatedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const cancellationNote = (status === 'cancelled' && order.cancellation_reason)
                 ? `<div class="order-cancellation-reason"><strong>Cancelled:</strong> ${escapeHtml(order.cancellation_reason)}</div>`
                 : '';
