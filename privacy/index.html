@@ -16677,7 +16677,7 @@
                 // to that same no-order state.
                 try {
                     const query = supabaseClient.from('orders').select('*').eq('user_id', currentSupabaseUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
-                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out loading your order.')), 10000));
+                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out loading your order.')), 4000));
                     const { data, error } = await Promise.race([query, timeout]);
                     if (error) throw error;
                     if (data) lastOrder = orderRowToLastOrder(data);
