@@ -3797,8 +3797,15 @@
            in both themes (see footer above), so this does too. */
         .footer-watermark-left {
             position: absolute;
-            bottom: -8%;
-            left: -3%;
+            /* Fixed px, not a %, on purpose — a % bottom/left offset is
+               relative to the footer's own height/width, which on mobile
+               (everything stacks into one tall column) is several times
+               taller than on desktop, so the same % pushed this mark
+               hundreds of pixels below the footer's own bottom edge and
+               footer's overflow:hidden clipped it away entirely. Same
+               fix, same reason, as .hero-text-watermark's em offset. */
+            bottom: -20px;
+            left: -14px;
             width: min(24vw, 260px);
             opacity: 0.16;
             pointer-events: none;
@@ -3814,9 +3821,6 @@
         }
         @media (prefers-reduced-motion: reduce) {
             .footer-watermark-left { animation: none; }
-        }
-        @media (max-width: 780px) {
-            .footer-watermark-left { display: none; }
         }
         footer .wrap { position: relative; z-index: 1; }
 
