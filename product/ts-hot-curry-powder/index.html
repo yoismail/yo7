@@ -3108,8 +3108,14 @@
            this used to be, a numbered rank badge is the one thing that
            still marks these out as best sellers specifically rather than
            just another product row. */
+        /* align-items: flex-start, not the flex default of stretch — a
+           discounted card's price can wrap onto a second line (see
+           .product-row's flex-wrap above), making that one card taller.
+           Stretch would then force every other card in the row to match
+           that height, leaving blank space below their shorter content
+           instead of letting each card size to its own. */
         .best-seller-carousel {
-            display: flex; gap: 18px; padding: 4px 2px 10px;
+            display: flex; align-items: flex-start; gap: 18px; padding: 4px 2px 10px;
             overflow-x: auto; scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
             scroll-snap-type: x proximity;
@@ -3216,8 +3222,10 @@
         .view-all-btn svg { width: 15px; height: 15px; transition: transform 0.2s ease; }
         .view-all-btn:hover { background: var(--aubergine); color: var(--cream); transform: translateX(2px); }
         .new-carousel-wrap { position: relative; width: 100%; max-width: 100%; display: flex; align-items: center; gap: 8px; }
+        /* align-items: flex-start — see the comment on .best-seller-carousel,
+           same fix for the same stretch-created blank-space issue. */
         .new-carousel {
-            display: flex; gap: 18px; padding: 4px 2px 10px;
+            display: flex; align-items: flex-start; gap: 18px; padding: 4px 2px 10px;
             overflow-x: auto; overflow-y: hidden;
             -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
@@ -3389,8 +3397,10 @@
             overflow: hidden;
         }
         .offer-carousel-wrap { position: relative; width: 100%; max-width: 100%; display: flex; align-items: center; gap: 8px; z-index: 1; }
+        /* align-items: flex-start — see the comment on .best-seller-carousel,
+           same fix for the same stretch-created blank-space issue. */
         .offer-carousel {
-            display: flex; gap: 18px; padding: 4px 2px 10px;
+            display: flex; align-items: flex-start; gap: 18px; padding: 4px 2px 10px;
             overflow-x: auto; overflow-y: hidden;
             -webkit-overflow-scrolling: touch; scrollbar-width: none;
             cursor: grab; flex: 1; min-width: 0;
