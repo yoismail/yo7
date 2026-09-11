@@ -2319,17 +2319,27 @@
         }
         /* Combo cards specifically (not the Build-a-bundle page, which
            only ever shows one bundle at a time and has room to spare) —
-           a combo with 4+ items pushed these cards well past every other
-           card on the page. Capping the item list itself and letting it
-           scroll internally bounds every combo card to roughly the same
-           height regardless of how many items it lists, rather than the
-           card just growing taller with every item added. */
-        .combo-card .bundle-items {
-            max-height: 148px; overflow-y: auto;
-        }
+           a combo with 4+ items used to push these cards well past every
+           other card on the page, which an internal scrollbar "fixed" by
+           just hiding the overflow, but that hid real ingredients behind a
+           scroll gesture shoppers often never discovered and made every
+           card's item count look inconsistent at a glance. Showing the
+           full list uncapped instead, and relying on .combo-card's own
+           smaller row size (below) to keep the card from growing much. */
         .bundle-item-row {
             display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body);
             padding: 6px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
+        }
+        /* Smaller row and thumbnail specifically inside combo cards — a
+           combo's item list is a supporting ingredient breakdown, not the
+           card's main content the way a single bundle's list is on the
+           Build-a-bundle page, so it can afford to read smaller and denser
+           now that every row shows uncapped (see .bundle-items above). */
+        .combo-card .bundle-item-row {
+            font-size: 12px; padding: 4px 0; gap: 8px;
+        }
+        .combo-card .bundle-item-thumb {
+            width: 26px; height: 26px; border-radius: 7px;
         }
         .bundle-item-row:first-child { padding-top: 0; }
         .bundle-item-row:last-child { border-bottom: none; padding-bottom: 0; }
@@ -2504,7 +2514,7 @@
         .combo-card .combo-ticket-perf::before, .combo-card .combo-ticket-perf::after { background: #FFF6CC; }
         .combo-card .combo-edit-btn { color: #2C1C10; border-color: rgba(44, 28, 16, 0.18); }
         .combo-ticket-head { padding: 18px 20px 10px; }
-        .combo-has-stamp h3 { padding-right: 56px; } /* clears the stamp badge overlapping this corner, only present when there's a discount to stamp */
+        .combo-has-stamp h3 { padding-right: 44px; } /* clears the stamp badge overlapping this corner, only present when there's a discount to stamp */
         .combo-ticket-body { padding: 14px 20px 16px; display: flex; flex-direction: column; flex: 1; }
         /* The linked category's own glyph (see comboCardHTML's comment),
            oversized and bled off the corner like the faded "Yo7" watermark
@@ -2535,8 +2545,8 @@
            discount pill, rotated as if pressed on slightly askew, with an
            inner dashed ring so it reads as ink-stamped rather than printed. */
         .combo-stamp {
-            position: absolute; z-index: 2; top: 18px; right: 18px;
-            width: 62px; height: 62px;
+            position: absolute; z-index: 2; top: 16px; right: 16px;
+            width: 48px; height: 48px;
             display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;
             background: linear-gradient(155deg, #FFEB3B 0%, var(--orange) 100%);
             border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
@@ -2556,12 +2566,12 @@
             .combo-stamp { animation: none; }
         }
         .combo-stamp-ring {
-            position: absolute; inset: 5px; border-radius: inherit;
+            position: absolute; inset: 4px; border-radius: inherit;
             border: 1.5px dashed rgba(4, 37, 0, 0.32);
             pointer-events: none;
         }
-        .combo-stamp-pct { font-family: var(--display); font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
-        .combo-stamp-label { font-family: var(--display); font-weight: 700; font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.72; margin-top: -1px; }
+        .combo-stamp-pct { font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: -0.01em; }
+        .combo-stamp-label { font-family: var(--display); font-weight: 700; font-size: 7px; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.72; margin-top: -1px; }
         /* Named explicitly rather than "you save X%" — a cash amount lands
            as more real to a shopper mid-scroll than a percentage they'd
            have to do the maths on themselves. */
