@@ -3873,18 +3873,22 @@
             border-color: var(--chartreuse);
             box-shadow: 0 0 0 3px rgba(144, 184, 0, 0.16);
         }
+        /* Same gold as .footer-interest's own accent (the "10% off" card
+           right next to this one) — both signup buttons read as the one
+           consistent call-to-action colour rather than the plain
+           newsletter card getting a different, weaker-looking green. */
         .newsletter-form button {
-            background: var(--chartreuse); color: var(--aubergine-deep); border: none; border-radius: 12px;
+            background: var(--orange); color: var(--aubergine-deep); border: none; border-radius: 12px;
             padding: 13px 22px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
             white-space: nowrap;
             transition: background 0.2s ease, transform 0.2s cubic-bezier(.16,.84,.44,1), box-shadow 0.2s ease;
         }
         .newsletter-form button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(144, 184, 0, 0.28);
+            box-shadow: 0 10px 20px rgba(225, 225, 0, 0.4);
         }
         .newsletter-form button:active {
-            background: var(--chartreuse-rich);
+            background: #C9C900;
             transform: translateY(0);
         }
 
@@ -3894,7 +3898,9 @@
            (.combo-stamp, .offer-tag). Both cards are solid white now
            that the footer itself carries this same gold tint (see
            footer above) — a gradient here as well would just blend the
-           card into the surface it's sitting on. */
+           card into the surface it's sitting on. The two buttons are
+           deliberately identical now (see .newsletter-form button
+           above), so there's no button override here any more. */
         .footer-interest {
             background: #FFFFFF;
             border-color: rgba(225, 225, 0, 0.4);
@@ -3909,16 +3915,6 @@
         .footer-interest .newsletter-form input {
             border-color: rgba(225, 225, 0, 0.45);
             background: rgba(225, 225, 0, 0.14);
-        }
-        .footer-interest .newsletter-form button {
-            background: var(--orange);
-            color: var(--aubergine-deep);
-        }
-        .footer-interest .newsletter-form button:hover {
-            box-shadow: 0 10px 20px rgba(225, 225, 0, 0.4);
-        }
-        .footer-interest .newsletter-form button:active {
-            background: #C9C900;
         }
 
         .footer-top {
@@ -9974,7 +9970,7 @@
                     <span class="hero-capture-thanks-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                     </span>
-                    <p>You're on the list — check your email for your 10% code.</p>
+                    <p>Done — check your email for your 10% code.</p>
                 </div>
             </div>
             <div class="footer-top">
@@ -19481,10 +19477,10 @@
                 if (!supabaseClient) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalLabel;
-                    showToast("We couldn't add you to the list just now, please try again in a moment.", 4000);
+                    showToast("We couldn't send your code just now, please try again in a moment.", 4000);
                     return;
                 }
-                submitBtn.textContent = 'Joining…';
+                submitBtn.textContent = 'Sending…';
                 const postcode = heroCapturePostcodeField.value.trim();
                 // isNewSignup distinguishes a fresh row from a repeat of an
                 // email already on the list (migration 42) — the DB is the
@@ -19498,8 +19494,8 @@
                 try { localStorage.setItem('yo7ComingSoonSignedUp', '1'); } catch (e) { /* private browsing etc. */ }
                 heroCaptureWrap.classList.add('signed-up');
                 showToast(isNewSignup
-                    ? "You're on the list! We've emailed your 10% code."
-                    : "You're already on the list — check your email for your 10% code.", 5500);
+                    ? "Done! We've emailed your 10% code."
+                    : "You've already got a code — check your email for it.", 5500);
             });
         }
         // renderHeroGlimpse/renderOfferCarousel/renderNewCarousel/
