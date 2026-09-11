@@ -3783,6 +3783,41 @@
         @media (max-width: 780px) {
             .footer-watermark { display: none; }
         }
+        /* The bottom-right mark above is deliberately a near-invisible
+           texture, not a logo you'd actually notice — this is the
+           opposite corner's counterpart, sized and lit to actually read
+           as the seal while it sits behind every bit of footer content
+           (z-index: 0, same as its sibling), so it never competes with
+           the copyright line or payment badges sitting on top of it for
+           attention. Same tilt-breathe-glow motion as .hero-watermark,
+           just gentler (a smaller max scale/rotation, since this mark
+           sits much closer to eye-catching text than the hero's does),
+           and a fixed opacity rather than the theme-flipping
+           --hero-watermark-op — the footer stays a fixed light surface
+           in both themes (see footer above), so this does too. */
+        .footer-watermark-left {
+            position: absolute;
+            bottom: -8%;
+            left: -3%;
+            width: min(24vw, 260px);
+            opacity: 0.16;
+            pointer-events: none;
+            z-index: 0;
+            transform-origin: 45% 55%;
+            animation: footerWatermarkLeftLive 8s ease-in-out infinite;
+        }
+        @keyframes footerWatermarkLeftLive {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.16; }
+            30% { transform: rotate(-3deg) scale(1.015); }
+            60% { transform: rotate(4deg) scale(1.04); opacity: 0.22; }
+            85% { transform: rotate(1deg) scale(1.015); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .footer-watermark-left { animation: none; }
+        }
+        @media (max-width: 780px) {
+            .footer-watermark-left { display: none; }
+        }
         footer .wrap { position: relative; z-index: 1; }
 
         .footer-newsletter {
@@ -9888,6 +9923,9 @@
     </div>
     <footer>
         <svg class="footer-watermark" viewBox="65 25 875 900" aria-hidden="true">
+            <use href="#seal-mark" />
+        </svg>
+        <svg class="footer-watermark-left" viewBox="65 25 875 900" aria-hidden="true">
             <use href="#seal-mark" />
         </svg>
         <div class="wrap">
