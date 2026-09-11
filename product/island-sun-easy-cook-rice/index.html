@@ -3751,26 +3751,37 @@
             height: 40px;
         }
         .footer-curve path {
-            /* Matches the footer's own background gradient's top stop
-               (see footer below) so the curve blends seamlessly into it
-               rather than leaving a hairline seam against a plain white. */
+            /* Matches the footer's own background (see footer below) so
+               the curve blends seamlessly into it rather than leaving a
+               hairline seam. Light mode: footer is transparent now, so
+               this just matches the page background it's sitting on —
+               the curve becomes visually inert there, which is fine,
+               there's no colour jump left to smooth over. Dark mode
+               keeps the real cream-to-gold matching stop, see below. */
+            fill: var(--page-bg);
+        }
+        [data-theme="dark"] .footer-curve path {
             fill: #FFFEFA;
         }
         footer {
             position: relative;
-            /* Same cream-to-gold family as .footer-interest below (the
-               "Get 10% Off" card), just toned way down — a much subtler
-               warm tint than the card's own accent rather than matching
-               it stop-for-stop, so the base surface reads as a gentle
-               cream rather than a yellow one. Fixed light surface
-               regardless of theme, same reasoning as the rest of this
-               section (see .footer-newsletter's own comment further
-               down): tuned once for a light background and stays that
-               way in both themes rather than flipping to near-black.
-               Solid, not translucent — nothing scrolls behind the
-               footer, so there was never anything for the old
-               backdrop-filter glass effect to actually reveal. */
-            background: linear-gradient(155deg, #FFFEFA, #FFF9E5);
+            /* Transparent in light mode — the page background is
+               already this same near-white cream (--page-bg), so the
+               footer just blends into it rather than sitting in its own
+               visibly-tinted panel. The cards keep their own solid white
+               background regardless (see .footer-newsletter below), so
+               they still stand out against the page behind them, same
+               as their border/shadow already relies on.
+               Dark mode is the one case this can't apply to: the
+               footer's own text/links/watermarks are fixed dark colours
+               tuned for a light surface (same reasoning as
+               .footer-newsletter's own comment further down — this
+               section doesn't flip with the theme), so a transparent
+               background there would put that dark text straight onto
+               the page's near-black dark background and make it
+               unreadable. Dark mode keeps the solid cream-to-gold
+               surface instead, exactly like every theme before this one. */
+            background: transparent;
             color: #2C1C10;
             /* Extra bottom padding clears the floating WhatsApp/basket
                buttons (fixed, bottom:24px, 56px tall) — without it, the
@@ -3779,6 +3790,9 @@
                once someone actually scrolls to the true bottom of the page. */
             padding: 56px 0 100px;
             overflow: hidden;
+        }
+        [data-theme="dark"] footer {
+            background: linear-gradient(155deg, #FFFEFA, #FFF9E5);
         }
         /* Same "Yo7" wordmark treatment as .hero-text-watermark (the big
            faded logo bleeding off the hero's bottom-left corner), mirrored
