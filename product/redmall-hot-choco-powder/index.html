@@ -1769,6 +1769,12 @@
            linger under the thank-you message. */
         .hero-capture-wrap.signed-up .hero-capture-hint { display: none; }
         .hero-capture-wrap.signed-up .hero-capture-thanks { display: flex; }
+        /* "Enter your email and postcode..." is instructions for a form
+           that's just been hidden above — leaving it up reads as
+           contradicting the "Done" message right underneath it (spotted
+           on a real device: both were visible at once). Heading stays,
+           it's still accurate context for what the card is about. */
+        .hero-capture-wrap.signed-up .footer-newsletter-text p { display: none; }
 
         .cta-row {
             display: flex;
