@@ -18251,11 +18251,12 @@
             // is the message almost everyone sees straight after signing up.
             if (data.user && !data.session) {
                 document.getElementById('signupAuthNote').style.display = 'none';
-                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account.');
+                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account — you\'ve already got 10% off your first order, it applies automatically at checkout.');
                 e.target.reset();
                 return;
             }
             setUser(name, data.user);
+            showToast('🎉 You\'ve got 10% off your first order, it applies automatically at checkout', 5000);
             redirectAfterAuth();
         });
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
