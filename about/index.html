@@ -800,14 +800,18 @@
            control in the row. */
         .nav-cart-btn {
             width: auto;
-            height: 28px;
-            padding: 0 15px 0 13px;
+            height: 34px;
+            padding: 0 17px 0 15px;
             background: rgba(144, 184, 0, 0.16);
             border-color: var(--chartreuse);
             color: var(--chartreuse);
         }
         .nav-cart-btn:hover {
             background: rgba(144, 184, 0, 0.26);
+        }
+        .nav-cart-btn svg {
+            width: 21px;
+            height: 21px;
         }
 
         .icon-btn svg {
@@ -1248,9 +1252,13 @@
                34px icon-only controls, so it doesn't read as the one
                oversized control next to the toggle right beside it. */
             .nav-cart-btn {
-                width: 25px;
-                height: 25px;
+                width: 29px;
+                height: 29px;
                 padding: 0;
+            }
+            .nav-cart-btn svg {
+                width: 18px;
+                height: 18px;
             }
 
             .theme-switch {
@@ -1809,11 +1817,18 @@
            click. Was scoped to .hero-capture-form .btn-primary back when
            the hero's main CTA was the email/postcode capture form; now
            applied directly to the Shop Now button that replaced it. */
+        .hero-cta-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
         .hero-shop-btn {
             position: relative;
             overflow: hidden;
             isolation: isolate;
-            margin-bottom: 8px;
         }
         .hero-shop-btn::after {
             content: '';
@@ -3784,6 +3799,37 @@
         .newsletter-form button:active {
             background: var(--chartreuse-rich);
             transform: translateY(0);
+        }
+
+        /* Distinguishes the "10% off" card from the plain newsletter one
+           right next to it — same wax-seal yellow the rest of the site
+           already uses for discounts/offers (.combo-stamp, .offer-tag),
+           rather than the two cards reading as duplicates of each other
+           just because they share the same layout. */
+        .footer-interest {
+            background: linear-gradient(155deg, #FFFCEE, #FFF6CC);
+            border-color: rgba(225, 225, 0, 0.4);
+        }
+        .footer-interest::before {
+            background: linear-gradient(90deg, transparent, var(--orange), transparent);
+        }
+        .footer-interest .footer-newsletter-icon {
+            background: rgba(225, 225, 0, 0.32);
+            color: var(--aubergine-deep);
+        }
+        .footer-interest .newsletter-form input {
+            border-color: rgba(225, 225, 0, 0.45);
+            background: rgba(225, 225, 0, 0.14);
+        }
+        .footer-interest .newsletter-form button {
+            background: var(--orange);
+            color: var(--aubergine-deep);
+        }
+        .footer-interest .newsletter-form button:hover {
+            box-shadow: 0 10px 20px rgba(225, 225, 0, 0.4);
+        }
+        .footer-interest .newsletter-form button:active {
+            background: #C9C900;
         }
 
         .footer-top {
@@ -7808,7 +7854,10 @@
                 </svg>
                 <h1><span class="stretch-word" style="animation-delay:0s">The</span> <span class="stretch-word" style="animation-delay:0.10s">Taste</span> <span class="stretch-word" style="animation-delay:0.20s">of</span> <span class="hero-accent stretch-word" style="animation-delay:0.30s">Home,</span> <span class="stretch-word" style="animation-delay:0.40s">Coming</span> <span class="stretch-word" style="animation-delay:0.50s">to</span> <span class="hero-accent stretch-word" style="animation-delay:0.60s">Suffolk</span> <span class="stretch-word" style="animation-delay:0.70s">&amp;</span> <span class="hero-accent stretch-word" style="animation-delay:0.80s">Essex</span>.</h1>
                 <p class="hero-sub">Real African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing, delivered across Suffolk and Essex.</p>
-                <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
+                <div class="hero-cta-row">
+                    <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
+                    <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">Browse Categories</a>
+                </div>
                 <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -9781,7 +9830,7 @@
                  admin view), not just building a mailing list. Used to be
                  the hero's whole CTA before Shop Now took over that job;
                  kept fully intact here, just less prominent. -->
-            <div class="footer-newsletter hero-capture-wrap" id="heroCaptureWrap">
+            <div class="footer-newsletter footer-interest hero-capture-wrap" id="heroCaptureWrap">
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
@@ -13245,7 +13294,12 @@
       <div class="body">
         <h4>${escapeHtml(p.name)}</h4>
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
-        <div class="price">${priceHTML(p)}</div>
+        <div class="product-row">
+          <div class="price">${priceHTML(p)}</div>
+          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
       </div>
     </a>`;
             }).join('');
@@ -13265,7 +13319,12 @@
       <div class="body">
         <h4>${escapeHtml(p.name)}</h4>
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
-        <div class="price">${priceHTML(p)}</div>
+        <div class="product-row">
+          <div class="price">${priceHTML(p)}</div>
+          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
       </div>
     </a>`).join('');
             const strip = document.getElementById('newCarousel');
@@ -13352,7 +13411,12 @@
       <div class="body">
         <h4>${escapeHtml(p.name)}</h4>
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
-        <div class="price">${priceHTML(p)}</div>
+        <div class="product-row">
+          <div class="price">${priceHTML(p)}</div>
+          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
       </div>
     </a>`).join('');
         }
@@ -16498,9 +16562,65 @@
             if (myOrdersChannel && supabaseClient) supabaseClient.removeChannel(myOrdersChannel);
             myOrdersChannel = null;
         }
-        function renderConfirmation() {
+        // lastOrder only ever lives in memory, so a refresh of this exact
+        // page (easy to do by accident right after paying, e.g. a
+        // pull-to-refresh on mobile) wiped it and showed "No recent order
+        // found" even though the order itself was created successfully.
+        // Reverses the exact "${address}, ${town} ${postcode}" format
+        // finishOrderAfterPayment/confirm-order always write, using the
+        // separately-stored delivery_postcode to strip that part off
+        // first — reliable specifically because this app is the only
+        // thing that ever writes an orders row in that shape.
+        function orderRowToLastOrder(row) {
+            const postcode = row.delivery_postcode || '';
+            let address = row.delivery_address || '';
+            if (postcode && address.endsWith(postcode)) {
+                address = address.slice(0, address.length - postcode.length).trim().replace(/,\s*$/, '');
+            }
+            let town = '';
+            const commaIdx = address.lastIndexOf(',');
+            if (commaIdx !== -1) {
+                town = address.slice(commaIdx + 1).trim();
+                address = address.slice(0, commaIdx).trim();
+            }
+            return {
+                number: row.order_number,
+                date: new Date(row.created_at),
+                items: Array.isArray(row.items) ? row.items : [],
+                subtotal: row.subtotal,
+                delivery: row.delivery_fee,
+                // The DB only ever stores one combined discount figure
+                // (see create-payment-intent's own pending_checkouts
+                // insert) — reconstructed here as a single "Discount"
+                // line rather than split back into code-discount and
+                // loyalty-discount, a reasonable simplification for this
+                // refresh-recovery path specifically.
+                discount: row.discount,
+                discountCode: row.discount_code,
+                loyaltyDiscount: 0,
+                total: row.total,
+                delivery_info: { name: row.delivery_name, address, town, postcode, phone: row.delivery_phone },
+                fulfilment: row.fulfilment_method,
+                loyaltyRewardEarned: false,
+                paymentMethodSummary: row.payment_method_summary,
+                stripePaymentIntentId: row.stripe_payment_intent_id,
+            };
+        }
+        async function renderConfirmation() {
+            if (!lastOrder && supabaseClient && currentSupabaseUser) {
+                document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">Loading your order…</p>';
+                const { data } = await supabaseClient.from('orders').select('*').eq('user_id', currentSupabaseUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+                if (data) lastOrder = orderRowToLastOrder(data);
+                // Nothing else may have re-routed away from this view while
+                // that fetch was in flight, but double-check anyway before
+                // writing into invoiceBox below — checked against the view
+                // itself (showView toggles this), not window.location.hash,
+                // since that's already been cleared back to a clean path by
+                // the time this runs and would always look "navigated away".
+                if (document.getElementById('view-confirm').classList.contains('hidden-view')) return;
+            }
             if (!lastOrder) {
-                document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">No recent order found. <a href="#/">Return home</a>.</p>';
+                document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">No recent order found. <a href="#/orders">View your orders</a>.</p>';
                 return;
             }
             const confirmLoyaltyEl = document.getElementById('confirmLoyaltyNote');
