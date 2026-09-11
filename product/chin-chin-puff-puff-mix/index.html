@@ -2456,11 +2456,19 @@
            is a stock UI pattern; it's built specifically for this card. */
         .combos-scroll { padding-bottom: 6px; }
         .combos-scroll .combo-card { flex: 0 0 280px; max-width: 280px; scroll-snap-align: start; }
+        /* Same wax-seal yellow the footer's "Get 10% Off" card and
+           .combo-stamp already use — ties combo deals into that same
+           "special offer" color language instead of looking like a plain
+           product card that happens to have a discount. Fixed regardless
+           of theme (same call as .footer-newsletter/.footer-interest —
+           see that comment), not adapted per dark/light. Every text/badge
+           color inside was chosen against THIS background specifically —
+           see the individual comments below before changing any of them. */
         .combo-card {
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 20px;
+            background: linear-gradient(155deg, #FFFCEE, #FFF6CC); border: 1px solid rgba(225, 225, 0, 0.4); border-radius: 20px;
             padding: 0; position: relative; display: flex; flex-direction: column;
             overflow: hidden; isolation: isolate;
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.06);
+            box-shadow: 0 1px 3px rgba(120, 110, 0, 0.06), 0 14px 30px rgba(120, 110, 0, 0.1);
             transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
         .combo-card:hover {
@@ -2468,8 +2476,33 @@
             box-shadow: 0 6px 14px rgba(var(--border-rgb), 0.08), 0 30px 54px rgba(var(--border-rgb), 0.18);
         }
         .combo-card > * { position: relative; z-index: 1; }
-        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18.5px; color: var(--heading); letter-spacing: -0.01em; line-height: 1.25; }
+        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18.5px; color: #2C1C10; letter-spacing: -0.01em; line-height: 1.25; }
         .combo-card .btn { width: 100%; text-align: center; }
+        /* Everything below overrides the theme-adaptive colors .bundle-tagline/
+           .bundle-item-row/etc. normally use (shared with .bundle-card on the
+           Build-a-bundle page, which DOES still follow the theme) — those
+           variables flip to near-white in dark mode, which would be
+           unreadable against this card's now-permanently-light background.
+           Literal tones matched to .footer-newsletter/.footer-interest's own
+           fixed-card treatment, not the sitewide theme variables. */
+        .combo-card .bundle-tagline { color: #6b5c4f; }
+        .combo-card .bundle-item-row { color: #4a3d3a; border-bottom-color: rgba(44, 28, 16, 0.1); }
+        .combo-card .bundle-item-row > span:first-of-type,
+        .combo-card .bundle-item-row > span:last-child { color: #2C1C10; }
+        .combo-card .bundle-item-row.out-of-stock,
+        .combo-card .bundle-item-row.out-of-stock > span:first-of-type,
+        .combo-card .bundle-item-row.out-of-stock > span:last-child { color: #8a7d6f; }
+        .combo-card .bundle-item-thumb { background: linear-gradient(160deg, #f0ecdc, #e7e1cc); color: #7a6d65; }
+        .combo-card .bundle-item-weight { color: #8a7d6f; }
+        .combo-card .bundle-weight-total { color: #8a7d6f; }
+        .combo-card .bundle-weight-total strong { color: #2C1C10; }
+        .combo-card .bundle-weight-total.zero-weight strong { color: #C1552C; }
+        .combo-card .bundle-total-row { color: #2C1C10; }
+        .combo-card .bundle-was { color: #8a7d6f; }
+        .combo-card .combo-ticket-watermark { color: #2C1C10; }
+        .combo-card .combo-ticket-perf { border-top-color: rgba(44, 28, 16, 0.22); }
+        .combo-card .combo-ticket-perf::before, .combo-card .combo-ticket-perf::after { background: #FFF6CC; }
+        .combo-card .combo-edit-btn { color: #2C1C10; border-color: rgba(44, 28, 16, 0.18); }
         .combo-ticket-head { padding: 18px 20px 10px; }
         .combo-has-stamp h3 { padding-right: 56px; } /* clears the stamp badge overlapping this corner, only present when there's a discount to stamp */
         .combo-ticket-body { padding: 14px 20px 16px; display: flex; flex-direction: column; flex: 1; }
@@ -4995,6 +5028,25 @@
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
+        /* These three carousels' cards are noticeably narrower than the
+           main shop grid's (168px on mobile — see the .offer-card et al.
+           breakpoints below), and a sale price alone already fills that
+           with three pieces (price, was-price, -X% pill). The full 34px
+           button next to all of that overflowed the card on mobile.
+           Smaller here specifically, plus a wrap fallback so a genuinely
+           long price never clips or pushes the button off the edge again. */
+        .offer-card .product-row, .new-card .product-row, .best-seller-card .product-row {
+            flex-wrap: wrap;
+            row-gap: 6px;
+        }
+        .offer-card .card-add-btn, .new-card .card-add-btn, .best-seller-card .card-add-btn {
+            width: 28px;
+            height: 28px;
+        }
+        .offer-card .card-add-btn svg, .new-card .card-add-btn svg, .best-seller-card .card-add-btn svg {
+            width: 13px;
+            height: 13px;
+        }
 
 
         /* ================= PRODUCT DETAIL ================= */
