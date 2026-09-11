@@ -155,6 +155,7 @@
                so light mode gets the same visible presence rather than a
                flat white hero. */
             --hero-watermark-op: 0.24;
+            --pattern-op: 0.22;
         }
 
         /* ================= DARK MODE =================
@@ -179,6 +180,7 @@
             --warn-text: #E8B98A;
             --hero-watermark-op: 0.16;
             --neutral-track: #2c2618;
+            --pattern-op: 0.14;
         }
 
         * {
@@ -3489,7 +3491,10 @@
         .delivery {
             padding: 96px 0;
             background: var(--section-alt-bg);
+            position: relative;
+            overflow: hidden;
         }
+        .delivery .wrap { position: relative; z-index: 1; }
 
         .delivery-grid {
             display: grid;
@@ -3784,6 +3789,25 @@
         }
         @media (max-width: 780px) {
             .footer-watermark { display: none; }
+        }
+        /* An original geometric accent (see #brand-pattern's own comment
+           for what it's built from and why it isn't a reproduction of any
+           specific textile tradition) — a deliberately subtle all-over
+           texture, distinct from the single large seal watermark each of
+           these sections may already have, giving flat-colour bands a bit
+           more surface interest without competing with the content on
+           top of them. Opacity (not colour) is what's tuned per theme,
+           via --pattern-op, same mechanism --hero-watermark-op already
+           uses — the pattern's own stroke colour stays the fixed
+           chartreuse-rich from the brand palette in both themes. */
+        .brand-pattern-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: var(--pattern-op);
+            pointer-events: none;
+            z-index: 0;
         }
         footer .wrap { position: relative; z-index: 1; }
 
@@ -7778,6 +7802,26 @@
                     d="M 811.10 500.00 Q 811.10 500.00 799.66 569.40 Q 788.22 638.80 753.14 706.12 Q 718.06 773.44 643.76 788.90 Q 569.47 804.36 499.62 806.04 Q 429.76 807.73 364.45 779.80 Q 299.14 751.87 269.30 688.67 Q 239.46 625.47 211.74 562.73 Q 184.02 500.00 195.32 429.36 Q 206.61 358.71 247.63 296.84 Q 288.64 234.96 362.97 230.13 Q 437.30 225.31 501.91 216.95 Q 566.51 208.60 621.00 244.26 Q 675.50 279.93 741.08 316.13 Q 806.65 352.32 808.88 426.16 Z"
                     fill="var(--aubergine-deep)" />
             </g>
+            <!-- An original geometric accent pattern (not a reproduction of
+                 any specific textile tradition — see the comment on
+                 .brand-pattern-bg for why), built from the same stroke
+                 language the category icons already use (round caps/joins,
+                 ~2px weight): a triangle, a scattered dot cluster, a
+                 chevron run, a two-ring spiral, and a diamond, tiled via
+                 SVG's own pattern element so no JS or repeated markup is
+                 needed to fill an area with it. -->
+            <pattern id="brand-pattern" width="128" height="128" patternUnits="userSpaceOnUse">
+                <g fill="none" stroke="var(--chartreuse-rich)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 14 L32 14 L25 26 Z" />
+                    <circle cx="100" cy="16" r="2" />
+                    <circle cx="108" cy="24" r="2" />
+                    <circle cx="100" cy="32" r="2" />
+                    <path d="M6 68 L16 58 L26 68 L36 58 L46 68 L56 58 L66 68 L76 58 L86 68 L96 58 L106 68 L116 58" />
+                    <path d="M22 108 a10 10 0 1 1 -0.5 0" />
+                    <path d="M22 108 a4 4 0 1 1 -0.5 0" />
+                    <path d="M104 100 L116 112 L104 124 L92 112 Z" />
+                </g>
+            </pattern>
         </defs>
     </svg>
 
@@ -8145,6 +8189,7 @@
         </section>
 
         <section class="delivery">
+            <svg class="brand-pattern-bg" aria-hidden="true"><rect width="100%" height="100%" fill="url(#brand-pattern)" /></svg>
             <div class="wrap delivery-grid">
                 <div class="delivery-badge reveal">
                     <svg viewBox="65 25 875 900"
@@ -9889,6 +9934,7 @@
         <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z"/></svg>
     </div>
     <footer>
+        <svg class="brand-pattern-bg" aria-hidden="true"><rect width="100%" height="100%" fill="url(#brand-pattern)" /></svg>
         <svg class="footer-watermark" viewBox="65 25 875 900" aria-hidden="true">
             <use href="#seal-mark" />
         </svg>
