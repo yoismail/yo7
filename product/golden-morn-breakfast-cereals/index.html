@@ -3745,22 +3745,23 @@
             height: 40px;
         }
         .footer-curve path {
-            fill: #fff;
+            /* Matches the footer's own background gradient's top stop
+               (see footer below) so the curve blends seamlessly into it
+               rather than leaving a hairline seam against a plain white. */
+            fill: #FFFCEE;
         }
         footer {
             position: relative;
-            /* Higher opacity than the nav's glass: the nav is fixed over
-               moving page content, so a lower opacity still reads as
-               crisp white with a hint of what's scrolling beneath it.
-               The footer sits in normal document flow with nothing
-               behind it but the flat page background, which in dark
-               mode is near-black, so the same lower opacity picked up a
-               muddy grey-green tint instead of glass, just page colour
-               bleeding through a flat translucent layer. Higher opacity
-               keeps it reading as white glass in both themes. */
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            /* Same warm cream-to-gold gradient as .footer-interest below
+               (the "Get 10% Off" card) — a fixed light surface regardless
+               of theme, same reasoning as the rest of this section (see
+               .footer-newsletter's own comment further down): it's
+               tuned once for a light background and stays that way in
+               both themes rather than flipping to near-black. Solid,
+               not translucent — nothing scrolls behind the footer, so
+               there was never anything for the old backdrop-filter glass
+               effect to actually reveal. */
+            background: linear-gradient(155deg, #FFFCEE, #FFF6CC);
             color: #2C1C10;
             /* Extra bottom padding clears the floating WhatsApp/basket
                buttons (fixed, bottom:24px, 56px tall) — without it, the
@@ -3769,9 +3770,6 @@
                once someone actually scrolls to the true bottom of the page. */
             padding: 56px 0 100px;
             overflow: hidden;
-        }
-        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-            footer { background: #FFFFFF; }
         }
         .footer-watermark {
             position: absolute;
@@ -3856,12 +3854,14 @@
         }
 
         /* Distinguishes the "10% off" card from the plain newsletter one
-           right next to it — same wax-seal yellow the rest of the site
-           already uses for discounts/offers (.combo-stamp, .offer-tag),
-           rather than the two cards reading as duplicates of each other
-           just because they share the same layout. */
+           right next to it via its accent colour alone — same wax-seal
+           yellow the rest of the site already uses for discounts/offers
+           (.combo-stamp, .offer-tag). Both cards are solid white now
+           that the footer itself carries this same gold tint (see
+           footer above) — a gradient here as well would just blend the
+           card into the surface it's sitting on. */
         .footer-interest {
-            background: linear-gradient(155deg, #FFFCEE, #FFF6CC);
+            background: #FFFFFF;
             border-color: rgba(225, 225, 0, 0.4);
         }
         .footer-interest::before {
