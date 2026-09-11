@@ -4985,11 +4985,27 @@
             background: var(--card-bg);
         }
 
+        /* Same asymmetric wax-seal blob as the seal mark, combo-deal
+           stamp, and the section dividers (see .about-divider-mark) —
+           a fourth use of the brand's one signature shape, so an empty
+           state reads as a considered brand moment instead of a bare
+           grey icon floating on its own. */
+        .empty-state-icon-badge {
+            width: 62px;
+            height: 54px;
+            margin: 0 auto 18px;
+            border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
+            background: linear-gradient(155deg, rgba(144, 184, 0, 0.16), rgba(144, 184, 0, 0.07));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-4deg);
+        }
         .empty-state-icon {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto 16px;
-            color: var(--text-faint);
+            width: 26px;
+            height: 26px;
+            color: var(--chartreuse-rich);
+            transform: rotate(4deg);
         }
 
         .empty-state h3 {
@@ -8287,7 +8303,7 @@
                     <button type="button" class="see-more-btn" id="productGridLoadMoreBtn">See more</button>
                 </div>
                 <div class="empty-state" id="emptyState" style="display:none;">
-                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
                     <h3>Nothing matches that yet</h3>
                     <p>Try another word, or message us directly, we're adding stock every week.</p>
                 </div>
@@ -8317,7 +8333,7 @@
                     <button type="button" class="see-more-btn" id="shopAllLoadMoreBtn">See more</button>
                 </div>
                 <div class="empty-state" id="shopAllEmptyState" style="display:none;">
-                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
                     <h3>Nothing matches that yet</h3>
                     <p>Try another word, or message us directly, we're adding stock every week.</p>
                 </div>
@@ -8495,6 +8511,7 @@
                             <div id="cartAllergenBanner" class="allergen-summary-banner" style="display:none;"></div>
                             <div id="cartSubscriptionBanner" class="subscription-summary-banner" style="display:none;"></div>
                             <div id="cartEmpty" class="empty-cart" style="display:none;">
+                                <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg></span>
                                 <h3>Your basket is empty</h3>
                                 <p>Add a few staples from the shop before checking out.</p>
                                 <a class="btn btn-primary" href="#/">Browse the shop</a>
