@@ -1737,8 +1737,19 @@
             display: none;
             flex-basis: 100%;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
+        /* Same size/shape as .footer-newsletter-icon (so this row lines up
+           with the icon+text row above it instead of the confirmation text
+           sitting flush against the card's edge with nothing to align to)
+           but its own fixed green, not .footer-interest's yellow variant —
+           this is a success state, not another offer badge. */
+        .hero-capture-thanks-icon {
+            width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
+            background: rgba(144,184,0,0.16); color: var(--chartreuse-rich);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hero-capture-thanks-icon svg { width: 19px; height: 19px; }
         .hero-capture-thanks p {
             font-family: var(--display);
             font-weight: 700;
@@ -1916,12 +1927,6 @@
             .hero h1 {
                 max-width: 520px;
                 margin: 6px 0 20px;
-            }
-            .hero-capture-hint {
-                text-align: left;
-            }
-            .hero-capture-thanks {
-                align-items: flex-start;
             }
             /* Per request: the seal (crisp foreground badge) is dropped
                from the desktop composition entirely, leaving the faded
@@ -9881,6 +9886,9 @@
                 </form>
                 <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
                 <div class="hero-capture-thanks" id="heroCaptureThanks">
+                    <span class="hero-capture-thanks-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </span>
                     <p>You're on the list! We'll email your code the moment we're live.</p>
                 </div>
             </div>
