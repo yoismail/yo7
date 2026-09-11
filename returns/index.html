@@ -16743,22 +16743,42 @@
               PDF is downloaded automatically and a blank email opens for the person to
               attach it themselves. No invoice details are pre-filled into the email body. */
 
+        // A tag left behind by a FAILED previous attempt still matches this
+        // selector, so re-using it blindly would resolve immediately as if
+        // the script had loaded when window.jspdf was never actually
+        // defined — every later call would then throw on the destructure
+        // in buildInvoicePdfBlob() with no way to recover short of a page
+        // reload. Only an explicitly-marked-loaded tag short-circuits;
+        // anything else (still loading, or failed and left in the DOM) is
+        // removed and re-requested fresh.
         function loadScriptOnce(src) {
             return new Promise((resolve, reject) => {
-                if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+                const existing = document.querySelector(`script[src="${src}"]`);
+                if (existing) {
+                    if (existing.dataset.loaded === 'true') { resolve(); return; }
+                    existing.remove();
+                }
                 const s = document.createElement('script');
                 s.src = src;
-                s.onload = () => resolve();
-                s.onerror = () => reject(new Error('Failed to load ' + src));
+                s.onload = () => { s.dataset.loaded = 'true'; resolve(); };
+                s.onerror = () => { s.remove(); reject(new Error('Failed to load ' + src)); };
                 document.head.appendChild(s);
             });
         }
 
         let pdfLibsPromise = null;
         let cachedInvoicePdfBlob = null;
+        // On a real network hiccup (flaky mobile signal, the background
+        // prefetch at confirmation-page load losing the race), a failed
+        // load used to poison pdfLibsPromise permanently — every later
+        // Print/Save PDF/Email invoice click reused the same already-
+        // rejected promise instead of retrying, so one bad moment broke
+        // invoices for the rest of the session. Clearing it on failure
+        // means the next click genuinely tries the network again.
         function ensurePdfLibsLoaded() {
             if (!pdfLibsPromise) {
-                pdfLibsPromise = loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+                pdfLibsPromise = loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+                    .catch(err => { pdfLibsPromise = null; throw err; });
             }
             return pdfLibsPromise;
         }
