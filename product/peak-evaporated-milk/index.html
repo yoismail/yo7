@@ -2090,7 +2090,7 @@
            not a one-off. This card is shared by the homepage "Why choose"
            section and the About Us "Our values" section, so both pick
            this up. */
-        .about-value-card svg {
+        .about-value-card svg, .about-value-card .pound-icon {
             width: 26px; height: 26px; margin-bottom: 12px;
             padding: 8px;
             box-sizing: content-box;
@@ -2099,12 +2099,19 @@
             color: var(--value-accent, var(--chartreuse-rich));
             transition: transform 0.3s cubic-bezier(.16,.84,.44,1);
         }
-        .about-value-card:hover svg { transform: scale(1.12); }
-        .about-value-card:nth-child(5n+1) svg { --value-accent: var(--chartreuse-rich); --value-accent-tint: rgba(114, 148, 0, 0.14); }
-        .about-value-card:nth-child(5n+2) svg { --value-accent: var(--aubergine-mid); --value-accent-tint: rgba(38, 98, 16, 0.12); }
-        .about-value-card:nth-child(5n+3) svg { --value-accent: #9a7f00; --value-accent-tint: rgba(154, 127, 0, 0.14); }
-        .about-value-card:nth-child(5n+4) svg { --value-accent: #C1552C; --value-accent-tint: rgba(193, 85, 44, 0.12); }
-        .about-value-card:nth-child(5n+5) svg { --value-accent: #9D6B11; --value-accent-tint: rgba(157, 107, 17, 0.14); }
+        /* .pound-icon is text (a "£" character, not an svg — the site has
+           no pound-sign icon glyph), so it needs the layout/font rules
+           .about-value-card svg gets for free from being an svg element. */
+        .about-value-card .pound-icon {
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--display); font-weight: 700; font-size: 20px;
+        }
+        .about-value-card:hover svg, .about-value-card:hover .pound-icon { transform: scale(1.12); }
+        .about-value-card:nth-child(5n+1) svg, .about-value-card:nth-child(5n+1) .pound-icon { --value-accent: var(--chartreuse-rich); --value-accent-tint: rgba(114, 148, 0, 0.14); }
+        .about-value-card:nth-child(5n+2) svg, .about-value-card:nth-child(5n+2) .pound-icon { --value-accent: var(--aubergine-mid); --value-accent-tint: rgba(38, 98, 16, 0.12); }
+        .about-value-card:nth-child(5n+3) svg, .about-value-card:nth-child(5n+3) .pound-icon { --value-accent: #9a7f00; --value-accent-tint: rgba(154, 127, 0, 0.14); }
+        .about-value-card:nth-child(5n+4) svg, .about-value-card:nth-child(5n+4) .pound-icon { --value-accent: #C1552C; --value-accent-tint: rgba(193, 85, 44, 0.12); }
+        .about-value-card:nth-child(5n+5) svg, .about-value-card:nth-child(5n+5) .pound-icon { --value-accent: #9D6B11; --value-accent-tint: rgba(157, 107, 17, 0.14); }
         .about-value-card h3 {
             font-family: var(--display); font-weight: 700; font-size: 15.5px; color: var(--heading); margin-bottom: 8px;
         }
