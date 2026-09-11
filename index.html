@@ -3771,56 +3771,40 @@
             padding: 56px 0 100px;
             overflow: hidden;
         }
-        .footer-watermark {
-            position: absolute;
-            bottom: -14%;
-            right: -4%;
-            width: min(38vw, 460px);
-            opacity: 0.05;
-            pointer-events: none;
+        /* Same "Yo7" wordmark treatment as .hero-text-watermark (the big
+           faded logo bleeding off the hero's bottom-left corner), mirrored
+           to the footer's bottom-right corner and sized noticeably larger
+           — the two earlier attempts here (a near-invisible bottom-right
+           seal icon, then a small animated one at bottom-left) both read
+           as texture rather than an actual logo. z-index: 0, same as
+           those did, keeps it behind every bit of footer content so it
+           never competes with the copyright line or payment badges for
+           attention regardless of how big it reads. bottom offset is em,
+           not %, same reason .hero-text-watermark itself already uses em
+           — a % of the footer's own height blows up into hundreds of
+           pixels on mobile once the footer stacks into one tall column
+           (the exact bug the previous bottom-left version hit). Fixed
+           opacity rather than the theme-flipping --hero-watermark-op —
+           the footer stays a fixed light surface in both themes (see
+           footer above), so this does too. */
+        .footer-text-watermark {
+            right: -2%;
+            bottom: -0.2em;
+            font-size: clamp(150px, 27vw, 460px);
+            color: #2C1C10;
+            opacity: 0.085;
             z-index: 0;
+            transform-origin: 85% 100%;
+            animation: footerTextWatermarkLive 8s ease-in-out infinite;
         }
-        @media (max-width: 780px) {
-            .footer-watermark { display: none; }
-        }
-        /* The bottom-right mark above is deliberately a near-invisible
-           texture, not a logo you'd actually notice — this is the
-           opposite corner's counterpart, sized and lit to actually read
-           as the seal while it sits behind every bit of footer content
-           (z-index: 0, same as its sibling), so it never competes with
-           the copyright line or payment badges sitting on top of it for
-           attention. Same tilt-breathe-glow motion as .hero-watermark,
-           just gentler (a smaller max scale/rotation, since this mark
-           sits much closer to eye-catching text than the hero's does),
-           and a fixed opacity rather than the theme-flipping
-           --hero-watermark-op — the footer stays a fixed light surface
-           in both themes (see footer above), so this does too. */
-        .footer-watermark-left {
-            position: absolute;
-            /* Fixed px, not a %, on purpose — a % bottom/left offset is
-               relative to the footer's own height/width, which on mobile
-               (everything stacks into one tall column) is several times
-               taller than on desktop, so the same % pushed this mark
-               hundreds of pixels below the footer's own bottom edge and
-               footer's overflow:hidden clipped it away entirely. Same
-               fix, same reason, as .hero-text-watermark's em offset. */
-            bottom: -20px;
-            left: -14px;
-            width: min(24vw, 260px);
-            opacity: 0.16;
-            pointer-events: none;
-            z-index: 0;
-            transform-origin: 45% 55%;
-            animation: footerWatermarkLeftLive 8s ease-in-out infinite;
-        }
-        @keyframes footerWatermarkLeftLive {
-            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.16; }
-            30% { transform: rotate(-3deg) scale(1.015); }
-            60% { transform: rotate(4deg) scale(1.04); opacity: 0.22; }
-            85% { transform: rotate(1deg) scale(1.015); }
+        @keyframes footerTextWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.085; }
+            32% { transform: rotate(-2deg) scale(1.015); }
+            60% { transform: rotate(2.5deg) scale(1.04); opacity: 0.13; }
+            84% { transform: rotate(-0.5deg) scale(1.015); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .footer-watermark-left { animation: none; }
+            .footer-text-watermark { animation: none; }
         }
         footer .wrap { position: relative; z-index: 1; }
 
@@ -9922,12 +9906,7 @@
         <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z"/></svg>
     </div>
     <footer>
-        <svg class="footer-watermark" viewBox="65 25 875 900" aria-hidden="true">
-            <use href="#seal-mark" />
-        </svg>
-        <svg class="footer-watermark-left" viewBox="65 25 875 900" aria-hidden="true">
-            <use href="#seal-mark" />
-        </svg>
+        <div class="text-watermark footer-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         <div class="wrap">
             <div class="footer-newsletter">
                 <div class="text-watermark newsletter-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
