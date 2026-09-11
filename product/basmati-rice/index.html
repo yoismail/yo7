@@ -15761,7 +15761,8 @@
         // page where status/comments/notification actually happen.
         function adminOrderTableRowHTML(order) {
             const status = order.status || 'placed';
-            const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const orderCreatedAt = new Date(order.created_at);
+            const dateLabel = orderCreatedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + orderCreatedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const billingName = (order.profiles && order.profiles.full_name) || order.delivery_name || '—';
             return `
     <tr>
@@ -15966,7 +15967,8 @@
             order.profiles = profilesById[order.user_id] || null;
             currentAdminOrder = order;
             const orderNumber = order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase());
-            const dateLabel = new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const orderCreatedAt = new Date(order.created_at);
+            const dateLabel = orderCreatedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' at ' + orderCreatedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             document.getElementById('aodTitle').textContent = `Order ${orderNumber}`;
             document.getElementById('aodSubtitle').textContent = `Placed ${dateLabel}`;
             const profile = order.profiles || {};
@@ -16644,7 +16646,7 @@
                     invLoyaltyEl.style.display = 'none';
                 }
             }
-            document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' at ' + lastOrder.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const di = lastOrder.delivery_info || {};
             const isPickup = lastOrder.fulfilment === 'pickup';
             document.getElementById('invAddress').innerHTML = isPickup
@@ -16863,7 +16865,8 @@
             setText(11, 'bold', ink);
             pdf.text(`Invoice ${order.number}`, pageWidth - margin, y + 18, { align: 'right' });
             setText(9, 'normal', muted);
-            const dateStr = new Date(order.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const orderDate = new Date(order.date);
+            const dateStr = orderDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' at ' + orderDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             pdf.text(dateStr, pageWidth - margin, y + 32, { align: 'right' });
 
             y += 48;
