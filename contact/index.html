@@ -15380,62 +15380,48 @@
                 paymentMethodSummary,
                 stripePaymentIntentId: paymentIntent.id,
             };
-            const di = ctx.deliveryInfo;
-            const { data, error } = await supabaseClient.from('orders').insert({
-                user_id: ctx.userId,
-                status: 'placed',
-                fulfilment_method: ctx.fulfilmentMethod,
-                items: lastOrder.items,
-                subtotal: lastOrder.subtotal,
-                delivery_fee: lastOrder.delivery,
-                discount: lastOrder.discount + lastOrder.loyaltyDiscount,
-                total: lastOrder.total,
-                delivery_name: di ? di.name : null,
-                delivery_address: di ? `${di.address}, ${di.town} ${di.postcode}` : null,
-                delivery_postcode: di ? di.postcode : null,
-                delivery_phone: di ? di.phone : null,
-                notes: di ? di.notes : null,
-                stripe_payment_intent_id: paymentIntent.id,
-                payment_method_summary: paymentMethodSummary,
-                discount_id: ctx.discountId || null,
-                discount_code: ctx.discountCode || null,
-            }).select('id, order_number').single();
-
-            if (error) {
-                // A unique_violation here means this exact PaymentIntent has
-                // already been turned into an order (e.g. the redirect-return
-                // handler ran twice) — that's not a failure, just re-find it
-                // and carry on rather than telling a customer who's already
-                // been charged and already has an order that something's wrong.
-                if (error.code === '23505') {
-                    const { data: existing } = await supabaseClient.from('orders').select('id, order_number').eq('stripe_payment_intent_id', paymentIntent.id).single();
-                    if (existing) {
-                        lastOrder.number = existing.order_number;
-                        clearPendingOrderContext();
-                        cart = [];
-                        appliedDiscount = null;
-                        updateCartBadge();
-                        window.location.hash = '#/order-confirmation';
-                        return { ok: true };
-                    }
-                }
-                // The card WAS genuinely charged at this point — this branch
-                // is "payment succeeded but saving the order record failed",
-                // which must never be treated the same as an ordinary
-                // failed payment (no silent fallback order number, no
-                // pretending it went through cleanly). The customer needs
-                // to know their payment reference so support can find it.
-                console.error('Order save failed after successful payment:', error.message);
-                return { ok: false, message: `Your payment went through, but saving the order hit a problem on our end. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
+            // The actual order record is created server-side now, not by
+            // this insert — see confirm-order's own header comment for
+            // why: this function used to insert into `orders` directly
+            // with whatever ctx claimed the items/total were, which
+            // nothing actually checked against what Stripe was charged.
+            // confirm-order takes only the paymentIntentId and rebuilds
+            // everything itself from pending_checkouts (create-payment-intent's
+            // own server-verified record), so lastOrder above is still
+            // built from ctx purely for what this page displays — the
+            // database's own copy is never trusted from the client at all.
+            let data, error;
+            try {
+                ({ data, error } = await supabaseClient.functions.invoke('confirm-order', {
+                    body: { paymentIntentId: paymentIntent.id },
+                }));
+            } catch (err) {
+                error = err;
             }
 
-            // Redemption itself is now recorded server-side, by a trigger
-            // on the orders row that just got inserted above (see
+            if (error || !data || data.error) {
+                const reason = (data && data.error) || (error && error.message);
+                // A "this payment doesn't belong to your account" or similar
+                // rejection is a real problem worth surfacing distinctly, but
+                // the common case here is the same "payment succeeded, order
+                // save hit a snag" as before — confirm-order already returns
+                // a message with the payment reference built in for that case.
+                console.error('confirm-order failed:', reason);
+                return { ok: false, message: reason || `Your payment went through, but saving the order hit a problem on our end. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
+            }
+
+            // Redemption itself is recorded server-side, by a trigger on
+            // the orders row confirm-order just inserted (see
             // supabase-migration-20-discount-codes.sql) — nothing to do
             // here.
-            lastOrder.number = data.order_number;
+            lastOrder.number = data.orderNumber;
             if (ctx.loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
-            lastOrder.loyaltyRewardEarned = !!(await issueLoyaltyRewardIfEarned(data.id));
+            // issueLoyaltyRewardIfEarned needs the new order's real id,
+            // which confirm-order doesn't hand back (only the order
+            // number) — looked up by the payment intent id it does return,
+            // same identifier confirm-order itself used to find/create it.
+            const { data: justPlaced } = await supabaseClient.from('orders').select('id').eq('stripe_payment_intent_id', paymentIntent.id).maybeSingle();
+            lastOrder.loyaltyRewardEarned = !!(justPlaced && await issueLoyaltyRewardIfEarned(justPlaced.id));
 
             clearPendingOrderContext();
             cart = [];
@@ -15472,10 +15458,10 @@
                 const result = await finishOrderAfterPayment(paymentIntent, ctx);
                 if (!result.ok) showToast(result.message.replace(/<[^>]+>/g, ''), 9000);
             } else if (paymentIntent.status === 'processing') {
-                // No webhook is wired up yet to catch this settling later in
-                // the background — see supabase-payment-setup-guide.md — so
-                // for now this is an honest "we don't know yet" rather than
-                // an order that might not actually be paid for.
+                // This browser doesn't wait around for it to settle — but
+                // stripe-webhook does, independently, and creates the order
+                // itself the moment Stripe reports success, same as if a
+                // dropped connection had happened here instead.
                 showToast("Your payment is still being confirmed. We'll be in touch as soon as it clears, no need to try again.", 9000);
                 window.location.hash = '#/';
             } else {
@@ -17301,7 +17287,7 @@
               <input type="number" step="0.01" min="0" id="ep-sale-${catSlug}-${idx}" value="${product.salePrice != null ? product.salePrice : ''}">
             </div>
           </div>
-          <div class="ep-row" style="grid-template-columns:1fr;">
+          <div class="ep-row">
             <div>
               <label>Stock status</label>
               <select id="ep-stock-${catSlug}-${idx}">
@@ -17310,7 +17296,17 @@
                 <option value="out" ${product.stock === 'out' ? 'selected' : ''}>Out of stock</option>
               </select>
             </div>
+            <div>
+              <label>Exact quantity in stock (optional)</label>
+              <input type="number" step="1" min="0" id="ep-stockqty-${catSlug}-${idx}" placeholder="Leave blank for unlimited" value="${typeof product.stockQuantity === 'number' ? product.stockQuantity : ''}">
+            </div>
           </div>
+          <!-- Blank keeps today's behaviour exactly as-is, "Stock status"
+               alone decides whether it can be bought. A number here turns
+               on real enforcement: checkout refuses to sell more than
+               this many, checked and decremented server-side, never
+               trusting the client. -->
+          <p style="font-size:12px; color:var(--text-muted); margin:-4px 0 8px;">Leave blank for products you don't need to track unit-by-unit. Once set, it goes down automatically as orders come in, update it yourself after restocking.</p>
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
               <label>Weight (kg, used for delivery pricing)</label>
@@ -17498,6 +17494,7 @@
             const before = {
                 name: product.name,
                 price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
+                stockQuantity: typeof product.stockQuantity === 'number' ? product.stockQuantity : null,
                 weight: typeof product.weight === 'number' ? product.weight : null,
                 unitOverride: product.unitOverride || null, description: product.description || null,
                 weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
@@ -17517,6 +17514,7 @@
             const priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
             const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`)?.value ?? '';
             const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`)?.value;
+            const stockQtyVal = document.getElementById(`ep-stockqty-${catSlug}-${idx}`)?.value ?? '';
             const unitLabelVal = document.getElementById(`ep-unitlabel-${catSlug}-${idx}`)?.value.trim() ?? '';
 
             if (!isNaN(priceVal) && priceVal >= 0) product.price = priceVal;
@@ -17526,6 +17524,11 @@
                 if (!isNaN(sv) && sv >= 0) product.salePrice = sv;
             }
             if (stockVal) product.stock = stockVal;
+            if (stockQtyVal === '') { delete product.stockQuantity; }
+            else {
+                const qv = parseInt(stockQtyVal, 10);
+                if (!isNaN(qv) && qv >= 0) product.stockQuantity = qv;
+            }
 
             const weightVal = document.getElementById(`ep-weight-${catSlug}-${idx}`)?.value ?? '';
             if (weightVal === '') { delete product.weight; }
@@ -17560,6 +17563,7 @@
                 price: product.price,
                 sale_price: product.salePrice != null ? product.salePrice : null,
                 stock: product.stock,
+                stock_quantity: typeof product.stockQuantity === 'number' ? product.stockQuantity : null,
                 weight: typeof product.weight === 'number' ? product.weight : null,
                 unit_override: product.unitOverride || null,
                 description: product.description || null,
@@ -17570,6 +17574,7 @@
             const after = {
                 name: product.name,
                 price: product.price, salePrice: product.salePrice ?? null, stock: product.stock,
+                stockQuantity: typeof product.stockQuantity === 'number' ? product.stockQuantity : null,
                 weight: typeof product.weight === 'number' ? product.weight : null,
                 unitOverride: product.unitOverride || null, description: product.description || null,
                 weightVariants: (product.weightVariants && product.weightVariants.length) ? variantSummary(product.weightVariants) : null,
@@ -17579,6 +17584,7 @@
                 { key: 'price', label: 'Price', format: money },
                 { key: 'salePrice', label: 'Sale price', format: money },
                 { key: 'stock', label: 'Stock', format: stockLabel },
+                { key: 'stockQuantity', label: 'Stock quantity' },
                 { key: 'weight', label: 'Weight', format: w => w + 'kg' },
                 { key: 'unitOverride', label: 'Unit size', format: unitOverrideLabel },
                 { key: 'description', label: 'Description', format: () => 'edited' },
@@ -17764,6 +17770,9 @@
               </select>
             </div>
           </div>
+          <div class="apf-row" style="grid-template-columns:1fr;">
+            <div><label>Exact quantity in stock (optional, leave blank for unlimited)</label><input type="number" step="1" min="0" id="apf-stockqty-${uid}"></div>
+          </div>
           <label class="apf-checkbox"><input type="checkbox" id="apf-isnew-${uid}" ${presetCategorySlug ? '' : 'checked'}> Feature in "New in stock"</label>
           <label class="apf-checkbox"><input type="checkbox" id="apf-isbestseller-${uid}"> Feature in "Best sellers"</label>
           <div class="apf-actions">
@@ -17823,6 +17832,7 @@
             const weightVal = document.getElementById(`apf-weight-${uid}`).value;
             const catSlug = presetCategorySlug || document.getElementById(`apf-cat-${uid}`).value;
             const stock = document.getElementById(`apf-stock-${uid}`).value;
+            const stockQtyVal = document.getElementById(`apf-stockqty-${uid}`)?.value ?? '';
             const isNewChecked = document.getElementById(`apf-isnew-${uid}`).checked;
             const isBestSellerChecked = document.getElementById(`apf-isbestseller-${uid}`).checked;
             const descEl = document.getElementById(`apf-desc-${uid}`);
@@ -17836,6 +17846,7 @@
             if (!cat) { alert('Please choose a category.'); return; }
 
             const newProduct = { name, unit, price, stock };
+            if (stockQtyVal !== '' && !isNaN(parseInt(stockQtyVal, 10)) && parseInt(stockQtyVal, 10) >= 0) newProduct.stockQuantity = parseInt(stockQtyVal, 10);
             if (saleVal !== '' && !isNaN(parseFloat(saleVal))) newProduct.salePrice = parseFloat(saleVal);
             if (weightVal !== '' && !isNaN(parseFloat(weightVal))) {
                 const wv = parseFloat(weightVal);
@@ -17869,7 +17880,8 @@
                 cat_slug: catSlug, idx, name, unit, price,
                 sale_price: newProduct.salePrice ?? null,
                 weight: newProduct.weight ?? null,
-                stock, description: descVal || null,
+                stock, stock_quantity: newProduct.stockQuantity ?? null,
+                description: descVal || null,
                 image_url: newProduct.image || null,
                 is_new: isNewChecked, is_best_seller: isBestSellerChecked,
             });
@@ -18032,6 +18044,7 @@
                 if (!cat) return;
                 const product = { name: row.name, unit: row.unit, price: row.price, stock: row.stock || 'in' };
                 if (row.sale_price != null) product.salePrice = row.sale_price;
+                if (row.stock_quantity != null) product.stockQuantity = row.stock_quantity;
                 if (row.weight != null) product.weight = row.weight;
                 if (row.description) product.description = row.description;
                 if (row.image_url) product.image = row.image_url;
@@ -18067,6 +18080,7 @@
                 if (row.price != null) product.price = row.price;
                 if (row.sale_price != null) product.salePrice = row.sale_price; else delete product.salePrice;
                 if (row.stock) product.stock = row.stock;
+                if (row.stock_quantity != null) product.stockQuantity = row.stock_quantity; else delete product.stockQuantity;
                 if (row.weight != null) product.weight = row.weight; else delete product.weight;
                 if (row.unit_override) product.unitOverride = row.unit_override;
                 if (row.description) product.description = row.description;

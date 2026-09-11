@@ -142,6 +142,7 @@ Deno.serve(async (req) => {
     total: pending.total,
     delivery_name: pending.delivery_name,
     delivery_address: pending.delivery_address,
+    delivery_postcode: pending.delivery_postcode,
     delivery_phone: pending.delivery_phone,
     notes: pending.notes,
     stripe_payment_intent_id: paymentIntent.id,
@@ -160,6 +161,14 @@ Deno.serve(async (req) => {
     }
     console.error("Fallback order insert failed:", orderError.message);
     return new Response("Order insert failed", { status: 500 }); // 500 so Stripe retries
+  }
+
+  // Same best-effort stock decrement confirm-order does on its own
+  // (much more common) path — this fallback path needs it too, since
+  // it's the other place an order can actually get created.
+  if (Array.isArray(pending.stock_lines) && pending.stock_lines.length > 0) {
+    const { error: stockError } = await db.rpc("decrement_stock", { p_lines: pending.stock_lines });
+    if (stockError) console.error("decrement_stock failed (non-fatal):", stockError.message);
   }
 
   // Order-confirmation email, admin new-order alert, and discount-

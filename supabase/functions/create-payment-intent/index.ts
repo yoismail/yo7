@@ -136,12 +136,12 @@ async function loadPricingSettings(db: ReturnType<typeof createClient>) {
 }
 
 type CartLineIn = { id: unknown; qty: unknown; isSubscription?: unknown };
-type ProductRow = { cat_slug: string; idx: number; price: number; sale_price: number | null; stock: string; weight: number | null };
+type ProductRow = { cat_slug: string; idx: number; price: number; sale_price: number | null; stock: string; weight: number | null; stock_quantity?: number | null };
 type WeightVariant = { label: string; price: number; weight?: number; salePrice?: number };
 function effectiveVariantPrice(v: WeightVariant): number {
   return typeof v.salePrice === "number" && v.salePrice < v.price ? v.salePrice : v.price;
 }
-type OverrideRow = { product_key: string; price: number | null; sale_price: number | null; stock: string | null; weight: number | null; weight_variants: WeightVariant[] | null };
+type OverrideRow = { product_key: string; price: number | null; sale_price: number | null; stock: string | null; weight: number | null; weight_variants: WeightVariant[] | null; stock_quantity?: number | null };
 
 // A product-shaped cart id is "<catSlug>::<idx>" optionally followed by
 // more "::"-separated segments — a weight-variant's own label
@@ -348,11 +348,11 @@ Deno.serve(async (req) => {
     // cart gets rejected as "Unknown product" the moment one is added.
     const { data: customProductRows } = await db
       .from("custom_products")
-      .select("cat_slug, idx, price, sale_price, stock, weight")
+      .select("cat_slug, idx, price, sale_price, stock, weight, stock_quantity")
       .in("cat_slug", catSlugs);
     const { data: overrideRows } = await db
       .from("product_overrides")
-      .select("product_key, price, sale_price, stock, weight, weight_variants")
+      .select("product_key, price, sale_price, stock, weight, weight_variants, stock_quantity")
       .in("product_key", [...productKeys]);
 
     const base = new Map<string, ProductRow>();
@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
     const overrides = new Map<string, OverrideRow>();
     (overrideRows ?? []).forEach((r: OverrideRow) => overrides.set(r.product_key, r));
 
-    function trusted(key: string): { price: number; salePrice: number | null; stock: string; weight: number } | null {
+    function trusted(key: string): { price: number; salePrice: number | null; stock: string; weight: number; stockQuantity: number | null } | null {
       const b = base.get(key);
       if (!b) return null;
       const o = overrides.get(key);
@@ -372,15 +372,29 @@ Deno.serve(async (req) => {
       const salePrice = o && o.sale_price !== undefined ? o.sale_price : b.sale_price;
       const stock = o?.stock ?? b.stock ?? "in";
       const weight = (o?.weight ?? b.weight) ?? 0;
-      return { price, salePrice, stock, weight };
+      // An override's stock_quantity (even if explicitly null) wins over
+      // the base row's, same layering as every other field here — an
+      // admin can only ever set this via product_overrides/
+      // custom_products directly, never via the seeded `products` table.
+      const stockQuantity = (o?.stock_quantity ?? b.stock_quantity) ?? null;
+      return { price, salePrice, stock, weight, stockQuantity };
     }
     function effective(t: { price: number; salePrice: number | null }): number {
       return t.salePrice !== null && t.salePrice < t.price ? t.salePrice : t.price;
     }
 
-    type PricedLine = { unitPrice: number; qty: number; weight: number; catSlug: string | null; productId: string };
+    type PricedLine = { unitPrice: number; qty: number; weight: number; catSlug: string | null; productId: string; stockKey?: string };
     const lines: PricedLine[] = [];
     let rejection: string | null = null;
+    // Only standalone product lines participate — a bundle/combo's own
+    // components already silently drop anything out of stock (line ~412
+    // above) rather than reject the whole cart, and layering quantity
+    // limits on top of that would mean the same underlying product
+    // needs its stock checked once per bundle it appears in as well as
+    // once on its own, which isn't worth the complexity for something
+    // curated and comparatively low-volume. Standalone lines are where
+    // someone can actually order 50 of one thing, which is the real risk.
+    const requestedQtyByKey = new Map<string, number>();
 
     for (const it of items) {
       const qty = typeof it.qty === "number" && Number.isFinite(it.qty) && it.qty > 0 ? Math.floor(it.qty) : 0;
@@ -426,6 +440,21 @@ Deno.serve(async (req) => {
         // already disables "Add to basket" for an out-of-stock product,
         // but that's a UI nicety, not enforcement — this is the real gate.
         if (t.stock === "out") { rejection = "One of the items in your basket just went out of stock, please remove it and try again."; break; }
+        // Only rejects, never reserves — a genuinely simultaneous
+        // checkout on the last unit by two different people can still
+        // both pass this check; decrement_stock (called once payment is
+        // actually confirmed, see confirm-order) is what closes that
+        // last, much narrower race, by refusing to go below zero.
+        if (t.stockQuantity !== null) {
+          const requestedSoFar = (requestedQtyByKey.get(parsed.baseKey) ?? 0) + qty;
+          requestedQtyByKey.set(parsed.baseKey, requestedSoFar);
+          if (requestedSoFar > t.stockQuantity) {
+            rejection = t.stockQuantity <= 0
+              ? "One of the items in your basket just sold out, please remove it and try again."
+              : `Only ${t.stockQuantity} of one item in your basket ${t.stockQuantity === 1 ? 'is' : 'are'} left in stock, please reduce the quantity.`;
+            break;
+          }
+        }
         let unitPrice: number;
         let weight: number;
         if (parsed.variantLabel !== null) {
@@ -439,7 +468,7 @@ Deno.serve(async (req) => {
           weight = t.weight;
         }
         if (it.isSubscription === true) unitPrice = round2(unitPrice * (1 - SUBSCRIPTION_DISCOUNT_PCT / 100));
-        lines.push({ unitPrice, qty, weight: weight * qty, catSlug: parsed.baseKey.split("::")[0], productId: it.id });
+        lines.push({ unitPrice, qty, weight: weight * qty, catSlug: parsed.baseKey.split("::")[0], productId: it.id, stockKey: parsed.baseKey });
         continue;
       }
 
@@ -559,10 +588,22 @@ Deno.serve(async (req) => {
 
     const total = Math.max(0, round2(subtotal + delivery - discountAmount - loyaltyDiscountAmount));
 
+    // Only standalone product lines carry a stockKey (see the comment by
+    // requestedQtyByKey above) — collapsed here from possibly-multiple
+    // lines for the same base product (different weight variants) into
+    // one summed quantity per product, which is what decrement_stock
+    // actually needs.
+    const stockLinesByKey = new Map<string, number>();
+    for (const l of lines) {
+      if (!l.stockKey) continue;
+      stockLinesByKey.set(l.stockKey, (stockLinesByKey.get(l.stockKey) ?? 0) + l.qty);
+    }
+    const stockLines = [...stockLinesByKey.entries()].map(([product_key, qty]) => ({ product_key, qty }));
+
     return {
       ok: true as const,
       subtotal, delivery, discountAmount, discountError, discountId: discountRow?.id ?? null, discountDef, freeDelivery,
-      loyaltyDiscountAmount, loyaltyPct, total, totalWeight,
+      loyaltyDiscountAmount, loyaltyPct, total, totalWeight, stockLines,
     };
   }
 
@@ -670,6 +711,8 @@ Deno.serve(async (req) => {
         notes: typeof deliveryInfo.notes === "string" ? deliveryInfo.notes : null,
         discount_id: priced.discountId,
         discount_code: typeof body.discountCode === "string" ? body.discountCode : null,
+        stock_lines: priced.stockLines,
+        delivery_postcode: typeof deliveryInfo.postcode === "string" ? deliveryInfo.postcode : null,
       });
       if (pendingError) console.error("pending_checkouts insert failed (order still relies on client fast path):", pendingError.message);
     }
