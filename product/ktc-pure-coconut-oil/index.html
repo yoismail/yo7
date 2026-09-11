@@ -18769,7 +18769,7 @@
                 renderDishPicker();
             } else {
                 showView('view-home');
-                // These four sections used to only be rendered once at page
+                // These five sections used to only be rendered once at page
                 // boot and never again, so a product edit (or the overrides
                 // fetch resolving shortly after load) never showed up here
                 // until a hard refresh happened to win the race — visiting
@@ -18779,6 +18779,7 @@
                 renderOfferCarousel();
                 renderNewCarousel();
                 renderBestSellersSpotlight();
+                renderMealSetsHome();
             }
             updateBreadcrumbJsonLd();
         }
