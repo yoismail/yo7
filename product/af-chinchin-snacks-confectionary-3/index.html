@@ -2121,17 +2121,35 @@
            values / promise / vision" blocks reads as one connected brand
            story instead of a stack of separate cards split by plain
            empty margin. */
+        /* The line-plus-dot version of this divider read as generic —
+           the same pattern any template uses. Both pieces now reuse
+           shapes the brand already owns elsewhere: the dashes match the
+           combo card's ticket-perforation line, and the mark itself is
+           the same asymmetric wax-seal blob as the seal mark and combo
+           stamp (border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%),
+           tying this divider to the same visual system instead of
+           introducing a fourth, unrelated shape language. */
         .about-divider {
             display: flex;
             justify-content: center;
+            align-items: center;
+            gap: 10px;
             margin: 0 auto 40px;
         }
+        .about-divider::before, .about-divider::after {
+            content: '';
+            width: 44px;
+            height: 0;
+            border-top: 1.5px dashed rgba(var(--border-rgb), 0.22);
+        }
         .about-divider-mark {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
+            width: 13px;
+            height: 10px;
+            flex-shrink: 0;
+            border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
             background: var(--chartreuse-rich);
-            box-shadow: 0 0 0 7px rgba(144, 184, 0, 0.13);
+            box-shadow: 0 0 0 6px rgba(144, 184, 0, 0.13);
+            transform: rotate(-8deg);
         }
         .about-block-alt {
             background: var(--section-alt-bg, var(--card-bg));
@@ -3610,11 +3628,15 @@
             display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
         }
 
+        /* Same wax-seal-blob + ticket-dash treatment as .about-divider,
+           see its comment — kept as its own rule since this one's a
+           single full-width dashed line rather than two short segments
+           flanking the mark. */
         .section-divider {
-            height: 1px;
+            height: 0;
             max-width: 220px;
             margin: 0 auto 48px;
-            background: linear-gradient(90deg, transparent, rgba(var(--border-rgb), 0.22) 50%, transparent);
+            border-top: 1.5px dashed rgba(var(--border-rgb), 0.22);
             position: relative;
         }
 
@@ -3623,10 +3645,10 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
+            transform: translate(-50%, -50%) rotate(-8deg);
+            width: 12px;
+            height: 9px;
+            border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
             background: var(--orange);
         }
 
