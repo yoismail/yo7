@@ -15355,14 +15355,13 @@
                 return { ok: false, message: `Your payment went through, but we lost track of the order details (this can happen after being sent to a payment provider and back). Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
             }
 
-            let paymentMethodSummary = 'Paid online';
-            try {
-                const { data: summaryData } = await supabaseClient.functions.invoke('create-payment-intent', {
-                    body: { action: 'summarize', paymentIntentId: paymentIntent.id },
-                });
-                if (summaryData && summaryData.summary) paymentMethodSummary = summaryData.summary;
-            } catch (err) { /* cosmetic only, the payment already succeeded either way */ }
-
+            // paymentMethodSummary (the real "Visa •••• 4242" / "Apple Pay"
+            // style label) now comes back from confirm-order itself below,
+            // which already retrieves the PaymentIntent server-side to
+            // verify it — this used to be a separate round trip to
+            // create-payment-intent's action:"summarize" purely for
+            // display, computing the exact same thing confirm-order now
+            // computes anyway for what it actually saves to the order.
             lastOrder = {
                 number: null, // assigned below from the real sequential
                                // YO7-0001-style number the database hands
@@ -15379,7 +15378,7 @@
                 fulfilment: ctx.fulfilmentMethod,
                 deliveryWeight: ctx.deliveryWeight,
                 loyaltyRewardEarned: false, // filled in below once the order is saved and has a real id to check against
-                paymentMethodSummary,
+                paymentMethodSummary: 'Paid online', // replaced below once confirm-order responds with the real one
                 stripePaymentIntentId: paymentIntent.id,
             };
             // The actual order record is created server-side now, not by
@@ -15417,6 +15416,7 @@
             // supabase-migration-20-discount-codes.sql) — nothing to do
             // here.
             lastOrder.number = data.orderNumber;
+            if (data.paymentMethodSummary) lastOrder.paymentMethodSummary = data.paymentMethodSummary;
             if (ctx.loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
             // issueLoyaltyRewardIfEarned needs the new order's real id,
             // which confirm-order doesn't hand back (only the order

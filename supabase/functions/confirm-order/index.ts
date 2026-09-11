@@ -146,24 +146,15 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Idempotent: if this order already exists (the webhook got there
-  // first, or this is a retried request after a dropped response),
-  // return it as-is rather than trying to create it again. Checked
-  // before touching Stripe at all — cheaper, and this is the common
-  // case on a retry.
-  async function existingOrder() {
-    return await db.from("orders").select("id, order_number").eq("stripe_payment_intent_id", paymentIntentId).maybeSingle();
-  }
-  const { data: already } = await existingOrder();
-  if (already) {
-    return new Response(JSON.stringify({ ok: true, orderNumber: already.order_number }), {
-      status: 200, headers: { ...cors, "Content-Type": "application/json" },
-    });
-  }
-
   let paymentIntent: Stripe.PaymentIntent;
   try {
-    paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    // expand: payment_method is what makes the real "Visa •••• 4242" /
+    // "Apple Pay" summary below possible in one round trip, instead of
+    // the separate action:"summarize" call this function used to leave
+    // the client to make on its own (whose result then went nowhere,
+    // since the old insert-directly-from-the-client code never actually
+    // read it back — that's the bug this replaces).
+    paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["payment_method"] });
   } catch (err) {
     console.error("Stripe paymentIntents.retrieve failed:", err instanceof Error ? err.message : err);
     return new Response(JSON.stringify({ error: "Couldn't verify that payment right now, please try again in a moment." }), {
@@ -186,95 +177,58 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { data: pending, error: pendingError } = await db
-    .from("pending_checkouts")
-    .select("*")
-    .eq("payment_intent_id", paymentIntentId)
-    .maybeSingle();
+  // Same brand/wallet formatting create-payment-intent's own
+  // action:"summarize" path already used.
+  let paymentMethodSummary = "Paid online";
+  const pm = paymentIntent.payment_method;
+  if (pm && typeof pm === "object" && pm.type === "card" && pm.card) {
+    const wallet = pm.card.wallet?.type;
+    if (wallet === "apple_pay") paymentMethodSummary = "Apple Pay";
+    else if (wallet === "google_pay") paymentMethodSummary = "Google Pay";
+    else {
+      const brand = pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1);
+      paymentMethodSummary = `${brand} •••• ${pm.card.last4}`;
+    }
+  }
 
-  if (pendingError) {
-    console.error("Looking up pending_checkouts failed:", pendingError.message);
+  // finalize_order_from_pending (see its own comment) does the actual
+  // work — looks up pending_checkouts, inserts the order from it, and
+  // decrements stock, all inside one advisory-locked transaction so
+  // this and stripe-webhook's own independent fallback path can never
+  // both reach the insert for the same payment (they still both call
+  // this, they just can't race past the lock at the same time).
+  const { data: result, error: finalizeError } = await db
+    .rpc("finalize_order_from_pending", { p_payment_intent_id: paymentIntentId, p_payment_method_summary: paymentMethodSummary })
+    .single();
+
+  if (finalizeError) {
+    console.error("finalize_order_from_pending failed:", finalizeError.message);
     return new Response(JSON.stringify({ error: "Something went wrong finishing your order, please try again." }), {
       status: 200, headers: { ...cors, "Content-Type": "application/json" },
     });
   }
-
-  if (!pending) {
-    // The webhook may have already consumed and deleted this row between
-    // the existingOrder() check above and now — re-check once more
-    // before giving up, since that's the common honest reason this
-    // happens, not tampering.
-    const { data: raceOrder } = await existingOrder();
-    if (raceOrder) {
-      return new Response(JSON.stringify({ ok: true, orderNumber: raceOrder.order_number }), {
-        status: 200, headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
+  if (!result?.order_number) {
     // Genuinely nothing to build an order from — the rare, documented,
-    // best-effort gap (see create-payment-intent's own comment on this
-    // insert): the payment definitely succeeded, but this safety net
-    // can't reconstruct the order's actual contents from nothing. Not
-    // something retrying this same request will fix.
-    console.error(`confirm-order: no pending_checkouts row for ${paymentIntentId}, nothing to build an order from.`);
+    // best-effort gap (see create-payment-intent's own comment on the
+    // pending_checkouts insert): the payment definitely succeeded, but
+    // this safety net can't reconstruct the order's actual contents
+    // from nothing. Not something retrying this same request will fix.
+    console.error(`confirm-order: nothing to build an order from for ${paymentIntentId}.`);
     return new Response(JSON.stringify({
       error: "Your payment went through, but we need a moment to finish setting up your order. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference: " + paymentIntentId,
     }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
-  const { data: order, error: orderError } = await db.from("orders").insert({
-    user_id: pending.user_id,
-    status: "placed",
-    fulfilment_method: pending.fulfilment_method,
-    items: pending.items,
-    subtotal: pending.subtotal,
-    delivery_fee: pending.delivery_fee,
-    discount: pending.discount,
-    total: pending.total,
-    delivery_name: pending.delivery_name,
-    delivery_address: pending.delivery_address,
-    delivery_postcode: pending.delivery_postcode,
-    delivery_phone: pending.delivery_phone,
-    notes: pending.notes,
-    stripe_payment_intent_id: paymentIntentId,
-    payment_method_summary: "Paid online",
-    discount_id: pending.discount_id,
-    discount_code: pending.discount_code,
-  }).select("id, order_number").single();
-
-  if (orderError) {
-    if (orderError.code === "23505") {
-      // Lost a race with the webhook between the checks above and this
-      // insert — vanishingly unlikely, but the same safe no-op either
-      // path already handles.
-      const { data: raceOrder } = await existingOrder();
-      await db.from("pending_checkouts").delete().eq("payment_intent_id", paymentIntentId);
-      return new Response(JSON.stringify({ ok: true, orderNumber: raceOrder?.order_number }), {
-        status: 200, headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
-    console.error("Order insert failed:", orderError.message);
-    return new Response(JSON.stringify({ error: "Something went wrong finishing your order, please try again." }), {
-      status: 200, headers: { ...cors, "Content-Type": "application/json" },
-    });
-  }
-
-  // Best-effort, same as everything else here that isn't the charge or
-  // the order itself: a failure decrementing stock should never make an
-  // already-paid order look like it failed to the customer.
-  if (Array.isArray(pending.stock_lines) && pending.stock_lines.length > 0) {
-    const { error: stockError } = await db.rpc("decrement_stock", { p_lines: pending.stock_lines });
-    if (stockError) console.error("decrement_stock failed (non-fatal):", stockError.message);
-  }
-
   // Order-confirmation email, admin new-order alert, and discount-
   // redemption tracking all fire automatically from the existing AFTER
-  // INSERT trigger on orders — nothing else to do for those. Loyalty-
-  // reward issuance is still a client-only nicety (issueLoyaltyRewardIfEarned
-  // needs the caller's own auth context), called by index.html right
-  // after this function returns success, same as before.
-  await db.from("pending_checkouts").delete().eq("payment_intent_id", paymentIntentId);
-
-  return new Response(JSON.stringify({ ok: true, orderNumber: order.order_number }), {
+  // INSERT trigger on orders — nothing else to do for those, and that
+  // only fires once regardless of whether this call was the one that
+  // actually inserted (is_new) or found an order already made by a
+  // race with the webhook. Loyalty-reward issuance is still a
+  // client-only nicety (issueLoyaltyRewardIfEarned needs the caller's
+  // own auth context), called by index.html right after this function
+  // returns success, same as before.
+  return new Response(JSON.stringify({ ok: true, orderNumber: result.order_number, paymentMethodSummary }), {
     status: 200, headers: { ...cors, "Content-Type": "application/json" },
   });
 });

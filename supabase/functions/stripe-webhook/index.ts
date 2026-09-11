@@ -109,81 +109,49 @@ Deno.serve(async (req) => {
     if (error) console.error("prune_pending_checkouts failed (non-fatal):", error.message);
   });
 
-  const { data: pending, error: pendingError } = await db
-    .from("pending_checkouts")
-    .select("*")
-    .eq("payment_intent_id", paymentIntent.id)
-    .maybeSingle();
+  // finalize_order_from_pending (see its own comment, added alongside
+  // decrement_stock) does the actual lookup-and-insert, inside an
+  // advisory-locked transaction keyed to this payment — that's what
+  // stops this fallback path and confirm-order's own (much more common)
+  // fast path from ever both reaching the insert for the same order,
+  // which used to burn two order_number sequence values every time they
+  // raced (the loser's insert still fired the number-assigning trigger
+  // before hitting the unique-constraint rejection). No payment_method
+  // expansion here the way confirm-order does for its nicer "Visa ••••
+  // 4242"-style summary — keeping this fallback path's one Stripe call
+  // (already spent verifying the signature) rather than adding a second
+  // one for a path that, by design, only actually fires rarely.
+  const { data: result, error: finalizeError } = await db
+    .rpc("finalize_order_from_pending", { p_payment_intent_id: paymentIntent.id })
+    .single();
 
-  if (pendingError) {
-    console.error("Looking up pending_checkouts failed:", pendingError.message);
-    return new Response("Lookup failed", { status: 500 }); // 500 so Stripe retries
+  if (finalizeError) {
+    console.error("finalize_order_from_pending failed:", finalizeError.message);
+    return new Response("Order finalize failed", { status: 500 }); // 500 so Stripe retries
   }
-
-  if (!pending) {
-    // Two honest possibilities: the client's own fast path already
-    // finished the order AND this row was never written in the first
-    // place (create-payment-intent logs but doesn't fail the payment if
-    // that insert itself fails — see its own comment), or this really is
-    // an order this safety net can't reconstruct. Either way there's
-    // nothing here to build an order from, and this is not something
-    // retrying will fix.
+  if (!result?.order_number) {
+    // Two honest possibilities: create-payment-intent's own
+    // pending_checkouts insert never happened in the first place (it
+    // logs but doesn't fail the payment if that insert itself fails —
+    // see its own comment), or this really is an order this safety net
+    // can't reconstruct. Either way there's nothing here to build an
+    // order from, and this is not something retrying will fix.
     return new Response(JSON.stringify({ received: true, note: "no pending_checkouts row, nothing to reconstruct" }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 
-  const { data: order, error: orderError } = await db.from("orders").insert({
-    user_id: pending.user_id,
-    status: "placed",
-    fulfilment_method: pending.fulfilment_method,
-    items: pending.items,
-    subtotal: pending.subtotal,
-    delivery_fee: pending.delivery_fee,
-    discount: pending.discount,
-    total: pending.total,
-    delivery_name: pending.delivery_name,
-    delivery_address: pending.delivery_address,
-    delivery_postcode: pending.delivery_postcode,
-    delivery_phone: pending.delivery_phone,
-    notes: pending.notes,
-    stripe_payment_intent_id: paymentIntent.id,
-    payment_method_summary: "Paid online",
-    discount_id: pending.discount_id,
-    discount_code: pending.discount_code,
-  }).select("id, order_number").single();
-
-  if (orderError) {
-    if (orderError.code === "23505") {
-      // The client's own fast path got there first — exactly the
-      // expected, safe outcome most of the time. Clean up the now-
-      // redundant pending row and stop.
-      await db.from("pending_checkouts").delete().eq("payment_intent_id", paymentIntent.id);
-      return new Response(JSON.stringify({ received: true, note: "order already existed (client fast path won)" }), { status: 200, headers: { "Content-Type": "application/json" } });
-    }
-    console.error("Fallback order insert failed:", orderError.message);
-    return new Response("Order insert failed", { status: 500 }); // 500 so Stripe retries
-  }
-
-  // Same best-effort stock decrement confirm-order does on its own
-  // (much more common) path — this fallback path needs it too, since
-  // it's the other place an order can actually get created.
-  if (Array.isArray(pending.stock_lines) && pending.stock_lines.length > 0) {
-    const { error: stockError } = await db.rpc("decrement_stock", { p_lines: pending.stock_lines });
-    if (stockError) console.error("decrement_stock failed (non-fatal):", stockError.message);
-  }
-
   // Order-confirmation email, admin new-order alert, and discount-
-  // redemption tracking all fire automatically from here via the
-  // existing AFTER INSERT trigger on orders (migrations 6/10/12/20) —
-  // nothing else to do for those regardless of which path created the
-  // row. Loyalty-reward issuance is NOT duplicated here on purpose: it's
-  // a client-only nicety today (issueLoyaltyRewardIfEarned relies on the
-  // caller's own auth context, which a webhook doesn't have), so in the
-  // rare case this fallback path is what actually saves an order, that
-  // one order's loyalty reward (if any) may need a manual top-up — a
-  // real but minor, recoverable gap, not an order silently lost.
-  await db.from("pending_checkouts").delete().eq("payment_intent_id", paymentIntent.id);
-
-  return new Response(JSON.stringify({ received: true, orderCreated: true, orderNumber: order.order_number }), {
+  // redemption tracking all fire automatically from the existing AFTER
+  // INSERT trigger on orders — nothing else to do for those, and that
+  // only fires once regardless of whether this call was the one that
+  // actually inserted or found an order already made by a race with
+  // confirm-order. Loyalty-reward issuance is NOT duplicated here on
+  // purpose: it's a client-only nicety today (issueLoyaltyRewardIfEarned
+  // relies on the caller's own auth context, which a webhook doesn't
+  // have), so in the rare case this fallback path is what actually
+  // saves an order, that one order's loyalty reward (if any) may need a
+  // manual top-up — a real but minor, recoverable gap, not an order
+  // silently lost.
+  return new Response(JSON.stringify({ received: true, orderCreated: result.is_new, orderNumber: result.order_number }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
