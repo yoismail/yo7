@@ -1924,17 +1924,13 @@
             margin-bottom: 22px;
         }
 
-        /* Both of these now sit inside .footer-newsletter (a wrapping flex
-           row: icon+text, then the form) rather than the hero — flex-basis:
-           100% pushes each onto its own full-width line below that row
-           instead of squeezing in as another row item. */
+        /* Both of these now sit inside .footer-newsletter (a column stack:
+           icon+text, then the form, then this) rather than the hero. */
         .hero-capture-hint {
-            flex-basis: 100%;
             margin-top: -6px;
         }
         .hero-capture-thanks {
             display: none;
-            flex-basis: 100%;
             align-items: center;
             gap: 16px;
         }
@@ -4122,11 +4118,8 @@
         }
         footer .wrap { position: relative; z-index: 1; }
 
-        /* Side by side above 900px — narrower than that and each card's
-           own internal row (icon+text vs. the form) has nowhere left to
-           breathe once a card is squeezed to half-width, given the
-           form inputs' own 220px min-width (see .newsletter-form input
-           below), so it drops back to the original stacked layout. */
+        /* Side by side above 900px, each card stacked full-width below
+           that. */
         .footer-newsletter-grid {
             display: flex;
             flex-direction: column;
@@ -4136,20 +4129,31 @@
         @media (min-width: 900px) {
             .footer-newsletter-grid {
                 flex-direction: row;
-                align-items: stretch;
+                /* flex-start, not stretch — the two cards have a
+                   different number of form fields (one email input vs.
+                   email+postcode), so stretching them to match heights
+                   left the shorter card's content sitting in a tall box
+                   with a slab of empty space under it. Each card now
+                   sizes to its own content instead. */
+                align-items: flex-start;
             }
             .footer-newsletter-grid .footer-newsletter {
                 flex: 1;
                 min-width: 0;
             }
         }
+        /* Column, not the old wrapping row of icon+text / form — a row
+           made the two cards' content heights differ by however many
+           lines the form happened to wrap onto (the plain email-only
+           form vs. the email+postcode one), and with the grid stretching
+           both cards to match the taller one, the shorter card's content
+           sat vertically centred in the extra space — a big, uneven gap
+           above and below it instead of a clean, top-aligned card. */
         .footer-newsletter {
             position: relative;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            flex-direction: column;
+            gap: 18px;
             padding: 34px 38px;
             margin-bottom: 40px;
             background: #FFFFFF;
@@ -4181,14 +4185,19 @@
             font-family: var(--display); font-weight: 700; font-size: 16px; color: #2C1C10; margin-bottom: 4px;
         }
         .footer-newsletter p { font-size: 13px; color: #6b5c4f; }
+        /* Each field on its own full-width row rather than trying to fit
+           side by side and wrapping unpredictably depending on how many
+           fields a given form has (see .footer-newsletter's own comment
+           above) — a consistent stack reads the same deliberate way on
+           both cards regardless of field count. */
         .newsletter-form {
             position: relative; z-index: 2;
-            display: flex; gap: 10px; flex-wrap: wrap;
+            display: flex; flex-direction: column; gap: 10px;
         }
         .newsletter-form input {
+            width: 100%;
             padding: 13px 16px; border-radius: 12px; border: 1.5px solid rgba(225, 225, 0, 0.35);
             background: rgba(225, 225, 0, 0.1); color: #2C1C10; font-family: var(--body); font-size: 16px;
-            min-width: 220px;
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .newsletter-form input::placeholder { color: rgba(44, 28, 16, 0.45); }
@@ -4202,6 +4211,7 @@
            consistent call-to-action colour rather than the plain
            newsletter card getting a different, weaker-looking green. */
         .newsletter-form button {
+            width: 100%;
             background: var(--orange); color: var(--aubergine-deep); border: none; border-radius: 12px;
             padding: 13px 22px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
             white-space: nowrap;
@@ -12086,7 +12096,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.30';
+        const BUILD_VERSION = '2026-09-12.31';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
