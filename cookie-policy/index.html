@@ -457,6 +457,14 @@
                 gap: 12px;
                 padding: 18px 20px;
             }
+            /* Full-width and centred rather than left-aligned like the
+               desktop pill — at the stacked mobile width a left-aligned
+               button left a big dead strip of plain orange to its right,
+               under a card that's otherwise full-width top to bottom. */
+            .launch-banner-tag {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         .trust-bar {
@@ -11996,7 +12004,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.20';
+        const BUILD_VERSION = '2026-09-12.21';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
