@@ -410,7 +410,12 @@
            launch-list mechanism) rather than just sitting there as
            decoration — javascript:void(0) + scrollIntoView, not a real
            href, same pattern the hero's own "Browse Categories" button
-           already uses, so it doesn't collide with the hash router. */
+           already uses, so it doesn't collide with the hash router.
+           Solid aubergine fill, not an outline — this needs to read as
+           the banner's one real call to action, not another label next
+           to the pulsing dot, so it gets the strongest contrast
+           available against the orange background instead of blending
+           into the same text colour as everything around it. */
         .launch-banner-tag {
             flex-shrink: 0;
             display: inline-flex;
@@ -421,24 +426,27 @@
             font-size: 11px;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--aubergine);
-            border: 1px solid rgba(6, 59, 0, 0.3);
+            color: var(--cream);
+            background: var(--aubergine);
+            border: 1px solid var(--aubergine);
             border-radius: 999px;
-            padding: 7px 16px;
+            padding: 9px 18px;
             white-space: nowrap;
             text-decoration: none;
             cursor: pointer;
-            transition: background 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 4px 14px rgba(6, 59, 0, 0.35);
+            transition: background 0.2s ease, transform 0.2s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.2s ease;
         }
         .launch-banner-tag:hover {
-            background: rgba(6, 59, 0, 0.08);
-            border-color: rgba(6, 59, 0, 0.45);
+            background: var(--aubergine-mid);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(6, 59, 0, 0.4);
         }
         .launch-banner-dot {
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background: var(--aubergine);
+            background: var(--orange);
             flex-shrink: 0;
             animation: embPulse 1.6s ease-in-out infinite;
         }
@@ -11907,7 +11915,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.9';
+        const BUILD_VERSION = '2026-09-12.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
