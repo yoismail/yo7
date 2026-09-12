@@ -5376,12 +5376,6 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        .product-card-weight {
-            font-size: 10.5px;
-            color: rgba(250, 249, 242, 0.55);
-            margin: -5px 0 7px;
-        }
-
         .product-row {
             display: flex;
             align-items: center;
@@ -12308,7 +12302,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.41';
+        const BUILD_VERSION = '2026-09-12.42';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14356,7 +14350,6 @@
         <div class="product-body">
           <h4>${escapeHtml(p.name)}</h4>
           <div class="product-unit">${escapeHtml(effectiveUnit(p) || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
-          ${(currentIsAdmin && editModeOn) ? `<div class="product-card-weight">${typeof p.weight === 'number' ? `Delivery weight: ${fmtWeight(p.weight)}` : 'Delivery weight not set'}</div>` : ''}
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
             <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
