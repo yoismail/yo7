@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Generates real, separately-crawlable URLs for Yo7 Foods' 76 statically
-defined products (the CATEGORIES array in index.html — 19 categories x 4
-products each). Right now every product only exists behind a hash route
+"""Generates real, separately-crawlable URLs for every product Yo7 Foods
+sells — both the ~249 hardcoded ones (the CATEGORIES array in
+src/index.html) and anything added or edited since through the live admin
+panel (the `custom_products` and `product_overrides` Supabase tables).
+Right now every product only exists behind a hash route
 (#/product/<catSlug>/<idx>), which Google never indexes as a distinct
 page — a search for a specific item can only ever land on the homepage.
 This is the same approach already used for the 9 content pages
@@ -10,11 +12,29 @@ one near-identical copy of index.html per product, written to a real path
 GitHub Pages serves directly (product/<slug>/index.html for a request to
 /product/<slug>/).
 
-Scope: only the 76 hardcoded products. Admin-added products
-(the `custom_products` Supabase table) aren't covered — this script reads
-CATEGORIES directly out of index.html, no network access, so it can't see
-anything that only exists in Supabase. That's a deliberate v1 limit, not
-an oversight.
+Scope: every product the live site would show, not just the 249 hardcoded
+ones — this fetches custom_products and product_overrides from Supabase's
+REST API (the same public anon key already embedded in src/index.html,
+which both tables allow anyone to SELECT from — see their RLS policies in
+supabase/schema.sql) and merges them on top of CATEGORIES, mirroring
+exactly what loadCustomProducts()/applyProductOverrides() do client-side.
+Without this, a static page's baked title/price/stock/JSON-LD would silently
+drift from whatever's actually live the moment an admin edits a product
+through the panel, and any product added purely through the panel would
+never get a real URL at all — both were true before this fetch/merge step
+existed. A product marked deleted (product_overrides.deleted) gets no page,
+and any page it previously had (a since-deleted or since-renamed product)
+is removed on this same run — see the orphan-pruning pass at the end of
+main() — so a stale/dead page never lingers on disk after this script runs.
+
+This talks to the network, so it can fail in ways a pure-local script
+can't (Supabase down, rate limited, a bad response). On any such failure
+it raises and exits non-zero *before* writing or deleting anything —
+never partially regenerates from incomplete data, which could otherwise
+silently prune legitimate pages or bake stale content into pages that
+looked "successfully" regenerated. A failed run just means "nothing
+changed this time"; the previously-committed pages stay exactly as they
+were until the next successful run.
 
 Two things happen per product, beyond what the 9-page script does:
   1. <head> is patched (title/description/canonical/og/twitter) exactly
@@ -33,22 +53,28 @@ markup, escaped apostrophes) — there's no safe way to parse that with
 Python's stdlib, so this shells out to `node` for exactly one step:
 evaluating the extracted CATEGORIES/CATEGORY_CODE_PREFIX literals and
 printing them as JSON. Everything else stays plain Python, matching the
-style of generate-static-pages.py.
+style of generate-static-pages.py — Supabase's REST API is plain HTTP+JSON,
+so those two fetches use only the standard library (urllib), no new
+dependency to install in CI for it.
 
 Usage:
     python3 scripts/generate-product-pages.py
 Run from anywhere; paths below are relative to the repo root the script
 lives in. Requires `node` on PATH (for the one CATEGORIES-parsing step
-only — this is the one place this repo needs a JS runtime at all).
+only — this is the one place this repo needs a JS runtime at all) and
+outbound network access to Supabase.
 """
 import html as html_lib
 import importlib.util
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from datetime import date
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -79,11 +105,23 @@ def extract_statement(html, start_marker, end_marker, label):
     return html[start:end + len(end_marker)]
 
 
+def extract_const_string(html, name):
+    """Pulls a single-line `const NAME = '...';` string literal out of the
+    source verbatim — unlike CATEGORIES, SUPABASE_URL/SUPABASE_ANON_KEY are
+    plain string literals, so a regex is safe here (no need for node)."""
+    m = re.search(rf"const {re.escape(name)} = '([^']*)';", html)
+    if not m:
+        raise ValueError(f'{name} not found in src/index.html — has its declaration moved or changed shape?')
+    return m.group(1)
+
+
 def load_categories():
     """Extracts CATEGORIES and CATEGORY_CODE_PREFIX out of index.html as
     real data, by having node evaluate the actual JS literals (the only
     safe way to parse a genuine JS array/object literal — unquoted keys,
-    embedded SVG markup, \\' escapes)."""
+    embedded SVG markup, \\' escapes). Also returns the Supabase URL/anon
+    key straight from the same source file, so there's exactly one place
+    those ever need to be correct."""
     with open(SOURCE, 'r', encoding='utf-8') as f:
         source_html = f.read()
 
@@ -108,7 +146,112 @@ def load_categories():
         os.unlink(tmp_path)
 
     data = json.loads(result.stdout)
-    return data['CATEGORIES'], data['CATEGORY_CODE_PREFIX']
+    supabase_url = extract_const_string(source_html, 'SUPABASE_URL')
+    supabase_anon_key = extract_const_string(source_html, 'SUPABASE_ANON_KEY')
+    return data['CATEGORIES'], data['CATEGORY_CODE_PREFIX'], supabase_url, supabase_anon_key
+
+
+def fetch_supabase_table(supabase_url, anon_key, table, order=None, attempts=3):
+    """A plain REST GET against Supabase's PostgREST endpoint — the exact
+    same public, RLS-gated read the live site's own supabase-js client
+    does (select('*')), just without the SDK. Retries transient failures
+    a couple of times (a scheduled CI run hitting one bad network blip
+    shouldn't fail the whole regeneration), but always raises — never
+    returns partial/empty data as if it were a real, empty result — once
+    attempts are exhausted, so a caller can never mistake "couldn't reach
+    Supabase" for "this table is genuinely empty."""
+    url = f'{supabase_url}/rest/v1/{table}?select=*'
+    if order:
+        url += f'&order={order}'
+    req = urllib.request.Request(url, headers={
+        'apikey': anon_key,
+        'Authorization': f'Bearer {anon_key}',
+        'Accept': 'application/json',
+    })
+    last_err = None
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = resp.read()
+            return json.loads(body.decode('utf-8'))
+        except (urllib.error.URLError, ValueError) as e:
+            last_err = e
+    raise RuntimeError(f'Failed to fetch {table!r} from Supabase after {attempts} attempts: {last_err}') from last_err
+
+
+def merge_custom_products(categories, rows):
+    """Mirrors loadCustomProducts() in index.html exactly — admin-added
+    products, inserted at their assigned index in their category's
+    products list (extending it with placeholder gaps if a row's idx ever
+    arrives ahead of where the list currently ends; shouldn't happen given
+    idx is always assigned as "next free slot", but this stays correct
+    either way rather than raising)."""
+    by_slug = {c['slug']: c for c in categories}
+    for row in rows:
+        cat = by_slug.get(row.get('cat_slug'))
+        if not cat:
+            continue
+        idx = row['idx']
+        product = {'name': row['name'], 'unit': row['unit'], 'price': row['price'], 'stock': row.get('stock') or 'in'}
+        if row.get('sale_price') is not None: product['salePrice'] = row['sale_price']
+        if row.get('stock_quantity') is not None: product['stockQuantity'] = row['stock_quantity']
+        if row.get('weight') is not None: product['weight'] = row['weight']
+        if row.get('description'): product['description'] = row['description']
+        if row.get('image_url'): product['image'] = row['image_url']
+        if row.get('is_new'): product['isNew'] = True
+        if row.get('is_best_seller'): product['isBestSeller'] = True
+        products = cat['products']
+        while len(products) <= idx:
+            products.append(None)
+        products[idx] = product
+
+
+def merge_overrides(categories, rows):
+    """Mirrors applyProductOverrides()'s merge loop in index.html exactly,
+    field for field, tri-states (is_new) included — deliberately kept in
+    lockstep with that function rather than "close enough", since any
+    field this misses is a field a crawler sees stale forever until
+    someone notices and fixes the drift by hand."""
+    by_slug = {c['slug']: c for c in categories}
+    for row in rows:
+        cat_slug, sep, idx_str = str(row.get('product_key') or '').partition('::')
+        if not sep or not idx_str.lstrip('-').isdigit():
+            continue
+        cat = by_slug.get(cat_slug)
+        if not cat:
+            continue
+        idx = int(idx_str)
+        if idx < 0 or idx >= len(cat['products']):
+            continue
+        product = cat['products'][idx]
+        if product is None:
+            continue
+        if row.get('name'): product['name'] = row['name']
+        if row.get('image_url'): product['image'] = row['image_url']
+        if row.get('price') is not None: product['price'] = row['price']
+        if row.get('sale_price') is not None: product['salePrice'] = row['sale_price']
+        else: product.pop('salePrice', None)
+        if row.get('stock'): product['stock'] = row['stock']
+        if row.get('stock_quantity') is not None: product['stockQuantity'] = row['stock_quantity']
+        else: product.pop('stockQuantity', None)
+        if row.get('weight') is not None: product['weight'] = row['weight']
+        else: product.pop('weight', None)
+        if row.get('unit_override'): product['unitOverride'] = row['unit_override']
+        if row.get('description'): product['description'] = row['description']
+        wv = row.get('weight_variants')
+        if isinstance(wv, list) and wv: product['weightVariants'] = wv
+        elif wv is None: product.pop('weightVariants', None)
+        is_new = row.get('is_new')
+        if is_new is True: product['isNew'] = True
+        elif is_new is False: product['isNew'] = False
+        if row.get('origin'): product['origin'] = row['origin']
+        if row.get('storage'): product['storage'] = row['storage']
+        allergens = row.get('allergens')
+        if isinstance(allergens, list) and allergens: product['allergens'] = allergens
+        if row.get('allergy_note'): product['allergyNote'] = row['allergy_note']
+        if row.get('nutrition'): product['nutrition'] = row['nutrition']
+        if row.get('cooking_tip'): product['cookingTip'] = row['cooking_tip']
+        product['deleted'] = row.get('deleted') is True
 
 
 def assign_product_codes(categories, code_prefix):
@@ -116,6 +259,8 @@ def assign_product_codes(categories, code_prefix):
     for cat in categories:
         prefix = code_prefix.get(cat['slug'], cat['slug'][:3].upper())
         for i, p in enumerate(cat['products']):
+            if p is None:
+                continue
             p['code'] = f'{prefix}-{i + 1:02d}'
 
 
@@ -245,9 +390,39 @@ def rebuild_sitemap(product_locs, today):
     print(f'sitemap.xml: kept {len(kept)} existing entries, added {len(product_blocks)} product entries')
 
 
+def prune_orphan_product_dirs(written_slugs):
+    """Removes any product/<slug>/ directory this run didn't (re)write —
+    a product that's since been deleted (product_overrides.deleted) or
+    renamed (its old slug is no longer anyone's current name) would
+    otherwise keep serving a real, indexable page forever, since nothing
+    else in this pipeline ever deletes a file it once wrote. Only ever
+    touches subdirectories of product/, one level deep, each of which is
+    exclusively this script's own output."""
+    product_root = os.path.join(REPO_ROOT, 'product')
+    if not os.path.isdir(product_root):
+        return
+    existing = {d for d in os.listdir(product_root) if os.path.isdir(os.path.join(product_root, d))}
+    orphans = sorted(existing - written_slugs)
+    for slug in orphans:
+        shutil.rmtree(os.path.join(product_root, slug))
+        print(f'removed stale product/{slug}/ (no longer a live, non-deleted product)')
+    if orphans:
+        print(f'{len(orphans)} orphaned product page(s) removed.')
+
+
 def main():
-    categories, code_prefix = load_categories()
+    categories, code_prefix, supabase_url, supabase_anon_key = load_categories()
+
+    # Network first, and nothing written until both calls have actually
+    # succeeded — see the module docstring for why: a half-applied merge
+    # (custom products loaded but overrides not, say, because the second
+    # call failed) would silently write pages that don't match any state
+    # the live site was ever actually in.
+    custom_product_rows = fetch_supabase_table(supabase_url, supabase_anon_key, 'custom_products', order='idx.asc')
+    merge_custom_products(categories, custom_product_rows)
     assign_product_codes(categories, code_prefix)
+    override_rows = fetch_supabase_table(supabase_url, supabase_anon_key, 'product_overrides')
+    merge_overrides(categories, override_rows)
 
     with open(SOURCE, 'r', encoding='utf-8') as f:
         source_lines = f.read().split('\n')
@@ -256,6 +431,7 @@ def main():
     used_slugs = set()
     product_locs = []
     written = 0
+    skipped_deleted = 0
 
     for cat in categories:
         cat_slug = cat['slug']
@@ -263,6 +439,17 @@ def main():
         cat_name_plain = decode_pre_escaped_amp(cat_name_escaped)
 
         for idx, p in enumerate(cat['products']):
+            # A gap (a custom_products idx arriving ahead of where its
+            # category's list currently ends — see merge_custom_products)
+            # or a soft-deleted product: neither gets a page, and neither
+            # occupies a slug, so a still-live product with the same name
+            # gets the clean slug rather than being pushed to "-2".
+            if p is None:
+                continue
+            if p.get('deleted'):
+                skipped_deleted += 1
+                continue
+
             name_plain = p['name']
             name_html = html_escape(name_plain)
             slug = unique_slug(name_plain, cat_slug, used_slugs)
@@ -302,7 +489,8 @@ def main():
             written += 1
             product_locs.append(page_url)
 
-    print(f'\n{written} product pages written.')
+    print(f'\n{written} product pages written' + (f', {skipped_deleted} deleted product(s) skipped.' if skipped_deleted else '.'))
+    prune_orphan_product_dirs(used_slugs)
     rebuild_sitemap(product_locs, today)
 
 

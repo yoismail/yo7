@@ -27,9 +27,18 @@ python3 scripts/minify.py                   # minifies repo-root index.html + ev
 `generate-product-pages.py` needs `node` on `PATH` (only to parse the
 `CATEGORIES` array literal out of `src/index.html` — one of two places
 this repo needs a JS runtime) and also rewrites `sitemap.xml` with the
-product URLs each time it runs. It only covers the hardcoded products,
-not ones added via the admin panel (those live only in Supabase, which
-this environment can't reach at generation time).
+product URLs each time it runs. It covers every product the live site
+would show, not just the ~249 hardcoded ones — it fetches
+`custom_products`/`product_overrides` from Supabase's REST API (the same
+public anon key already in `src/index.html`, which both tables allow
+anyone to read — see their RLS policies in `supabase/schema.sql`) and
+merges them on top of `CATEGORIES`, the same way
+`loadCustomProducts()`/`applyProductOverrides()` do client-side. This
+needs real network access to Supabase to run at all — if that fetch
+fails, the script raises and exits non-zero *before* writing or deleting
+anything, rather than ever regenerating from incomplete data. A product
+marked `deleted` gets no page, and any page it previously had (or a
+renamed product's old slug) is removed on the same run.
 
 `minify.py` needs `npx` on `PATH` (fetches `terser`/`csso-cli` on
 demand) and must run **after** the two generators above — they depend on
@@ -42,10 +51,14 @@ scratch.
 
 **This runs automatically now** — `.github/workflows/regenerate-pages.yml`
 re-runs all three scripts on every push to `main` that touches
-`src/index.html`, and pushes back any resulting diff in `index.html`,
-the generated page directories, and `sitemap.xml` on its own. You only
-need to run them by hand for local testing/preview; committing their
-output yourself is no longer required.
+`src/index.html`, **and on its own hourly schedule** (to pick up
+admin-panel changes — a new product, an edited price, a delete — none of
+which touch this repo on their own), and pushes back any resulting diff
+in `index.html`, the generated page directories, and `sitemap.xml` on
+its own. You only need to run them by hand for local testing/preview
+(and locally, without network access to Supabase, only the first two
+generators will actually complete); committing their output yourself is
+no longer required.
 
 ## Supabase backend
 
