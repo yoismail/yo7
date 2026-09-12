@@ -352,6 +352,88 @@
             background: rgba(6, 59, 0, 0.1); border-radius: 999px; padding: 4px 10px;
         }
 
+        /* ================= LAUNCH BANNER =================
+           Homepage-only strip right under the trust bar, telling a
+           first-time visitor the site itself is real and live even
+           though the business's official launch (real fulfilment,
+           January 2027) hasn't happened yet — distinct from the trust
+           bar above it (a moving ticker of quick facts) and the
+           edit-mode banner below it (admin-only, orange), so this gets
+           its own quieter, editorial register: a dark aubergine band
+           with a gold accent, closer to a printed notice than another
+           strip of UI chrome. display:none by default, toggled by
+           route() (see updateActiveNavLink) rather than living inside
+           the VIEWS/showView() system, since it isn't a routed view. */
+        .launch-banner {
+            display: none;
+            position: relative;
+            background: linear-gradient(120deg, var(--aubergine-deep) 0%, #0b3f02 100%);
+            overflow: hidden;
+        }
+        .launch-banner.is-visible { display: block; }
+        .launch-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(225, 225, 0, 0.55), transparent);
+        }
+        .launch-banner-inner {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 28px;
+        }
+        .launch-banner-badge {
+            flex-shrink: 0;
+            width: 44px;
+            height: 40px;
+            border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
+            background: rgba(225, 225, 0, 0.14);
+            color: var(--orange);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .launch-banner-badge svg { width: 19px; height: 19px; }
+        .launch-banner-text { flex: 1; min-width: 0; }
+        .launch-banner-text h2 {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 15.5px;
+            letter-spacing: -0.005em;
+            color: var(--cream);
+            margin-bottom: 4px;
+        }
+        .launch-banner-text p {
+            font-size: 13px;
+            line-height: 1.55;
+            color: rgba(250, 249, 242, 0.72);
+            max-width: 660px;
+        }
+        .launch-banner-tag {
+            flex-shrink: 0;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--orange);
+            border: 1px solid rgba(225, 225, 0, 0.35);
+            border-radius: 999px;
+            padding: 7px 16px;
+            white-space: nowrap;
+        }
+        @media (max-width: 720px) {
+            .launch-banner-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 18px 20px;
+            }
+        }
+
         .trust-bar {
             position: fixed;
             left: 0;
@@ -7978,7 +8060,7 @@
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
             <div class="trust-bar-set">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Now open, order online</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
                 <span>Sign up today to secure 10% off your first box</span>
                 <span class="trust-sep">&bull;</span>
@@ -7986,13 +8068,30 @@
                 <span class="trust-sep">&bull;</span>
             </div>
             <div class="trust-bar-set" aria-hidden="true">
-                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Now open, order online</span>
+                <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
                 <span>Sign up today to secure 10% off your first box</span>
                 <span class="trust-sep">&bull;</span>
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>UK-wide delivery available</span>
                 <span class="trust-sep">&bull;</span>
             </div>
+        </div>
+    </div>
+
+    <!-- Homepage only — toggled by route() alongside updateActiveNavLink's
+         own home-route check, not tied into the VIEWS/showView() system
+         (this isn't a routed view, just a strip of chrome under the
+         trust bar), so it gets its own small is-visible toggle instead. -->
+    <div class="launch-banner" id="launchBanner">
+        <div class="wrap launch-banner-inner">
+            <span class="launch-banner-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+            </span>
+            <div class="launch-banner-text">
+                <h2>The website is live. The launch is coming.</h2>
+                <p>Yo7 Foods is now online as we prepare for our official business launch in January 2027. Explore our range, get familiar with Yo7 Foods and join our launch list to be among the first to know when we go live.</p>
+            </div>
+            <span class="launch-banner-tag">Stay tuned</span>
         </div>
     </div>
 
@@ -10005,7 +10104,7 @@
                     </span>
                     <div>
                         <h4>Get 10% Off Your First Order</h4>
-                        <p>Enter your email and postcode and we'll email you a 10% code for your first order right away.</p>
+                        <p>Enter your email and postcode and we'll email you a 10% code to use when we launch.</p>
                     </div>
                 </div>
                 <form class="newsletter-form" id="heroCaptureForm">
@@ -11790,7 +11889,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.6';
+        const BUILD_VERSION = '2026-09-12.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18755,11 +18854,20 @@
                 activeEl.classList.add('route-view-enter');
             }
         }
-        function updateActiveNavLink() {
-            const hash = window.location.hash;
+        // Takes the route's hash explicitly (route()'s own already-captured
+        // local variable) rather than re-reading window.location.hash
+        // itself — by the time route() calls this, syncAddressBarToHash()
+        // has already rewritten the address bar to a clean path and
+        // cleared the real hash as a side effect (see its own comment),
+        // so a fresh read here would see an empty hash on every single
+        // non-home route and misread it as home. That was a real,
+        // pre-existing bug: the Home nav link stayed highlighted active
+        // on every page, not just home.
+        function updateActiveNavLink(hash) {
+            const isHome = hash === '' || hash === '#/';
             const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/shop', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers', '#/build-bundle'];
             const links = {
-                navLinkHome: hash === '' || hash === '#/',
+                navLinkHome: isHome,
                 navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
                 navLinkStory: hash === '#/about',
                 navLinkDelivery: hash === '#/delivery-info' || hash === '#/delivery-policy',
@@ -18770,6 +18878,10 @@
                 const el = document.getElementById(id);
                 if (el) el.classList.toggle('nav-link-active', active);
             });
+            // Homepage only — see the .launch-banner CSS comment for why
+            // this isn't part of the VIEWS/showView() system instead.
+            const launchBanner = document.getElementById('launchBanner');
+            if (launchBanner) launchBanner.classList.toggle('is-visible', isHome);
         }
         /* ================= CLEAN URLS =================
            Every route on this site has always been, and still is, a hash
@@ -18883,7 +18995,7 @@
             const hash = window.location.hash;
             syncAddressBarToHash(hash);
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-            updateActiveNavLink();
+            updateActiveNavLink(hash);
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
 
             if (hash === '#/shop') {
