@@ -802,12 +802,13 @@
             width: auto;
             height: 34px;
             padding: 0 17px 0 15px;
-            background: rgba(144, 184, 0, 0.16);
-            border-color: var(--chartreuse);
-            color: var(--chartreuse);
+            background: var(--orange);
+            border-color: var(--orange);
+            color: var(--aubergine-deep);
         }
         .nav-cart-btn:hover {
-            background: rgba(144, 184, 0, 0.26);
+            background: #C9C900;
+            border-color: #C9C900;
         }
         .nav-cart-btn svg {
             width: 21px;
@@ -967,7 +968,7 @@
             width: 9px;
             height: 9px;
             border-radius: 50%;
-            background: var(--chartreuse-rich);
+            background: var(--orange);
             border: 2px solid #FFFFFF;
             display: none;
         }
@@ -977,7 +978,7 @@
             position: absolute;
             inset: -3px;
             border-radius: 50%;
-            background: var(--chartreuse-rich);
+            background: var(--orange);
             opacity: 0.55;
             animation: accountDotPulse 2.2s ease-out infinite;
         }
@@ -11778,7 +11779,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.2';
+        const BUILD_VERSION = '2026-09-12.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
