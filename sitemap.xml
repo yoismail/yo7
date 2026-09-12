@@ -127,7 +127,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/indomie-onion/</loc>
+    <loc>https://yo7foods.co.uk/product/indomie-chicken/</loc>
     <lastmod>2026-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -140,6 +140,12 @@
   </url>
   <url>
     <loc>https://yo7foods.co.uk/product/rice-vermicelli/</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yo7foods.co.uk/product/indomie-onion-carton/</loc>
     <lastmod>2026-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -421,7 +427,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/ripe-plantain/</loc>
+    <loc>https://yo7foods.co.uk/product/yellow-plantain/</loc>
     <lastmod>2026-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -571,7 +577,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/ts-plantain-chips-chili/</loc>
+    <loc>https://yo7foods.co.uk/product/oxford-cabin-biscuit/</loc>
     <lastmod>2026-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -1070,6 +1076,12 @@
   </url>
   <url>
     <loc>https://yo7foods.co.uk/product/sweet-potato/</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yo7foods.co.uk/product/puna-yam/</loc>
     <lastmod>2026-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
