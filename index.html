@@ -233,7 +233,26 @@
             border-radius: 4px;
         }
 
-        html { overflow-x: hidden; }
+        /* overscroll-behavior-x, not just overflow-x — Safari's rubber-
+           band swipe can still reveal a sliver of horizontal scroll on
+           some fixed-position/transformed elements that overflow-x:
+           hidden alone doesn't fully contain there, even though nothing
+           shows it in Chromium. Belt-and-suspenders with the existing
+           overflow-x rule below, not a replacement for it. */
+        html { overflow-x: hidden; overscroll-behavior-x: none; }
+
+        /* No image/iframe on the site had an explicit responsive-media
+           reset before this — most already set their own width/height
+           (icons, thumbnails, the delivery-info map), but an admin-
+           uploaded product photo wider than its card, with nothing
+           capping it, is exactly the kind of real-content overflow that
+           never shows up testing with placeholder icons and no network
+           to actually load images against. Safe globally: this only
+           caps width, never forces a resize on anything that already
+           fits its own explicit sizing. */
+        img, svg, video, iframe, embed, object {
+            max-width: 100%;
+        }
 
         /* Scroll anchoring is a browser feature that nudges scroll position
            to compensate when content above the viewport changes height,
@@ -260,7 +279,9 @@
             line-height: 1.55;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
+            overscroll-behavior-x: none;
             width: 100%;
+            max-width: 100%;
         }
 
         a {
@@ -12266,7 +12287,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.37';
+        const BUILD_VERSION = '2026-09-12.38';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
