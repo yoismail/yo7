@@ -11394,13 +11394,21 @@
         function pendingLoyaltyReward() {
             return loyaltyCachedReward;
         }
-        function loyaltyStatusHTML() {
+        /* activelyApplying: true only at the one call site (the cart/
+           checkout summary panel) where a pending reward isn't a future
+           benefit any more — it's already being deducted in that same
+           panel's own Loyalty reward line. Every other call site (the
+           orders page, just browsing) leaves this off, where "next
+           order" is still the accurate, forward-looking framing. */
+        function loyaltyStatusHTML(activelyApplying) {
             if (!currentUser) {
                 return `<a href="#/login">Log in</a> to unlock <strong>${loyaltyRewardPct}% off</strong> your next order whenever a single order reaches <strong>${money(loyaltySpendThreshold)}</strong>.`;
             }
             const pending = pendingLoyaltyReward();
             if (pending) {
-                return `You've got <strong>${pending.pct}% off</strong> your next order, it applies automatically at checkout.`;
+                return activelyApplying
+                    ? `You've got <strong>${pending.pct}% off</strong> this order, already applied below.`
+                    : `You've got <strong>${pending.pct}% off</strong> your next order, it applies automatically at checkout.`;
             }
             const sub = cartSubtotal();
             if (sub >= loyaltySpendThreshold) {
@@ -12260,7 +12268,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.36';
+        const BUILD_VERSION = '2026-09-12.37';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15296,7 +15304,7 @@
             const loyaltyNoteEl = document.getElementById('loyaltyNote');
             if (loyaltyNoteEl) {
                 loyaltyNoteEl.classList.toggle('loyalty-note-earned', !!pendingLoyaltyReward());
-                loyaltyNoteEl.innerHTML = loyaltyStatusHTML();
+                loyaltyNoteEl.innerHTML = loyaltyStatusHTML(true);
             }
             updateSummaries();
             scheduleLoadCartRatingsAndSales();
