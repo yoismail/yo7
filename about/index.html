@@ -916,7 +916,15 @@
             align-items: center;
             justify-content: center;
             padding: 0 4px;
-            border: 2px solid var(--aubergine-deep);
+            /* White, not the dark aubergine this used before the cart
+               button itself became solid yellow (see .nav-cart-btn) — a
+               near-black ring around a green badge sitting on bright
+               yellow read as a harsh outline rather than blending in.
+               White matches the nav bar's own fixed background (#mainNav
+               never changes with theme), so it reads as a clean cutout
+               instead, same idea as .float-cart-badge's border already
+               matching the page behind it. */
+            border: 2px solid #FFFFFF;
         }
 
         .cart-badge.zero {
@@ -11781,7 +11789,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.4';
+        const BUILD_VERSION = '2026-09-12.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
