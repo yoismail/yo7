@@ -4164,8 +4164,8 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: var(--aubergine);
-            color: var(--cream);
+            background: var(--orange);
+            color: var(--aubergine-deep);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -4193,7 +4193,7 @@
             pointer-events: none !important;
             transform: scale(0.6) translateY(12px) !important;
         }
-        .float-cart:hover { background: var(--aubergine-mid); transform: scale(1.08); }
+        .float-cart:hover { background: #C9C900; transform: scale(1.08); }
         .float-cart svg { width: 24px; height: 24px; }
         @keyframes badgePop {
             0% { transform: scale(1); }
@@ -4239,7 +4239,7 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: var(--chartreuse);
+            background: var(--orange);
             color: var(--aubergine-deep);
             display: flex;
             align-items: center;
@@ -4348,7 +4348,7 @@
         }
 
         .float-order:hover {
-            background: var(--chartreuse-soft);
+            background: #C9C900;
             transform: scale(1.08);
         }
 
@@ -11780,7 +11780,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-08.40';
+        const BUILD_VERSION = '2026-09-12.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
