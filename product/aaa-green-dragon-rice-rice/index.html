@@ -436,11 +436,25 @@
             cursor: pointer;
             box-shadow: 0 4px 14px rgba(6, 59, 0, 0.25);
             transition: background 0.2s ease, transform 0.2s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.2s ease;
+            /* Idle attention pulse — a soft ring breathing outward around
+               the button, same cream as its own fill so it reads as a
+               glow rather than a colour clash. Stopped on hover (below)
+               rather than fought over via !important — hover's own lift
+               and stronger shadow are enough feedback on their own. */
+            animation: launchBannerTagPulse 2.4s ease-in-out infinite;
         }
         .launch-banner-tag:hover {
+            animation: none;
             background: #FFFFFF;
             transform: translateY(-1px);
             box-shadow: 0 8px 20px rgba(6, 59, 0, 0.3);
+        }
+        @keyframes launchBannerTagPulse {
+            0%, 100% { box-shadow: 0 4px 14px rgba(6, 59, 0, 0.25); transform: scale(1); }
+            50% { box-shadow: 0 4px 14px rgba(6, 59, 0, 0.25), 0 0 0 7px rgba(250, 249, 242, 0.32); transform: scale(1.015); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .launch-banner-tag { animation: none; }
         }
         .launch-banner-dot {
             width: 7px;
@@ -12227,7 +12241,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.32';
+        const BUILD_VERSION = '2026-09-12.33';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
