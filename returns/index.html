@@ -8962,11 +8962,11 @@
                                 <span>Subscribe &amp; save <strong id="pdSubscribePct">10%</strong></span>
                             </label>
                             <div class="subscribe-discount-edit">
-                                <label>Subscription discount % (site-wide)</label>
+                                <label for="subscribeDiscountInput">Subscription discount % (site-wide)</label>
                                 <input type="number" min="0" max="50" id="subscribeDiscountInput" value="10">
                             </div>
                             <div class="subscribe-frequency-row" id="pdSubscribeFrequencyRow" style="display:none;">
-                                <label>Deliver every</label>
+                                <label for="pdSubscribeFrequency">Deliver every</label>
                                 <select id="pdSubscribeFrequency">
                                     <option value="2">2 weeks</option>
                                     <option value="4" selected>4 weeks</option>
@@ -9174,22 +9174,22 @@
                                 </button>
                             </div>
                             <form id="deliveryForm">
-                                <div class="field"><label>Full name</label><input type="text" required id="dName"
+                                <div class="field"><label for="dName">Full name</label><input type="text" required id="dName"
                                         placeholder="Your name"></div>
-                                <div class="field"><label>Phone number</label><input type="tel" required id="dPhone"
+                                <div class="field"><label for="dPhone">Phone number</label><input type="tel" required id="dPhone"
                                         placeholder="07000 000000"></div>
                                 <div id="deliveryAddressFields">
-                                    <div class="field"><label>Delivery address</label><input type="text" required
+                                    <div class="field"><label for="dAddress">Delivery address</label><input type="text" required
                                             id="dAddress" placeholder="Street address"></div>
                                     <div class="field-row">
-                                        <div class="field"><label>Town</label><input type="text" required id="dTown"
+                                        <div class="field"><label for="dTown">Town</label><input type="text" required id="dTown"
                                                 placeholder="Ipswich"></div>
-                                        <div class="field"><label>Postcode</label><input type="text" required id="dPostcode"
+                                        <div class="field"><label for="dPostcode">Postcode</label><input type="text" required id="dPostcode"
                                                 placeholder="CO1 1AA" autocomplete="postal-code">
                                             <div class="field-hint" id="dPostcodeHint"></div>
                                         </div>
                                     </div>
-                                    <div class="field"><label>Delivery notes (optional)</label><textarea id="dNotes"
+                                    <div class="field"><label for="dNotes">Delivery notes (optional)</label><textarea id="dNotes"
                                             rows="2" placeholder="Gate code, preferred time, etc."></textarea></div>
                                 </div>
                                 <div id="pickupInfoBlock" class="pickup-info hidden-view">
@@ -10107,10 +10107,10 @@
                 <h1>Welcome back</h1>
                 <div class="sub">Log in to see your orders and save your delivery details.</div>
                 <form id="loginForm">
-                    <div class="field"><label>Email</label><input type="email" id="loginEmail" required placeholder="you@example.com">
+                    <div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" required placeholder="you@example.com">
                     </div>
                     <div class="field">
-                        <label>Password</label>
+                        <label for="loginPassword">Password</label>
                         <input type="password" id="loginPassword" required placeholder="••••••••">
                         <a href="#/forgot-password" class="auth-forgot-link">Forgot password?</a>
                     </div>
@@ -10134,7 +10134,7 @@
                 <h1>Reset your password</h1>
                 <div class="sub">Enter the email address on your account and we'll send you a link to reset your password.</div>
                 <form id="forgotPasswordForm">
-                    <div class="field"><label>Email</label><input type="email" id="fpEmail" required placeholder="you@example.com"></div>
+                    <div class="field"><label for="fpEmail">Email</label><input type="email" id="fpEmail" required placeholder="you@example.com"></div>
                     <div class="auth-error" id="forgotPasswordError" role="alert" style="display:none;"></div>
                     <div class="auth-success" id="forgotPasswordSuccess" role="status" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Send reset link</button>
@@ -10155,7 +10155,7 @@
                 <h1>Choose a new password</h1>
                 <div class="sub">Almost done, set a new password for your account.</div>
                 <form id="resetPasswordForm">
-                    <div class="field"><label>New password</label><input type="password" id="rpPassword" required minlength="6" placeholder="At least 6 characters"></div>
+                    <div class="field"><label for="rpPassword">New password</label><input type="password" id="rpPassword" required minlength="6" placeholder="At least 6 characters"></div>
                     <div class="auth-error" id="resetPasswordError" role="alert" style="display:none;"></div>
                     <div class="auth-success" id="resetPasswordSuccess" role="status" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Update password</button>
@@ -10216,11 +10216,11 @@
                 <h1>Create your account</h1>
                 <div class="sub">Faster ordering next time, and first word on what's back in stock.</div>
                 <form id="signupForm">
-                    <div class="field"><label>Full name</label><input type="text" required id="suName"
+                    <div class="field"><label for="suName">Full name</label><input type="text" required id="suName"
                             placeholder="Your name"></div>
-                    <div class="field"><label>Email</label><input type="email" id="suEmail" required placeholder="you@example.com">
+                    <div class="field"><label for="suEmail">Email</label><input type="email" id="suEmail" required placeholder="you@example.com">
                     </div>
-                    <div class="field"><label>Password</label><input type="password" id="suPassword" required minlength="6"
+                    <div class="field"><label for="suPassword">Password</label><input type="password" id="suPassword" required minlength="6"
                             placeholder="At least 6 characters"></div>
                     <div class="auth-error" id="signupError" role="alert" style="display:none;"></div>
                     <div class="auth-success" id="signupSuccess" role="status" style="display:none;"></div>
@@ -10271,9 +10271,9 @@
                         <h1>Admin login</h1>
                         <div class="sub">Restricted to Yo7 Foods staff.</div>
                         <form id="adminLoginForm">
-                            <div class="field"><label>Admin username or email</label><input type="text" id="adminLoginId" required placeholder="yo7foods20" autocomplete="username"></div>
+                            <div class="field"><label for="adminLoginId">Admin username or email</label><input type="text" id="adminLoginId" required placeholder="yo7foods20" autocomplete="username"></div>
                             <div class="field">
-                                <label>Password</label>
+                                <label for="adminLoginPassword">Password</label>
                                 <input type="password" id="adminLoginPassword" required placeholder="••••••••" autocomplete="current-password">
                                 <a href="#" id="adminForgotPasswordLink" class="auth-forgot-link">Forgot password?</a>
                             </div>
@@ -10604,7 +10604,7 @@
             <h3>Edit category</h3>
             <div class="sub" id="catEditCatName"></div>
             <div>
-                <label>Category photo</label>
+                <label for="catEditPhotoInput">Category photo</label>
                 <div class="ep-photo-row">
                     <div class="ep-photo-preview" id="catEditPhotoPreview"></div>
                     <div>
@@ -10614,7 +10614,7 @@
                 </div>
             </div>
             <div style="margin-top:14px;">
-                <label>Description</label>
+                <label for="catEditTagline">Description</label>
                 <textarea id="catEditTagline" rows="3"></textarea>
             </div>
             <div class="modal-actions">
@@ -11617,11 +11617,11 @@
     <h3>Review platforms <span class="admin-only-tag">Edit mode only</span></h3>
     <p class="delivery-admin-note">Leave these blank until you actually have a Trustpilot or Google Business profile, a badge only appears once there's somewhere real for it to link to.</p>
     <div class="field-row">
-      <div class="field"><label>Trustpilot profile URL</label><input type="url" id="trustpilotUrlInput" placeholder="https://uk.trustpilot.com/review/yo7foods.co.uk" value="${escapeHtml(trustpilotUrl)}"></div>
-      <div class="field"><label>Google Business profile URL</label><input type="url" id="googleBusinessUrlInput" placeholder="https://g.page/..." value="${escapeHtml(googleBusinessUrl)}"></div>
+      <div class="field"><label for="trustpilotUrlInput">Trustpilot profile URL</label><input type="url" id="trustpilotUrlInput" placeholder="https://uk.trustpilot.com/review/yo7foods.co.uk" value="${escapeHtml(trustpilotUrl)}"></div>
+      <div class="field"><label for="googleBusinessUrlInput">Google Business profile URL</label><input type="url" id="googleBusinessUrlInput" placeholder="https://g.page/..." value="${escapeHtml(googleBusinessUrl)}"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Google Place ID</label><input type="text" id="googlePlaceIdInput" placeholder="ChIJ..." value="${escapeHtml(googlePlaceId)}">
+      <div class="field"><label for="googlePlaceIdInput">Google Place ID</label><input type="text" id="googlePlaceIdInput" placeholder="ChIJ..." value="${escapeHtml(googlePlaceId)}">
         <span class="delivery-admin-note" style="display:block;margin-top:4px;">Pulls your real Google rating and review text onto the homepage (separate from the profile URL above, which is just the link-out badge). Find yours by searching your business name at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener">Google's Place ID finder</a>.</span>
       </div>
     </div>
@@ -11835,9 +11835,9 @@
     <p class="delivery-admin-note">Discount codes save for real and go live for every customer immediately. "Max per customer" is enforced against real redemption records, not this browser's storage.</p>
     <div id="discountsList" class="delivery-rule-list"></div>
     <form id="addDiscountForm" class="discount-admin-form">
-      <div class="field"><label>Internal name</label><input type="text" id="newDiscName" placeholder="e.g. August welcome offer" required></div>
-      <div class="field"><label>Code customers enter</label><input type="text" id="newDiscCode" placeholder="e.g. WELCOME10" required></div>
-      <div class="field"><label>Type</label>
+      <div class="field"><label for="newDiscName">Internal name</label><input type="text" id="newDiscName" placeholder="e.g. August welcome offer" required></div>
+      <div class="field"><label for="newDiscCode">Code customers enter</label><input type="text" id="newDiscCode" placeholder="e.g. WELCOME10" required></div>
+      <div class="field"><label for="newDiscType">Type</label>
         <select id="newDiscType">
           <option value="percent">Percent off</option>
           <option value="fixed">Fixed amount off</option>
@@ -11845,27 +11845,27 @@
           <option value="bogo">Buy X get Y free</option>
         </select>
       </div>
-      <div class="field" id="newDiscValueField"><label>Value (% or £)</label><input type="number" step="0.01" min="0" id="newDiscValue"></div>
+      <div class="field" id="newDiscValueField"><label for="newDiscValue">Value (% or £)</label><input type="number" step="0.01" min="0" id="newDiscValue"></div>
       <div class="field-row" id="newDiscBogoFields" style="display:none;">
-        <div class="field"><label>Buy quantity</label><input type="number" min="1" id="newDiscBuyQty" value="1"></div>
-        <div class="field"><label>Get free quantity</label><input type="number" min="1" id="newDiscGetQty" value="1"></div>
+        <div class="field"><label for="newDiscBuyQty">Buy quantity</label><input type="number" min="1" id="newDiscBuyQty" value="1"></div>
+        <div class="field"><label for="newDiscGetQty">Get free quantity</label><input type="number" min="1" id="newDiscGetQty" value="1"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Start date (optional)</label><input type="date" id="newDiscStart"></div>
-        <div class="field"><label>End date (optional)</label><input type="date" id="newDiscEnd"></div>
+        <div class="field"><label for="newDiscStart">Start date (optional)</label><input type="date" id="newDiscStart"></div>
+        <div class="field"><label for="newDiscEnd">End date (optional)</label><input type="date" id="newDiscEnd"></div>
       </div>
-      <div class="field"><label>Applies to</label>
+      <div class="field"><label for="newDiscScope">Applies to</label>
         <select id="newDiscScope">
           <option value="all">All items</option>
           <option value="category">One category</option>
           <option value="product">One specific product</option>
         </select>
       </div>
-      <div class="field" id="newDiscCategoryField" style="display:none;"><label>Category</label><select id="newDiscCategory"></select></div>
-      <div class="field" id="newDiscProductField" style="display:none;"><label>Product</label><select id="newDiscProduct"></select></div>
+      <div class="field" id="newDiscCategoryField" style="display:none;"><label for="newDiscCategory">Category</label><select id="newDiscCategory"></select></div>
+      <div class="field" id="newDiscProductField" style="display:none;"><label for="newDiscProduct">Product</label><select id="newDiscProduct"></select></div>
       <div class="field-row">
-        <div class="field"><label>Minimum order £ (optional)</label><input type="number" step="0.01" min="0" id="newDiscMinOrder"></div>
-        <div class="field"><label>Max uses per customer (optional)</label><input type="number" min="1" id="newDiscMaxPerCustomer"></div>
+        <div class="field"><label for="newDiscMinOrder">Minimum order £ (optional)</label><input type="number" step="0.01" min="0" id="newDiscMinOrder"></div>
+        <div class="field"><label for="newDiscMaxPerCustomer">Max uses per customer (optional)</label><input type="number" min="1" id="newDiscMaxPerCustomer"></div>
       </div>
       <div style="display:flex; gap:10px; align-items:center;">
         <button type="submit" class="btn btn-primary" id="discFormSubmitBtn">Create discount</button>
@@ -12289,7 +12289,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.38';
+        const BUILD_VERSION = '2026-09-12.39';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12745,8 +12745,8 @@
       ${totalRow}
       ${bundleWeightTotalHTML(inStockItems)}
       <div class="bundle-discount-edit">
-        <label>Combo discount %</label>
-        <input type="number" min="0" max="90" value="${discountPct}" onchange="setBundleDiscount(${bi}, this.value)">
+        <label for="bundle-discount-${bi}">Combo discount %</label>
+        <input type="number" min="0" max="90" id="bundle-discount-${bi}" value="${discountPct}" onchange="setBundleDiscount(${bi}, this.value)">
       </div>
       <button class="bundle-add-btn" type="button" onclick="addBundleToCart(${bi})">Add bundle to basket</button>
       <button type="button" class="bundle-edit-btn" onclick="openBundleEdit(${bi}, this)">Edit bundle</button>
@@ -12789,11 +12789,11 @@
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
       <h3>Edit bundle</h3>
-      <div class="field"><label>Bundle name</label><input type="text" id="bbe-name" value="${escapeHtml(bundle.name)}"></div>
-      <div class="field"><label>Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="bbe-discount" value="${bundle.discountPercent || 0}"></div>
-      <div class="field"><label>Tagline</label><input type="text" id="bbe-tagline" value="${escapeHtml(bundle.tagline || '')}"></div>
+      <div class="field"><label for="bbe-name">Bundle name</label><input type="text" id="bbe-name" value="${escapeHtml(bundle.name)}"></div>
+      <div class="field"><label for="bbe-discount">Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="bbe-discount" value="${bundle.discountPercent || 0}"></div>
+      <div class="field"><label for="bbe-tagline">Tagline</label><input type="text" id="bbe-tagline" value="${escapeHtml(bundle.tagline || '')}"></div>
       <div class="field">
-        <label>Items included (at least 2)</label>
+        <label for="bbe-item-cat">Items included (at least 2)</label>
         <div id="bbe-items-list" class="delivery-rule-list"></div>
         <div class="apf-row">
           <div><select id="bbe-item-cat"></select></div>
@@ -12921,13 +12921,13 @@
         <div class="add-product-form">
           <h3>Add a new bundle</h3>
           <div class="apf-row">
-            <div><label>Bundle name</label><input type="text" id="abf-name" placeholder="e.g. Sunday Stew Pot"></div>
-            <div><label>Tagline</label><input type="text" id="abf-tagline" placeholder="e.g. A rich, slow stew from scratch."></div>
+            <div><label for="abf-name">Bundle name</label><input type="text" id="abf-name" placeholder="e.g. Sunday Stew Pot"></div>
+            <div><label for="abf-tagline">Tagline</label><input type="text" id="abf-tagline" placeholder="e.g. A rich, slow stew from scratch."></div>
           </div>
           <div id="abf-items-list" class="delivery-rule-list"></div>
           <div class="apf-row">
-            <div><label>Category</label><select id="abf-cat"></select></div>
-            <div><label>Product</label><select id="abf-product"></select></div>
+            <div><label for="abf-cat">Category</label><select id="abf-cat"></select></div>
+            <div><label for="abf-product">Product</label><select id="abf-product"></select></div>
           </div>
           <button type="button" class="ep-save" style="margin-bottom:14px;" onclick="addItemToNewBundle()">Add item to bundle</button>
           <div class="apf-actions">
@@ -13155,13 +13155,13 @@
             slot.innerHTML = `
       <div class="dish-builder-edit-form add-product-form">
         <h3>Edit dish</h3>
-        <div><label>Dish name</label><input type="text" id="de-name" value="${escapeHtml(dish.name)}"></div>
+        <div><label for="de-name">Dish name</label><input type="text" id="de-name" value="${escapeHtml(dish.name)}"></div>
         <div>
-          <label>Icon</label>
-          <div class="dish-icon-picker" id="de-icon-picker"></div>
+          <label id="de-icon-picker-label">Icon</label>
+          <div class="dish-icon-picker" id="de-icon-picker" role="group" aria-labelledby="de-icon-picker-label"></div>
         </div>
         <div>
-          <label>Suggested ingredients (at least 1)</label>
+          <label for="de-item-cat">Suggested ingredients (at least 1)</label>
           <div id="de-items-list" class="delivery-rule-list"></div>
           <div class="apf-row">
             <div><select id="de-item-cat"></select></div>
@@ -13257,13 +13257,13 @@
             slot.innerHTML = `
         <div class="add-product-form">
           <h3>Add a new dish</h3>
-          <div><label>Dish name</label><input type="text" id="adf-name" placeholder="e.g. Egusi Soup"></div>
+          <div><label for="adf-name">Dish name</label><input type="text" id="adf-name" placeholder="e.g. Egusi Soup"></div>
           <div>
-            <label>Icon</label>
-            <div class="dish-icon-picker" id="adf-icon-picker"></div>
+            <label id="adf-icon-picker-label">Icon</label>
+            <div class="dish-icon-picker" id="adf-icon-picker" role="group" aria-labelledby="adf-icon-picker-label"></div>
           </div>
           <div>
-            <label>Suggested ingredients</label>
+            <label for="adf-item-cat">Suggested ingredients</label>
             <div id="adf-items-list" class="delivery-rule-list"></div>
             <div class="apf-row">
               <div><select id="adf-item-cat"></select></div>
@@ -13356,8 +13356,8 @@
       ${totalRow}
       ${bundleWeightTotalHTML(inStockItems)}
       ${items.length ? `<div class="bundle-discount-edit">
-        <label>Combo discount %</label>
-        <input type="number" min="0" max="90" value="${discountPct}" onchange="setComboDiscount(${ci}, this.value)">
+        <label for="combo-discount-${ci}">Combo discount %</label>
+        <input type="number" min="0" max="90" id="combo-discount-${ci}" value="${discountPct}" onchange="setComboDiscount(${ci}, this.value)">
       </div>` : ''}
       ${items.length
                 ? `<button class="bundle-add-btn combo-add-btn" type="button" onclick="addComboToCart(${ci})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg>Add combo to basket</button>`
@@ -13443,12 +13443,12 @@
             const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
       <h3>Edit combo</h3>
-      <div class="field"><label>Combo name</label><input type="text" id="cce-name" value="${escapeHtml(combo.name)}"></div>
-      <div class="field"><label>Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="cce-discount" value="${combo.discountPercent || 0}"></div>
-      <div class="field"><label>Description</label><input type="text" id="cce-desc" value="${escapeHtml(combo.description || '')}"></div>
-      <div class="field"><label>Link to category (used only if no items are added)</label><select id="cce-link"><option value="">No link</option>${catOptions}</select></div>
+      <div class="field"><label for="cce-name">Combo name</label><input type="text" id="cce-name" value="${escapeHtml(combo.name)}"></div>
+      <div class="field"><label for="cce-discount">Discount % (applies to the items below)</label><input type="number" min="0" max="90" id="cce-discount" value="${combo.discountPercent || 0}"></div>
+      <div class="field"><label for="cce-desc">Description</label><input type="text" id="cce-desc" value="${escapeHtml(combo.description || '')}"></div>
+      <div class="field"><label for="cce-link">Link to category (used only if no items are added)</label><select id="cce-link"><option value="">No link</option>${catOptions}</select></div>
       <div class="field">
-        <label>Items included (optional, shown on the card)</label>
+        <label for="cce-item-cat">Items included (optional, shown on the card)</label>
         <div id="cce-items-list" class="delivery-rule-list"></div>
         <div class="apf-row">
           <div><select id="cce-item-cat"></select></div>
@@ -13529,15 +13529,15 @@
         <div class="add-product-form">
           <h3>Add a new combo</h3>
           <div class="apf-row">
-            <div><label>Combo name</label><input type="text" id="acf-name" placeholder="e.g. Weekend Jollof Combo"></div>
-            <div><label>Discount % (optional)</label><input type="number" min="0" max="90" id="acf-discount" placeholder="e.g. 10"></div>
+            <div><label for="acf-name">Combo name</label><input type="text" id="acf-name" placeholder="e.g. Weekend Jollof Combo"></div>
+            <div><label for="acf-discount">Discount % (optional)</label><input type="number" min="0" max="90" id="acf-discount" placeholder="e.g. 10"></div>
           </div>
-          <div><label>Description</label><input type="text" id="acf-desc" placeholder="What's included, in a sentence" style="width:100%;"></div>
+          <div><label for="acf-desc">Description</label><input type="text" id="acf-desc" placeholder="What's included, in a sentence" style="width:100%;"></div>
           <div class="apf-row">
-            <div><label>Link to category (optional)</label><select id="acf-link"><option value="">No link</option>${catOptions}</select></div>
+            <div><label for="acf-link">Link to category (optional)</label><select id="acf-link"><option value="">No link</option>${catOptions}</select></div>
           </div>
           <div>
-            <label>Items included (optional, shown on the card)</label>
+            <label for="acf-item-cat">Items included (optional, shown on the card)</label>
             <div id="acf-items-list" class="delivery-rule-list"></div>
             <div class="apf-row">
               <div><select id="acf-item-cat"></select></div>
@@ -14148,11 +14148,11 @@
         <div class="add-product-form">
           <h3>Add a product to special offers</h3>
           <div class="apf-row">
-            <div><label>Category</label><select id="ato-cat"></select></div>
-            <div><label>Product</label><select id="ato-product"></select></div>
+            <div><label for="ato-cat">Category</label><select id="ato-cat"></select></div>
+            <div><label for="ato-product">Product</label><select id="ato-product"></select></div>
           </div>
           <div class="apf-row">
-            <div><label>Sale price (£)</label><input type="number" step="0.01" min="0" id="ato-saleprice"></div>
+            <div><label for="ato-saleprice">Sale price (£)</label><input type="number" step="0.01" min="0" id="ato-saleprice"></div>
           </div>
           <p id="ato-current-price" style="font-size:12px; color:var(--text-muted); margin:-6px 0 10px;"></p>
           <div class="apf-actions">
@@ -18118,13 +18118,13 @@
         <div class="edit-panel">
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
-              <label>Product name</label>
+              <label for="ep-productname-${catSlug}-${idx}">Product name</label>
               <input type="text" id="ep-productname-${catSlug}-${idx}" value="${escapeHtml(product.name)}">
             </div>
           </div>
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
-              <label>Product photo</label>
+              <label for="ep-photo-${catSlug}-${idx}">Product photo</label>
               <div class="ep-photo-row">
                 <div class="ep-photo-preview" id="ep-photo-preview-${catSlug}-${idx}">${product.image ? `<img src="${product.image}" alt="">` : `<span>${product.emoji || DEFAULT_ITEM_ICON_SVG}</span>`}</div>
                 <div>
@@ -18136,23 +18136,23 @@
           </div>
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
-              <label>Description (optional, leave blank to use the default)</label>
+              <label for="ep-desc-${catSlug}-${idx}">Description (optional, leave blank to use the default)</label>
               <textarea id="ep-desc-${catSlug}-${idx}" rows="3" placeholder="${escapeHtml(product.name)}, a Yo7 Foods staple from our ${cat.name.replace(/&amp;/g, '&')} aisle...">${escapeHtml(product.description || '')}</textarea>
             </div>
           </div>
           <div class="ep-row">
             <div>
-              <label>Price (£)</label>
+              <label for="ep-price-${catSlug}-${idx}">Price (£)</label>
               <input type="number" step="0.01" min="0" id="ep-price-${catSlug}-${idx}" value="${product.price}">
             </div>
             <div>
-              <label>Sale price (£, optional)</label>
+              <label for="ep-sale-${catSlug}-${idx}">Sale price (£, optional)</label>
               <input type="number" step="0.01" min="0" id="ep-sale-${catSlug}-${idx}" value="${product.salePrice != null ? product.salePrice : ''}">
             </div>
           </div>
           <div class="ep-row">
             <div>
-              <label>Stock status</label>
+              <label for="ep-stock-${catSlug}-${idx}">Stock status</label>
               <select id="ep-stock-${catSlug}-${idx}">
                 <option value="in" ${product.stock === 'in' || !product.stock ? 'selected' : ''}>In stock</option>
                 <option value="low" ${product.stock === 'low' ? 'selected' : ''}>Low stock</option>
@@ -18160,7 +18160,7 @@
               </select>
             </div>
             <div>
-              <label>Exact quantity in stock (optional)</label>
+              <label for="ep-stockqty-${catSlug}-${idx}">Exact quantity in stock (optional)</label>
               <input type="number" step="1" min="0" id="ep-stockqty-${catSlug}-${idx}" placeholder="Leave blank for unlimited" value="${typeof product.stockQuantity === 'number' ? product.stockQuantity : ''}">
             </div>
           </div>
@@ -18172,19 +18172,19 @@
           <p style="font-size:12px; color:var(--text-muted); margin:-4px 0 8px;">Leave blank for products you don't need to track unit-by-unit. Once set, it goes down automatically as orders come in, update it yourself after restocking.</p>
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
-              <label>Weight (kg, used for delivery pricing)</label>
+              <label for="ep-weight-${catSlug}-${idx}">Weight (kg, used for delivery pricing)</label>
               <input type="number" step="0.01" min="0" id="ep-weight-${catSlug}-${idx}" placeholder="e.g. 5 for a 5kg bag" value="${typeof product.weight === 'number' ? product.weight : ''}">
             </div>
           </div>
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div>
-              <label>Pack size / unit label (optional, leave blank to use the default)</label>
+              <label for="ep-unitlabel-${catSlug}-${idx}">Pack size / unit label (optional, leave blank to use the default)</label>
               <input type="text" id="ep-unitlabel-${catSlug}-${idx}" placeholder="${escapeHtml(product.unit || '')}" value="${escapeHtml(unitOverrideLabel(product.unitOverride) || '')}">
             </div>
           </div>
           <p style="font-size:11px; color:var(--text-muted); margin:-6px 0 10px;">This is the size/pack text shown to customers everywhere, e.g. "1.5kg bag" or "500ml jar". It doesn't affect delivery pricing; that's the Weight field above.</p>
           <div class="ep-variants-block">
-            <label>Weight options (optional, one product with several sizes, e.g. 2kg / 5kg / 10kg / 20kg, instead of a separate product per size)</label>
+            <label for="ep-varlabel-${catSlug}-${idx}">Weight options (optional, one product with several sizes, e.g. 2kg / 5kg / 10kg / 20kg, instead of a separate product per size)</label>
             <div id="ep-variants-list-${catSlug}-${idx}" class="ep-variants-list">${variantsListHTML(product, catSlug, idx)}</div>
             <div class="ep-variant-add-row">
               <input type="text" id="ep-varlabel-${catSlug}-${idx}" placeholder="Label, e.g. 5kg">
@@ -18602,30 +18602,30 @@
         <div class="add-product-form">
           <h3>Add a new product</h3>
           <div class="apf-row">
-            <div><label>Product name</label><input type="text" id="apf-name-${uid}" placeholder="e.g. Bag of Rice"></div>
-            <div><label>Unit</label><input type="text" id="apf-unit-${uid}" placeholder="e.g. 1kg"></div>
+            <div><label for="apf-name-${uid}">Product name</label><input type="text" id="apf-name-${uid}" placeholder="e.g. Bag of Rice"></div>
+            <div><label for="apf-unit-${uid}">Unit</label><input type="text" id="apf-unit-${uid}" placeholder="e.g. 1kg"></div>
           </div>
           <div>
-            <label>Product photo (optional)</label>
+            <label for="apf-photo-${uid}">Product photo (optional)</label>
             <div class="ep-photo-row">
               <div class="ep-photo-preview" id="apf-photo-preview-${uid}"><span>${DEFAULT_ITEM_ICON_SVG}</span></div>
               <input type="file" accept="image/*" id="apf-photo-${uid}" onchange="handleNewProductPhotoUpload('${uid}', this)">
             </div>
           </div>
           <div class="apf-row">
-            <div><label>Price (£)</label><input type="number" step="0.01" min="0" id="apf-price-${uid}" placeholder="0.00"></div>
-            <div><label>Sale price (£, optional)</label><input type="number" step="0.01" min="0" id="apf-sale-${uid}"></div>
+            <div><label for="apf-price-${uid}">Price (£)</label><input type="number" step="0.01" min="0" id="apf-price-${uid}" placeholder="0.00"></div>
+            <div><label for="apf-sale-${uid}">Sale price (£, optional)</label><input type="number" step="0.01" min="0" id="apf-sale-${uid}"></div>
           </div>
           <div class="apf-row" style="grid-template-columns:1fr;">
-            <div><label>Weight (kg, used for delivery pricing)</label><input type="number" step="0.01" min="0" id="apf-weight-${uid}" placeholder="e.g. 2 for a 2kg bag"></div>
+            <div><label for="apf-weight-${uid}">Weight (kg, used for delivery pricing)</label><input type="number" step="0.01" min="0" id="apf-weight-${uid}" placeholder="e.g. 2 for a 2kg bag"></div>
           </div>
           <div>
-            <label>Description (optional, leave blank to use the default)</label>
+            <label for="apf-desc-${uid}">Description (optional, leave blank to use the default)</label>
             <textarea id="apf-desc-${uid}" rows="2" placeholder="Leave blank to auto-generate from the category"></textarea>
           </div>
           <div class="apf-row">
-            <div><label>Category</label><select id="apf-cat-${uid}" ${presetCategorySlug ? 'disabled' : ''}>${catOptions}</select></div>
-            <div><label>Stock status</label>
+            <div><label for="apf-cat-${uid}">Category</label><select id="apf-cat-${uid}" ${presetCategorySlug ? 'disabled' : ''}>${catOptions}</select></div>
+            <div><label for="apf-stock-${uid}">Stock status</label>
               <select id="apf-stock-${uid}">
                 <option value="in" selected>In stock</option>
                 <option value="low">Low stock</option>
@@ -18634,7 +18634,7 @@
             </div>
           </div>
           <div class="apf-row" style="grid-template-columns:1fr;">
-            <div><label>Exact quantity in stock (optional, leave blank for unlimited)</label><input type="number" step="1" min="0" id="apf-stockqty-${uid}"></div>
+            <div><label for="apf-stockqty-${uid}">Exact quantity in stock (optional, leave blank for unlimited)</label><input type="number" step="1" min="0" id="apf-stockqty-${uid}"></div>
           </div>
           <label class="apf-checkbox"><input type="checkbox" id="apf-isnew-${uid}" ${presetCategorySlug ? '' : 'checked'}> Feature in "New in stock"</label>
           <label class="apf-checkbox"><input type="checkbox" id="apf-isbestseller-${uid}"> Feature in "Best sellers"</label>
@@ -19807,8 +19807,8 @@
     <h3>Loyalty nudge <span class="admin-only-tag">Edit mode only</span></h3>
     <p class="delivery-admin-note">Any single order at or above the threshold unlocks the reward on the customer's account, no code to generate or type, it applies automatically at checkout on their next order. An account only ever holds one unused reward at a time. Changes below apply to every customer immediately.</p>
     <div class="field-row">
-      <div class="field"><label>Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="${loyaltySpendThreshold}"></div>
-      <div class="field"><label>Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="${loyaltyRewardPct}"></div>
+      <div class="field"><label for="loyaltyThresholdInput">Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="${loyaltySpendThreshold}"></div>
+      <div class="field"><label for="loyaltyRewardInput">Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="${loyaltyRewardPct}"></div>
     </div>`;
             document.getElementById('loyaltyThresholdInput').addEventListener('change', async (e) => {
                 const n = parseFloat(e.target.value);
