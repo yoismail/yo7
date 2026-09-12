@@ -3848,8 +3848,23 @@
             margin-right: auto;
         }
         .reviews-section {
-            background: var(--section-alt-bg);
+            /* Same corner-glow + dot-grain language as the sections above
+               it, over var(--section-alt-bg) with its own dark-mode
+               override, same pairing as .why-choose-section right before
+               it — its own border-top/bottom already marks the seam, so
+               the identical background reads as one deliberate pair of
+               sections rather than losing the boundary. */
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--section-alt-bg);
             padding: 72px 0 80px;
+        }
+        [data-theme="dark"] .reviews-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--section-alt-bg);
         }
         .reviews-section .section-head p {
             max-width: 46ch;
@@ -12066,7 +12081,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.28';
+        const BUILD_VERSION = '2026-09-12.29';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
