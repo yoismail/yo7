@@ -680,10 +680,39 @@
             display: block;
             flex-shrink: 0;
             transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+            animation: logoMarkBreathe 6s ease-in-out infinite;
         }
 
+        /* !important: without it the hover scale loses to the running
+           logoMarkBreathe animation (a CSS animation always wins over a
+           plain declaration for the same property, regardless of
+           specificity) and hovering the nav logo would do nothing. */
         .nav-mark:hover svg {
-            transform: scale(1.08);
+            transform: scale(1.08) !important;
+        }
+
+        /* Same gentle tilt-breathe used on every other Yo7 mark on the
+           site (hero/footer watermarks use a larger version of this idea)
+           so the brand mark reads as one consistent, deliberate design
+           choice wherever it appears — nav, footer, invoice, About, the
+           hero's own crisp badge, and the auth pages. Transform-only (no
+           opacity pulse): these are crisp, fully-opaque identity marks,
+           not faded background texture. */
+        @keyframes logoMarkBreathe {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            32% { transform: rotate(-1.5deg) scale(1.045); }
+            64% { transform: rotate(1.5deg) scale(1.06); }
+            85% { transform: rotate(-0.5deg) scale(1.02); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .nav-mark svg,
+            .footer-mark svg,
+            .invoice-mark svg,
+            .seal,
+            .about-seal,
+            .auth-box .seal-mini {
+                animation: none;
+            }
         }
 
         .nav-badge {
@@ -1670,7 +1699,7 @@
             84% { transform: rotate(-1deg) scale(1.015); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .hero-text-watermark { animation: none; }
+            .hero-text-watermark, .confirm-watermark { animation: none; }
         }
         /* .shop-header (About Us intro) is a fixed white/light panel in
            both themes (see .shop-header-story), so this uses a fixed faded
@@ -1687,6 +1716,24 @@
             bottom: -0.265em;
             font-size: clamp(90px, 15vw, 220px);
             color: rgba(44, 28, 16, 0.06);
+            /* Transform-only — no opacity keyframe like the hero/footer
+               text watermarks use, since this mark's faintness is baked
+               into its color's own alpha rather than a separate opacity
+               property (see the fixed-vs-theme-flipping note above); an
+               opacity pulse here would stack on top of that alpha and
+               read as flickering rather than glowing. */
+            transform-origin: 85% 100%;
+            animation: introWatermarkLive 7.8s ease-in-out infinite;
+            animation-delay: -3.5s;
+        }
+        @keyframes introWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            32% { transform: rotate(-2deg) scale(1.02); }
+            64% { transform: rotate(2.5deg) scale(1.045); }
+            85% { transform: rotate(-0.5deg) scale(1.015); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .about-intro-watermark { animation: none; }
         }
         /* .confirm-section (order confirmation) does flip with the theme
            (background: var(--page-bg)), so this can reuse the same
@@ -1705,6 +1752,14 @@
             font-size: clamp(80px, 14vw, 220px);
             color: var(--ink);
             opacity: var(--hero-watermark-op);
+            /* Reuses the hero's own heroTextWatermarkLive keyframe outright
+               rather than a bespoke one — this mark already shares the
+               hero's exact var(--ink)/--hero-watermark-op pairing (see
+               above), so its opacity keyframe (tied to that same variable)
+               is correct here unchanged; only the corner differs. */
+            transform-origin: 85% 0%;
+            animation: heroTextWatermarkLive 7.5s ease-in-out infinite;
+            animation-delay: -4.8s;
         }
         /* The seal — the actual mark used everywhere else (nav, hero,
            About, invoice) — rather than the "Yo7" text wordmark other
@@ -1721,6 +1776,18 @@
             opacity: 0.09;
             pointer-events: none;
             z-index: 0;
+            transform-origin: 82% 85%;
+            animation: newsletterWatermarkLive 7.2s ease-in-out infinite;
+            animation-delay: -4s;
+        }
+        @keyframes newsletterWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.09; }
+            30% { transform: rotate(-2deg) scale(1.03); }
+            62% { transform: rotate(2.5deg) scale(1.05); opacity: 0.14; }
+            85% { transform: rotate(-0.5deg) scale(1.02); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .newsletter-watermark { animation: none; }
         }
         .hero-scroll-cue svg { width: 100%; height: 100%; }
         @keyframes heroScrollCue {
@@ -1846,6 +1913,8 @@
             width: 150px;
             height: 150px;
             margin-bottom: 8px;
+            animation: logoMarkBreathe 6.4s ease-in-out infinite;
+            animation-delay: -1.5s;
         }
 
         .hero h1 {
@@ -2104,8 +2173,22 @@
             left: 50%;
             width: min(70vw, 780px);
             opacity: 0.05;
-            transform: translate(-50%, -50%);
             pointer-events: none;
+            animation: storyWatermarkLive 7s ease-in-out infinite;
+        }
+        /* Same tilt-breathe-glow language as the hero/footer watermarks,
+           centred rather than corner-anchored since this mark sits
+           dead-centre with no clipped edge to bleed off — every keyframe
+           re-states the translate(-50%,-50%) centring so the animation
+           doesn't clobber it. */
+        @keyframes storyWatermarkLive {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.05; }
+            30% { transform: translate(-50%, -50%) rotate(-2deg) scale(1.03); }
+            62% { transform: translate(-50%, -50%) rotate(2.5deg) scale(1.06); opacity: 0.08; }
+            85% { transform: translate(-50%, -50%) rotate(-0.5deg) scale(1.02); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .story-watermark { animation: none; }
         }
 
         .story-inner {
@@ -2193,7 +2276,7 @@
             gap: 24px;
             margin-bottom: 72px;
         }
-        .about-seal { width: clamp(120px, 9vw, 160px); height: clamp(120px, 9vw, 160px); flex-shrink: 0; }
+        .about-seal { width: clamp(120px, 9vw, 160px); height: clamp(120px, 9vw, 160px); flex-shrink: 0; animation: logoMarkBreathe 6s ease-in-out infinite; animation-delay: -2s; }
         .about-story-grid h2 {
             font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.6vw, 36px);
             letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 20px; color: var(--heading);
@@ -2405,6 +2488,18 @@
             width: 60%;
             opacity: 0.1;
             pointer-events: none;
+            transform-origin: 80% 20%;
+            animation: aboutThanksWatermarkLive 7.6s ease-in-out infinite;
+            animation-delay: -2s;
+        }
+        @keyframes aboutThanksWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.1; }
+            32% { transform: rotate(2deg) scale(1.03); }
+            64% { transform: rotate(-2.5deg) scale(1.05); opacity: 0.15; }
+            85% { transform: rotate(0.5deg) scale(1.015); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .about-thanks svg.about-thanks-watermark { animation: none; }
         }
         .about-thanks > * { position: relative; z-index: 1; }
         .about-thanks h2 {
@@ -4131,6 +4226,8 @@
         }
 
         .footer-mark svg {
+            animation: logoMarkBreathe 6s ease-in-out infinite;
+            animation-delay: -3s;
             width: 30px;
             height: 30px;
         }
@@ -6631,6 +6728,8 @@
         }
 
         .invoice-mark svg {
+            animation: logoMarkBreathe 6.2s ease-in-out infinite;
+            animation-delay: -0.8s;
             width: 26px;
             height: 26px;
         }
@@ -7384,6 +7483,7 @@
             height: 52px;
             margin: 0 auto 18px;
             display: block;
+            animation: logoMarkBreathe 6s ease-in-out infinite;
         }
 
         .auth-box h1 {
@@ -11930,7 +12030,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.16';
+        const BUILD_VERSION = '2026-09-12.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
