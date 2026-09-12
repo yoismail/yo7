@@ -2234,9 +2234,36 @@
 
         /* ================= ABOUT PAGE ================= */
         .about-section {
+            /* Same corner-glow + dot-grain language used across the
+               homepage, over var(--page-bg) with its own dark-mode
+               override — this section had no explicit background before
+               (just inheriting body's), so it's added here rather than
+               layered onto something already there. */
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 64px 0 90px;
         }
-        .legal-section { padding: 56px 0 90px; }
+        [data-theme="dark"] .about-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+        }
+        .legal-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+            padding: 56px 0 90px;
+        }
+        [data-theme="dark"] .legal-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+        }
         .legal-content { max-width: 68ch; margin: 0 auto; }
         .legal-content h2 {
             font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--heading);
@@ -4657,17 +4684,28 @@
         .shop-header {
             position: relative;
             overflow: hidden;
-            background: #FFFFFF;
-            background-image: radial-gradient(circle at 88% -20%, rgba(144, 184, 0, 0.14), transparent 55%);
+            /* Dot-grain layered under this header's own pre-existing
+               corner glow — same texture family as the hero/story/etc,
+               without touching the glow that was already here. */
+            background:
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                radial-gradient(circle at 88% -20%, rgba(144, 184, 0, 0.14), transparent 55%),
+                #FFFFFF;
             color: #2C1C10;
             padding: 52px 0 48px;
             border-bottom: 1px solid rgba(44, 28, 16, 0.08);
         }
         .shop-header .wrap { position: relative; z-index: 2; }
 
+        /* These two variants had no glow of their own — flat white — so
+           unlike the base .shop-header above, they get the full corner-
+           glow + dot-grain pairing used across the rest of the site. */
         .shop-header-contact,
         .shop-header-story {
-            background: #FFFFFF;
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                #FFFFFF;
         }
 
         .breadcrumb {
@@ -5070,8 +5108,17 @@
 
         /* ================= PRODUCT GRID / CARD ================= */
         .products-section {
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 48px 0 100px;
+        }
+        [data-theme="dark"] .products-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
 
         .product-grid {
@@ -5452,8 +5499,17 @@
 
         /* ================= PRODUCT DETAIL ================= */
         .pd-section {
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 44px 0 100px;
+        }
+        [data-theme="dark"] .pd-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
 
         .pd-grid {
@@ -5952,9 +6008,18 @@
 
         /* ================= CHECKOUT ================= */
         .checkout-section {
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 44px 0 110px;
             min-height: 60vh;
+        }
+        [data-theme="dark"] .checkout-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
 
         .checkout-steps {
@@ -6723,8 +6788,17 @@
         .confirm-section {
             position: relative;
             overflow: hidden;
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 60px 0 110px;
+        }
+        [data-theme="dark"] .confirm-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
         .confirm-section .wrap { position: relative; z-index: 2; }
 
@@ -6999,6 +7073,10 @@
 
             .confirm-section {
                 padding: 0;
+                /* Same reasoning as .confirm-watermark's own print
+                   exclusion above — the corner glow/dot-grain shouldn't
+                   bleed into the saved/printed invoice either. */
+                background: none !important;
             }
 
             .invoice {
@@ -7021,8 +7099,17 @@
 
         /* ================= CONTACT PAGE ================= */
         .contact-section {
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 52px 0 100px;
+        }
+        [data-theme="dark"] .contact-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
 
         .contact-grid {
@@ -7229,8 +7316,17 @@
 
         /* ================= DELIVERY INFO PAGE ================= */
         .dinfo-section {
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 52px 0 96px;
+        }
+        [data-theme="dark"] .dinfo-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
 
         .postcode-checker {
@@ -7474,7 +7570,19 @@
         }
 
         /* ================= GUIDE / FAQ ================= */
-        .guide-section { background: var(--page-bg); padding: 52px 0 100px; }
+        .guide-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+            padding: 52px 0 100px;
+        }
+        [data-theme="dark"] .guide-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+        }
         .guide-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 60px; }
         .guide-step {
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 18px; padding: 26px 24px;
@@ -7528,11 +7636,20 @@
 
         /* ================= AUTH PAGES ================= */
         .auth-section {
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             min-height: 78vh;
             display: flex;
             align-items: center;
             padding: 60px 20px;
+        }
+        [data-theme="dark"] .auth-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
 
         .auth-box {
@@ -7619,7 +7736,19 @@
         }
 
         /* ================= ORDER HISTORY ================= */
-        .orders-section { padding: 48px 0 100px; background: var(--page-bg); }
+        .orders-section {
+            padding: 48px 0 100px;
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+        }
+        [data-theme="dark"] .orders-section {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+        }
         .order-history-list { display: flex; flex-direction: column; gap: 22px; }
         .order-history-empty, .order-history-loading, .order-history-error {
             text-align: center; padding: 70px 20px; color: var(--text-muted); font-size: 14.5px;
@@ -12096,7 +12225,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.31';
+        const BUILD_VERSION = '2026-09-12.32';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
