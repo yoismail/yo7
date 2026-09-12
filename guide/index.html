@@ -406,8 +406,16 @@
             color: rgba(6, 59, 0, 0.78);
             max-width: 660px;
         }
+        /* Links to the footer's "Get 10% Off" signup card (the actual
+           launch-list mechanism) rather than just sitting there as
+           decoration — javascript:void(0) + scrollIntoView, not a real
+           href, same pattern the hero's own "Browse Categories" button
+           already uses, so it doesn't collide with the hash router. */
         .launch-banner-tag {
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             font-family: var(--display);
             font-weight: 700;
             font-size: 11px;
@@ -418,6 +426,21 @@
             border-radius: 999px;
             padding: 7px 16px;
             white-space: nowrap;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .launch-banner-tag:hover {
+            background: rgba(6, 59, 0, 0.08);
+            border-color: rgba(6, 59, 0, 0.45);
+        }
+        .launch-banner-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--aubergine);
+            flex-shrink: 0;
+            animation: embPulse 1.6s ease-in-out infinite;
         }
         @media (max-width: 720px) {
             .launch-banner-inner {
@@ -8083,7 +8106,10 @@
                 <h2>The website is live. The launch is coming.</h2>
                 <p>Yo7 Foods is now online as we prepare for our official business launch in January 2027. Explore our range, get familiar with Yo7 Foods and join our launch list to be among the first to know when we go live.</p>
             </div>
-            <span class="launch-banner-tag">Stay tuned</span>
+            <a class="launch-banner-tag" href="javascript:void(0)" onclick="document.getElementById('heroCaptureWrap').scrollIntoView({behavior:'smooth', block:'center'})">
+                <span class="launch-banner-dot" aria-hidden="true"></span>
+                Stay tuned
+            </a>
         </div>
     </div>
 
@@ -11881,7 +11907,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.8';
+        const BUILD_VERSION = '2026-09-12.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
