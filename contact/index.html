@@ -11780,7 +11780,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.1';
+        const BUILD_VERSION = '2026-09-12.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13757,26 +13757,21 @@
         window.removeProductFromNewArrivals = removeProductFromNewArrivals;
 
         (function initTrustBarPause() {
+            // Desktop hover only — there's nothing clickable inside the
+            // ticker (plain text/icons, no links), so there was never a
+            // gesture inside it worth protecting on touch. The removed
+            // touchmove handler paused the scroll on ANY swipe that
+            // started on this bar with dx > dy, but the bar is
+            // position:fixed right under the nav — exactly where a thumb
+            // often lands to start an ordinary page scroll — so a normal
+            // vertical scroll with any diagonal drift kept triggering it,
+            // freezing the ticker for 2s at a time. That's what "freezes
+            // intermittently" on real devices actually was.
             const track = document.getElementById('trustBarTrack');
             if (!track) return;
             let resumeTimer = null;
-            function pause() {
-                track.classList.add('paused');
-                clearTimeout(resumeTimer);
-                resumeTimer = setTimeout(() => track.classList.remove('paused'), 2000);
-            }
-            track.addEventListener('mouseenter', () => track.classList.add('paused'));
+            track.addEventListener('mouseenter', () => { clearTimeout(resumeTimer); track.classList.add('paused'); });
             track.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); track.classList.remove('paused'); });
-            let touchStartX = 0, touchStartY = 0;
-            track.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            track.addEventListener('touchmove', (e) => {
-                const dx = Math.abs(e.touches[0].clientX - touchStartX);
-                const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                if (dx > dy && dx > 6) pause();
-            }, { passive: true });
         })();
 
         function stockLabel(s) {
