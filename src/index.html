@@ -2119,6 +2119,9 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
+            /* Same reasoning as .footer-col a — this was ~19px tall,
+               under the 24px minimum touch-target height (WCAG 2.5.8). */
+            padding: 3px 0;
             margin-top: 18px;
             /* The big faded "Yo7" watermark tracks the hero's own bottom
                edge (see .hero-text-watermark), so this link — the last
@@ -4450,6 +4453,11 @@
             font-size: 14.5px;
             color: #2C1C10;
             text-decoration: none;
+            /* Padding, not just the margin-bottom gap between rows — the
+               margin doesn't grow the link's own tappable box, and at
+               ~22px that was under the 24px minimum touch-target height
+               (WCAG 2.5.8). */
+            padding: 3px 0;
             margin-bottom: 8px;
             opacity: 0.85;
             transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
@@ -12302,7 +12310,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.42';
+        const BUILD_VERSION = '2026-09-12.43';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
