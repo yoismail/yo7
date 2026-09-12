@@ -2149,7 +2149,17 @@
         .story {
             position: relative;
             padding: 100px 0;
-            background: #FAF2E3;
+            /* Same treatment language as the hero above it — a corner
+               glow in var(--chartreuse-rich) and a faint var(--aubergine)
+               dot grain over the section's own fixed sand background (no
+               dark-mode variant, same as the footer/newsletter card use
+               the same fixed-light-surface convention). Bottom-left
+               corner again on purpose: a repeating motif reads as one
+               deliberate system rather than a one-off flourish. */
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                #FAF2E3;
             overflow: hidden;
             text-align: center;
         }
@@ -12018,7 +12028,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.24';
+        const BUILD_VERSION = '2026-09-12.25';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
