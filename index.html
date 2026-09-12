@@ -7329,16 +7329,23 @@
         }
 
         /* ================= DELIVERY INFO PAGE ================= */
+        /* Dot-grain only, no corner glow — this page has two back-to-back
+           .dinfo-section instances (this one, then the cards section
+           right below with padding-top:0), so a glow at each one's own
+           bottom-left corner landed right at the seam between them. In
+           dark mode --card-bg and the glow-tinted --page-bg are close
+           enough in tone that the glow washed out the boundary between
+           the areas-strip card and the card grid below it, making them
+           read as one blurred block instead of separate cards (spotted
+           on a real device). */
         .dinfo-section {
             background:
-                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
                 radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 52px 0 96px;
         }
         [data-theme="dark"] .dinfo-section {
             background:
-                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
                 radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
@@ -12237,7 +12244,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.34';
+        const BUILD_VERSION = '2026-09-12.35';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
