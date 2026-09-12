@@ -357,27 +357,21 @@
            first-time visitor the site itself is real and live even
            though the business's official launch (real fulfilment,
            January 2027) hasn't happened yet — distinct from the trust
-           bar above it (a moving ticker of quick facts) and the
-           edit-mode banner below it (admin-only, orange), so this gets
-           its own quieter, editorial register: a dark aubergine band
-           with a gold accent, closer to a printed notice than another
-           strip of UI chrome. display:none by default, toggled by
-           route() (see updateActiveNavLink) rather than living inside
-           the VIEWS/showView() system, since it isn't a routed view. */
+           bar above it (a moving ticker of quick facts). Same solid
+           orange/aubergine treatment as .edit-mode-banner just below it
+           (not a coincidence — same colour token pair on purpose),
+           rather than the dark green this used at first. display:none
+           by default, toggled by route() (see updateActiveNavLink)
+           rather than living inside the VIEWS/showView() system, since
+           it isn't a routed view. */
         .launch-banner {
             display: none;
             position: relative;
-            background: linear-gradient(120deg, var(--aubergine-deep) 0%, #0b3f02 100%);
+            background: var(--orange);
+            color: var(--aubergine);
             overflow: hidden;
         }
         .launch-banner.is-visible { display: block; }
-        .launch-banner::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(225, 225, 0, 0.55), transparent);
-        }
         .launch-banner-inner {
             position: relative;
             display: flex;
@@ -390,8 +384,8 @@
             width: 44px;
             height: 40px;
             border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
-            background: rgba(225, 225, 0, 0.14);
-            color: var(--orange);
+            background: rgba(6, 59, 0, 0.12);
+            color: var(--aubergine);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -403,13 +397,13 @@
             font-weight: 700;
             font-size: 15.5px;
             letter-spacing: -0.005em;
-            color: var(--cream);
+            color: var(--aubergine);
             margin-bottom: 4px;
         }
         .launch-banner-text p {
             font-size: 13px;
             line-height: 1.55;
-            color: rgba(250, 249, 242, 0.72);
+            color: rgba(6, 59, 0, 0.78);
             max-width: 660px;
         }
         .launch-banner-tag {
@@ -419,8 +413,8 @@
             font-size: 11px;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--orange);
-            border: 1px solid rgba(225, 225, 0, 0.35);
+            color: var(--aubergine);
+            border: 1px solid rgba(6, 59, 0, 0.3);
             border-radius: 999px;
             padding: 7px 16px;
             white-space: nowrap;
@@ -11887,7 +11881,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.7';
+        const BUILD_VERSION = '2026-09-12.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
