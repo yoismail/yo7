@@ -3725,7 +3725,20 @@
 
         .delivery {
             padding: 96px 0;
-            background: var(--section-alt-bg);
+            /* Same corner-glow + dot-grain language as the hero/story
+               above — here layered over var(--section-alt-bg), which
+               already flips with theme, so (unlike those two fixed-light
+               sections) this needs its own dark-mode glow colour too. */
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--section-alt-bg);
+        }
+        [data-theme="dark"] .delivery {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--section-alt-bg);
         }
 
         .delivery-grid {
@@ -12024,7 +12037,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.25';
+        const BUILD_VERSION = '2026-09-12.26';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
