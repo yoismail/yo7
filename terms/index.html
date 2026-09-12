@@ -372,25 +372,6 @@
             overflow: hidden;
         }
         .launch-banner.is-visible { display: block; }
-        /* Same #seal-mark used for the hero's own big background
-           watermark just below this banner, positioned to sit near the
-           seam between the two — reads as the one shape carrying
-           through both sections rather than the banner and hero looking
-           like two unrelated blocks stacked on top of each other.
-           Fixed opacity, not the theme-flipping --hero-watermark-op —
-           this banner is a fixed light surface regardless of theme. */
-        .launch-banner-watermark {
-            position: absolute;
-            bottom: -38%;
-            right: -5%;
-            width: min(22vw, 170px);
-            opacity: 0.16;
-            pointer-events: none;
-            z-index: 0;
-        }
-        @media (max-width: 720px) {
-            .launch-banner-watermark { display: none; }
-        }
         .launch-banner-inner {
             position: relative;
             display: flex;
@@ -430,11 +411,11 @@
            decoration — javascript:void(0) + scrollIntoView, not a real
            href, same pattern the hero's own "Browse Categories" button
            already uses, so it doesn't collide with the hash router.
-           Solid chartreuse fill, not an outline — still its own colour
-           against the orange banner (so it reads as the one real call
-           to action, not another label next to the pulsing dot), but
-           the lighter brand green sits together with the orange more
-           easily than the near-black aubergine this used at first. */
+           Cream fill, not the brand green — a plain white/cream button
+           against a fully saturated colour field reads as the premium,
+           editorial choice (a printed insert, not another UI chip), and
+           keeps it visually distinct from every other chartreuse/orange
+           button already on the page. */
         .launch-banner-tag {
             flex-shrink: 0;
             display: inline-flex;
@@ -445,9 +426,9 @@
             font-size: 11px;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--aubergine-deep);
-            background: var(--chartreuse);
-            border: 1px solid var(--chartreuse);
+            color: var(--aubergine);
+            background: var(--cream);
+            border: 1px solid var(--cream);
             border-radius: 999px;
             padding: 9px 18px;
             white-space: nowrap;
@@ -457,7 +438,7 @@
             transition: background 0.2s ease, transform 0.2s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.2s ease;
         }
         .launch-banner-tag:hover {
-            background: var(--chartreuse-rich);
+            background: #FFFFFF;
             transform: translateY(-1px);
             box-shadow: 0 8px 20px rgba(6, 59, 0, 0.3);
         }
@@ -465,7 +446,7 @@
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background: var(--aubergine-deep);
+            background: var(--aubergine);
             flex-shrink: 0;
             animation: embPulse 1.6s ease-in-out infinite;
         }
@@ -1575,7 +1556,17 @@
             position: relative;
             background: #FFFFFF;
             color: #2C1C10;
-            overflow: hidden;
+            /* clip-path, not overflow:hidden — same clipping on every
+               other edge (0 inset = flush with the box, identical to
+               what overflow:hidden already did there), but the top
+               inset is negative, deliberately leaving that edge open so
+               .hero-watermark (see below) can bleed upward into the
+               launch banner sitting directly above this section instead
+               of getting cut off dead at the seam between them. Later
+               in DOM order than the banner, so it paints on top of it
+               where the two overlap, same as it always painted on top
+               of its own section. */
+            clip-path: inset(-200% 0 0 0);
             padding: 56px 0 64px;
         }
 
@@ -1797,31 +1788,39 @@
         }
 
 
+        /* Static, not animated (heroWatermarkLive's tilt-breathe-glow
+           lived here before) — confirmed by testing that it's a real
+           Chromium rendering quirk: an element that both (a) extends
+           past its ancestor's normal box via clip-path AND (b) has an
+           active CSS animation (anywhere in that ancestor's subtree,
+           not just on the element itself) gets its paint silently
+           clipped back to the ancestor's un-expanded bounds, ignoring
+           the clip-path that's supposed to permit the bleed. That bleed
+           (into the launch banner above, see .hero's own clip-path
+           comment) mattered more here than the motion did, so the
+           animation lost out rather than the flow effect. */
         .hero-watermark {
             position: absolute;
-            top: -8%;
+            /* Fixed px, not a % — a % top offset is relative to .hero's
+               own height, which varies with content and would bleed a
+               different amount into the launch banner above depending
+               on how tall the hero happens to render, rather than a
+               consistent, deliberate amount every time. Same em/px-not-%
+               reasoning already used for .hero-text-watermark and the
+               footer's own corner marks. */
+            top: -60px;
             right: -6%;
             width: min(60vw, 640px);
-            opacity: var(--hero-watermark-op);
+            /* A bit brighter than the shared --hero-watermark-op other
+               watermarks use — this one now bleeds up into the launch
+               banner's saturated orange, where the plain base opacity
+               read as barely-there. Boosted here rather than raising
+               the shared variable itself, which would also affect
+               .hero-text-watermark and the confirmation page's own
+               reuse of it, neither of which need the change. */
+            opacity: calc(var(--hero-watermark-op) + 0.12);
             pointer-events: none;
             z-index: 1;
-            transform-origin: 62% 42%;
-            animation: heroWatermarkLive 6.5s ease-in-out infinite;
-        }
-        /* A continuous tilt-breathe-glow rather than a spin — a mark this
-           size spinning would read as a loading indicator, not a logo.
-           Four uneven stops (not a symmetric 2-point wobble) keep the
-           motion reading as organic rather than mechanical, and the
-           opacity lift at the peak gives it a soft glow pulse so it stays
-           noticeable as ambient motion without shouting for attention. */
-        @keyframes heroWatermarkLive {
-            0%, 100% { transform: rotate(0deg) scale(1); opacity: var(--hero-watermark-op); }
-            30% { transform: rotate(-4deg) scale(1.02); }
-            60% { transform: rotate(7deg) scale(1.09); opacity: calc(var(--hero-watermark-op) + 0.1); }
-            85% { transform: rotate(2deg) scale(1.03); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-watermark { animation: none; }
         }
 
         .hero-inner {
@@ -2083,10 +2082,9 @@
                 display: none;
             }
             .hero-watermark {
-                top: -4%;
+                top: -110px;
                 bottom: auto;
                 right: -8%;
-                transform: none;
                 width: min(46vw, 600px);
             }
         }
@@ -8125,9 +8123,6 @@
          (this isn't a routed view, just a strip of chrome under the
          trust bar), so it gets its own small is-visible toggle instead. -->
     <div class="launch-banner" id="launchBanner">
-        <svg class="launch-banner-watermark" viewBox="65 25 875 900" aria-hidden="true">
-            <use href="#seal-mark" />
-        </svg>
         <div class="wrap launch-banner-inner">
             <span class="launch-banner-badge" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
@@ -11937,7 +11932,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.15';
+        const BUILD_VERSION = '2026-09-12.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
