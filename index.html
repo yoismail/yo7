@@ -1890,12 +1890,6 @@
             margin-bottom: 16px;
         }
 
-        .seal {
-            width: 150px;
-            height: 150px;
-            margin-bottom: 8px;
-        }
-
         .hero h1 {
             font-family: var(--display);
             font-weight: 700;
@@ -2109,10 +2103,10 @@
 
         /* Desktop-only: below this the hero is the mobile-tuned centred
            stack (unchanged). Above it, centering the same stack just left
-           a huge dead gap either side and made the seal read as a small
-           afterthought badge — this shifts the copy into a real left
-           column with its own max-width, and gives the seal + watermark
-           the freed-up right side as a deliberate art moment instead. */
+           a huge dead gap either side — this shifts the copy into a real
+           left column with its own max-width, and gives the background
+           watermark the freed-up right side as a deliberate art moment
+           instead. */
         @media (min-width: 901px) {
             .hero-inner {
                 align-items: flex-start;
@@ -2121,13 +2115,6 @@
             .hero h1 {
                 max-width: 520px;
                 margin: 6px 0 20px;
-            }
-            /* Per request: the seal (crisp foreground badge) is dropped
-               from the desktop composition entirely, leaving the faded
-               background "7" watermark as the hero's only art element,
-               scaled up to fill the freed-up right side on its own. */
-            .seal {
-                display: none;
             }
             .hero-watermark {
                 top: -4%;
@@ -8236,9 +8223,6 @@
             </svg>
             <div class="wrap hero-inner">
                 <div class="eyebrow">African &amp; Caribbean grocery store, Ipswich.</div>
-                <svg class="seal" viewBox="65 25 875 900">
-                    <use href="#seal-mark" />
-                </svg>
                 <h1><span class="hero-accent stretch-word" style="animation-delay:0s">African</span> <span class="stretch-word" style="animation-delay:0.10s">&amp;</span> <span class="stretch-word" style="animation-delay:0.20s">Caribbean</span> <span class="stretch-word" style="animation-delay:0.30s">Groceries,</span> <span class="stretch-word" style="animation-delay:0.40s">Delivered</span> <span class="stretch-word" style="animation-delay:0.50s">Across</span> <span class="stretch-word" style="animation-delay:0.60s">the</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">UK</span>.</h1>
                 <p class="hero-sub">African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing. Delivered UK-wide, with local collection in Ipswich.</p>
                 <div class="hero-cta-row">
@@ -12010,7 +11994,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.19';
+        const BUILD_VERSION = '2026-09-12.20';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
