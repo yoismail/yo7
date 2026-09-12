@@ -3886,10 +3886,24 @@
                 radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--section-alt-bg);
         }
+        /* Flex, not the base grid — with 5 cards, auto-fit grid columns
+           wrap however many happen to fit per row, which at this
+           section's width landed as an uneven, oddly-stacked mix rather
+           than a clean layout (spotted on a real device). flex-wrap +
+           justify-content:center gives a deliberate 3-then-2 instead:
+           three cards fill the first row, the remaining two centre
+           themselves on the row below rather than sitting flush-left
+           under an empty third slot. */
         .why-choose-section .about-values-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             max-width: 1080px;
             margin-left: auto;
             margin-right: auto;
+        }
+        .why-choose-section .about-value-card {
+            flex: 0 1 320px;
         }
         .reviews-section {
             /* Same corner-glow + dot-grain language as the sections above
@@ -12246,7 +12260,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.35';
+        const BUILD_VERSION = '2026-09-12.36';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
