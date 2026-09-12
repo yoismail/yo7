@@ -594,13 +594,21 @@
             width: 100%; padding: 7px 9px; border-radius: 8px; border: 1.5px solid rgba(225,225,0,0.3);
             font-family: var(--body); font-size: 16px; background: var(--card-bg);
         }
-        .edit-panel .ep-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .edit-panel .ep-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
         .edit-panel .ep-save {
             flex: 1; background: var(--chartreuse); color: var(--aubergine); border: none; border-radius: 8px;
             font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px;
         }
         .edit-panel .ep-cancel {
             background: none; border: 1.5px solid rgba(var(--border-rgb), 0.16); color: var(--heading);
+            border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
+        }
+        .edit-panel .ep-delete {
+            background: none; border: 1.5px solid #C1552C; color: #C1552C;
+            border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
+        }
+        .edit-panel .ep-restore {
+            background: none; border: 1.5px solid var(--chartreuse); color: var(--heading);
             border-radius: 8px; font-family: var(--display); font-weight: 700; font-size: 12px; padding: 8px 12px;
         }
         .ep-variants-block { margin-bottom: 10px; }
@@ -5314,6 +5322,13 @@
         .stock-badge.in { background: var(--chartreuse); color: var(--aubergine-deep); }
         .stock-badge.low { background: var(--orange); color: var(--aubergine); }
         .stock-badge.out { background: #5a4d48; color: #fff; }
+        .stock-badge.deleted { background: #C1552C; color: #fff; }
+        /* Only ever shown to an admin with edit mode on (see productCardHTML) —
+           a deleted product is filtered out of every customer-facing listing,
+           this dimming + badge is purely so it's still recognisable, in the
+           category it was deleted from, as "gone but recoverable" rather than
+           looking like a plain in-stock card. */
+        .product-card.is-deleted .product-thumb, .product-card.is-deleted .product-body { opacity: 0.5; }
         /* A fresh badge node is rendered every time its card is (no reflow
            trick needed to replay it, unlike route-view-enter), so this
            triggers on every appearance: new stock/sale state, a re-render,
@@ -5359,6 +5374,12 @@
             color: rgba(250, 249, 242, 0.75);
             margin-bottom: 7px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .product-card-weight {
+            font-size: 10.5px;
+            color: rgba(250, 249, 242, 0.55);
+            margin: -5px 0 7px;
         }
 
         .product-row {
@@ -12287,7 +12308,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.40';
+        const BUILD_VERSION = '2026-09-12.41';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -12350,7 +12371,18 @@
             return DISH_ICON_LIBRARY.map((ic, i) => `<button type="button" class="dish-icon-option${ic.svg === selectedSvg ? ' selected' : ''}" title="${escapeHtml(ic.label)}" aria-label="${escapeHtml(ic.label)}" onclick="${handlerName}(${i})">${ic.svg}</button>`).join('');
         }
         function allProducts() {
-            return CATEGORIES.flatMap(c => c.products.map((p, i) => ({ ...p, id: c.slug + '::' + i, catSlug: c.slug, catName: c.name, emoji: c.emoji })));
+            // Deleted products never surface here — unlike the category grid,
+            // there's no edit-mode exception, since this feeds discovery
+            // surfaces (search, New/Best Seller, Shop all, upsells) where a
+            // deleted item showing up would be confusing however it's found.
+            return CATEGORIES.flatMap(c => c.products.map((p, i) => ({ ...p, id: c.slug + '::' + i, catSlug: c.slug, catName: c.name, emoji: c.emoji }))).filter(p => !p.deleted);
+        }
+        // Shared by every "pick a product to add" admin dropdown (bundles,
+        // deals, combos, offers) — a deleted product is excluded so a fresh
+        // bundle/offer/deal can't reintroduce something already taken off
+        // the shop; the option value stays the product's real index either way.
+        function productOptionsHTML(cat) {
+            return cat.products.map((p, i) => ({ p, i })).filter(x => !x.p.deleted).map(({ p, i }) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
         }
         function getProduct(catSlug, idx) {
             const cat = findCategory(catSlug);
@@ -12812,7 +12844,7 @@
         function populateBundleEditProductSelect() {
             const catSlug = document.getElementById('bbe-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('bbe-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+            document.getElementById('bbe-item-product').innerHTML = productOptionsHTML(cat);
         }
         function renderBundleEditItemsList() {
             document.getElementById('bbe-items-list').innerHTML = bundleEditNewItems.map((ref, i) => {
@@ -12942,7 +12974,7 @@
             const catSlug = document.getElementById('abf-cat').value;
             const cat = findCategory(catSlug);
             const select = document.getElementById('abf-product');
-            select.innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+            select.innerHTML = productOptionsHTML(cat);
         }
         function addItemToNewBundle() {
             const catSlug = document.getElementById('abf-cat').value;
@@ -13194,7 +13226,7 @@
         function populateDishEditProductSelect() {
             const catSlug = document.getElementById('de-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('de-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+            document.getElementById('de-item-product').innerHTML = productOptionsHTML(cat);
         }
         function renderDishEditItemsList() {
             document.getElementById('de-items-list').innerHTML = dishEditNewItems.map((ref, i) => {
@@ -13289,7 +13321,7 @@
         function populateAdfProductSelect() {
             const catSlug = document.getElementById('adf-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('adf-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+            document.getElementById('adf-item-product').innerHTML = productOptionsHTML(cat);
         }
         function renderNewDishItemsList() {
             document.getElementById('adf-items-list').innerHTML = newDishItems.map((ref, i) => {
@@ -13468,7 +13500,7 @@
         function populateComboEditProductSelect() {
             const catSlug = document.getElementById('cce-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('cce-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+            document.getElementById('cce-item-product').innerHTML = productOptionsHTML(cat);
         }
         function renderComboEditItemsList() {
             document.getElementById('cce-items-list').innerHTML = comboEditNewItems.map((ref, i) => {
@@ -13557,7 +13589,7 @@
         function populateAcfProductSelect() {
             const catSlug = document.getElementById('acf-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('acf-item-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+            document.getElementById('acf-item-product').innerHTML = productOptionsHTML(cat);
         }
         function renderNewComboItemsList() {
             document.getElementById('acf-items-list').innerHTML = newComboItems.map((ref, i) => {
@@ -14167,7 +14199,7 @@
         function populateAtoProductSelect() {
             const catSlug = document.getElementById('ato-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('ato-product').innerHTML = cat.products.map((p, i) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+            document.getElementById('ato-product').innerHTML = productOptionsHTML(cat);
             updateAtoCurrentPriceLabel();
         }
         function updateAtoCurrentPriceLabel() {
@@ -14312,10 +14344,10 @@
             const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
             return `
-    <div class="product-card" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
+    <div class="product-card${p.deleted ? ' is-deleted' : ''}" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
-          ${stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : ''}
+          ${p.deleted ? `<span class="stock-badge deleted">Deleted</span>` : (stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : '')}
           ${productPhotoHTML(p, p.name)}
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -14324,6 +14356,7 @@
         <div class="product-body">
           <h4>${escapeHtml(p.name)}</h4>
           <div class="product-unit">${escapeHtml(effectiveUnit(p) || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
+          ${(currentIsAdmin && editModeOn) ? `<div class="product-card-weight">${typeof p.weight === 'number' ? `Delivery weight: ${fmtWeight(p.weight)}` : 'Delivery weight not set'}</div>` : ''}
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
             <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
@@ -14440,7 +14473,13 @@
             document.getElementById('shopHeaderTitle').textContent = cat ? cat.name.replace(/&amp;/g, '&') : 'Category not found';
             document.getElementById('shopHeaderDesc').textContent = cat ? cat.tagline : '';
             renderCatStrip(slug);
-            const items = cat ? cat.products.map((p, i) => ({ ...p, emoji: cat.emoji, catSlug: slug, idx: i })) : [];
+            // A deleted product stays visible here (only here, only in edit
+            // mode) so there's a natural, findable way to undo a delete —
+            // right where it was deleted from — without a dedicated "trash"
+            // page. Everywhere else a deleted product is treated as gone.
+            const items = cat ? cat.products
+                .map((p, i) => ({ ...p, emoji: cat.emoji, catSlug: slug, idx: i }))
+                .filter(p => !p.deleted || (currentIsAdmin && editModeOn)) : [];
             document.getElementById('resultCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderProductGridPaginated(items);
         }
@@ -14715,7 +14754,11 @@
             const freqRow = document.getElementById('pdSubscribeFrequencyRow');
             if (freqRow) freqRow.style.display = 'none';
             document.getElementById('pdQtyVal').textContent = pdQty;
-            if (!p) {
+            // A deleted product's own page 404s for everyone, admins
+            // included — restoring it happens from the category grid it was
+            // deleted from (edit mode keeps it visible there), not from a
+            // page that's otherwise indistinguishable from any live product.
+            if (!p || p.deleted) {
                 clearProductJsonLd();
                 document.getElementById('pdName').textContent = 'Product not found';
                 document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; Not found`;
@@ -14783,7 +14826,7 @@
 
             updatePdPrice();
 
-            const related = cat.products.map((rp, ri) => ({ ...rp, emoji: cat.emoji, catSlug, idx: ri })).filter(rp => rp.idx !== p.idx).slice(0, 4);
+            const related = cat.products.map((rp, ri) => ({ ...rp, emoji: cat.emoji, catSlug, idx: ri })).filter(rp => rp.idx !== p.idx && !rp.deleted).slice(0, 4);
             renderGrid(related, 'relatedGrid');
             renderProductDetailsSection(p, catSlug);
             renderProductReviews(catSlug, Number(idx));
@@ -16817,6 +16860,8 @@
                 case 'product_created': return `${who} added ${label}${entry.details && entry.details.catName ? ` to ${escapeHtml(entry.details.catName)}` : ''}`;
                 case 'product_photo_updated': return `${who} updated the photo for ${label}`;
                 case 'product_photo_removed': return `${who} removed the photo from ${label}`;
+                case 'product_deleted': return `${who} deleted ${label}`;
+                case 'product_restored': return `${who} restored ${label}`;
                 case 'bundle_updated': case 'combo_updated': {
                     const kind = entry.action === 'bundle_updated' ? 'bundle' : 'combo';
                     const summary = entry.details && changeSummary(entry.details.changes);
@@ -18196,6 +18241,9 @@
           <div class="ep-actions">
             <button class="ep-save" type="button" onclick="saveEditPanel('${catSlug}', ${idx}, this)">Save</button>
             <button class="ep-cancel" type="button" onclick="this.closest('.edit-panel-slot').innerHTML='';">Cancel</button>
+            ${product.deleted
+                ? `<button class="ep-restore" type="button" onclick="restoreProductFromPanel('${catSlug}', ${idx}, this)">Restore product</button>`
+                : `<button class="ep-delete" type="button" onclick="deleteProductFromPanel('${catSlug}', ${idx}, this)">Delete product</button>`}
           </div>
         </div>`;
         }
@@ -18463,6 +18511,93 @@
             route(); // re-render the current view so the change is visible immediately everywhere it appears
         }
         window.saveEditPanel = saveEditPanel;
+
+        // Soft delete only — the product stays at its same index in
+        // cat.products forever. Every product_overrides row, every
+        // custom_products row, and every past order's line items address a
+        // product by that positional "catSlug::idx", so actually removing
+        // the slot (array splice) would shift every later product in the
+        // category and silently mis-attribute all of it. Marking it deleted
+        // (and out of stock, belt-and-suspenders alongside every existing
+        // stock === 'out' check already gating add-to-cart/bundles/reorder)
+        // hides it everywhere a customer would see it while leaving the slot
+        // intact, and — unlike a real delete — it can be undone.
+        async function deleteProduct(catSlug, idx) {
+            const cat = findCategory(catSlug);
+            const product = cat && cat.products[idx];
+            if (!product) return { ok: false };
+            // Reverted below on failure rather than left set, unlike most
+            // other admin edits here — a delete that silently didn't
+            // actually take (e.g. an expired session failing the RLS check)
+            // must not make the product vanish from just this tab while it
+            // stays live for everyone else; that's a worse outcome than a
+            // price edit not syncing.
+            const prevDeleted = product.deleted, prevStock = product.stock;
+            product.deleted = true;
+            product.stock = 'out';
+            if (!supabaseClient) return { ok: true };
+            const { error } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(catSlug, idx),
+                deleted: true,
+                stock: 'out',
+                updated_at: new Date().toISOString(),
+            });
+            if (error) { product.deleted = prevDeleted; product.stock = prevStock; return { ok: false, error }; }
+            logAdminAction('product_deleted', 'product', product.name, {});
+            return { ok: true };
+        }
+        // Stock is deliberately left as 'out' from the delete rather than
+        // guessed back to 'in' here — restoring visibility isn't the same as
+        // knowing it's actually back in stock, that's a separate call an
+        // admin makes explicitly (the edit panel that opens right after this
+        // has the Stock status field right there).
+        async function restoreProduct(catSlug, idx) {
+            const cat = findCategory(catSlug);
+            const product = cat && cat.products[idx];
+            if (!product) return { ok: false };
+            product.deleted = false;
+            if (!supabaseClient) return { ok: true };
+            const { error } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(catSlug, idx),
+                deleted: false,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) { product.deleted = true; return { ok: false, error }; }
+            logAdminAction('product_restored', 'product', product.name, {});
+            return { ok: true };
+        }
+        async function deleteProductFromPanel(catSlug, idx, btn) {
+            const cat = findCategory(catSlug);
+            const product = cat.products[idx];
+            if (!confirm(`Delete "${product.name}"? It disappears from the shop immediately. Existing orders that included it aren't affected, and you can restore it later from this same category with edit mode still on.`)) return;
+            btn.disabled = true;
+            btn.textContent = 'Deleting…';
+            const result = await deleteProduct(catSlug, idx);
+            if (!result.ok) {
+                showToast('Couldn\'t delete: ' + result.error.message, 6000);
+                btn.disabled = false;
+                btn.textContent = 'Delete product';
+                return;
+            }
+            btn.closest('.edit-panel-slot').innerHTML = '';
+            route();
+        }
+        window.deleteProductFromPanel = deleteProductFromPanel;
+        async function restoreProductFromPanel(catSlug, idx, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Restoring…';
+            const result = await restoreProduct(catSlug, idx);
+            if (!result.ok) {
+                showToast('Couldn\'t restore: ' + result.error.message, 6000);
+                btn.disabled = false;
+                btn.textContent = 'Restore product';
+                return;
+            }
+            btn.closest('.edit-panel-slot').innerHTML = '';
+            route();
+            showToast('Product restored — check its stock status is right before customers can buy it again.');
+        }
+        window.restoreProductFromPanel = restoreProductFromPanel;
 
         // Uploads to the product-photos storage bucket and saves the public
         // URL to product_overrides straight away, this one persists on
@@ -18962,6 +19097,7 @@
                 if (row.allergy_note) product.allergyNote = row.allergy_note;
                 if (row.nutrition) product.nutrition = row.nutrition;
                 if (row.cooking_tip) product.cookingTip = row.cooking_tip;
+                product.deleted = row.deleted === true;
             });
             route(); // re-render whatever's currently on screen with the real data now in hand
         }
