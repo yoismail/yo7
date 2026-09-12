@@ -2516,7 +2516,14 @@
 
         /* ================= SHOP / CATEGORY GRID ================= */
         .shop-section {
-            background: #FAF2E3;
+            /* Same dot-grain texture as the other sections in this pass,
+               over the section's own fixed sand background — no separate
+               corner glow here, since #shopByGroup below already has its
+               own bespoke one (see its ::before) and a second glow layered
+               under it would be redundant rather than complementary. */
+            background:
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                #FAF2E3;
             color: #2C1C10;
             padding: 88px 0 96px;
         }
@@ -12077,7 +12084,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.29';
+        const BUILD_VERSION = '2026-09-12.30';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
