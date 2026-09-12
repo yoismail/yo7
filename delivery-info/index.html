@@ -148,6 +148,14 @@
             --warn-text: #7a4a26;
             --display: 'Montserrat Alternates', sans-serif;
             --body: 'Montserrat Alternates', sans-serif;
+            /* Warm terracotta accent — a deliberate second colour family
+               alongside the brand's chartreuse/aubergine green, used for
+               small market-inspired texture and grounding warmth (a
+               background glow, a hand-stamped label mark) rather than
+               replacing the brand palette itself, which stays green. */
+            --clay: #C1622D;
+            --clay-deep: #8A3E17;
+            --clay-soft: #E8B48A;
             /* The hero's logo watermark is a translucent colour overlay at a
                fixed opacity, tuned against a near-black canvas in dark mode
                where it reads as a clear glow. Against white in light mode
@@ -179,6 +187,9 @@
             --warn-text: #E8B98A;
             --hero-watermark-op: 0.16;
             --neutral-track: #2c2618;
+            --clay: #D97A44;
+            --clay-deep: #F0A874;
+            --clay-soft: #4A2A18;
         }
 
         * {
@@ -1590,7 +1601,15 @@
         /* ================= HERO ================= */
         .hero {
             position: relative;
-            background: #FFFFFF;
+            /* Warm parchment base rather than flat white — a soft clay
+               glow grounded in the opposite corner from the watermark
+               (bottom-left vs. the mark's top-right), plus a faint dot
+               grain across the whole section for a tactile, papery
+               texture instead of a flat digital surface. */
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(193, 98, 45, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--cream);
             color: #2C1C10;
             overflow: hidden;
             padding: 56px 0 64px;
@@ -1889,6 +1908,10 @@
         }
 
         .eyebrow {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
             font-family: var(--display);
             font-weight: 500;
             font-size: 13px;
@@ -1896,6 +1919,17 @@
             text-transform: uppercase;
             color: var(--chartreuse-rich);
             margin-bottom: 16px;
+        }
+        /* Small hand-stamped market-label mark rather than plain caps
+           text on its own — one deliberate accent of the new warm clay
+           tone against the section's otherwise green/cream palette. */
+        .eyebrow::before {
+            content: '';
+            width: 14px;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--clay);
+            flex-shrink: 0;
         }
 
         .hero h1 {
@@ -2093,7 +2127,10 @@
            artwork and blobs already use theme-safe brand variables and
            need no change; only the literal light-theme colours below do. */
         [data-theme="dark"] .hero {
-            background: var(--page-bg);
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(217, 122, 68, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             color: var(--ink);
         }
         [data-theme="dark"] .hero-sub {
@@ -12004,7 +12041,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.21';
+        const BUILD_VERSION = '2026-09-12.22';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
