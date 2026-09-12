@@ -1898,10 +1898,6 @@
         }
 
         .eyebrow {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
             font-family: var(--display);
             font-weight: 500;
             font-size: 13px;
@@ -1909,18 +1905,6 @@
             text-transform: uppercase;
             color: var(--chartreuse-rich);
             margin-bottom: 16px;
-        }
-        /* Small hand-stamped market-label mark rather than plain caps
-           text on its own — same colour as the label text next to it
-           (var(--chartreuse-rich), already the site's own accent), not
-           a new hue. */
-        .eyebrow::before {
-            content: '';
-            width: 14px;
-            height: 3px;
-            border-radius: 2px;
-            background: var(--chartreuse-rich);
-            flex-shrink: 0;
         }
 
         .hero h1 {
@@ -12030,7 +12014,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.23';
+        const BUILD_VERSION = '2026-09-12.24';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
