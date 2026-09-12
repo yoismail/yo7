@@ -3807,8 +3807,21 @@
         }
 
         .order {
-            background: var(--page-bg);
+            /* Same corner-glow + dot-grain language as the hero/story/
+               delivery sections above it, layered over var(--page-bg) —
+               also theme-flipping, so it gets its own dark-mode glow
+               colour like .delivery did. */
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
             padding: 0 0 96px;
+        }
+        [data-theme="dark"] .order {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
         }
 
         .why-choose-section {
@@ -12039,7 +12052,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-12.26';
+        const BUILD_VERSION = '2026-09-12.27';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
