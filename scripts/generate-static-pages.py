@@ -30,7 +30,12 @@ import json
 import os
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCE = os.path.join(REPO_ROOT, 'index.html')
+# src/index.html, not repo-root index.html — that's now a generated,
+# minified build artifact (see scripts/minify.py), not the editable
+# source. This script needs the readable original: its patch_head()
+# below patches exact line numbers in the <head>, which only holds for
+# unminified HTML.
+SOURCE = os.path.join(REPO_ROOT, 'src', 'index.html')
 BASE_URL = 'https://yo7foods.co.uk'
 
 # slug -> (hash route, <title>, meta description, breadcrumb label)

@@ -53,7 +53,10 @@ from datetime import date
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
-SOURCE = os.path.join(REPO_ROOT, 'index.html')
+# src/index.html, not repo-root index.html — see the matching comment in
+# generate-static-pages.py. This script's CATEGORIES extraction and
+# marker-based text patching below both need the readable original too.
+SOURCE = os.path.join(REPO_ROOT, 'src', 'index.html')
 SITEMAP = os.path.join(REPO_ROOT, 'sitemap.xml')
 BASE_URL = 'https://yo7foods.co.uk'
 
