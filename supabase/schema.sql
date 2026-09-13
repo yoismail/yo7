@@ -664,7 +664,13 @@ begin
         '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/shop" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Start shopping</a></p>' ||
         '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
         '<a href="https://yo7foods.co.uk/#/unsubscribe-newsletter/' || v_token || '" style="color:#999;">Unsubscribe</a></p>' ||
-        '</div>'
+        '</div>',
+      'text',
+        'You''re on the list' || E'\n\n' ||
+        'Thanks for joining the Yo7 Family. Expect new arrivals, offers, and the occasional recipe, no spam.' || E'\n\n' ||
+        'Start shopping: https://yo7foods.co.uk/#/shop' || E'\n\n' ||
+        'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY' || E'\n' ||
+        'Unsubscribe: https://yo7foods.co.uk/#/unsubscribe-newsletter/' || v_token
     )
   );
 end;
