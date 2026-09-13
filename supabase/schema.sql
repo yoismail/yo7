@@ -235,6 +235,7 @@ begin
         'subject', v_copy.subject || ' — ' || coalesce(new.order_number, new.id::text),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
           '<p>' || v_copy.body || '</p>' ||
           '<p style="color:#666;font-size:13px;">Order ' || coalesce(new.order_number, new.id::text) || ' &middot; Total ' || to_char(new.total, 'FM£999999990.00') || '</p>' ||
@@ -268,6 +269,7 @@ begin
         'subject', 'New order ' || coalesce(new.order_number, new.id::text) || ' — ' || to_char(new.total, 'FM£999999990.00'),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">New order received</h2>' ||
           '<p>' || coalesce(v_customer_name, 'A customer') || ' just placed order ' || coalesce(new.order_number, new.id::text) || '.</p>' ||
           '<p style="color:#333;font-size:14px;">' ||
@@ -440,6 +442,7 @@ begin
       'subject', 'You''re on the list for Yo7 Foods',
       'html',
         '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
+        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
         '<h2 style="color:#063B00;">You''re on the list</h2>' ||
         '<p>Thanks for your interest in Yo7 Foods. We''re officially launching in Suffolk &amp; Essex in January 2027, bringing the premium African and Caribbean staples you love directly to East Anglia.</p>' ||
         '<p>We''ll email you the moment we launch, along with your 10% off code for your first order.</p>' ||
@@ -493,6 +496,7 @@ begin
         'subject', 'Time to reorder your ' || v_row.product_name || '?',
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">Running low on ' || v_row.product_name || '?</h2>' ||
           '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then ''else 's' end) || ', and that time has come round again. Head back to Yo7 Foods whenever you''re ready — this is just a reminder, nothing''s been charged.</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Reorder now</a></p>' ||
@@ -584,6 +588,7 @@ begin
       'subject', v_copy.subject || ' — ' || coalesce(v_order.order_number, v_order.id::text),
       'html',
         '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
+        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
         '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
         '<p>' || v_copy.body || '</p>' ||
         v_note_html ||
@@ -653,6 +658,7 @@ begin
       'subject', 'Welcome to the Yo7 Family',
       'html',
         '<div style="font-family:sans-serif;max-width:480px;margin:0 auto;">' ||
+        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
         '<h2 style="color:#063B00;">You''re on the list</h2>' ||
         '<p>Thanks for joining the Yo7 Family. Expect new arrivals, offers, and the occasional recipe, no spam.</p>' ||
         '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/shop" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Start shopping</a></p>' ||
