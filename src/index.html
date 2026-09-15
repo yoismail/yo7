@@ -5401,6 +5401,16 @@
             margin-bottom: 7px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        /* Empty (no min-height reserved) until loadProductCardRatings()
+           fills it in for products that actually have reviews — most
+           cards render with nothing here at all, a fixed reserved height
+           would mean visible dead space on every one of those. */
+        .product-card-rating {
+            display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+            font-size: 10.5px; color: rgba(250, 249, 242, 0.75); margin-bottom: 6px;
+        }
+        .product-card-rating .pcr-stars { display: inline-flex; align-items: center; gap: 1px; color: var(--orange); }
+        .product-card-rating .pcr-stars svg { width: 10px; height: 10px; }
 
         .product-row {
             display: flex;
@@ -5524,6 +5534,21 @@
             color: var(--heading);
             font-size: 20px;
             margin-bottom: 8px;
+        }
+        /* A dead end otherwise — "nothing matches, try another word" on
+           its own just leaves someone stuck. Populated by
+           createPaginatedGrid()'s paint() with a handful of best sellers
+           whenever the grid it's attached to comes up empty (search or a
+           thin category alike), so there's always somewhere to go next. */
+        .empty-state-suggestions {
+            margin-top: 28px;
+            text-align: left;
+        }
+        .empty-state-suggestions-label {
+            text-align: center;
+            font-family: var(--display); font-weight: 700; font-size: 12px;
+            letter-spacing: 0.03em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 16px;
         }
 
         /* Everything that used to live on the (now-removed) full-bleed
@@ -8953,6 +8978,7 @@
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
                     <h3>Nothing matches that yet</h3>
                     <p>Try another word, or message us directly, we're adding stock every week.</p>
+                    <div class="empty-state-suggestions" id="emptyStateSuggestions"></div>
                 </div>
             </div>
         </section>
@@ -8983,6 +9009,7 @@
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
                     <h3>Nothing matches that yet</h3>
                     <p>Try another word, or message us directly, we're adding stock every week.</p>
+                    <div class="empty-state-suggestions" id="shopAllEmptyStateSuggestions"></div>
                 </div>
             </div>
         </section>
@@ -12357,7 +12384,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.48';
+        const BUILD_VERSION = '2026-09-15.49';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -13770,6 +13797,24 @@
             }
             return allProducts().filter(p => p.isBestSeller).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
         }
+        // "Nothing matches that yet" on its own is a dead end — this gives
+        // whoever hit it (an unmatched search, or a genuinely thin
+        // category) somewhere to go next instead of just a shrug. Looks
+        // for an element named "<emptyId>Suggestions" (e.g. emptyState ->
+        // emptyStateSuggestions) so each empty-state instance can opt in
+        // just by having that element in its markup; silently does
+        // nothing for one that doesn't.
+        function fillEmptyStateSuggestions(emptyId) {
+            if (!emptyId) return;
+            const el = document.getElementById(emptyId + 'Suggestions');
+            if (!el) return;
+            const items = bestSellerItems().slice(0, 4);
+            if (items.length === 0) { el.innerHTML = ''; return; }
+            el.innerHTML = `
+    <div class="empty-state-suggestions-label">Popular right now</div>
+    <div class="product-grid">${items.map((p, i) => productCardHTML(p, i)).join('')}</div>`;
+            scheduleLoadProductCardRatings();
+        }
         async function loadRealBestSellers() {
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.rpc('get_best_sellers', { p_days: 30, p_limit: 12 });
@@ -14405,6 +14450,7 @@
         <div class="product-body">
           <h4>${escapeHtml(p.name)}</h4>
           <div class="product-unit">${escapeHtml(effectiveUnit(p) || '')}${variantCount ? ` &middot; ${variantCount + 1} sizes` : ''}</div>
+          <div class="product-card-rating" data-product-key="${p.catSlug}::${pidx}"></div>
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
             <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
@@ -14450,9 +14496,11 @@
             if (items.length === 0) {
                 grid.innerHTML = '';
                 if (empty) empty.style.display = 'block';
+                fillEmptyStateSuggestions(emptyId);
             } else {
                 if (empty) empty.style.display = 'none';
                 grid.innerHTML = items.map((p, i) => productCardHTML(p, i)).join('');
+                scheduleLoadProductCardRatings();
             }
         }
 
@@ -14471,9 +14519,11 @@
                 if (state.items.length === 0) {
                     grid.innerHTML = '';
                     empty.style.display = 'block';
+                    fillEmptyStateSuggestions(emptyId);
                 } else {
                     empty.style.display = 'none';
                     grid.innerHTML = state.items.slice(0, state.visible).map((p, i) => productCardHTML(p, i)).join('');
+                    scheduleLoadProductCardRatings();
                 }
                 const loadMoreWrap = document.getElementById(loadMoreId);
                 const remaining = state.items.length - state.visible;
@@ -14642,9 +14692,21 @@
             // characters, only an exact match (already handled above)
             // counts.
             if (word.length < 3 || target.length < 3) return false;
+            const maxDist = Math.max(word.length, target.length) >= 8 ? 2 : 1;
+            // Same short-word problem one size up: "non" (3 letters, a
+            // real word — see product_overrides keywords like "non
+            // alcoholic") is a plain substring of "nonexistent", which is
+            // itself buried in all sorts of unrelated longer queries.
+            // Without this, any 3+ letter target word could match any
+            // query word of any length just by happening to appear
+            // somewhere inside it. A genuine typo only ever differs by a
+            // couple of characters in length, so gating the substring
+            // shortcut by that same tolerance keeps it a fast path for
+            // what the edit-distance check below would catch anyway,
+            // not a separate, looser rule of its own.
+            if (Math.abs(word.length - target.length) > maxDist) return false;
             if (target.includes(word) || word.includes(target)) return true;
             if (word.length < 4 || target.length < 4) return false;
-            const maxDist = Math.max(word.length, target.length) >= 8 ? 2 : 1;
             return editDistance(word, target) <= maxDist;
         }
         function searchWords(p) {
@@ -15533,6 +15595,56 @@
                 }
                 if (sold > 0) parts.push(`<span class="crb-sep">&middot;</span><span>${roundedCountLabel(sold)} sold</span>`);
                 el.innerHTML = parts.join(' ');
+            });
+        }
+        // Same rating badge idea as the cart panel above, now on the
+        // product card itself — a category grid, search results, related
+        // products, "popular right now" fallbacks, whatever's currently
+        // using productCardHTML(). Shares cartRatingsData as one cache
+        // for the whole site rather than a second, separate one: a
+        // product already looked up for the cart panel doesn't need
+        // fetching again for a grid, and vice versa.
+        let productCardRatingsLoadTimer = null;
+        function scheduleLoadProductCardRatings() {
+            clearTimeout(productCardRatingsLoadTimer);
+            productCardRatingsLoadTimer = setTimeout(loadProductCardRatings, 150);
+        }
+        async function loadProductCardRatings() {
+            const badgeEls = Array.from(document.querySelectorAll('.product-card-rating[data-product-key]'));
+            if (!supabaseClient || badgeEls.length === 0) return;
+            // Only ever fetches a key this cache doesn't already have an
+            // answer for — a re-render of products already looked up
+            // (pagination, a repeat visit) costs nothing extra.
+            const keys = [...new Set(badgeEls.map(el => el.dataset.productKey))].filter(k => !cartRatingsData.has(k));
+            if (keys.length > 0) {
+                const { data, error } = await supabaseClient.from('product_reviews').select('product_key, rating').in('product_key', keys).limit(2000);
+                if (!error && data) {
+                    data.forEach(r => {
+                        const entry = cartRatingsData.get(r.product_key) || { sum: 0, count: 0 };
+                        entry.sum += r.rating; entry.count += 1;
+                        cartRatingsData.set(r.product_key, entry);
+                    });
+                }
+                // A product with genuinely zero reviews never appears in
+                // `data` above, so without recording something here it'd
+                // fail the "already have an answer" check forever and get
+                // re-fetched on every single grid render. An explicit
+                // zero-entry means "checked, there's nothing" — as real a
+                // cached answer as any other.
+                keys.forEach(k => { if (!cartRatingsData.has(k)) cartRatingsData.set(k, { sum: 0, count: 0 }); });
+            }
+            renderProductCardRatingBadges();
+        }
+        function renderProductCardRatingBadges() {
+            document.querySelectorAll('.product-card-rating[data-product-key]').forEach(el => {
+                const rating = cartRatingsData.get(el.dataset.productKey);
+                // No badge at all for an unreviewed product — a "be the
+                // first to review" prompt reads fine as one line in the
+                // cart, but repeated across a whole grid of otherwise
+                // ordinary product cards it's just noise.
+                el.innerHTML = (rating && rating.count > 0)
+                    ? `<span class="pcr-stars">${starsHTML(rating.sum / rating.count)}</span><span>${(rating.sum / rating.count).toFixed(1)} (${roundedCountLabel(rating.count)})</span>`
+                    : '';
             });
         }
         const cartListEl = document.getElementById('cartList');
@@ -19340,7 +19452,9 @@
         function renderSearchDropdown(resultsEl, items, query) {
             if (!query.trim()) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; return; }
             if (items.length === 0) {
-                resultsEl.innerHTML = `<div class="search-empty">No matches for "${escapeHtml(query)}" yet, try another word.</div>`;
+                resultsEl.innerHTML = `
+    <div class="search-empty">No matches for "${escapeHtml(query)}" yet, try another word.</div>
+    <a class="search-see-all" href="#/best-sellers">Browse best sellers instead</a>`;
                 resultsEl.classList.add('open');
                 return;
             }
