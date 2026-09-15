@@ -11187,7 +11187,7 @@
             const row = document.getElementById('heroGlimpseRow');
             if (!row) return;
             row.innerHTML = GROUPS.map((g, i) => `
-      <a class="hero-glimpse-pill" href="#/group/${g.slug}" style="--pill-delay:${(i * 0.5).toFixed(2)}s"><span class="emoji">${g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+      <a class="hero-glimpse-pill" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}" style="--pill-delay:${(i * 0.5).toFixed(2)}s"><span class="emoji">${g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
         }
 
         /* ================= DELIVERY FEE (weight-based) =================
@@ -12434,7 +12434,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.53';
+        const BUILD_VERSION = '2026-09-15.54';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14608,11 +14608,18 @@
             document.getElementById('crumbLabel').textContent = cat ? cat.name.replace(/&amp;/g, '&') : 'Not found';
             const breadcrumbEl = document.getElementById('shopBreadcrumb');
             const backLink = document.getElementById('backToGroupLink');
-            if (cat && group) {
+            if (cat && group && group.categories.length > 1) {
                 breadcrumbEl.innerHTML = `<a href="#/">Home</a> &rsaquo; <a href="#/group/${group.slug}">${group.name.replace(/&amp;/g, '&')}</a> &rsaquo; <span id="crumbLabel">${cat.name.replace(/&amp;/g, '&')}</span>`;
                 backLink.style.display = 'inline-flex';
                 backLink.href = `#/group/${group.slug}`;
                 document.getElementById('backToGroupLabel').textContent = `Back to ${group.name.replace(/&amp;/g, '&')}`;
+            } else if (cat) {
+                // A group made of exactly this one category (Rice, Beans,
+                // Noodles, Breakfast & Cereals) has no group page worth a
+                // separate breadcrumb hop — it would just repeat the
+                // category name back at itself ("Home > Beans > Beans").
+                breadcrumbEl.innerHTML = `<a href="#/">Home</a> &rsaquo; <span id="crumbLabel">${cat.name.replace(/&amp;/g, '&')}</span>`;
+                backLink.style.display = 'none';
             } else {
                 breadcrumbEl.innerHTML = `<a href="#/">Home</a> &rsaquo; <span id="crumbLabel">Not found</span>`;
                 backLink.style.display = 'none';
@@ -14983,7 +14990,7 @@
             const stock = p.stock || 'in';
             updateProductJsonLd(p, cat, catSlug, idx);
             const pdGroup = groupForCategory(catSlug);
-            document.getElementById('pdCrumb').innerHTML = pdGroup
+            document.getElementById('pdCrumb').innerHTML = (pdGroup && pdGroup.categories.length > 1)
                 ? `<a href="#/">Home</a> &rsaquo; <a href="#/group/${pdGroup.slug}">${pdGroup.name.replace(/&amp;/g, '&')}</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${escapeHtml(p.name)}`
                 : `<a href="#/">Home</a> &rsaquo; <a href="#/category/${catSlug}">${cat.name.replace(/&amp;/g, '&')}</a> &rsaquo; ${escapeHtml(p.name)}`;
             document.getElementById('pdCatTag').textContent = cat.name.replace(/&amp;/g, '&');
