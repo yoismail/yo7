@@ -3571,6 +3571,18 @@
             box-shadow: 0 3px 8px rgba(225,225,0,0.45), 0 0 0 2px var(--card-bg);
             z-index: 3;
         }
+        /* Reuses .best-seller-card/.best-seller-carousel wholesale for the
+           "Buy it again" row below (see loadBuyAgainSuggestions()) — same
+           card treatment, just this one badge instead of a rank number,
+           since neither class is actually scoped to the best-sellers
+           section's own background. */
+        .buy-again-tag {
+            position: absolute; top: 10px; left: 10px; background: var(--chartreuse); color: var(--aubergine-deep);
+            font-family: var(--display); font-weight: 700; font-size: 8.5px; letter-spacing: 0.03em;
+            text-transform: uppercase; padding: 4px 9px; border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18), 0 0 0 2px var(--card-bg);
+            z-index: 3;
+        }
         /* Same edit-mode-only remove control as .offer-remove-btn, same
            reason — no per-card admin affordance existed on this carousel
            either, just the general product editor to hunt through. */
@@ -8570,6 +8582,35 @@
             </div>
         </section>
 
+        <!-- Same visibility rule as .reorder-section above (signed-in,
+             has order history), shown by loadBuyAgainSuggestions(), same
+             trigger (setUser()). Unlike that one order/all-or-nothing
+             banner, this looks across many past orders and surfaces
+             individual products as normal browsable cards, so a customer
+             can pick some and skip others rather than redoing a whole
+             past basket. Reuses .best-seller-card/.best-seller-carousel
+             (see the CSS comment by .buy-again-tag) rather than a new
+             card treatment. -->
+        <section class="buy-again-section" id="buyAgainSection" style="display:none;">
+            <div class="wrap">
+                <div class="new-section-head reveal">
+                    <div>
+                        <div class="section-eyebrow">Your usuals</div>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Buy it again</h2>
+                    </div>
+                </div>
+                <div class="cat-nav-wrap">
+                    <button class="cat-nav-arrow cat-nav-arrow-prev" id="buyAgainCarouselPrev" type="button" aria-label="Scroll buy it again left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <div class="best-seller-carousel" id="buyAgainCarousel"></div>
+                    <button class="cat-nav-arrow cat-nav-arrow-next" id="buyAgainCarouselNext" type="button" aria-label="Scroll buy it again right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
         <div class="hero-glimpse-strip">
             <div class="wrap">
                 <div class="hero-glimpse-title">Shop by department</div>
@@ -12310,7 +12351,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.46';
+        const BUILD_VERSION = '2026-09-15.47';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16540,6 +16581,80 @@
             section.style.display = '';
         }
         window.loadReorderSuggestion = loadReorderSuggestion;
+        // Unlike loadReorderSuggestion() above (one order, all-or-nothing
+        // redo), this looks across the customer's last 20 orders and
+        // surfaces individual products they've bought before as normal
+        // browsable cards — pick some, skip others, rather than redoing
+        // a whole past basket. Same visibility rule: signed-in customers
+        // with real order history only.
+        async function loadBuyAgainSuggestions() {
+            const section = document.getElementById('buyAgainSection');
+            if (!section) return;
+            if (!supabaseClient || !currentSupabaseUser) { section.style.display = 'none'; return; }
+            const { data, error } = await supabaseClient
+                .from('orders')
+                .select('items, created_at')
+                .eq('user_id', currentSupabaseUser.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+            if (error || !data || data.length === 0) { section.style.display = 'none'; return; }
+
+            // One entry per base product (catSlug::idx) — a weight-variant
+            // or subscription line item (a third ::segment on the id)
+            // still counts toward its base product here, "buy it again"
+            // is about the product, not the exact size/frequency picked
+            // last time. Same bundle::/combo:: skip as reorderOrder()
+            // above — those aren't single products, don't fit this grid.
+            const seen = new Map();
+            data.forEach(order => {
+                const items = Array.isArray(order.items) ? order.items : [];
+                items.forEach(item => {
+                    const id = item.id || '';
+                    if (id.startsWith('bundle::') || id.startsWith('combo::')) return;
+                    const [catSlug, idxStr] = id.split('::');
+                    if (!catSlug || idxStr === undefined) return;
+                    const key = `${catSlug}::${idxStr}`;
+                    const entry = seen.get(key) || { catSlug, idx: Number(idxStr), count: 0, lastAt: order.created_at };
+                    entry.count += 1;
+                    if (order.created_at > entry.lastAt) entry.lastAt = order.created_at;
+                    seen.set(key, entry);
+                });
+            });
+
+            // Most-often-bought first, most-recent as the tiebreak — a
+            // real repeat purchase says more about what someone actually
+            // wants again than a one-off bought once a while back.
+            const items = [...seen.values()]
+                .map(e => {
+                    const p = getProduct(e.catSlug, e.idx);
+                    return p ? { ...p, buyAgainCount: e.count, buyAgainLastAt: e.lastAt } : null;
+                })
+                .filter(p => p && !p.deleted && p.stock !== 'out')
+                .sort((a, b) => (b.buyAgainCount - a.buyAgainCount) || (new Date(b.buyAgainLastAt) - new Date(a.buyAgainLastAt)))
+                .slice(0, 10);
+
+            const strip = document.getElementById('buyAgainCarousel');
+            if (!strip || items.length === 0) { section.style.display = 'none'; return; }
+            section.style.display = '';
+            strip.innerHTML = items.map(p => `
+    <a class="best-seller-card" href="#/product/${p.catSlug}/${p.idx}">
+      <div class="thumb">
+        <span class="buy-again-tag">Bought ${p.buyAgainCount}&times;</span>
+        ${productPhotoHTML(p, p.name)}
+      </div>
+      <div class="body">
+        <h4>${escapeHtml(p.name)}</h4>
+        <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
+        <div class="product-row">
+          <div class="price">${priceHTML(p)}</div>
+          <button class="card-add-btn" type="button" aria-label="Add ${escapeHtml(p.name)} to basket" title="Add to basket" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+    </a>`).join('');
+        }
+        window.loadBuyAgainSuggestions = loadBuyAgainSuggestions;
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
         // this query to return other people's rows at all). Rendered as a
@@ -18023,6 +18138,7 @@
             refreshAdminStatus();
             subscribeMyOrders();
             loadReorderSuggestion();
+            loadBuyAgainSuggestions();
         }
         function clearUser() {
             currentUser = null;
@@ -18055,6 +18171,8 @@
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             const reorderSection = document.getElementById('reorderSection');
             if (reorderSection) reorderSection.style.display = 'none';
+            const buyAgainSection = document.getElementById('buyAgainSection');
+            if (buyAgainSection) buyAgainSection.style.display = 'none';
             const adminNavLink = document.getElementById('adminNavLink');
             if (adminNavLink) adminNavLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
@@ -20087,10 +20205,16 @@
         const bestSellerCarouselStrip = document.getElementById('bestSellerCarousel');
         if (bestSellerCarouselPrev && bestSellerCarouselStrip) bestSellerCarouselPrev.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, -460));
         if (bestSellerCarouselNext && bestSellerCarouselStrip) bestSellerCarouselNext.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, 460));
+        const buyAgainCarouselPrev = document.getElementById('buyAgainCarouselPrev');
+        const buyAgainCarouselNext = document.getElementById('buyAgainCarouselNext');
+        const buyAgainCarouselStrip = document.getElementById('buyAgainCarousel');
+        if (buyAgainCarouselPrev && buyAgainCarouselStrip) buyAgainCarouselPrev.addEventListener('click', () => scrollCarouselStrip(buyAgainCarouselStrip, -460));
+        if (buyAgainCarouselNext && buyAgainCarouselStrip) buyAgainCarouselNext.addEventListener('click', () => scrollCarouselStrip(buyAgainCarouselStrip, 460));
         initCarouselPeriodicJump('newCarousel');
         initCarouselPeriodicJump('offerCarousel');
         initCarouselPeriodicJump('advertCarousel', 5000);
         initCarouselPeriodicJump('bestSellerCarousel');
+        initCarouselPeriodicJump('buyAgainCarousel');
         // Shop by category, Bundles, and Shop-by-meal stay manual/swipe/
         // arrow-driven only, no auto-scroll — Best sellers and Shop by
         // category used to have a continuous ambient auto-scroll here,
