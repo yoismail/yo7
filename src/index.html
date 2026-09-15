@@ -12504,7 +12504,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.60';
+        const BUILD_VERSION = '2026-09-15.61';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16480,7 +16480,17 @@
                 errorEl.innerHTML = result.message;
                 errorEl.style.display = 'block';
                 placeOrderBtn.classList.remove('is-loading');
-                placeOrderBtn.disabled = false;
+                // Deliberately NOT re-enabled — every failure this branch
+                // can reach happens after stripe.confirmPayment() already
+                // succeeded (see the comment above finishOrderAfterPayment
+                // itself), so the card has already been charged. Leaving
+                // "Place order £X" clickable here invited a second,
+                // genuinely separate charge for the same order if the
+                // customer — reasonably, seeing an error — tried again.
+                // result.message always carries a contact-us-with-this-
+                // reference instruction instead of a reason to retry.
+                const label = placeOrderBtn.querySelector('.place-order-label');
+                if (label) label.textContent = 'Payment received — contact us to finish this order';
                 return;
             }
             placeOrderBtn.classList.remove('is-loading');
@@ -16536,24 +16546,54 @@
             // own server-verified record), so lastOrder above is still
             // built from ctx purely for what this page displays — the
             // database's own copy is never trusted from the client at all.
-            let data, error;
-            try {
-                ({ data, error } = await supabaseClient.functions.invoke('confirm-order', {
-                    body: { paymentIntentId: paymentIntent.id },
-                }));
-            } catch (err) {
-                error = err;
+            // confirm-order needs a genuinely valid session right now to
+            // verify who's asking — getSession() transparently refreshes
+            // an expiring token before returning it, so whatever the
+            // customer's token looked like when the payment step first
+            // loaded (however long ago that was, after filling in
+            // delivery/payment details) doesn't matter, only that it's
+            // fresh for this call.
+            if (supabaseClient) await supabaseClient.auth.getSession();
+            async function callConfirmOrder() {
+                try {
+                    return await supabaseClient.functions.invoke('confirm-order', {
+                        body: { paymentIntentId: paymentIntent.id },
+                    });
+                } catch (err) {
+                    return { data: null, error: err };
+                }
+            }
+            let { data, error } = await callConfirmOrder();
+
+            // "Please log in again and retry." (confirm-order's own text
+            // when it can't resolve a user from the Authorization header)
+            // is the one failure worth a single silent retry rather than
+            // going straight to the customer — getSession() above already
+            // refreshes a token nearing expiry, but a background tab whose
+            // refresh timer never got to run can still hand it a token
+            // that's already gone stale, which only refreshSession()
+            // forcing a genuinely new one (not just checking the cached
+            // one) reliably fixes.
+            if (!error && data && data.error === 'Please log in again and retry.' && supabaseClient) {
+                await supabaseClient.auth.refreshSession();
+                ({ data, error } = await callConfirmOrder());
             }
 
             if (error || !data || data.error) {
                 const reason = (data && data.error) || (error && error.message);
-                // A "this payment doesn't belong to your account" or similar
-                // rejection is a real problem worth surfacing distinctly, but
-                // the common case here is the same "payment succeeded, order
-                // save hit a snag" as before — confirm-order already returns
-                // a message with the payment reference built in for that case.
                 console.error('confirm-order failed:', reason);
-                return { ok: false, message: reason || `Your payment went through, but saving the order hit a problem on our end. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
+                // The card has already been charged by the time this
+                // function is ever called (see its own comment above) —
+                // every message here points at contacting support with the
+                // payment reference, never at retrying, so a customer
+                // reading it is never invited to pay a second time for an
+                // order that already went through once. The raw reason is
+                // included as a technical detail EXCEPT when it's the
+                // login one specifically — "(Please log in again and
+                // retry.)" right next to "contact us" reads as a mixed
+                // signal about which of those two things to actually do.
+                const showReason = reason && reason !== 'Please log in again and retry.';
+                return { ok: false, message: `Your payment went through, but saving the order hit a problem on our end${showReason ? ` (${escapeHtml(reason)})` : ''}. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
             }
 
             // Redemption itself is recorded server-side, by a trigger on
