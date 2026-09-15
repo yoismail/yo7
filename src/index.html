@@ -3583,6 +3583,12 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.18), 0 0 0 2px var(--card-bg);
             z-index: 3;
         }
+        /* Every other homepage section (.new-section, .offer-section,
+           .best-sellers-section, ...) carries its own vertical padding —
+           this one was missing it entirely, so it sat flush against
+           .reorder-section above and .hero-glimpse-strip below with no
+           breathing room at all. */
+        .buy-again-section { padding: 56px 0 60px; }
         /* Same edit-mode-only remove control as .offer-remove-btn, same
            reason — no per-card admin affordance existed on this carousel
            either, just the general product editor to hunt through. */
@@ -12351,7 +12357,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.47';
+        const BUILD_VERSION = '2026-09-15.48';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
