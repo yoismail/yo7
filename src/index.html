@@ -8675,6 +8675,10 @@
                         <div class="section-eyebrow">Your usuals</div>
                         <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Buy it again</h2>
                     </div>
+                    <a class="view-all-btn" href="#/buy-again">
+                        View all your usuals
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
                 </div>
                 <div class="cat-nav-wrap">
                     <button class="cat-nav-arrow cat-nav-arrow-prev" id="buyAgainCarouselPrev" type="button" aria-label="Scroll buy it again left">
@@ -10102,6 +10106,27 @@
                 </button>
                 <div id="addProductSlotBestSellers"></div>
                 <div class="shop-all-grid" id="bestSellersGrid"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= BUY IT AGAIN (View All) =================
+         No add-product button here unlike its siblings above — this
+         list is entirely derived from the signed-in customer's own past
+         orders (see buyAgainItems()), so there's nothing an admin could
+         usefully add directly to it. -->
+    <div id="view-buy-again" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Your Usuals</div>
+                <h1>Your usuals</h1>
+                <p>Everything you've ordered from us more than once, ranked by how often you buy it.</p>
+                <div class="result-count" id="buyAgainPageCount"></div>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="shop-all-grid" id="buyAgainPageGrid"></div>
             </div>
         </section>
     </div>
@@ -12479,7 +12504,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.59';
+        const BUILD_VERSION = '2026-09-15.60';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16811,23 +16836,23 @@
             section.style.display = '';
         }
         window.loadReorderSuggestion = loadReorderSuggestion;
-        // Unlike loadReorderSuggestion() above (one order, all-or-nothing
-        // redo), this looks across the customer's last 20 orders and
-        // surfaces individual products they've bought before as normal
-        // browsable cards — pick some, skip others, rather than redoing
-        // a whole past basket. Same visibility rule: signed-in customers
-        // with real order history only.
-        async function loadBuyAgainSuggestions() {
-            const section = document.getElementById('buyAgainSection');
-            if (!section) return;
-            if (!supabaseClient || !currentSupabaseUser) { section.style.display = 'none'; return; }
+        // Shared by the homepage carousel (loadBuyAgainSuggestions, top 10)
+        // and the "View all your usuals" page (renderBuyAgainPage, no
+        // cap) — looks across the customer's last 20 orders and surfaces
+        // individual products they've bought before, most-often-bought
+        // first. Signed-out, or no real order history, resolves to an
+        // empty list rather than erroring — both callers already handle
+        // that as "nothing to show" the same way every other empty state
+        // on this page does.
+        async function buyAgainItems() {
+            if (!supabaseClient || !currentSupabaseUser) return [];
             const { data, error } = await supabaseClient
                 .from('orders')
                 .select('items, created_at')
                 .eq('user_id', currentSupabaseUser.id)
                 .order('created_at', { ascending: false })
                 .limit(20);
-            if (error || !data || data.length === 0) { section.style.display = 'none'; return; }
+            if (error || !data || data.length === 0) return [];
 
             // One entry per base product (catSlug::idx) — a weight-variant
             // or subscription line item (a third ::segment on the id)
@@ -16854,14 +16879,18 @@
             // Most-often-bought first, most-recent as the tiebreak — a
             // real repeat purchase says more about what someone actually
             // wants again than a one-off bought once a while back.
-            const items = [...seen.values()]
+            return [...seen.values()]
                 .map(e => {
                     const p = getProduct(e.catSlug, e.idx);
                     return p ? { ...p, buyAgainCount: e.count, buyAgainLastAt: e.lastAt } : null;
                 })
                 .filter(p => p && !p.deleted && p.stock !== 'out')
-                .sort((a, b) => (b.buyAgainCount - a.buyAgainCount) || (new Date(b.buyAgainLastAt) - new Date(a.buyAgainLastAt)))
-                .slice(0, 10);
+                .sort((a, b) => (b.buyAgainCount - a.buyAgainCount) || (new Date(b.buyAgainLastAt) - new Date(a.buyAgainLastAt)));
+        }
+        async function loadBuyAgainSuggestions() {
+            const section = document.getElementById('buyAgainSection');
+            if (!section) return;
+            const items = (await buyAgainItems()).slice(0, 10);
 
             const strip = document.getElementById('buyAgainCarousel');
             if (!strip || items.length === 0) { section.style.display = 'none'; return; }
@@ -16885,6 +16914,16 @@
     </a>`).join('');
         }
         window.loadBuyAgainSuggestions = loadBuyAgainSuggestions;
+        // The "View all your usuals" page (#/buy-again) — same data as the
+        // homepage carousel above, just uncapped and through the standard
+        // productCardHTML/renderGrid treatment every other "view all X"
+        // page (best sellers, new arrivals, special offers) already uses,
+        // rather than the carousel's own best-seller-card markup.
+        async function renderBuyAgainPage() {
+            const items = await buyAgainItems();
+            document.getElementById('buyAgainPageCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
+            renderGrid(items, 'buyAgainPageGrid');
+        }
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
         // this query to return other people's rows at all). Rendered as a
@@ -19731,7 +19770,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -19998,6 +20037,9 @@
             } else if (hash === '#/best-sellers') {
                 showView('view-best-sellers');
                 renderBestSellersPage();
+            } else if (hash === '#/buy-again') {
+                showView('view-buy-again');
+                renderBuyAgainPage();
             } else if (hash === '#/special-offers') {
                 showView('view-special-offers');
                 renderSpecialOffersPage();
