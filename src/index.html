@@ -4219,6 +4219,42 @@
                 flex: 1;
                 min-width: 0;
             }
+            /* Sized for a full-width mobile stack; side by side on
+               desktop that same size reads oversized relative to the
+               rest of the footer, so trim it down here rather than
+               shrinking the (touch-friendlier) mobile version too. */
+            .footer-newsletter-grid .footer-newsletter {
+                gap: 12px;
+                padding: 22px 26px;
+                border-radius: 18px;
+            }
+            .footer-newsletter-grid .footer-newsletter-icon {
+                width: 32px;
+                height: 32px;
+            }
+            .footer-newsletter-grid .footer-newsletter-icon svg {
+                width: 15px;
+                height: 15px;
+            }
+            .footer-newsletter-grid .footer-newsletter h4 {
+                font-size: 14px;
+            }
+            .footer-newsletter-grid .footer-newsletter p {
+                font-size: 12px;
+            }
+            .footer-newsletter-grid .newsletter-form {
+                gap: 8px;
+            }
+            .footer-newsletter-grid .newsletter-form input {
+                padding: 10px 14px;
+                border-radius: 10px;
+                font-size: 14px;
+            }
+            .footer-newsletter-grid .newsletter-form button {
+                padding: 10px 18px;
+                border-radius: 10px;
+                font-size: 12.5px;
+            }
         }
         /* Column, not the old wrapping row of icon+text / form — a row
            made the two cards' content heights differ by however many
