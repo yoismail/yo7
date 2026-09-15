@@ -1810,37 +1810,6 @@
             animation: heroTextWatermarkLive 7.5s ease-in-out infinite;
             animation-delay: -4.8s;
         }
-        /* The seal — the actual mark used everywhere else (nav, hero,
-           About, invoice) — rather than the "Yo7" text wordmark other
-           watermarks on this page use, so this card's own faded corner
-           mark reads as the real logo, not a second, different one.
-           #seal-mark fills with the fixed var(--chartreuse) brand green
-           (not currentColor), so this stays a fixed opacity in both
-           themes on purpose — the card background is what changes
-           (.footer-newsletter now uses var(--card-bg), a dark card in
-           dark mode), and translucent chartreuse reads fine against
-           either. */
-        .newsletter-watermark {
-            position: absolute;
-            right: -6%;
-            bottom: -28px;
-            width: clamp(150px, 40vw, 220px);
-            opacity: 0.09;
-            pointer-events: none;
-            z-index: 0;
-            transform-origin: 82% 85%;
-            animation: newsletterWatermarkLive 7.2s ease-in-out infinite;
-            animation-delay: -4s;
-        }
-        @keyframes newsletterWatermarkLive {
-            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.09; }
-            30% { transform: rotate(-2deg) scale(1.03); }
-            62% { transform: rotate(2.5deg) scale(1.05); opacity: 0.14; }
-            85% { transform: rotate(-0.5deg) scale(1.02); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .newsletter-watermark { animation: none; }
-        }
         .hero-scroll-cue svg { width: 100%; height: 100%; }
         @keyframes heroScrollCue {
             0%, 100% { transform: translate(-50%, 0); opacity: 0.5; }
@@ -10598,9 +10567,6 @@
         <div class="wrap">
             <div class="footer-newsletter-grid">
             <div class="footer-newsletter">
-                <svg class="newsletter-watermark" viewBox="65 25 875 900" aria-hidden="true">
-                    <use href="#seal-mark" />
-                </svg>
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
@@ -12474,7 +12440,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.57';
+        const BUILD_VERSION = '2026-09-15.58';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
