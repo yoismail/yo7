@@ -464,6 +464,97 @@ $_$;
 ALTER FUNCTION "public"."register_coming_soon_interest"("p_email" "text", "p_postcode" "text", "p_source" "text") OWNER TO "postgres";
 
 
+-- A pending_checkouts row (see that table's own definition) is written
+-- the moment someone reaches the payment step, before Stripe confirms
+-- anything, and only ever deleted later by prune_pending_checkouts —
+-- never on success, so its mere presence doesn't mean the order failed.
+-- The "not exists ... orders o where o.stripe_payment_intent_id = ..."
+-- check below is what actually tells a genuine abandon (nothing was ever
+-- placed against this payment intent) apart from an order that went
+-- through fine and just hasn't been pruned away yet — skipping that
+-- check would mean emailing someone "you forgot something" for an order
+-- they already completed.
+CREATE OR REPLACE FUNCTION "public"."send_abandoned_cart_reminders"() RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_api_key text;
+  v_row record;
+  v_item_count int;
+  v_preview text;
+begin
+  select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
+  if v_api_key is null then
+    return; -- Resend not configured yet, see setup-order-emails.md
+  end if;
+
+  -- The 1-20 hour window is deliberate on both ends: under an hour and
+  -- this might catch someone still genuinely mid-checkout (gone to grab
+  -- a card, not abandoned); pending_checkouts rows only survive to
+  -- ~24 hours before prune_pending_checkouts can remove them (it runs
+  -- opportunistically off Stripe webhook traffic, not its own schedule
+  -- — see that function's callers), so waiting much past 20 leaves too
+  -- little margin before the row, and the chance to follow up at all,
+  -- is gone.
+  for v_row in
+    select pc.*, p.email as customer_email
+    from public.pending_checkouts pc
+    join public.profiles p on p.id = pc.user_id
+    where pc.abandoned_reminder_sent_at is null
+      and pc.created_at <= now() - interval '1 hour'
+      and pc.created_at >= now() - interval '20 hours'
+      and p.email is not null
+      and jsonb_array_length(pc.items) > 0
+      and not exists (
+        select 1 from public.orders o where o.stripe_payment_intent_id = pc.payment_intent_id
+      )
+  loop
+    v_item_count := jsonb_array_length(v_row.items);
+    select string_agg(coalesce(item ->> 'name', 'an item'), ', ')
+      into v_preview
+      from (select item from jsonb_array_elements(v_row.items) as item limit 3) t;
+
+    perform net.http_post(
+      url := 'https://api.resend.com/emails',
+      headers := jsonb_build_object(
+        'Authorization', 'Bearer ' || v_api_key,
+        'Content-Type', 'application/json'
+      ),
+      body := jsonb_build_object(
+        'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+        'reply_to', 'hello@yo7foods.co.uk',
+        'to', v_row.customer_email,
+        'subject', 'You left something in your basket',
+        'html',
+          '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<h2 style="color:#063B00;">Still there?</h2>' ||
+          '<p>You started an order with us but didn''t quite finish checking out. No rush, your basket''s still saved and waiting whenever you''re ready to come back.</p>' ||
+          '<p style="color:#666;font-size:13px;">' || v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' &middot; Total ' || to_char(v_row.total, 'FM£999999990.00') || '</p>' ||
+          '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/checkout" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Complete your order</a></p>' ||
+          '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
+          '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
+          '</div>',
+        'text',
+          'Still there?' || E'\n\n' ||
+          'You started an order with us but didn''t quite finish checking out. No rush, your basket''s still saved and waiting whenever you''re ready to come back.' || E'\n\n' ||
+          v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' · Total ' || to_char(v_row.total, 'FM£999999990.00') || E'\n' ||
+          'Complete your order: https://yo7foods.co.uk/#/checkout' || E'\n\n' ||
+          'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
+          'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
+      )
+    );
+
+    update public.pending_checkouts set abandoned_reminder_sent_at = now() where payment_intent_id = v_row.payment_intent_id;
+  end loop;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."send_abandoned_cart_reminders"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."send_due_subscription_reminders"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -990,7 +1081,8 @@ CREATE TABLE IF NOT EXISTS "public"."pending_checkouts" (
     "notes" "text",
     "discount_id" "uuid",
     "discount_code" "text",
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "abandoned_reminder_sent_at" timestamp with time zone
 );
 
 
@@ -1703,6 +1795,11 @@ GRANT ALL ON FUNCTION "public"."register_coming_soon_interest"("p_email" "text",
 GRANT ALL ON FUNCTION "public"."register_coming_soon_interest"("p_email" "text", "p_postcode" "text", "p_source" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."register_coming_soon_interest"("p_email" "text", "p_postcode" "text", "p_source" "text") TO "service_role";
 
+
+
+GRANT ALL ON FUNCTION "public"."send_abandoned_cart_reminders"() TO "anon";
+GRANT ALL ON FUNCTION "public"."send_abandoned_cart_reminders"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."send_abandoned_cart_reminders"() TO "service_role";
 
 
 GRANT ALL ON FUNCTION "public"."send_due_subscription_reminders"() TO "anon";
