@@ -12310,7 +12310,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.44';
+        const BUILD_VERSION = '2026-09-15.45';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14558,10 +14558,63 @@
             // compounding the longer a session went on.
             observeContainerReveals(document.getElementById('groupCatGrid'), '.reveal');
         }
+        // Classic O(len(a) * len(b)) edit-distance table — only ever called
+        // on single words (not whole queries), so this is fast enough to
+        // run per keystroke at this catalogue's size without memoizing.
+        function editDistance(a, b) {
+            if (a === b) return 0;
+            const la = a.length, lb = b.length;
+            if (la === 0) return lb;
+            if (lb === 0) return la;
+            let prev = new Array(lb + 1);
+            let curr = new Array(lb + 1);
+            for (let j = 0; j <= lb; j++) prev[j] = j;
+            for (let i = 1; i <= la; i++) {
+                curr[0] = i;
+                for (let j = 1; j <= lb; j++) {
+                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                    curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+                }
+                [prev, curr] = [curr, prev];
+            }
+            return prev[lb];
+        }
+        // How many typos get forgiven scales with word length — tolerating
+        // one wrong letter in a 3-letter word turns it into a different
+        // word entirely ("ice" vs "rice" is a deletion, not a typo), but
+        // that same one-letter slip on an 8+ letter word is exactly what a
+        // real typo looks like. Below 4 letters, no fuzzing at all — too
+        // easy to accidentally match something unrelated.
+        function fuzzyWordMatch(word, target) {
+            if (word === target) return true;
+            // A short target word — "s" left over from a tokenized
+            // possessive ("Tabitha's" -> "tabitha"/"s"), or a real short
+            // word like "in"/"of"/"gs" — would otherwise trivially be a
+            // substring of almost any longer query word, matching
+            // products that have nothing to do with the search. Below 3
+            // characters, only an exact match (already handled above)
+            // counts.
+            if (word.length < 3 || target.length < 3) return false;
+            if (target.includes(word) || word.includes(target)) return true;
+            if (word.length < 4 || target.length < 4) return false;
+            const maxDist = Math.max(word.length, target.length) >= 8 ? 2 : 1;
+            return editDistance(word, target) <= maxDist;
+        }
+        function searchWords(p) {
+            return (p.name + ' ' + p.catName + ' ' + (p.keywords || '')).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        }
         function matchesQuery(p, q) {
-            return p.name.toLowerCase().includes(q) ||
-                p.catName.toLowerCase().includes(q) ||
-                (p.keywords && p.keywords.toLowerCase().includes(q));
+            const hay = (p.name + ' ' + p.catName + ' ' + (p.keywords || '')).toLowerCase();
+            if (hay.includes(q)) return true; // exact substring — the common, fast path
+            // Falls back to per-word fuzzy matching only once the exact
+            // check fails, and only counts a product when every word
+            // typed has a close match somewhere in it — so a typo in one
+            // word of a multi-word search ("plaintain chips") still finds
+            // the right product without loosening into unrelated matches.
+            const qWords = q.split(/[^a-z0-9]+/).filter(Boolean);
+            if (qWords.length === 0) return false;
+            const targetWords = searchWords(p);
+            return qWords.every(qw => targetWords.some(tw => fuzzyWordMatch(qw, tw)));
         }
         function searchProducts(query) {
             const q = query.trim().toLowerCase();
