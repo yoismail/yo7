@@ -318,6 +318,91 @@ def build_json_ld(name_plain, description_plain, code, category_plain, page_url,
     return json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
 
 
+def effective_unit(p):
+    """Mirrors effectiveUnit()/unitOverrideLabel() in index.html exactly."""
+    override = p.get('unitOverride')
+    if isinstance(override, str):
+        override = override.strip() or None
+    elif isinstance(override, dict):
+        qty = override.get('qty')
+        override = f"{qty}{override.get('measure') or ''}" if isinstance(qty, (int, float)) and qty > 0 else None
+    else:
+        override = None
+    return override or p['unit']
+
+
+def stock_label(stock):
+    """Mirrors stockLabel() in index.html exactly."""
+    if stock == 'low': return 'Low stock'
+    if stock == 'out': return 'Out of stock'
+    return 'In stock'
+
+
+def money(n):
+    """Mirrors money() in index.html exactly."""
+    return f'£{n:.2f}'
+
+
+def require_one(html, needle, label):
+    count = html.count(needle)
+    if count != 1:
+        raise ValueError(f'{label}: expected exactly 1 occurrence of {needle!r}, found {count} — has the #view-product markup in src/index.html changed shape?')
+
+
+def inject_static_product_content(html, p, cat_slug, cat_name_escaped, name_html, description_html, price, stock, on_sale):
+    """Bakes the product's real name/price/description/stock/image straight
+    into the #view-product markup (name/price/desc/stock/breadcrumb, and the
+    photo if one exists) instead of leaving it for renderProductPage() to
+    fill in at runtime. renderProductPage() still runs exactly as before for
+    a real visitor and overwrites every one of these with the identical
+    values (showView()'s hidden-view toggle doesn't care what a view's
+    initial state was) — this only changes what's in the raw HTTP response
+    before any JS executes, which is what a non-JS-rendering crawler
+    actually sees. Every #view-product field below starts genuinely empty
+    in src/index.html (see renderProductPage() itself, which fills the exact
+    same ids), so without this a text-only crawl of any of these 251 pages
+    sees a page with a real <title>/meta and JSON-LD, but literally no
+    visible product name, price, or description in the body at all."""
+    unit_html = html_escape(effective_unit(p))
+    code = p.get('code')
+    code_html = f'Product code: {html_escape(code)}' if code else ''
+    stock_label_html = html_escape(stock_label(stock))
+    breadcrumb_html = (
+        f'<a href="#/">Home</a> &rsaquo; '
+        f'<a href="#/category/{cat_slug}">{cat_name_escaped}</a> &rsaquo; {name_html}'
+    )
+
+    replacements = [
+        ('<div id="view-product" class="hidden-view">', '<div id="view-product">'),
+        ('<div class="breadcrumb" id="pdCrumb"></div>', f'<div class="breadcrumb" id="pdCrumb">{breadcrumb_html}</div>'),
+        ('<span class="stock-badge" id="pdStockBadge"></span>', f'<span class="stock-badge {stock}" id="pdStockBadge">{stock_label_html}</span>'),
+        ('<div class="pd-cat-tag" id="pdCatTag"></div>', f'<div class="pd-cat-tag" id="pdCatTag">{cat_name_escaped}</div>'),
+        ('<h1 id="pdName"></h1>', f'<h1 id="pdName">{name_html}</h1>'),
+        ('<div class="pd-code" id="pdCode"></div>', f'<div class="pd-code" id="pdCode">{code_html}</div>'),
+        ('<div class="pd-unit" id="pdUnit"></div>', f'<div class="pd-unit" id="pdUnit">{unit_html}</div>'),
+        ('<div class="pd-price" id="pdPrice"></div>', f'<div class="pd-price" id="pdPrice">{money(price)}</div>'),
+        ('<p class="pd-desc" id="pdDesc"></p>', f'<p class="pd-desc" id="pdDesc">{description_html}</p>'),
+        ('<span id="pdStockText">In stock</span>', f'<span id="pdStockText">{stock_label_html}</span>'),
+    ]
+    if on_sale:
+        replacements.append((
+            '<span class="sale-badge" id="pdSaleBadge" style="display:none;">Sale</span>',
+            '<span class="sale-badge" id="pdSaleBadge" style="display:block;">Sale</span>',
+        ))
+    image_url = p.get('image')
+    if image_url:
+        replacements.append((
+            '<span class="pd-placeholder" id="pdPlaceholder"></span>',
+            f'<img src="{html_escape(image_url)}" alt="{name_html}" loading="lazy" decoding="async" class="product-photo-img">'
+            f'<span class="pd-placeholder" id="pdPlaceholder" style="display:none;"></span>',
+        ))
+
+    for needle, replacement in replacements:
+        require_one(html, needle, 'inject_static_product_content')
+        html = html.replace(needle, replacement, 1)
+    return html
+
+
 def inject_route_seed_and_marker(html, cat_slug, idx, real_path):
     # Same marker/guard pattern as generate-static-pages.py's
     # inject_route_seed(), extended with a second, unconditional line
@@ -470,6 +555,8 @@ def main():
             sale_price = p.get('salePrice')
             price = sale_price if (isinstance(sale_price, (int, float)) and sale_price < p['price']) else p['price']
 
+            on_sale = isinstance(sale_price, (int, float)) and sale_price < p['price']
+
             title_html = f'{name_html} | Yo7 Foods'
             json_ld_text = build_json_ld(name_plain, description_plain, p['code'], cat_name_plain, page_url, price, availability)
             breadcrumb_json_ld_text = build_breadcrumb_json_ld(cat_name_plain, cat_slug, name_plain, page_url)
@@ -479,6 +566,7 @@ def main():
             html = inject_route_seed_and_marker(html, cat_slug, idx, real_path)
             html = inject_json_ld(html, json_ld_text)
             html = inject_breadcrumb_json_ld(html, breadcrumb_json_ld_text)
+            html = inject_static_product_content(html, p, cat_slug, cat_name_escaped, name_html, description_html, price, stock, on_sale)
 
             out_dir = os.path.join(REPO_ROOT, path_slug)
             os.makedirs(out_dir, exist_ok=True)

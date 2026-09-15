@@ -12374,9 +12374,41 @@
            Supabase Edge Function's own secrets, never here.
            See supabase-payment-setup-guide.md for where to get this. */
         const STRIPE_PUBLISHABLE_KEY = 'pk_test_51TzyoTJ223ML9UT0U2ZBk84I8z8594kF9Oh4DTcULkBYeXlpJz5i30rPxbdN0jJXtH4gKiA0k6gD3EHOYhHD0NG900GMQPYErP';
-        const stripe = (STRIPE_PUBLISHABLE_KEY.startsWith('pk_') && window.Stripe)
+        let stripe = (STRIPE_PUBLISHABLE_KEY.startsWith('pk_') && window.Stripe)
             ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
             : null;
+
+        // js.stripe.com/v3 is loaded as a plain blocking <script src> in
+        // <head> (see comment there) — if it fails for any one visitor
+        // (a flaky connection, an ad/privacy blocker that miscategorises
+        // it, a momentary CDN blip) `stripe` above is permanently null for
+        // the rest of the page's life, and checkout falls back to the
+        // "Card payments aren't available" message despite the payment
+        // badges everywhere else promising otherwise. Since card payment
+        // is meant to be genuinely live, that's a real (if rare) failure
+        // to recover from, not a state to accept — this re-attempts the
+        // load once, on demand, right before checkout needs it.
+        let stripeLoadRetried = false;
+        function ensureStripeLoaded() {
+            if (stripe) return Promise.resolve(stripe);
+            if (stripeLoadRetried) return Promise.resolve(null); // already tried once, don't loop forever
+            stripeLoadRetried = true;
+            return new Promise((resolve) => {
+                const existing = document.querySelector('script[data-stripe-retry]');
+                if (existing) { resolve(null); return; }
+                const script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.dataset.stripeRetry = 'true';
+                const timeout = setTimeout(() => resolve(null), 8000);
+                script.onload = () => {
+                    clearTimeout(timeout);
+                    stripe = window.Stripe ? window.Stripe(STRIPE_PUBLISHABLE_KEY) : null;
+                    resolve(stripe);
+                };
+                script.onerror = () => { clearTimeout(timeout); resolve(null); };
+                document.head.appendChild(script);
+            });
+        }
 
         // Bumped by hand on every delivered change, shown in the edit-mode
         // banner so whoever's looking at the live site can tell which
@@ -12384,7 +12416,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.50';
+        const BUILD_VERSION = '2026-09-15.51';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16113,6 +16145,16 @@
             const placeOrderBtn = document.getElementById('placeOrderBtn');
             errorEl.style.display = 'none';
             stripeElements = null;
+
+            if (!stripe && supabaseClient) {
+                // Supabase loaded fine, so the page itself is working —
+                // Stripe.js specifically failing to load points at a
+                // transient script-load issue rather than anything
+                // actually misconfigured, so it's worth one retry before
+                // telling the customer payment is unavailable.
+                mountEl.innerHTML = '<div class="payment-element-loading"><span class="payment-spinner" aria-hidden="true"></span>Loading payment options…</div>';
+                await ensureStripeLoaded();
+            }
 
             if (!stripe || !supabaseClient) {
                 noteEl.style.display = 'block';
