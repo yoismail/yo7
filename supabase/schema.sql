@@ -284,7 +284,7 @@ begin
         'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
         'reply_to', 'hello@yo7foods.co.uk',
         'to', v_email,
-        'subject', v_copy.subject || ' — ' || coalesce(new.order_number, new.id::text),
+        'subject', v_copy.subject || ' - ' || coalesce(new.order_number, new.id::text),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
@@ -318,7 +318,7 @@ begin
       body := jsonb_build_object(
         'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
         'to', v_admin.email,
-        'subject', 'New order ' || coalesce(new.order_number, new.id::text) || ' — ' || to_char(new.total, 'FM£999999990.00'),
+        'subject', 'New order ' || coalesce(new.order_number, new.id::text) || ' - ' || to_char(new.total, 'FM£999999990.00'),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
@@ -641,7 +641,7 @@ begin
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">Running low on ' || v_row.product_name || '?</h2>' ||
-          '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then ''else 's' end) || ', and that time has come round again. Head back to Yo7 Foods whenever you''re ready — this is just a reminder, nothing''s been charged.</p>' ||
+          '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then ''else 's' end) || ', and that time has come round again. Head back to Yo7 Foods whenever you''re ready. This is just a reminder, nothing''s been charged.</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Reorder now</a></p>' ||
           '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
           '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
@@ -735,7 +735,7 @@ begin
       'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
       'reply_to', 'hello@yo7foods.co.uk',
       'to', v_email,
-      'subject', v_copy.subject || ' — ' || coalesce(v_order.order_number, v_order.id::text),
+      'subject', v_copy.subject || ' - ' || coalesce(v_order.order_number, v_order.id::text),
       'html',
         '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
         '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
@@ -1279,7 +1279,7 @@ CREATE TABLE IF NOT EXISTS "public"."push_subscriptions" (
 ALTER TABLE "public"."push_subscriptions" OWNER TO "postgres";
 
 
-COMMENT ON COLUMN "public"."push_subscriptions"."endpoint" IS 'The browser push service URL for this one subscribed device — unique per device/browser, not per user, since one customer can have several.';
+COMMENT ON COLUMN "public"."push_subscriptions"."endpoint" IS 'The browser push service URL for this one subscribed device, unique per device/browser, not per user, since one customer can have several.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."rate_limit_hits" (

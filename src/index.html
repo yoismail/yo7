@@ -10520,7 +10520,7 @@
                 <div id="pushToggleCard" class="push-toggle-card" style="display:none;">
                     <div class="push-toggle-text">
                         <strong id="pushToggleTitle">Turn on push notifications</strong>
-                        <span id="pushToggleDesc">Get an alert on this device the moment there's an order update or announcement — even with the site closed.</span>
+                        <span id="pushToggleDesc">Get an alert on this device the moment there's an order update or announcement, even with the site closed.</span>
                     </div>
                     <button type="button" class="btn btn-secondary" id="pushToggleBtn">Turn on</button>
                 </div>
@@ -10593,7 +10593,7 @@
                     </div>
                     <div class="admin-panel-section panel-announcement">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Send announcement</h2>
-                        <p class="sub">Goes to every signed-in customer's notifications inbox (the bell icon in the nav) — for site-wide news, not order-specific updates, those already send automatically.</p>
+                        <p class="sub">Goes to every signed-in customer's notifications inbox (the bell icon in the nav), for site-wide news, not order-specific updates, those already send automatically.</p>
                         <form id="announcementForm">
                             <div class="field"><label for="announcementTitle">Title</label><input type="text" id="announcementTitle" required maxlength="80" placeholder="e.g. We're open for Christmas orders"></div>
                             <div class="field"><label for="announcementBody">Message</label><textarea id="announcementBody" rows="3" required maxlength="500" placeholder="Keep it short, this shows as a single notification card."></textarea></div>
@@ -11906,7 +11906,7 @@
             if (btn) { btn.disabled = false; btn.textContent = 'Refresh now'; }
             if (error) { showToast('Couldn\'t reach the refresh function: ' + error.message, 6000); return; }
             if (data?.error) { showToast(data.error, 7000); return; }
-            showToast(data?.skipped ? 'Already up to date.' : `Fetched ${data?.reviewsFetched ?? 0} review(s), rating ${data?.rating ?? '—'}.`, 6000);
+            showToast(data?.skipped ? 'Already up to date.' : `Fetched ${data?.reviewsFetched ?? 0} review(s), rating ${data?.rating ?? '-'}.`, 6000);
             await loadGoogleReviews();
             renderGoogleReviews();
         }
@@ -12527,7 +12527,7 @@
         // JSON value, so null vs a real value counts as a change) are
         // included, in defs order.
         function diffFields(before, after, defs) {
-            const fmt = (v, f) => v === null || v === undefined || v === '' ? '—' : (f ? f(v) : String(v));
+            const fmt = (v, f) => v === null || v === undefined || v === '' ? '-' : (f ? f(v) : String(v));
             return defs
                 .filter(d => JSON.stringify(before[d.key] ?? null) !== JSON.stringify(after[d.key] ?? null))
                 .map(d => ({ label: d.label, from: fmt(before[d.key], d.format), to: fmt(after[d.key], d.format) }));
@@ -12632,7 +12632,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.6';
+        const BUILD_VERSION = '2026-09-16.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17122,7 +17122,7 @@
             if (isIosNonStandalone()) {
                 card.style.display = 'none';
                 hint.style.display = 'block';
-                hint.textContent = 'Add Yo7 Foods to your Home Screen to turn on push notifications — iPhone only allows them for installed apps.';
+                hint.textContent = 'Add Yo7 Foods to your Home Screen to turn on push notifications. iPhone only allows them for installed apps.';
                 return;
             }
             if (!pushSupported()) {
@@ -17147,7 +17147,7 @@
                 btn.onclick = disablePushNotifications;
             } else {
                 titleEl.textContent = 'Turn on push notifications';
-                descEl.textContent = "Get an alert on this device the moment there's an order update or announcement — even with the site closed.";
+                descEl.textContent = "Get an alert on this device the moment there's an order update or announcement, even with the site closed.";
                 btn.textContent = 'Turn on';
                 btn.onclick = enablePushNotifications;
             }
@@ -17324,7 +17324,7 @@
             const status = order.status || 'placed';
             const orderCreatedAt = new Date(order.created_at);
             const dateLabel = orderCreatedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + orderCreatedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            const billingName = (order.profiles && order.profiles.full_name) || order.delivery_name || '—';
+            const billingName = (order.profiles && order.profiles.full_name) || order.delivery_name || '-';
             return `
     <tr>
         <td>${escapeHtml(order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()))}</td>
@@ -17332,7 +17332,7 @@
         <td><span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span></td>
         <td class="admin-orders-total">${money(order.total)}</td>
         <td>${escapeHtml(billingName)}</td>
-        <td>${escapeHtml(order.delivery_name || '—')}</td>
+        <td>${escapeHtml(order.delivery_name || '-')}</td>
         <td>${order.fulfilment_method === 'pickup' ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode)}</td>
         <td><a class="admin-orders-details-link" href="#/admin/order/${order.id}">Details</a></td>
     </tr>`;
@@ -17798,8 +17798,8 @@
             <tbody>${data.map(s => `
     <tr>
         <td>${escapeHtml(s.email)}</td>
-        <td>${escapeHtml(s.postcode || '—')}</td>
-        <td>${s.discount_code ? escapeHtml(s.discount_code) : '—'}</td>
+        <td>${escapeHtml(s.postcode || '-')}</td>
+        <td>${s.discount_code ? escapeHtml(s.discount_code) : '-'}</td>
         <td>${new Date(s.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
     </tr>`).join('')}</tbody>
         </table>
@@ -18110,7 +18110,7 @@
                 btn.disabled = false;
                 btn.textContent = 'Send to all customers';
                 if (error) { setAuthError('announcementError', error.message); return; }
-                setAuthSuccess('announcementSuccess', 'Sent — every customer will see it next time they open their notifications.');
+                setAuthSuccess('announcementSuccess', 'Sent. Every customer will see it next time they open their notifications.');
                 e.target.reset();
             });
         }
