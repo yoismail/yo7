@@ -12643,7 +12643,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.8';
+        const BUILD_VERSION = '2026-09-16.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -19956,7 +19956,7 @@
             });
             assignProductCodes();
         }
-        async function applyProductOverrides() {
+        async function applyProductOverrides(opts) {
             if (!supabaseClient) return;
             // These two reads are independent, so fetched in parallel to cut
             // the network latency roughly in half rather than paying for
@@ -20004,9 +20004,65 @@
                 if (row.cooking_tip) product.cookingTip = row.cooking_tip;
                 product.deleted = row.deleted === true;
             });
-            route(); // re-render whatever's currently on screen with the real data now in hand
+            // skipRerender: true from refreshCatalogOnForeground() below,
+            // which decides for itself whether/how to re-render — every
+            // other caller wants the normal immediate re-render.
+            if (!(opts && opts.skipRerender)) {
+                route(); // re-render whatever's currently on screen with the real data now in hand
+            }
         }
         applyProductOverrides();
+
+        // The web app has no auto-refresh: applyProductOverrides() above
+        // only ever runs once, at boot, so a session that's already open
+        // keeps showing whatever price/stock/new-product data it fetched
+        // then, even after an admin change goes live. Reopening (or just
+        // switching back to) an already-open session is the realistic way
+        // that goes stale — this is what catches it. A permanently-open
+        // realtime connection would also catch a session left foregrounded
+        // and completely untouched, but checkout always re-verifies price
+        // and stock server-side (create-payment-intent) regardless of what
+        // the screen shows, so a few stale minutes of DISPLAYED price is
+        // cosmetic, never a charging bug — not worth that always-on cost
+        // for how rarely this business's prices actually change.
+        let catalogRefreshInFlight = false;
+        let lastCatalogRefreshAt = 0;
+        // Only re-renders on views that are pure product browsing/display.
+        // Deliberately excludes anything that can hold in-progress, unsaved
+        // input — checkout, auth forms, admin forms/edit mode, orders,
+        // notifications — so a foreground return can never wipe out
+        // something someone was in the middle of typing or reset a
+        // checkout step they were mid-way through.
+        function isCatalogRefreshSafeHash(hash) {
+            return hash === '' || hash === '#/' || hash === '#/shop' ||
+                hash.startsWith('#/category/') || hash.startsWith('#/group/') ||
+                hash.startsWith('#/product/') || hash.startsWith('#/search/') ||
+                hash === '#/new-arrivals' || hash === '#/best-sellers' ||
+                hash === '#/special-offers' || hash === '#/bundles' || hash === '#/combos' ||
+                hash === '#/buy-again';
+        }
+        async function refreshCatalogOnForeground() {
+            if (catalogRefreshInFlight || !supabaseClient) return;
+            if (Date.now() - lastCatalogRefreshAt < 10000) return; // rapid tab-switching guard
+            catalogRefreshInFlight = true;
+            try {
+                await applyProductOverrides({ skipRerender: true });
+                lastCatalogRefreshAt = Date.now();
+                // Re-derived the same way route() itself always does —
+                // window.location.hash reads empty here almost always
+                // (syncAddressBarToHash already cleared it after the last
+                // real render), see route()'s own comment on this.
+                const hash = pathToHash(window.location.pathname);
+                if (isCatalogRefreshSafeHash(hash)) {
+                    route({ preserveScroll: true });
+                }
+            } finally {
+                catalogRefreshInFlight = false;
+            }
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') refreshCatalogOnForeground();
+        });
 
         document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -20429,7 +20485,7 @@
         }
         window.addEventListener('popstate', queueRoute);
 
-        function route() {
+        function route(opts) {
             // "#edit" is a shortcut straight into edit mode for whoever's
             // already logged in as admin, it still goes through the same
             // admin dashboard route and the same currentIsAdmin check,
@@ -20459,7 +20515,13 @@
             syncHashFromPath();
             const hash = window.location.hash;
             syncAddressBarToHash(hash);
-            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            // Skipped only when refreshCatalogOnForeground() (see its own
+            // comment) re-renders the current page in place to pick up a
+            // price/stock change — every other call site is a genuine
+            // navigation, where jumping to the top is exactly right.
+            if (!(opts && opts.preserveScroll)) {
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            }
             updateActiveNavLink(hash);
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
 
