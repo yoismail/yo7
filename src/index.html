@@ -12632,7 +12632,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.5';
+        const BUILD_VERSION = '2026-09-16.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17108,15 +17108,26 @@
             const btn = document.getElementById('pushToggleBtn');
             if (!card || !hint || !titleEl || !descEl || !btn) return;
 
-            if (!supabaseClient || !currentSupabaseUser || !pushSupported()) {
+            if (!supabaseClient || !currentSupabaseUser) {
                 card.style.display = 'none';
                 hint.style.display = 'none';
                 return;
             }
+            // Checked before pushSupported() below on purpose: iOS Safari
+            // in a plain browser tab (not installed to the Home Screen)
+            // has no PushManager at all, so pushSupported() would always
+            // be false there too — this is the one case where "push
+            // isn't available" has an actionable fix worth telling the
+            // customer about, rather than just going quiet.
             if (isIosNonStandalone()) {
                 card.style.display = 'none';
                 hint.style.display = 'block';
                 hint.textContent = 'Add Yo7 Foods to your Home Screen to turn on push notifications — iPhone only allows them for installed apps.';
+                return;
+            }
+            if (!pushSupported()) {
+                card.style.display = 'none';
+                hint.style.display = 'none';
                 return;
             }
             if (Notification.permission === 'denied') {
