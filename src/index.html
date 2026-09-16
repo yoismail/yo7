@@ -12650,7 +12650,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.10';
+        const BUILD_VERSION = '2026-09-16.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17075,7 +17075,9 @@
         };
         const NOTIF_TYPE_LABELS = { order: 'Order update', announcement: 'Announcement', offer: 'Special offer' };
         function notifItemHTML(n) {
-            const dateLabel = new Date(n.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const createdAt = new Date(n.created_at);
+            const dateLabel = createdAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                + ', ' + createdAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const tag = n.link ? 'a' : 'div';
             const hrefAttr = n.link ? ` href="${escapeHtml(n.link)}"` : '';
             const type = n.category || (n.user_id ? 'order' : 'announcement');
