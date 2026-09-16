@@ -7959,14 +7959,25 @@
         }
         .notif-item.is-unread {
             border-left-color: var(--chartreuse);
+            border-left-width: 4px;
+            background: #90B8001A;
             box-shadow: 0 2px 8px rgba(var(--border-rgb), 0.06);
         }
         a.notif-item:hover { transform: translateY(-1px); }
-        .notif-item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .notif-dot {
-            width: 7px; height: 7px; border-radius: 999px; background: var(--chartreuse); flex-shrink: 0;
+        .notif-meta-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .notif-type-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            padding: 3px 8px; border-radius: 999px; white-space: nowrap;
         }
-        .notif-item:not(.is-unread) .notif-dot { display: none; }
+        .notif-type-tag svg { width: 11px; height: 11px; flex-shrink: 0; }
+        .notif-type-tag.type-order { background: rgba(var(--border-rgb), 0.1); color: var(--text-body); }
+        .notif-type-tag.type-announcement { background: #90B8001F; color: var(--chartreuse-rich); }
+        [data-theme="dark"] .notif-type-tag.type-announcement { color: var(--chartreuse-soft); }
+        .notif-new-pill {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+            color: #fff; background: var(--chartreuse-rich); padding: 3px 8px; border-radius: 999px;
+        }
         .notif-title { font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--heading); }
         .notif-item:not(.is-unread) .notif-title { font-weight: 600; color: var(--text-body); }
         .notif-body { font-size: 13.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
@@ -12632,7 +12643,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.7';
+        const BUILD_VERSION = '2026-09-16.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17003,11 +17014,26 @@
             const readIds = new Set((reads || []).map(r => r.notification_id));
             return notifs.map(n => ({ ...n, isRead: readIds.has(n.id) }));
         }
+        // Mirrors the in-page bell badge onto the installed PWA's actual
+        // home-screen icon (iOS 16.4+ and most Android browsers support
+        // this once installed) — same unread count, so a customer can
+        // tell there's something new without even opening the app, the
+        // way any native app's icon badge already works. Silently a
+        // no-op everywhere else (browser tab, unsupported browser): the
+        // API simply won't exist on navigator there, same feature-
+        // detection shape as the push code above.
+        function updateAppIconBadge(count) {
+            if (!('setAppBadge' in navigator)) return;
+            try {
+                if (count > 0) navigator.setAppBadge(count).catch(() => {});
+                else navigator.clearAppBadge().catch(() => {});
+            } catch (err) { /* Badging API present but call rejected synchronously — nothing to do */ }
+        }
         async function loadUnreadNotificationCount() {
             const btn = document.getElementById('notifNavBtn');
             const badge = document.getElementById('notifBadge');
             if (!btn) return;
-            if (!supabaseClient || !currentSupabaseUser) { btn.style.display = 'none'; return; }
+            if (!supabaseClient || !currentSupabaseUser) { btn.style.display = 'none'; updateAppIconBadge(0); return; }
             btn.style.display = '';
             const items = await loadNotificationsWithReadState();
             const unread = items.filter(n => !n.isRead).length;
@@ -17015,6 +17041,7 @@
                 badge.textContent = unread > 9 ? '9+' : String(unread);
                 badge.classList.toggle('zero', unread === 0);
             }
+            updateAppIconBadge(unread);
         }
         window.loadUnreadNotificationCount = loadUnreadNotificationCount;
         // Marking read happens in bulk, for everything visible on the page
@@ -17027,13 +17054,29 @@
             await supabaseClient.from('notification_reads').upsert(rows, { onConflict: 'notification_id,user_id', ignoreDuplicates: true });
             loadUnreadNotificationCount();
         }
+        // A real user_id means this came from an order-status change
+        // (notify_order_status_change / send_order_status_email always
+        // stamp the order's own customer); NULL means a broadcast, which
+        // only ever happens from the admin's "Send announcement" panel.
+        // That's enough to tell the two apart without a schema change —
+        // there's no third source of notifications rows yet.
+        const NOTIF_TYPE_ICONS = {
+            order: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
+            announcement: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>',
+        };
         function notifItemHTML(n) {
             const dateLabel = new Date(n.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
             const tag = n.link ? 'a' : 'div';
             const hrefAttr = n.link ? ` href="${escapeHtml(n.link)}"` : '';
+            const type = n.user_id ? 'order' : 'announcement';
+            const typeLabel = type === 'order' ? 'Order update' : 'Announcement';
             return `
     <${tag} class="notif-item${n.isRead ? '' : ' is-unread'}"${hrefAttr}>
-      <div class="notif-item-top"><span class="notif-dot" aria-hidden="true"></span><span class="notif-title">${escapeHtml(n.title)}</span></div>
+      <div class="notif-meta-row">
+        <span class="notif-type-tag type-${type}">${NOTIF_TYPE_ICONS[type]}${typeLabel}</span>
+        ${n.isRead ? '' : '<span class="notif-new-pill">New</span>'}
+      </div>
+      <div class="notif-title">${escapeHtml(n.title)}</div>
       <div class="notif-body">${escapeHtml(n.body)}</div>
       <div class="notif-time">${dateLabel}</div>
     </${tag}>`;
@@ -18862,6 +18905,7 @@
             if (buyAgainSection) buyAgainSection.style.display = 'none';
             const notifNavBtn = document.getElementById('notifNavBtn');
             if (notifNavBtn) notifNavBtn.style.display = 'none';
+            if (typeof updateAppIconBadge === 'function') updateAppIconBadge(0);
             const adminNavLink = document.getElementById('adminNavLink');
             if (adminNavLink) adminNavLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
