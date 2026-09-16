@@ -213,6 +213,14 @@ begin
     return new;
   end if;
 
+  select * into v_copy from public.order_status_email_copy(new.status, new.cancellation_reason);
+
+  -- In-app notification — independent of whether Resend/email is even
+  -- configured below (see the v_api_key check right after), a customer
+  -- should see "order received" in their inbox regardless. Migration 43.
+  insert into public.notifications (user_id, title, body, link)
+    values (new.user_id, v_copy.headline, v_copy.body, '#/orders');
+
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
     return new; -- Resend not configured yet, see setup-order-emails.md
@@ -221,7 +229,6 @@ begin
   -- ---- Customer confirmation ----
   select email into v_email from public.profiles where id = new.user_id;
   if v_email is not null then
-    select * into v_copy from public.order_status_email_copy(new.status, new.cancellation_reason);
     perform net.http_post(
       url := 'https://api.resend.com/emails',
       headers := jsonb_build_object(
@@ -639,17 +646,24 @@ begin
     raise exception 'Order not found';
   end if;
 
+  select * into v_copy from public.order_status_email_copy(v_order.status, v_order.cancellation_reason);
+
+  -- In-app notification for this status change — independent of whether
+  -- the customer has an email on file or Resend is configured (both
+  -- checked below), same reasoning as notify_order_status_change's own
+  -- notification insert. Migration 43.
+  insert into public.notifications (user_id, title, body, link)
+    values (v_order.user_id, v_copy.headline, v_copy.body, '#/orders');
+
   select email into v_email from public.profiles where id = v_order.user_id;
   if v_email is null then
-    return; -- nothing to send to
+    return; -- nothing to email, notification above still went out
   end if;
 
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
     return; -- Resend not configured yet, see setup-order-emails.md
   end if;
-
-  select * into v_copy from public.order_status_email_copy(v_order.status, v_order.cancellation_reason);
 
   -- The admin's optional comment (admin_note), shown alongside the status
   -- update. Cancellations already show their reason via cancellation_reason
@@ -1024,6 +1038,32 @@ CREATE TABLE IF NOT EXISTS "public"."newsletter_subscribers" (
 ALTER TABLE "public"."newsletter_subscribers" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."notification_reads" (
+    "notification_id" "uuid" NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "read_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."notification_reads" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."notifications" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid",
+    "title" "text" NOT NULL,
+    "body" "text" NOT NULL,
+    "link" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."notifications" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."notifications"."user_id" IS 'NULL = broadcast to every signed-in customer.';
+
+
 CREATE TABLE IF NOT EXISTS "public"."orders" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid",
@@ -1297,6 +1337,16 @@ ALTER TABLE ONLY "public"."newsletter_subscribers"
 
 
 
+ALTER TABLE ONLY "public"."notification_reads"
+    ADD CONSTRAINT "notification_reads_pkey" PRIMARY KEY ("notification_id", "user_id");
+
+
+
+ALTER TABLE ONLY "public"."notifications"
+    ADD CONSTRAINT "notifications_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."orders"
     ADD CONSTRAINT "orders_pkey" PRIMARY KEY ("id");
 
@@ -1364,6 +1414,14 @@ CREATE INDEX "discount_redemptions_by_user" ON "public"."discount_redemptions" U
 
 
 CREATE UNIQUE INDEX "newsletter_subscribers_token_idx" ON "public"."newsletter_subscribers" USING "btree" ("unsubscribe_token");
+
+
+
+CREATE INDEX "notifications_created_at_idx" ON "public"."notifications" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "notifications_user_id_idx" ON "public"."notifications" USING "btree" ("user_id");
 
 
 
@@ -1437,6 +1495,21 @@ ALTER TABLE ONLY "public"."loyalty_rewards"
 
 
 
+ALTER TABLE ONLY "public"."notification_reads"
+    ADD CONSTRAINT "notification_reads_notification_id_fkey" FOREIGN KEY ("notification_id") REFERENCES "public"."notifications"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."notification_reads"
+    ADD CONSTRAINT "notification_reads_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."notifications"
+    ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."orders"
     ADD CONSTRAINT "orders_discount_id_fkey" FOREIGN KEY ("discount_id") REFERENCES "public"."discount_codes"("id");
 
@@ -1473,6 +1546,10 @@ ALTER TABLE ONLY "public"."subscription_reminders"
 
 
 CREATE POLICY "Admins can manage discount codes" ON "public"."discount_codes" USING ("public"."is_admin_user"()) WITH CHECK ("public"."is_admin_user"());
+
+
+
+CREATE POLICY "Admins can manage notifications" ON "public"."notifications" USING ("public"."is_admin_user"()) WITH CHECK ("public"."is_admin_user"());
 
 
 
@@ -1588,11 +1665,19 @@ CREATE POLICY "Users can insert own orders" ON "public"."orders" FOR INSERT WITH
 
 
 
+CREATE POLICY "Users can mark their own notifications read" ON "public"."notification_reads" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can update own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
 
 
 
 CREATE POLICY "Users can update their own cart" ON "public"."carts" FOR UPDATE USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can view own or broadcast notifications" ON "public"."notifications" FOR SELECT USING ((("auth"."uid"() IS NOT NULL) AND (("auth"."uid"() = "user_id") OR ("user_id" IS NULL))));
 
 
 
@@ -1609,6 +1694,10 @@ CREATE POLICY "Users can view their own cart" ON "public"."carts" FOR SELECT USI
 
 
 CREATE POLICY "Users can view their own loyalty rewards" ON "public"."loyalty_rewards" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can view their own read markers" ON "public"."notification_reads" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
@@ -1655,6 +1744,12 @@ ALTER TABLE "public"."loyalty_settings" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."newsletter_subscribers" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."notification_reads" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."orders" ENABLE ROW LEVEL SECURITY;
@@ -1907,6 +2002,18 @@ GRANT ALL ON TABLE "public"."loyalty_settings" TO "service_role";
 GRANT ALL ON TABLE "public"."newsletter_subscribers" TO "anon";
 GRANT ALL ON TABLE "public"."newsletter_subscribers" TO "authenticated";
 GRANT ALL ON TABLE "public"."newsletter_subscribers" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."notification_reads" TO "anon";
+GRANT ALL ON TABLE "public"."notification_reads" TO "authenticated";
+GRANT ALL ON TABLE "public"."notification_reads" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."notifications" TO "anon";
+GRANT ALL ON TABLE "public"."notifications" TO "authenticated";
+GRANT ALL ON TABLE "public"."notifications" TO "service_role";
 
 
 

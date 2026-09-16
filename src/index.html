@@ -7937,6 +7937,40 @@
             text-align: center; padding: 70px 20px; color: var(--text-muted); font-size: 14.5px;
         }
         .order-history-empty a { color: var(--heading-mid); font-weight: 600; }
+
+        /* Same card-list rhythm as .order-history-list right above, its own
+           class since a notification card is a simpler shape (no status
+           badge/line items) — unread ones get the chartreuse left edge +
+           dot treatment order cards use their status colour for, read
+           ones fade to the same muted, borderless look every other "seen
+           this already" state on the site uses. */
+        .notif-list { display: flex; flex-direction: column; gap: 12px; }
+        .notif-item {
+            position: relative;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-left: 3px solid transparent;
+            border-radius: 14px;
+            padding: 16px 18px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .notif-item.is-unread {
+            border-left-color: var(--chartreuse);
+            box-shadow: 0 2px 8px rgba(var(--border-rgb), 0.06);
+        }
+        a.notif-item:hover { transform: translateY(-1px); }
+        .notif-item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .notif-dot {
+            width: 7px; height: 7px; border-radius: 999px; background: var(--chartreuse); flex-shrink: 0;
+        }
+        .notif-item:not(.is-unread) .notif-dot { display: none; }
+        .notif-title { font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--heading); }
+        .notif-item:not(.is-unread) .notif-title { font-weight: 600; color: var(--text-body); }
+        .notif-body { font-size: 13.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+        .notif-time { font-size: 11.5px; color: var(--text-muted); opacity: 0.75; margin-top: 8px; }
         /* Every card used to be near-identical (same white fill, a border
            barely visible against the page background, no shadow), so a
            list of more than two or three read as one continuous block
@@ -8511,6 +8545,13 @@
                         <circle cx="18" cy="21" r="1.4" />
                     </svg>
                     <span class="cart-badge zero" id="cartBadge">0</span>
+                </a>
+                <a class="icon-btn nav-notif-btn" id="notifNavBtn" href="#/notifications" aria-label="Notifications" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    <span class="cart-badge zero" id="notifBadge">0</span>
                 </a>
                 <div class="account-wrap" id="accountWrap">
                     <a class="nav-account" id="accountBtn" href="#/login">
@@ -10436,6 +10477,23 @@
         </section>
     </div>
 
+    <!-- ================= NOTIFICATIONS ================= -->
+    <div id="view-notifications" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Notifications</div>
+                <h1>Notifications</h1>
+                <p>Order updates and announcements from Yo7 Foods.</p>
+            </div>
+        </header>
+        <section class="orders-section">
+            <div class="wrap">
+                <div id="notifList" class="notif-list"></div>
+                <div class="order-history-empty" id="notifEmpty" style="display:none;">Nothing here yet. We'll let you know about order updates and anything else worth knowing.</div>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= ADMIN ================= -->
     <div id="view-admin" class="hidden-view">
         <header class="shop-header">
@@ -10495,6 +10553,18 @@
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></span>10% off sign-ups</h2>
                         <p class="sub">Everyone who's signed up via the footer's "Get 10% Off Your First Order" card.</p>
                         <div id="comingSoonSignupsList"></div>
+                    </div>
+                    <div class="admin-panel-section panel-announcement">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Send announcement</h2>
+                        <p class="sub">Goes to every signed-in customer's notifications inbox (the bell icon in the nav) — for site-wide news, not order-specific updates, those already send automatically.</p>
+                        <form id="announcementForm">
+                            <div class="field"><label for="announcementTitle">Title</label><input type="text" id="announcementTitle" required maxlength="80" placeholder="e.g. We're open for Christmas orders"></div>
+                            <div class="field"><label for="announcementBody">Message</label><textarea id="announcementBody" rows="3" required maxlength="500" placeholder="Keep it short, this shows as a single notification card."></textarea></div>
+                            <div class="field"><label for="announcementLink">Link (optional)</label><input type="text" id="announcementLink" maxlength="200" placeholder="e.g. #/special-offers"></div>
+                            <div class="auth-error" id="announcementError" role="alert" style="display:none;"></div>
+                            <div class="auth-success" id="announcementSuccess" role="status" style="display:none;"></div>
+                            <button class="btn btn-primary" type="submit" id="announcementSubmitBtn">Send to all customers</button>
+                        </form>
                     </div>
                     <div class="admin-panel-section panel-analytics">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/></svg></span>Business analytics</h2>
@@ -12519,7 +12589,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.2';
+        const BUILD_VERSION = '2026-09-16.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16859,6 +16929,96 @@
             window.location.hash = '#/checkout';
         }
         window.reorderOrder = reorderOrder;
+
+        /* ================= NOTIFICATIONS (in-app inbox) =================
+           Order-status updates (see the notifications insert in
+           notify_order_status_change and send_order_status_email) plus
+           admin announcements (view-admin's "Send announcement" panel,
+           see sendAdminAnnouncement()) — the notifications table row is
+           shared, notification_reads is a separate per-user read marker
+           so one broadcast row (user_id null) can be read by some
+           customers and not others without duplicating it per recipient.
+           Migration 43. */
+        // Both loadUnreadNotificationCount() (nav badge) and
+        // renderNotificationsPage() (the full #/notifications list) need
+        // the exact same "my notifications, with my own read state
+        // joined on" query — kept as one function so they can never drift
+        // out of sync with each other on what counts as unread.
+        async function loadNotificationsWithReadState() {
+            if (!supabaseClient || !currentSupabaseUser) return [];
+            const [{ data: notifs, error: nErr }, { data: reads }] = await Promise.all([
+                supabaseClient.from('notifications')
+                    .select('*')
+                    .or(`user_id.eq.${currentSupabaseUser.id},user_id.is.null`)
+                    .order('created_at', { ascending: false })
+                    .limit(100),
+                supabaseClient.from('notification_reads')
+                    .select('notification_id')
+                    .eq('user_id', currentSupabaseUser.id),
+            ]);
+            if (nErr || !notifs) return [];
+            const readIds = new Set((reads || []).map(r => r.notification_id));
+            return notifs.map(n => ({ ...n, isRead: readIds.has(n.id) }));
+        }
+        async function loadUnreadNotificationCount() {
+            const btn = document.getElementById('notifNavBtn');
+            const badge = document.getElementById('notifBadge');
+            if (!btn) return;
+            if (!supabaseClient || !currentSupabaseUser) { btn.style.display = 'none'; return; }
+            btn.style.display = '';
+            const items = await loadNotificationsWithReadState();
+            const unread = items.filter(n => !n.isRead).length;
+            if (badge) {
+                badge.textContent = unread > 9 ? '9+' : String(unread);
+                badge.classList.toggle('zero', unread === 0);
+            }
+        }
+        window.loadUnreadNotificationCount = loadUnreadNotificationCount;
+        // Marking read happens in bulk, for everything visible on the page
+        // at once, the moment the page renders — same as opening any other
+        // inbox/notification centre already counts as "seen", no need to
+        // make the customer click each one individually.
+        async function markNotificationsRead(ids) {
+            if (!supabaseClient || !currentSupabaseUser || !ids.length) return;
+            const rows = ids.map(id => ({ notification_id: id, user_id: currentSupabaseUser.id }));
+            await supabaseClient.from('notification_reads').upsert(rows, { onConflict: 'notification_id,user_id', ignoreDuplicates: true });
+            loadUnreadNotificationCount();
+        }
+        function notifItemHTML(n) {
+            const dateLabel = new Date(n.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const tag = n.link ? 'a' : 'div';
+            const hrefAttr = n.link ? ` href="${escapeHtml(n.link)}"` : '';
+            return `
+    <${tag} class="notif-item${n.isRead ? '' : ' is-unread'}"${hrefAttr}>
+      <div class="notif-item-top"><span class="notif-dot" aria-hidden="true"></span><span class="notif-title">${escapeHtml(n.title)}</span></div>
+      <div class="notif-body">${escapeHtml(n.body)}</div>
+      <div class="notif-time">${dateLabel}</div>
+    </${tag}>`;
+        }
+        async function renderNotificationsPage() {
+            const list = document.getElementById('notifList');
+            const empty = document.getElementById('notifEmpty');
+            if (!list || !empty) return;
+            if (!supabaseClient || !currentSupabaseUser) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                empty.innerHTML = 'Log in to see your notifications. <a href="#/login" onclick="postLoginRedirect=\'#/notifications\'">Log in</a>';
+                return;
+            }
+            const items = await loadNotificationsWithReadState();
+            if (items.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                empty.innerHTML = "Nothing here yet. We'll let you know about order updates and anything else worth knowing.";
+                return;
+            }
+            empty.style.display = 'none';
+            list.innerHTML = items.map(n => notifItemHTML(n)).join('');
+            const unreadIds = items.filter(n => !n.isRead).map(n => n.id);
+            if (unreadIds.length) markNotificationsRead(unreadIds);
+        }
+        window.renderNotificationsPage = renderNotificationsPage;
+
         // Personalizes the homepage for a signed-in customer with at least
         // one past order — a "Welcome back, reorder your last order?"
         // shortcut, using that same order's real items rather than
@@ -17752,6 +17912,32 @@
                 renderAdminPage();
             });
         }
+        // Broadcast: a direct insert with user_id left out (null), same
+        // table every order-status notification uses — RLS only lets an
+        // admin insert into notifications at all (see migration 43), so
+        // there's no separate Edge Function/RPC needed just to gate this.
+        const announcementForm = document.getElementById('announcementForm');
+        if (announcementForm) {
+            announcementForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('announcementTitle').value.trim();
+                const body = document.getElementById('announcementBody').value.trim();
+                const link = document.getElementById('announcementLink').value.trim();
+                setAuthError('announcementError', '');
+                setAuthSuccess('announcementSuccess', '');
+                if (!title || !body) { setAuthError('announcementError', 'Title and message are both required.'); return; }
+                if (!supabaseClient) { setAuthError('announcementError', 'Not connected right now, try again shortly.'); return; }
+                const btn = document.getElementById('announcementSubmitBtn');
+                btn.disabled = true;
+                btn.textContent = 'Sending…';
+                const { error } = await supabaseClient.from('notifications').insert({ title, body, link: link || null });
+                btn.disabled = false;
+                btn.textContent = 'Send to all customers';
+                if (error) { setAuthError('announcementError', error.message); return; }
+                setAuthSuccess('announcementSuccess', 'Sent — every customer will see it next time they open their notifications.');
+                e.target.reset();
+            });
+        }
         const addAdminForm = document.getElementById('addAdminForm');
         if (addAdminForm) {
             addAdminForm.addEventListener('submit', async (e) => {
@@ -18463,6 +18649,7 @@
             subscribeMyOrders();
             loadReorderSuggestion();
             loadBuyAgainSuggestions();
+            loadUnreadNotificationCount();
         }
         function clearUser() {
             currentUser = null;
@@ -18497,6 +18684,8 @@
             if (reorderSection) reorderSection.style.display = 'none';
             const buyAgainSection = document.getElementById('buyAgainSection');
             if (buyAgainSection) buyAgainSection.style.display = 'none';
+            const notifNavBtn = document.getElementById('notifNavBtn');
+            if (notifNavBtn) notifNavBtn.style.display = 'none';
             const adminNavLink = document.getElementById('adminNavLink');
             if (adminNavLink) adminNavLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
@@ -19825,7 +20014,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -19994,7 +20183,31 @@
         // fires 'hashchange' on its own (there's usually no hash at all
         // in either state to compare) — without this, the address bar
         // would move but the app wouldn't react at all.
-        window.addEventListener('popstate', route);
+        //
+        // Both listeners route through this same debounce rather than
+        // calling route() directly: any same-document navigation that
+        // changes the URL's fragment (a link click, a location.hash
+        // assignment) fires BOTH 'popstate' and 'hashchange' for that one
+        // navigation, not just one or the other — that's standard browser
+        // behaviour, not a bug in this app. Calling route() from each
+        // listener independently ran the entire route dispatch, including
+        // every page's data fetch, twice per navigation. Harmless for a
+        // page that just re-renders the same data, but genuinely wrong
+        // for one with a side effect on render (marking notifications
+        // read) — the second, redundant run would see its own first run's
+        // side effect already applied. Coalescing into a single queued
+        // call fixes both the correctness bug and the doubled network
+        // traffic. The timeout (not a microtask) matters: browsers queue
+        // popstate and hashchange as separate tasks for the same
+        // navigation, so only a macrotask delay reliably lets the second
+        // one arrive before route() actually runs.
+        let routeCallQueued = false;
+        function queueRoute() {
+            if (routeCallQueued) return;
+            routeCallQueued = true;
+            setTimeout(() => { routeCallQueued = false; route(); }, 0);
+        }
+        window.addEventListener('popstate', queueRoute);
 
         function route() {
             // "#edit" is a shortcut straight into edit mode for whoever's
@@ -20070,6 +20283,9 @@
             } else if (hash === '#/orders') {
                 showView('view-orders');
                 renderOrderHistory();
+            } else if (hash === '#/notifications') {
+                showView('view-notifications');
+                renderNotificationsPage();
             } else if (hash === '#/admin' || hash === '#/admin/orders') {
                 showView('view-admin');
                 renderAdminPage();
@@ -20133,7 +20349,7 @@
             }
             updateBreadcrumbJsonLd();
         }
-        window.addEventListener('hashchange', route);
+        window.addEventListener('hashchange', queueRoute);
 
         /* ================= DEFENSIVE LINK HANDLING =================
            Some mobile browsers handle taps on href="#/..." links inconsistently
