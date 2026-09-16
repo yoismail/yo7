@@ -57,6 +57,51 @@ $$;
 ALTER FUNCTION "public"."assign_order_number"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."dispatch_push_notification"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_secret text;
+begin
+  -- Fires for every row inserted into notifications, regardless of where
+  -- it came from — an order-status update (notify_order_status_change /
+  -- send_order_status_email below) or an admin's own broadcast insert
+  -- from the "Send announcement" panel — so this is the one place a push
+  -- actually gets dispatched, instead of three separate call sites that
+  -- could drift out of sync with each other.
+  --
+  -- Real Web Push needs a VAPID-signed request and, for most browsers, a
+  -- payload encrypted per subscriber — genuine asymmetric crypto, not
+  -- something plpgsql/pg_net can do the way the Resend calls elsewhere in
+  -- this file just POST a bearer token. The actual sending happens in the
+  -- send-push Edge Function; this trigger just hands it the notification
+  -- id and gets out of the way, same fire-and-forget shape as every
+  -- net.http_post call here (pg_net queues the request and returns
+  -- immediately — a slow or failed push service never holds up the
+  -- insert this trigger is attached to). Migration 44.
+  select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'push_dispatch_secret';
+  if v_secret is null then
+    return new; -- Push not deployed/configured yet, see setup-push-notifications.md
+  end if;
+
+  perform net.http_post(
+    url := 'https://mcxfzfvhdtcjfyjmnamr.supabase.co/functions/v1/send-push',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || v_secret,
+      'Content-Type', 'application/json'
+    ),
+    body := jsonb_build_object('notification_id', new.id)
+  );
+
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."dispatch_push_notification"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_best_sellers"("p_days" integer DEFAULT 30, "p_limit" integer DEFAULT 12) RETURNS TABLE("product_id" "text", "units_sold" numeric)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -1221,6 +1266,22 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
 ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."push_subscriptions" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "endpoint" "text" NOT NULL,
+    "p256dh" "text" NOT NULL,
+    "auth_key" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."push_subscriptions" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."push_subscriptions"."endpoint" IS 'The browser push service URL for this one subscribed device — unique per device/browser, not per user, since one customer can have several.';
+
+
 CREATE TABLE IF NOT EXISTS "public"."rate_limit_hits" (
     "id" bigint NOT NULL,
     "bucket_key" "text" NOT NULL,
@@ -1387,6 +1448,16 @@ ALTER TABLE ONLY "public"."profiles"
 
 
 
+ALTER TABLE ONLY "public"."push_subscriptions"
+    ADD CONSTRAINT "push_subscriptions_endpoint_key" UNIQUE ("endpoint");
+
+
+
+ALTER TABLE ONLY "public"."push_subscriptions"
+    ADD CONSTRAINT "push_subscriptions_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."rate_limit_hits"
     ADD CONSTRAINT "rate_limit_hits_pkey" PRIMARY KEY ("id");
 
@@ -1429,6 +1500,10 @@ CREATE UNIQUE INDEX "orders_stripe_payment_intent_id_key" ON "public"."orders" U
 
 
 
+CREATE INDEX "push_subscriptions_user_id_idx" ON "public"."push_subscriptions" USING "btree" ("user_id");
+
+
+
 CREATE INDEX "rate_limit_hits_bucket_time_idx" ON "public"."rate_limit_hits" USING "btree" ("bucket_key", "created_at");
 
 
@@ -1442,6 +1517,10 @@ CREATE INDEX "subscription_reminders_due_idx" ON "public"."subscription_reminder
 
 
 CREATE UNIQUE INDEX "subscription_reminders_token_idx" ON "public"."subscription_reminders" USING "btree" ("unsubscribe_token");
+
+
+
+CREATE OR REPLACE TRIGGER "notifications_dispatch_push" AFTER INSERT ON "public"."notifications" FOR EACH ROW EXECUTE FUNCTION "public"."dispatch_push_notification"();
 
 
 
@@ -1532,6 +1611,11 @@ ALTER TABLE ONLY "public"."product_reviews"
 
 ALTER TABLE ONLY "public"."profiles"
     ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."push_subscriptions"
+    ADD CONSTRAINT "push_subscriptions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -1665,6 +1749,10 @@ CREATE POLICY "Users can insert own orders" ON "public"."orders" FOR INSERT WITH
 
 
 
+CREATE POLICY "Users can manage their own push subscriptions" ON "public"."push_subscriptions" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can mark their own notifications read" ON "public"."notification_reads" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
@@ -1773,6 +1861,9 @@ ALTER TABLE "public"."products" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."push_subscriptions" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."rate_limit_hits" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1805,6 +1896,12 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 GRANT ALL ON FUNCTION "public"."assign_order_number"() TO "anon";
 GRANT ALL ON FUNCTION "public"."assign_order_number"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."assign_order_number"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "anon";
+GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "service_role";
 
 
 
@@ -2062,6 +2159,12 @@ GRANT ALL ON TABLE "public"."products" TO "service_role";
 GRANT ALL ON TABLE "public"."profiles" TO "anon";
 GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."push_subscriptions" TO "anon";
+GRANT ALL ON TABLE "public"."push_subscriptions" TO "authenticated";
+GRANT ALL ON TABLE "public"."push_subscriptions" TO "service_role";
 
 
 

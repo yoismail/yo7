@@ -97,3 +97,49 @@ self.addEventListener('fetch', (event) => {
         })
     );
 });
+
+// Real OS-level push, phase 2 of the in-app notifications inbox — the
+// send-push Edge Function (see supabase/functions/send-push) sends a
+// small JSON payload {title, body, link}, encrypted so only this one
+// subscribed device can read it; this is where it actually gets turned
+// into something the customer sees. Never assume event.data exists (a
+// push service is technically allowed to deliver an empty ping), and
+// wrap the whole thing in event.waitUntil() for the same reason cache
+// writes above are — without it the browser can suspend this worker
+// before showNotification() finishes.
+self.addEventListener('push', (event) => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (err) { /* not JSON — show a generic fallback below */ }
+    const title = data.title || 'Yo7 Foods';
+    const body = data.body || 'You have a new update.';
+    const link = data.link || '#/notifications';
+    event.waitUntil(
+        self.registration.showNotification(title, {
+            body,
+            icon: '/favicon-192x192.png',
+            badge: '/favicon-192x192.png',
+            data: { link },
+        })
+    );
+});
+
+// Tapping the notification should behave like tapping the bell in the
+// app itself: reuse an already-open tab if there is one (just navigating
+// it, not opening a duplicate) and only open a brand new window if
+// nothing was open at all.
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const link = (event.notification.data && event.notification.data.link) || '#/notifications';
+    const targetUrl = new URL(link, self.registration.scope).href;
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if ('focus' in client) {
+                    if ('navigate' in client) client.navigate(targetUrl).catch(() => {});
+                    return client.focus();
+                }
+            }
+            if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+        })
+    );
+});

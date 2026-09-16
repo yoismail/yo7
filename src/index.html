@@ -7971,6 +7971,35 @@
         .notif-item:not(.is-unread) .notif-title { font-weight: 600; color: var(--text-body); }
         .notif-body { font-size: 13.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
         .notif-time { font-size: 11.5px; color: var(--text-muted); opacity: 0.75; margin-top: 8px; }
+        .push-toggle-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 16px;
+        }
+        .push-toggle-text { display: flex; flex-direction: column; gap: 3px; }
+        .push-toggle-text strong { font-family: var(--display); font-size: 14.5px; color: var(--heading); }
+        .push-toggle-text span { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+        .push-toggle-card .btn { flex-shrink: 0; white-space: nowrap; }
+        .push-toggle-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        @media (max-width: 520px) {
+            .push-toggle-card { flex-direction: column; align-items: flex-start; }
+            .push-toggle-card .btn { width: 100%; }
+        }
         /* Every card used to be near-identical (same white fill, a border
            barely visible against the page background, no shadow), so a
            list of more than two or three read as one continuous block
@@ -10488,6 +10517,14 @@
         </header>
         <section class="orders-section">
             <div class="wrap">
+                <div id="pushToggleCard" class="push-toggle-card" style="display:none;">
+                    <div class="push-toggle-text">
+                        <strong id="pushToggleTitle">Turn on push notifications</strong>
+                        <span id="pushToggleDesc">Get an alert on this device the moment there's an order update or announcement — even with the site closed.</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="pushToggleBtn">Turn on</button>
+                </div>
+                <div id="pushToggleHint" class="push-toggle-hint" style="display:none;"></div>
                 <div id="notifList" class="notif-list"></div>
                 <div class="order-history-empty" id="notifEmpty" style="display:none;">Nothing here yet. We'll let you know about order updates and anything else worth knowing.</div>
             </div>
@@ -12540,6 +12577,12 @@
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
             : null;
 
+        /* Public half of the VAPID key pair the send-push Edge Function
+           signs with — safe to ship client-side, same reasoning as the
+           Supabase anon key above: it can only be used to prove pushes
+           come from this same site, never to read or forge anything. */
+        const VAPID_PUBLIC_KEY = 'BGSHOGtfOPfmzkKjFWcaHYrhDuvmACNV5MPamfCZrbE_MoDiaGcS1pEWypWogX1tJul3S6HFB8xrgyW-JdunoKg';
+
         /* ================= STRIPE ==================
            Publishable key only — safe to ship in client-side code, same
            as the Supabase anon key above. The secret key that actually
@@ -12589,7 +12632,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.4';
+        const BUILD_VERSION = '2026-09-16.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16996,6 +17039,7 @@
     </${tag}>`;
         }
         async function renderNotificationsPage() {
+            renderPushToggle();
             const list = document.getElementById('notifList');
             const empty = document.getElementById('notifEmpty');
             if (!list || !empty) return;
@@ -17018,6 +17062,127 @@
             if (unreadIds.length) markNotificationsRead(unreadIds);
         }
         window.renderNotificationsPage = renderNotificationsPage;
+
+        /* Phase 2 of the notifications inbox — a real OS-level push for
+           whichever of these order updates/announcements land while the
+           site isn't even open in a tab, using the VAPID key above and
+           the send-push Edge Function (triggered automatically for
+           every notifications row, see migration 44/dispatch_push_
+           notification in supabase/schema.sql). Subscribing is entirely
+           opt-in from the #/notifications page itself — never prompted
+           automatically on page load, since an unprompted permission
+           request is the single fastest way to get a browser's own
+           "this site keeps asking, block it" heuristics turned against
+           you. */
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            const output = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; i++) output[i] = rawData.charCodeAt(i);
+            return output;
+        }
+        function pushSupported() {
+            return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+        }
+        // iOS only allows push for a PWA actually added to the home
+        // screen (display-mode: standalone) — offering the toggle in a
+        // plain Safari tab there would just fail silently on subscribe().
+        function isIosNonStandalone() {
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            return isIos && !isStandalone;
+        }
+        async function getCurrentPushSubscription() {
+            if (!pushSupported()) return null;
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                return await reg.pushManager.getSubscription();
+            } catch (err) { return null; }
+        }
+        async function renderPushToggle() {
+            const card = document.getElementById('pushToggleCard');
+            const hint = document.getElementById('pushToggleHint');
+            const titleEl = document.getElementById('pushToggleTitle');
+            const descEl = document.getElementById('pushToggleDesc');
+            const btn = document.getElementById('pushToggleBtn');
+            if (!card || !hint || !titleEl || !descEl || !btn) return;
+
+            if (!supabaseClient || !currentSupabaseUser || !pushSupported()) {
+                card.style.display = 'none';
+                hint.style.display = 'none';
+                return;
+            }
+            if (isIosNonStandalone()) {
+                card.style.display = 'none';
+                hint.style.display = 'block';
+                hint.textContent = 'Add Yo7 Foods to your Home Screen to turn on push notifications — iPhone only allows them for installed apps.';
+                return;
+            }
+            if (Notification.permission === 'denied') {
+                card.style.display = 'none';
+                hint.style.display = 'block';
+                hint.textContent = 'Notifications are blocked for this site in your browser settings. Allow them there to turn push notifications back on.';
+                return;
+            }
+
+            const sub = await getCurrentPushSubscription();
+            hint.style.display = 'none';
+            card.style.display = 'flex';
+            if (sub) {
+                titleEl.textContent = 'Push notifications are on';
+                descEl.textContent = "You'll get an alert on this device for order updates and announcements.";
+                btn.textContent = 'Turn off';
+                btn.onclick = disablePushNotifications;
+            } else {
+                titleEl.textContent = 'Turn on push notifications';
+                descEl.textContent = "Get an alert on this device the moment there's an order update or announcement — even with the site closed.";
+                btn.textContent = 'Turn on';
+                btn.onclick = enablePushNotifications;
+            }
+        }
+        async function enablePushNotifications() {
+            const btn = document.getElementById('pushToggleBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Turning on…'; }
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return;
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+                });
+                const json = sub.toJSON();
+                await supabaseClient.from('push_subscriptions').upsert({
+                    user_id: currentSupabaseUser.id,
+                    endpoint: json.endpoint,
+                    p256dh: json.keys.p256dh,
+                    auth_key: json.keys.auth,
+                }, { onConflict: 'endpoint' });
+            } catch (err) {
+                console.error('enablePushNotifications failed:', err);
+            } finally {
+                if (btn) btn.disabled = false;
+                renderPushToggle();
+            }
+        }
+        async function disablePushNotifications() {
+            const btn = document.getElementById('pushToggleBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Turning off…'; }
+            try {
+                const sub = await getCurrentPushSubscription();
+                if (sub) {
+                    const endpoint = sub.endpoint;
+                    await sub.unsubscribe();
+                    if (supabaseClient) await supabaseClient.from('push_subscriptions').delete().eq('endpoint', endpoint);
+                }
+            } catch (err) {
+                console.error('disablePushNotifications failed:', err);
+            } finally {
+                if (btn) btn.disabled = false;
+                renderPushToggle();
+            }
+        }
 
         // Personalizes the homepage for a signed-in customer with at least
         // one past order — a "Welcome back, reorder your last order?"
