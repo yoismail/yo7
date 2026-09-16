@@ -12504,7 +12504,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-15.61';
+        const BUILD_VERSION = '2026-09-16.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16490,7 +16490,7 @@
                 // result.message always carries a contact-us-with-this-
                 // reference instruction instead of a reason to retry.
                 const label = placeOrderBtn.querySelector('.place-order-label');
-                if (label) label.textContent = 'Payment received — contact us to finish this order';
+                if (label) label.textContent = 'Payment received, contact us to finish this order';
                 return;
             }
             placeOrderBtn.classList.remove('is-loading');
@@ -19076,7 +19076,7 @@
             }
             btn.closest('.edit-panel-slot').innerHTML = '';
             route();
-            showToast('Product restored — check its stock status is right before customers can buy it again.');
+            showToast('Product restored. Check its stock status is right before customers can buy it again.');
         }
         window.restoreProductFromPanel = restoreProductFromPanel;
 
@@ -19443,7 +19443,7 @@
             // is the message almost everyone sees straight after signing up.
             if (data.user && !data.session) {
                 document.getElementById('signupAuthNote').style.display = 'none';
-                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account — you\'ve already got 10% off your first order, it applies automatically at checkout.');
+                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account. You\'ve already got 10% off your first order, and it applies automatically at checkout.');
                 e.target.reset();
                 return;
             }
