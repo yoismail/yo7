@@ -263,8 +263,8 @@ begin
   -- In-app notification — independent of whether Resend/email is even
   -- configured below (see the v_api_key check right after), a customer
   -- should see "order received" in their inbox regardless. Migration 43.
-  insert into public.notifications (user_id, title, body, link)
-    values (new.user_id, v_copy.headline, v_copy.body, '#/orders');
+  insert into public.notifications (user_id, title, body, link, category)
+    values (new.user_id, v_copy.headline, v_copy.body, '#/orders', 'order');
 
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
@@ -697,8 +697,8 @@ begin
   -- the customer has an email on file or Resend is configured (both
   -- checked below), same reasoning as notify_order_status_change's own
   -- notification insert. Migration 43.
-  insert into public.notifications (user_id, title, body, link)
-    values (v_order.user_id, v_copy.headline, v_copy.body, '#/orders');
+  insert into public.notifications (user_id, title, body, link, category)
+    values (v_order.user_id, v_copy.headline, v_copy.body, '#/orders', 'order');
 
   select email into v_email from public.profiles where id = v_order.user_id;
   if v_email is null then
@@ -1099,7 +1099,9 @@ CREATE TABLE IF NOT EXISTS "public"."notifications" (
     "title" "text" NOT NULL,
     "body" "text" NOT NULL,
     "link" "text",
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "category" "text" DEFAULT 'announcement'::"text" NOT NULL,
+    CONSTRAINT "notifications_category_check" CHECK (("category" = ANY (ARRAY['order'::"text", 'announcement'::"text", 'offer'::"text"])))
 );
 
 
@@ -1107,6 +1109,9 @@ ALTER TABLE "public"."notifications" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."notifications"."user_id" IS 'NULL = broadcast to every signed-in customer.';
+
+
+COMMENT ON COLUMN "public"."notifications"."category" IS 'Drives the type tag/icon on the #/notifications page: order (set automatically by the order-status triggers), announcement or offer (picked by the admin in the "Send announcement" panel).';
 
 
 CREATE TABLE IF NOT EXISTS "public"."orders" (

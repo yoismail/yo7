@@ -7974,6 +7974,7 @@
         .notif-type-tag.type-order { background: rgba(var(--border-rgb), 0.1); color: var(--text-body); }
         .notif-type-tag.type-announcement { background: #90B8001F; color: var(--chartreuse-rich); }
         [data-theme="dark"] .notif-type-tag.type-announcement { color: var(--chartreuse-soft); }
+        .notif-type-tag.type-offer { background: rgba(193, 85, 44, 0.12); color: #C1552C; }
         .notif-new-pill {
             font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
             color: #fff; background: var(--chartreuse-rich); padding: 3px 8px; border-radius: 999px;
@@ -10606,6 +10607,12 @@
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Send announcement</h2>
                         <p class="sub">Goes to every signed-in customer's notifications inbox (the bell icon in the nav), for site-wide news, not order-specific updates, those already send automatically.</p>
                         <form id="announcementForm">
+                            <div class="field"><label for="announcementCategory">Type</label>
+                                <select id="announcementCategory">
+                                    <option value="announcement">Announcement (store news, hours, etc.)</option>
+                                    <option value="offer">Special offer (a price drop or deal)</option>
+                                </select>
+                            </div>
                             <div class="field"><label for="announcementTitle">Title</label><input type="text" id="announcementTitle" required maxlength="80" placeholder="e.g. We're open for Christmas orders"></div>
                             <div class="field"><label for="announcementBody">Message</label><textarea id="announcementBody" rows="3" required maxlength="500" placeholder="Keep it short, this shows as a single notification card."></textarea></div>
                             <div class="field"><label for="announcementLink">Link (optional)</label><input type="text" id="announcementLink" maxlength="200" placeholder="e.g. #/special-offers"></div>
@@ -12643,7 +12650,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.9';
+        const BUILD_VERSION = '2026-09-16.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17054,26 +17061,29 @@
             await supabaseClient.from('notification_reads').upsert(rows, { onConflict: 'notification_id,user_id', ignoreDuplicates: true });
             loadUnreadNotificationCount();
         }
-        // A real user_id means this came from an order-status change
-        // (notify_order_status_change / send_order_status_email always
-        // stamp the order's own customer); NULL means a broadcast, which
-        // only ever happens from the admin's "Send announcement" panel.
-        // That's enough to tell the two apart without a schema change —
-        // there's no third source of notifications rows yet.
+        // notifications.category (migration 45) is what the admin actually
+        // picks in the "Send announcement" panel — Announcement vs Special
+        // offer. Order-status inserts (notify_order_status_change /
+        // send_order_status_email) always stamp category='order'
+        // themselves. n.user_id is only the fallback for any row inserted
+        // before that migration ran, back when a real user_id was the only
+        // signal this was order-related at all.
         const NOTIF_TYPE_ICONS = {
             order: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
             announcement: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>',
+            offer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
         };
+        const NOTIF_TYPE_LABELS = { order: 'Order update', announcement: 'Announcement', offer: 'Special offer' };
         function notifItemHTML(n) {
             const dateLabel = new Date(n.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
             const tag = n.link ? 'a' : 'div';
             const hrefAttr = n.link ? ` href="${escapeHtml(n.link)}"` : '';
-            const type = n.user_id ? 'order' : 'announcement';
-            const typeLabel = type === 'order' ? 'Order update' : 'Announcement';
+            const type = n.category || (n.user_id ? 'order' : 'announcement');
+            const typeLabel = NOTIF_TYPE_LABELS[type] || NOTIF_TYPE_LABELS.announcement;
             return `
     <${tag} class="notif-item${n.isRead ? '' : ' is-unread'}"${hrefAttr}>
       <div class="notif-meta-row">
-        <span class="notif-type-tag type-${type}">${NOTIF_TYPE_ICONS[type]}${typeLabel}</span>
+        <span class="notif-type-tag type-${type}">${NOTIF_TYPE_ICONS[type] || NOTIF_TYPE_ICONS.announcement}${typeLabel}</span>
         ${n.isRead ? '' : '<span class="notif-new-pill">New</span>'}
       </div>
       <div class="notif-title">${escapeHtml(n.title)}</div>
@@ -18139,6 +18149,7 @@
         if (announcementForm) {
             announcementForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const category = document.getElementById('announcementCategory').value;
                 const title = document.getElementById('announcementTitle').value.trim();
                 const body = document.getElementById('announcementBody').value.trim();
                 const link = document.getElementById('announcementLink').value.trim();
@@ -18149,7 +18160,7 @@
                 const btn = document.getElementById('announcementSubmitBtn');
                 btn.disabled = true;
                 btn.textContent = 'Sending…';
-                const { error } = await supabaseClient.from('notifications').insert({ title, body, link: link || null });
+                const { error } = await supabaseClient.from('notifications').insert({ title, body, link: link || null, category });
                 btn.disabled = false;
                 btn.textContent = 'Send to all customers';
                 if (error) { setAuthError('announcementError', error.message); return; }
