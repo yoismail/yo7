@@ -95,6 +95,21 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <!-- Makes the site installable ("Add to Home Screen") as a standalone
+         PWA on Android/Chrome — name, icons, theme colour, and that it
+         should open without browser chrome (display: standalone). iOS
+         Safari doesn't read this for its own home-screen icon (that's
+         the apple-touch-icon link above) or standalone mode (the three
+         apple-mobile-web-app-* meta tags below), but does still use it
+         for install banners in newer versions. sw.js (registered near
+         the end of the app script, after boot) is what actually makes
+         the installed app work offline-ish rather than just being a
+         bookmark with a nicer icon. -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#063B00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Yo7 Foods">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- A plain <link rel="stylesheet"> here blocks first paint until this
@@ -12504,7 +12519,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.1';
+        const BUILD_VERSION = '2026-09-16.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -20747,6 +20762,19 @@
             requestIdleCallback(loadDeferredImageStyles, { timeout: 1500 });
         } else {
             window.addEventListener('load', loadDeferredImageStyles);
+        }
+
+        // PWA installability + offline fallback (see sw.js's own header
+        // comment for exactly what it does and doesn't cache). Registered
+        // after 'load' so it never competes with anything on the critical
+        // rendering path, and silently no-ops in any browser without
+        // serviceWorker support rather than erroring.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch((err) => {
+                    console.error('Service worker registration failed:', err);
+                });
+            });
         }
     </script>
 
