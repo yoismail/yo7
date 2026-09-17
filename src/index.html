@@ -1405,17 +1405,21 @@
                 letter-spacing: 0.2em;
             }
 
-            /* Signed-out only: "Sign up / Log in" is too long a string to
-               keep on the bar at this width, so it collapses to just the
-               icon, same as always. Signed-in mobile visitors used to get
-               the same treatment — icon only, with the "Hi, Jane" greeting
-               and account options hidden behind a tap on that icon. Now the
-               greeting stays on the bar (see .nav-account.is-logged-in
-               right below) so it's visible without a click; tapping it
-               still opens the same dropdown for order history/log out/etc.
-               Desktop (>900px, well clear of this breakpoint) already
-               showed the greeting inline and is untouched. */
-            .nav-account:not(.is-logged-in) {
+            /* Both signed-in and signed-out collapse to just the icon at
+               this width — "Sign up / Log in" and a customer's name are
+               both too long a string to keep on the bar alongside
+               everything else in .nav-right, and the notifications bell
+               (added later) left no slack for a name pill to keep fitting
+               reliably at the narrowest real phones (iPhone 12 mini,
+               375px) without it. The greeting itself moved to the
+               homepage's "Welcome back" section instead (see
+               reorderTitle) — a bigger, more visible place for it than an
+               11.5px ellipsis-truncated nav label ever was. Tapping the
+               icon still opens the same dropdown for order history/log
+               out/etc regardless of signed-in state. Desktop (>900px,
+               well clear of this breakpoint) still shows the full pill
+               with name and is untouched. */
+            .nav-account {
                 width: 34px;
                 height: 34px;
                 padding: 0;
@@ -1423,29 +1427,9 @@
                 border-radius: 11px;
             }
 
-            .nav-account:not(.is-logged-in) span#accountLabel,
-            .nav-account:not(.is-logged-in) .account-caret {
+            .nav-account span#accountLabel,
+            .nav-account .account-caret {
                 display: none !important;
-            }
-
-            .nav-account.is-logged-in {
-                padding: 7px 10px 7px 8px;
-                gap: 6px;
-                max-width: 130px;
-            }
-
-            .nav-account.is-logged-in span#accountLabel {
-                font-size: 11.5px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 74px;
-            }
-
-            .nav-account.is-logged-in .account-caret {
-                display: inline-block !important;
-                width: 10px !important;
-                height: 10px !important;
             }
 
             .icon-btn,
@@ -12692,7 +12676,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.12';
+        const BUILD_VERSION = '2026-09-17.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17317,6 +17301,12 @@
             orderHistoryCache[data.id] = data;
             const itemCount = items.reduce((s, it) => s + (Number(it.qty) || 1), 0);
             const previewNames = items.slice(0, 3).map(it => it.name || 'an item').join(', ');
+            // The nav no longer shows the customer's name on mobile (see
+            // the 480px breakpoint) — this is where that personalization
+            // moved to instead, a full-width homepage greeting rather
+            // than a truncated nav label.
+            const titleEl = document.getElementById('reorderTitle');
+            if (titleEl && currentUser) titleEl.textContent = `Welcome back, ${currentUser.split(' ')[0]}!`;
             const summaryEl = document.getElementById('reorderSummary');
             if (summaryEl) summaryEl.textContent = `Your last order had ${itemCount} item${itemCount === 1 ? '' : 's'}: ${previewNames}${items.length > 3 ? ', and more' : ''}.`;
             const btn = document.getElementById('reorderBtn');
