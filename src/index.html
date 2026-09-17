@@ -1454,6 +1454,17 @@
                 height: 34px;
             }
 
+            /* The notifications bell (added after this breakpoint was
+               originally tuned) pushed the row just past what fits
+               alongside the hamburger at the narrowest real phones
+               (iPhone 12 mini, 375px) — wrap-around dropped the
+               hamburger onto its own line. Tightening the gap between
+               these icons recovers that without shrinking anything
+               enough to feel cramped or hurt tap targets. */
+            .nav-right {
+                gap: 6px;
+            }
+
             /* Screen's too tight here for the desktop pill treatment (icon
                + horizontal padding) alongside the rest of the bar, so the
                cart reverts to a compact circle — sized to match
@@ -1470,6 +1481,18 @@
                 height: 18px;
             }
 
+            /* Same reasoning and sizing as .nav-cart-btn right above —
+               keeps the bell from being the one oversized control in a
+               row where everything else has already shrunk. */
+            .nav-notif-btn {
+                width: 29px;
+                height: 29px;
+            }
+            .nav-notif-btn svg {
+                width: 18px;
+                height: 18px;
+            }
+
             .theme-switch {
                 width: 46px;
                 height: 25px;
@@ -1482,6 +1505,25 @@
 
             [data-theme="dark"] .theme-switch-thumb {
                 transform: translateX(23px);
+            }
+        }
+
+        /* One more notch down from the 480px tier above — a handful of
+           real, common phones (360px-wide Android devices in particular)
+           are narrower than every iPhone this bar was ever checked
+           against, and the bell added after that tier was tuned was
+           already most of what pushed 375px right to its edge (see the
+           .nav-right comment above). Nothing here changes how anything
+           looks above 400px. */
+        @media (max-width:400px) {
+            #mainNav .wrap {
+                gap: 6px;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .nav-right {
+                gap: 4px;
             }
         }
 
@@ -12650,7 +12692,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-16.11';
+        const BUILD_VERSION = '2026-09-16.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
