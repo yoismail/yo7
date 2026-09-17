@@ -1405,7 +1405,7 @@
                 letter-spacing: 0.2em;
             }
 
-            /* Both signed-in and signed-out collapse to just the icon at
+            /* Both signed-in and signed-out lose the name/label text at
                this width — "Sign up / Log in" and a customer's name are
                both too long a string to keep on the bar alongside
                everything else in .nav-right, and the notifications bell
@@ -1414,12 +1414,18 @@
                375px) without it. The greeting itself moved to the
                homepage's "Welcome back" section instead (see
                reorderTitle) — a bigger, more visible place for it than an
-               11.5px ellipsis-truncated nav label ever was. Tapping the
-               icon still opens the same dropdown for order history/log
-               out/etc regardless of signed-in state. Desktop (>900px,
-               well clear of this breakpoint) still shows the full pill
-               with name and is untouched. */
-            .nav-account {
+               11.5px ellipsis-truncated nav label ever was. Desktop
+               (>900px, well clear of this breakpoint) still shows the
+               full pill with name and is untouched. */
+            .nav-account span#accountLabel {
+                display: none !important;
+            }
+
+            /* Signed-out: a plain square icon button, same treatment as
+               every other icon-only control on this bar — tapping it is a
+               direct link to #/login, not a menu, so there's nothing for
+               a caret to indicate. */
+            .nav-account:not(.is-logged-in) {
                 width: 34px;
                 height: 34px;
                 padding: 0;
@@ -1427,9 +1433,24 @@
                 border-radius: 11px;
             }
 
-            .nav-account span#accountLabel,
-            .nav-account .account-caret {
-                display: none !important;
+            /* Signed-in: stays a (much smaller) pill rather than a bare
+               square specifically to keep room for the caret — tapping
+               this one opens a real dropdown (order history, log out,
+               etc), and the chevron is what tells a customer that's a
+               menu rather than a link straight to a page, the same as it
+               already does on desktop. JS (setUser/clearUser) already
+               toggles the caret's own display for signed-in vs signed-out
+               — nothing to override here. */
+            .nav-account.is-logged-in {
+                padding: 6px 8px;
+                gap: 2px;
+                border-radius: 999px;
+            }
+
+            .nav-account.is-logged-in .account-caret {
+                width: 10px !important;
+                height: 10px !important;
+                margin-left: 0;
             }
 
             .icon-btn,
@@ -12676,7 +12697,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-17.1';
+        const BUILD_VERSION = '2026-09-17.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
