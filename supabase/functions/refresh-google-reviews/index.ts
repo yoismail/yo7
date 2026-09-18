@@ -36,88 +36,66 @@
 //   supabase secrets set GOOGLE_PLACES_API_KEY=AIza...
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically
 // by Supabase for every Edge Function, nothing to set for those.
-
 import { createClient } from "npm:@supabase/supabase-js@2";
-
 const ALLOWED_ORIGINS = new Set([
   "https://yo7foods.co.uk",
-  "https://www.yo7foods.co.uk",
+  "https://www.yo7foods.co.uk"
 ]);
-
-function corsHeaders(origin: string | null) {
+function corsHeaders(origin) {
   const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://yo7foods.co.uk";
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
   };
 }
-
 const FRESHNESS_HOURS = 20;
-
-async function checkRateLimit(
-  db: ReturnType<typeof createClient>,
-  bucketKey: string,
-  limit: number,
-  windowSeconds: number,
-): Promise<boolean> {
+async function checkRateLimit(db, bucketKey, limit, windowSeconds) {
   const windowStart = new Date(Date.now() - windowSeconds * 1000).toISOString();
-  const { count } = await db
-    .from("rate_limit_hits")
-    .select("id", { count: "exact", head: true })
-    .eq("bucket_key", bucketKey)
-    .gte("created_at", windowStart);
+  const { count } = await db.from("rate_limit_hits").select("id", {
+    count: "exact",
+    head: true
+  }).eq("bucket_key", bucketKey).gte("created_at", windowStart);
   if ((count ?? 0) >= limit) return false;
-  await db.from("rate_limit_hits").insert({ bucket_key: bucketKey });
+  await db.from("rate_limit_hits").insert({
+    bucket_key: bucketKey
+  });
   return true;
 }
-
-function getClientIp(req: Request): string {
-  return req.headers.get("cf-connecting-ip")
-    ?? req.headers.get("x-forwarded-for")?.split(",")[0].trim()
-    ?? "unknown";
+function getClientIp(req) {
+  return req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
 }
-
-type GoogleReview = {
-  rating?: number;
-  relativePublishTimeDescription?: string;
-  publishTime?: string;
-  text?: { text?: string };
-  authorAttribution?: { displayName?: string; photoUri?: string };
-};
-type GooglePlaceResponse = {
-  rating?: number;
-  userRatingCount?: number;
-  reviews?: GoogleReview[];
-  error?: { message?: string };
-};
-
-Deno.serve(async (req) => {
+Deno.serve(async (req)=>{
   const origin = req.headers.get("origin");
   const cors = corsHeaders(origin);
-
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: cors });
+    return new Response(null, {
+      headers: cors
+    });
   }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   // Service-role client: reads/writes the cache and pricing_settings
   // regardless of RLS, same pattern as create-payment-intent.
   const db = createClient(supabaseUrl, serviceRoleKey);
-
   const clientIp = getClientIp(req);
-  if (!(await checkRateLimit(db, `refresh-google-reviews:${clientIp}`, 10, 60))) {
-    return new Response(JSON.stringify({ error: "Too many requests, please wait a moment and try again." }), {
+  if (!await checkRateLimit(db, `refresh-google-reviews:${clientIp}`, 10, 60)) {
+    return new Response(JSON.stringify({
+      error: "Too many requests, please wait a moment and try again."
+    }), {
       status: 200,
-      headers: { ...cors, "Content-Type": "application/json", "Retry-After": "30" },
+      headers: {
+        ...cors,
+        "Content-Type": "application/json",
+        "Retry-After": "30"
+      }
     });
   }
-
-  let body: Record<string, unknown> = {};
-  try { body = await req.json(); } catch { /* an empty cron ping has no body at all, that's fine */ }
-
+  let body = {};
+  try {
+    body = await req.json();
+  } catch  {}
   // A forced refresh (the admin panel's "Refresh now" button) needs to
   // actually be from a verified admin, not just a truthy flag in the
   // request body someone could fake — checked the same way
@@ -126,7 +104,11 @@ Deno.serve(async (req) => {
   let isVerifiedAdmin = false;
   if (body.force === true) {
     const authClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+      global: {
+        headers: {
+          Authorization: req.headers.get("Authorization") ?? ""
+        }
+      }
     });
     const { data: userData } = await authClient.auth.getUser();
     if (userData?.user?.id) {
@@ -134,78 +116,105 @@ Deno.serve(async (req) => {
       isVerifiedAdmin = profile?.is_admin === true;
     }
   }
-
   const { data: cache } = await db.from("google_reviews_cache").select("fetched_at").eq("id", true).maybeSingle();
-  const staleEnough = !cache?.fetched_at || (Date.now() - new Date(cache.fetched_at).getTime()) > FRESHNESS_HOURS * 60 * 60 * 1000;
-
+  const staleEnough = !cache?.fetched_at || Date.now() - new Date(cache.fetched_at).getTime() > FRESHNESS_HOURS * 60 * 60 * 1000;
   if (!staleEnough && !(body.force === true && isVerifiedAdmin)) {
-    return new Response(JSON.stringify({ ok: true, skipped: true, reason: "Cache is still fresh, Google wasn't called." }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      skipped: true,
+      reason: "Cache is still fresh, Google wasn't called."
+    }), {
       status: 200,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: {
+        ...cors,
+        "Content-Type": "application/json"
+      }
     });
   }
-
   const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
   if (!apiKey) {
     console.error("GOOGLE_PLACES_API_KEY is not set — run: supabase secrets set GOOGLE_PLACES_API_KEY=AIza...");
-    return new Response(JSON.stringify({ error: "Google Places API isn't configured on the server yet." }), {
+    return new Response(JSON.stringify({
+      error: "Google Places API isn't configured on the server yet."
+    }), {
       status: 200,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: {
+        ...cors,
+        "Content-Type": "application/json"
+      }
     });
   }
-
   const { data: settings } = await db.from("pricing_settings").select("google_place_id").eq("id", true).maybeSingle();
   const placeId = settings?.google_place_id;
   if (!placeId) {
-    return new Response(JSON.stringify({ error: "No Google Place ID set yet — add one in the admin panel's Review platforms section first." }), {
+    return new Response(JSON.stringify({
+      error: "No Google Place ID set yet — add one in the admin panel's Review platforms section first."
+    }), {
       status: 200,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: {
+        ...cors,
+        "Content-Type": "application/json"
+      }
     });
   }
-
   try {
     const resp = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, {
       headers: {
         "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "rating,userRatingCount,reviews",
-      },
+        "X-Goog-FieldMask": "rating,userRatingCount,reviews"
+      }
     });
-    const place = await resp.json() as GooglePlaceResponse;
+    const place = await resp.json();
     if (!resp.ok) {
       console.error("Google Places API error:", place.error?.message);
-      return new Response(JSON.stringify({ error: place.error?.message || "Google Places API request failed." }), {
+      return new Response(JSON.stringify({
+        error: place.error?.message || "Google Places API request failed."
+      }), {
         status: 200,
-        headers: { ...cors, "Content-Type": "application/json" },
+        headers: {
+          ...cors,
+          "Content-Type": "application/json"
+        }
       });
     }
-
-    const reviews = (place.reviews ?? []).map((r) => ({
-      author_name: r.authorAttribution?.displayName ?? "Google user",
-      author_photo_url: r.authorAttribution?.photoUri ?? null,
-      rating: typeof r.rating === "number" ? r.rating : null,
-      relative_time: r.relativePublishTimeDescription ?? null,
-      publish_time: r.publishTime ?? null,
-      text: r.text?.text ?? "",
-    }));
-
+    const reviews = (place.reviews ?? []).map((r)=>({
+        author_name: r.authorAttribution?.displayName ?? "Google user",
+        author_photo_url: r.authorAttribution?.photoUri ?? null,
+        rating: typeof r.rating === "number" ? r.rating : null,
+        relative_time: r.relativePublishTimeDescription ?? null,
+        publish_time: r.publishTime ?? null,
+        text: r.text?.text ?? ""
+      }));
     await db.from("google_reviews_cache").upsert({
       id: true,
       rating: typeof place.rating === "number" ? place.rating : null,
       review_count: typeof place.userRatingCount === "number" ? place.userRatingCount : null,
       reviews,
-      fetched_at: new Date().toISOString(),
+      fetched_at: new Date().toISOString()
     });
-
-    return new Response(JSON.stringify({ ok: true, rating: place.rating, reviewCount: place.userRatingCount, reviewsFetched: reviews.length }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      rating: place.rating,
+      reviewCount: place.userRatingCount,
+      reviewsFetched: reviews.length
+    }), {
       status: 200,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: {
+        ...cors,
+        "Content-Type": "application/json"
+      }
     });
   } catch (err) {
     console.error("Google Places fetch failed:", err);
     const message = err instanceof Error ? err.message : "Couldn't reach Google Places API.";
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({
+      error: message
+    }), {
       status: 200,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: {
+        ...cors,
+        "Content-Type": "application/json"
+      }
     });
   }
 });

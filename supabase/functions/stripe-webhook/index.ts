@@ -47,15 +47,14 @@
 // STRIPE_WEBHOOK_SECRET above.
 //
 // See supabase-payment-setup-guide.md for the full walkthrough.
-
 import Stripe from "npm:stripe@17.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-Deno.serve(async (req) => {
+Deno.serve(async (req)=>{
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+    return new Response("Method not allowed", {
+      status: 405
+    });
   }
-
   const secretKey = Deno.env.get("STRIPE_SECRET_KEY");
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
   if (!secretKey || !webhookSecret) {
@@ -64,11 +63,13 @@ Deno.serve(async (req) => {
     // convention) — there is no browser waiting on `data.error` for this
     // endpoint, only Stripe's own retry logic, which is exactly what
     // should see this as a real failure and try again later.
-    return new Response("Webhook not configured", { status: 500 });
+    return new Response("Webhook not configured", {
+      status: 500
+    });
   }
-
-  const stripe = new Stripe(secretKey, { apiVersion: "2024-12-18.acacia" });
-
+  const stripe = new Stripe(secretKey, {
+    apiVersion: "2024-12-18.acacia"
+  });
   // Signature verification needs the RAW request body, byte for byte —
   // parsing it as JSON first (even to re-stringify) can change
   // whitespace/key order enough to break the signature check. Read it as
@@ -76,10 +77,11 @@ Deno.serve(async (req) => {
   const rawBody = await req.text();
   const signature = req.headers.get("Stripe-Signature");
   if (!signature) {
-    return new Response("Missing Stripe-Signature header", { status: 400 });
+    return new Response("Missing Stripe-Signature header", {
+      status: 400
+    });
   }
-
-  let event: Stripe.Event;
+  let event;
   try {
     // constructEventAsync (not the sync constructEvent) — Deno's runtime
     // doesn't have Node's synchronous crypto primitives Stripe's default
@@ -88,27 +90,33 @@ Deno.serve(async (req) => {
     event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret);
   } catch (err) {
     console.error("Webhook signature verification failed:", err instanceof Error ? err.message : err);
-    return new Response("Invalid signature", { status: 400 });
+    return new Response("Invalid signature", {
+      status: 400
+    });
   }
-
   if (event.type !== "payment_intent.succeeded") {
     // Only subscribed to this one event type in the Dashboard, but
     // acknowledging anything else with 200 rather than erroring is the
     // documented-safe default if the subscription list ever changes.
-    return new Response(JSON.stringify({ received: true, skipped: event.type }), { status: 200, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({
+      received: true,
+      skipped: event.type
+    }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
   }
-
-  const paymentIntent = event.data.object as Stripe.PaymentIntent;
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const paymentIntent = event.data.object;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const db = createClient(supabaseUrl, serviceRoleKey);
-
   // Cheap, opportunistic cleanup of old abandoned rows — same pattern as
   // prune_rate_limit_hits, no separate cron needed for a table this small.
-  db.rpc("prune_pending_checkouts").then(({ error }) => {
+  db.rpc("prune_pending_checkouts").then(({ error })=>{
     if (error) console.error("prune_pending_checkouts failed (non-fatal):", error.message);
   });
-
   // finalize_order_from_pending (see its own comment, added alongside
   // decrement_stock) does the actual lookup-and-insert, inside an
   // advisory-locked transaction keyed to this payment — that's what
@@ -121,13 +129,14 @@ Deno.serve(async (req) => {
   // 4242"-style summary — keeping this fallback path's one Stripe call
   // (already spent verifying the signature) rather than adding a second
   // one for a path that, by design, only actually fires rarely.
-  const { data: result, error: finalizeError } = await db
-    .rpc("finalize_order_from_pending", { p_payment_intent_id: paymentIntent.id })
-    .single();
-
+  const { data: result, error: finalizeError } = await db.rpc("finalize_order_from_pending", {
+    p_payment_intent_id: paymentIntent.id
+  }).single();
   if (finalizeError) {
     console.error("finalize_order_from_pending failed:", finalizeError.message);
-    return new Response("Order finalize failed", { status: 500 }); // 500 so Stripe retries
+    return new Response("Order finalize failed", {
+      status: 500
+    }); // 500 so Stripe retries
   }
   if (!result?.order_number) {
     // Two honest possibilities: create-payment-intent's own
@@ -136,9 +145,16 @@ Deno.serve(async (req) => {
     // see its own comment), or this really is an order this safety net
     // can't reconstruct. Either way there's nothing here to build an
     // order from, and this is not something retrying will fix.
-    return new Response(JSON.stringify({ received: true, note: "no pending_checkouts row, nothing to reconstruct" }), { status: 200, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({
+      received: true,
+      note: "no pending_checkouts row, nothing to reconstruct"
+    }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
   }
-
   // Order-confirmation email, admin new-order alert, and discount-
   // redemption tracking all fire automatically from the existing AFTER
   // INSERT trigger on orders — nothing else to do for those, and that
@@ -151,8 +167,14 @@ Deno.serve(async (req) => {
   // saves an order, that one order's loyalty reward (if any) may need a
   // manual top-up — a real but minor, recoverable gap, not an order
   // silently lost.
-  return new Response(JSON.stringify({ received: true, orderCreated: result.is_new, orderNumber: result.order_number }), {
+  return new Response(JSON.stringify({
+    received: true,
+    orderCreated: result.is_new,
+    orderNumber: result.order_number
+  }), {
     status: 200,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    }
   });
 });

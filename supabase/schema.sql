@@ -1,3 +1,6 @@
+
+
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -15,6 +18,8 @@ CREATE EXTENSION IF NOT EXISTS "pg_cron" WITH SCHEMA "pg_catalog";
 
 
 
+
+
 COMMENT ON SCHEMA "public" IS 'standard public schema';
 
 
@@ -24,7 +29,11 @@ CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "public";
 
 
 
+
+
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
+
+
 
 
 
@@ -34,12 +43,18 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
 
 
 
+
+
 CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
 
 
 
 
+
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+
+
 
 
 
@@ -57,6 +72,73 @@ $$;
 ALTER FUNCTION "public"."assign_order_number"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."decrement_stock"("p_lines" "jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  line jsonb;
+  v_key text;
+  v_qty int;
+  v_cat_slug text;
+  v_idx int;
+  v_rows int;
+BEGIN
+  FOR line IN SELECT * FROM jsonb_array_elements(p_lines)
+  LOOP
+    v_key := line->>'product_key';
+    v_qty := (line->>'qty')::int;
+    IF v_key IS NULL OR v_qty IS NULL OR v_qty <= 0 THEN
+      CONTINUE;
+    END IF;
+
+    -- An override row (admin has explicitly set tracking on this
+    -- product) takes priority over custom_products, matching how
+    -- create-payment-intent's own trusted() already layers the two.
+    UPDATE public.product_overrides
+    SET stock_quantity = stock_quantity - v_qty
+    WHERE product_key = v_key AND stock_quantity IS NOT NULL AND stock_quantity >= v_qty;
+    GET DIAGNOSTICS v_rows = ROW_COUNT;
+    IF v_rows > 0 THEN
+      CONTINUE;
+    END IF;
+
+    v_cat_slug := split_part(v_key, '::', 1);
+    v_idx := NULLIF(split_part(v_key, '::', 2), '')::int;
+    IF v_idx IS NULL THEN
+      CONTINUE;
+    END IF;
+
+    UPDATE public.custom_products
+    SET stock_quantity = stock_quantity - v_qty
+    WHERE cat_slug = v_cat_slug AND idx = v_idx AND stock_quantity IS NOT NULL AND stock_quantity >= v_qty;
+    GET DIAGNOSTICS v_rows = ROW_COUNT;
+
+    IF v_rows = 0 THEN
+      -- Only worth a warning if this product was actually being tracked
+      -- (stock_quantity IS NOT NULL somewhere) and still came up short —
+      -- create-payment-intent already rejects payment before it starts
+      -- if there isn't enough stock, so this only fires on the narrow
+      -- race between two people checking out the very last unit at
+      -- once. Money's already been taken by this point, so the order
+      -- still goes ahead regardless; this is just a breadcrumb in the
+      -- Supabase function logs for that one rare case, not an error.
+      IF EXISTS (
+        SELECT 1 FROM public.product_overrides WHERE product_key = v_key AND stock_quantity IS NOT NULL
+        UNION ALL
+        SELECT 1 FROM public.custom_products WHERE cat_slug = v_cat_slug AND idx = v_idx AND stock_quantity IS NOT NULL
+      ) THEN
+        RAISE WARNING 'decrement_stock: shortfall for % (requested %)', v_key, v_qty;
+      END IF;
+    END IF;
+  END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."decrement_stock"("p_lines" "jsonb") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."dispatch_push_notification"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -64,27 +146,15 @@ CREATE OR REPLACE FUNCTION "public"."dispatch_push_notification"() RETURNS "trig
 declare
   v_secret text;
 begin
-  -- Fires for every row inserted into notifications, regardless of where
-  -- it came from — an order-status update (notify_order_status_change /
-  -- send_order_status_email below) or an admin's own broadcast insert
-  -- from the "Send announcement" panel — so this is the one place a push
-  -- actually gets dispatched, instead of three separate call sites that
-  -- could drift out of sync with each other.
-  --
-  -- Real Web Push needs a VAPID-signed request and, for most browsers, a
-  -- payload encrypted per subscriber — genuine asymmetric crypto, not
-  -- something plpgsql/pg_net can do the way the Resend calls elsewhere in
-  -- this file just POST a bearer token. The actual sending happens in the
-  -- send-push Edge Function; this trigger just hands it the notification
-  -- id and gets out of the way, same fire-and-forget shape as every
-  -- net.http_post call here (pg_net queues the request and returns
-  -- immediately — a slow or failed push service never holds up the
-  -- insert this trigger is attached to). Migration 44.
+  -- Get shared secret from Vault
   select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'push_dispatch_secret';
+  
+  -- Silently skip if push not configured yet
   if v_secret is null then
-    return new; -- Push not deployed/configured yet, see setup-push-notifications.md
+    return new;
   end if;
 
+  -- Call Edge Function to send the push
   perform net.http_post(
     url := 'https://mcxfzfvhdtcjfyjmnamr.supabase.co/functions/v1/send-push',
     headers := jsonb_build_object(
@@ -100,6 +170,69 @@ $$;
 
 
 ALTER FUNCTION "public"."dispatch_push_notification"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text" DEFAULT 'Paid online'::"text") RETURNS TABLE("order_id" "uuid", "order_number" "text", "is_new" boolean)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_pending public.pending_checkouts%ROWTYPE;
+  v_order_id uuid;
+  v_order_number text;
+BEGIN
+  -- Serializes every caller racing on the SAME payment (confirm-order's
+  -- fast path, stripe-webhook's fallback, any retry of either) into one
+  -- at a time — whichever arrives second blocks here until the first
+  -- one's already finished below, then finds the order already made and
+  -- returns it directly without ever reaching the insert itself. Scoped
+  -- to this transaction (released automatically on return), and safe to
+  -- call repeatedly for the same payment — it's the equivalent of the
+  -- unique-constraint check both callers already relied on, just
+  -- serialized instead of raced.
+  PERFORM pg_advisory_xact_lock(hashtext(p_payment_intent_id));
+
+  SELECT id, orders.order_number INTO v_order_id, v_order_number
+  FROM public.orders WHERE stripe_payment_intent_id = p_payment_intent_id;
+
+  IF FOUND THEN
+    RETURN QUERY SELECT v_order_id, v_order_number, false;
+    RETURN;
+  END IF;
+
+  SELECT * INTO v_pending FROM public.pending_checkouts WHERE payment_intent_id = p_payment_intent_id;
+
+  IF NOT FOUND THEN
+    -- Nothing to build an order from — same honest "can't reconstruct"
+    -- case both callers already handle on a null result.
+    RETURN QUERY SELECT NULL::uuid, NULL::text, false;
+    RETURN;
+  END IF;
+
+  INSERT INTO public.orders (
+    user_id, status, fulfilment_method, items, subtotal, delivery_fee, discount, total,
+    delivery_name, delivery_address, delivery_postcode, delivery_phone, notes,
+    stripe_payment_intent_id, payment_method_summary, discount_id, discount_code
+  ) VALUES (
+    v_pending.user_id, 'placed', v_pending.fulfilment_method, v_pending.items, v_pending.subtotal,
+    v_pending.delivery_fee, v_pending.discount, v_pending.total,
+    v_pending.delivery_name, v_pending.delivery_address, v_pending.delivery_postcode, v_pending.delivery_phone, v_pending.notes,
+    p_payment_intent_id, p_payment_method_summary, v_pending.discount_id, v_pending.discount_code
+  )
+  RETURNING id, orders.order_number INTO v_order_id, v_order_number;
+
+  IF v_pending.stock_lines IS NOT NULL AND jsonb_array_length(v_pending.stock_lines) > 0 THEN
+    PERFORM public.decrement_stock(v_pending.stock_lines);
+  END IF;
+
+  DELETE FROM public.pending_checkouts WHERE payment_intent_id = p_payment_intent_id;
+
+  RETURN QUERY SELECT v_order_id, v_order_number, true;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_best_sellers"("p_days" integer DEFAULT 30, "p_limit" integer DEFAULT 12) RETURNS TABLE("product_id" "text", "units_sold" numeric)
@@ -143,6 +276,15 @@ CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
 begin
   insert into public.profiles (id, full_name, phone, email)
   values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'phone', new.email);
+
+  -- Skip automatic reward if email already got a code from footer signup
+  if not exists (
+    select 1 from public.coming_soon_signups
+    where email = lower(new.email) and discount_code is not null
+  ) then
+    insert into public.loyalty_rewards (user_id, pct) values (new.id, 10);
+  end if;
+
   return new;
 end;
 $$;
@@ -249,29 +391,24 @@ declare
   v_customer_name text;
   v_item_count int;
 begin
-  -- Only a brand new order emails automatically. A later status update is
-  -- the admin's explicit "Send email to customer" action instead
-  -- (send_order_status_email below) — see migration 10 for why: so an
-  -- admin can save a status/comment change silently, or resend the same
-  -- notification, without every save doubling up as an email.
+  -- Only fires on brand NEW orders, not updates
   if tg_op = 'UPDATE' then
     return new;
   end if;
 
   select * into v_copy from public.order_status_email_copy(new.status, new.cancellation_reason);
 
-  -- In-app notification — independent of whether Resend/email is even
-  -- configured below (see the v_api_key check right after), a customer
-  -- should see "order received" in their inbox regardless. Migration 43.
-  insert into public.notifications (user_id, title, body, link)
-    values (new.user_id, v_copy.headline, v_copy.body, '#/orders');
+  -- In-app notification — NOW with category = 'order'
+  insert into public.notifications (user_id, title, body, link, category)
+    values (new.user_id, v_copy.headline, v_copy.body, '#/orders', 'order');
 
+  -- Email section — only runs if Resend configured
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
-    return new; -- Resend not configured yet, see setup-order-emails.md
+    return new;
   end if;
 
-  -- ---- Customer confirmation ----
+  -- Customer confirmation email
   select email into v_email from public.profiles where id = new.user_id;
   if v_email is not null then
     perform net.http_post(
@@ -287,12 +424,12 @@ begin
         'subject', v_copy.subject || ' — ' || coalesce(new.order_number, new.id::text),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="httpsyo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
           '<p>' || v_copy.body || '</p>' ||
           '<p style="color:#666;font-size:13px;">Order ' || coalesce(new.order_number, new.id::text) || ' &middot; Total ' || to_char(new.total, 'FM£999999990.00') || '</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View your orders</a></p>' ||
-          '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
+          '<p style="color:#666;font-size:12.5px;">Any questions? <a href="httpswa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
           '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
           '</div>',
         'text',
@@ -305,9 +442,10 @@ begin
     );
   end if;
 
-  -- ---- New-order admin alert (unchanged in shape since migration 12/17) ----
+  -- Admin alert for new order
   select coalesce(full_name, email) into v_customer_name from public.profiles where id = new.user_id;
   v_item_count := (select count(*) from jsonb_array_elements(new.items));
+
   for v_admin in select email from public.profiles where is_admin = true and email is not null loop
     perform net.http_post(
       url := 'https://api.resend.com/emails',
@@ -321,7 +459,7 @@ begin
         'subject', 'New order ' || coalesce(new.order_number, new.id::text) || ' — ' || to_char(new.total, 'FM£999999990.00'),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="httpsyo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">New order received</h2>' ||
           '<p>' || coalesce(v_customer_name, 'A customer') || ' just placed order ' || coalesce(new.order_number, new.id::text) || '.</p>' ||
           '<p style="color:#333;font-size:14px;">' ||
@@ -394,12 +532,14 @@ CREATE OR REPLACE FUNCTION "public"."prevent_self_admin_escalation"() RETURNS "t
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-begin
-  if new.is_admin is distinct from old.is_admin and not public.is_admin_user() then
-    new.is_admin := old.is_admin;
-  end if;
-  return new;
-end;
+BEGIN
+  IF NEW.is_admin IS DISTINCT FROM OLD.is_admin THEN
+    IF NOT public.is_admin_user() THEN
+      RAISE EXCEPTION 'Only an existing admin can change admin status.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
 $$;
 
 
@@ -455,31 +595,25 @@ declare
   v_email text := lower(trim(p_email));
   v_postcode text := nullif(upper(trim(coalesce(p_postcode, ''))), '');
 begin
-  -- Validate email format
   if v_email is null or v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
     raise exception 'Please enter a valid email address.';
   end if;
-
-  -- Validate postcode only if provided
   if v_postcode is not null and v_postcode !~ '^[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}$' then
     raise exception 'Please enter a valid UK postcode.';
   end if;
 
-  -- Insert — skip if email already exists
   insert into public.coming_soon_signups (email, postcode, source)
   values (v_email, v_postcode, p_source)
   on conflict (email) do nothing
   returning id into v_new_id;
 
-  -- No new row created → email already registered
   if v_new_id is null then
     return false;
   end if;
 
-  -- Send confirmation email via Resend if API key exists
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
-    return true; -- Signup saved, email skipped
+    return true;
   end if;
 
   perform net.http_post(
@@ -507,7 +641,6 @@ begin
         'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
     )
   );
-
   return true;
 end;
 $_$;
@@ -516,16 +649,6 @@ $_$;
 ALTER FUNCTION "public"."register_coming_soon_interest"("p_email" "text", "p_postcode" "text", "p_source" "text") OWNER TO "postgres";
 
 
--- A pending_checkouts row (see that table's own definition) is written
--- the moment someone reaches the payment step, before Stripe confirms
--- anything, and only ever deleted later by prune_pending_checkouts —
--- never on success, so its mere presence doesn't mean the order failed.
--- The "not exists ... orders o where o.stripe_payment_intent_id = ..."
--- check below is what actually tells a genuine abandon (nothing was ever
--- placed against this payment intent) apart from an order that went
--- through fine and just hasn't been pruned away yet — skipping that
--- check would mean emailing someone "you forgot something" for an order
--- they already completed.
 CREATE OR REPLACE FUNCTION "public"."send_abandoned_cart_reminders"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -541,14 +664,7 @@ begin
     return; -- Resend not configured yet, see setup-order-emails.md
   end if;
 
-  -- The 1-20 hour window is deliberate on both ends: under an hour and
-  -- this might catch someone still genuinely mid-checkout (gone to grab
-  -- a card, not abandoned); pending_checkouts rows only survive to
-  -- ~24 hours before prune_pending_checkouts can remove them (it runs
-  -- opportunistically off Stripe webhook traffic, not its own schedule
-  -- — see that function's callers), so waiting much past 20 leaves too
-  -- little margin before the row, and the chance to follow up at all,
-  -- is gone.
+  -- Only checkouts 1–20 hours old, not yet reminded, not converted to paid order
   for v_row in
     select pc.*, p.email as customer_email
     from public.pending_checkouts pc
@@ -617,7 +733,7 @@ declare
 begin
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
-    return; -- Resend not configured yet, see setup-order-emails.md
+    return;
   end if;
 
   for v_row in
@@ -641,22 +757,22 @@ begin
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">Running low on ' || v_row.product_name || '?</h2>' ||
-          '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then ''else 's' end) || ', and that time has come round again. Head back to Yo7 Foods whenever you''re ready — this is just a reminder, nothing''s been charged.</p>' ||
+          '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then '' else 's' end) || ', and that time has come round again. Head back to Yo7 Foods whenever you''re ready — this is just a reminder, nothing''s been charged.</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Reorder now</a></p>' ||
-          '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
+          '<p style="color:#666;font-size:12.5px;">Any questions? <a href="httpswa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
           '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
           '<a href="https://yo7foods.co.uk/#/unsubscribe-reminder/' || v_row.unsubscribe_token || '" style="color:#999;">Stop these reminders for this item</a></p>' ||
           '</div>',
         'text',
           'Running low on ' || v_row.product_name || '?' || E'\n\n' ||
-          'You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then '' else 's' end) || ', and that time has come round again. This is just a reminder, nothing''s been charged.' || E'\n\n' ||
+          'You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then '' else 's' end) || '. This is just a reminder, nothing''s been charged.' || E'\n\n' ||
           'Reorder now: https://yo7foods.co.uk/#/orders' || E'\n\n' ||
           'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
-          'Stop these reminders for this item: https://yo7foods.co.uk/#/unsubscribe-reminder/' || v_row.unsubscribe_token || E'\n\n' ||
+          'Stop these reminders: https://yo7foods.co.uk/#/unsubscribe-reminder/' || v_row.unsubscribe_token || E'\n\n' ||
           'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
       )
     );
-
+    
     update public.subscription_reminders
     set next_due_at = now() + (frequency_weeks || ' weeks')::interval,
         last_sent_at = now(),
@@ -693,27 +809,22 @@ begin
 
   select * into v_copy from public.order_status_email_copy(v_order.status, v_order.cancellation_reason);
 
-  -- In-app notification for this status change — independent of whether
-  -- the customer has an email on file or Resend is configured (both
-  -- checked below), same reasoning as notify_order_status_change's own
-  -- notification insert. Migration 43.
-  insert into public.notifications (user_id, title, body, link)
-    values (v_order.user_id, v_copy.headline, v_copy.body, '#/orders');
+  -- In-app notification with category = 'order'
+  insert into public.notifications (user_id, title, body, link, category)
+    values (v_order.user_id, v_copy.headline, v_copy.body, '#/orders', 'order');
 
+  -- Email delivery
   select email into v_email from public.profiles where id = v_order.user_id;
   if v_email is null then
-    return; -- nothing to email, notification above still went out
+    return;
   end if;
 
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
-    return; -- Resend not configured yet, see setup-order-emails.md
+    return;
   end if;
 
-  -- The admin's optional comment (admin_note), shown alongside the status
-  -- update. Cancellations already show their reason via cancellation_reason
-  -- (baked into v_copy.body above), so this only adds a second paragraph
-  -- for a non-cancelled status change.
+  -- Optional admin note
   v_note_html := case
     when v_order.status <> 'cancelled' and v_order.admin_note is not null and length(trim(v_order.admin_note)) > 0
       then '<p>' || v_order.admin_note || '</p>'
@@ -738,13 +849,13 @@ begin
       'subject', v_copy.subject || ' — ' || coalesce(v_order.order_number, v_order.id::text),
       'html',
         '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+        '<div style="text-align:center;margin-bottom:14px;"><img src="httpsyo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
         '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
         '<p>' || v_copy.body || '</p>' ||
         v_note_html ||
         '<p style="color:#666;font-size:13px;">Order ' || coalesce(v_order.order_number, v_order.id::text) || ' &middot; Total ' || to_char(v_order.total, 'FM£999999990.00') || '</p>' ||
         '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View your orders</a></p>' ||
-        '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
+        '<p style="color:#666;font-size:12.5px;">Any questions? <a href="httpswa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
         '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
         '</div>',
       'text',
@@ -763,6 +874,20 @@ $$;
 ALTER FUNCTION "public"."send_order_status_email"("p_order_id" "uuid") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."set_review_verified_purchase"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  NEW.is_verified_purchase := public.has_purchased_product(NEW.user_id, NEW.product_key);
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."set_review_verified_purchase"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."subscribe_to_newsletter"("p_email" "text", "p_source" "text" DEFAULT 'footer'::"text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -776,10 +901,6 @@ begin
     raise exception 'Please enter a valid email address.';
   end if;
 
-  -- Reactivates a previously unsubscribed row on the same email instead of
-  -- the old on conflict do nothing, which would silently no-op the form —
-  -- someone who unsubscribed and later re-signs-up via the footer form
-  -- should actually end up resubscribed.
   insert into public.newsletter_subscribers (email, source, active)
   values (lower(trim(p_email)), p_source, true)
   on conflict (email) do update
@@ -793,7 +914,7 @@ begin
 
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
   if v_api_key is null then
-    return; -- Resend not configured yet, the subscription itself is still saved
+    return;
   end if;
 
   perform net.http_post(
@@ -881,7 +1002,6 @@ begin
   update public.newsletter_subscribers
   set active = false
   where unsubscribe_token = p_token and active = true;
-
   return found;
 end;
 $$;
@@ -967,7 +1087,8 @@ CREATE TABLE IF NOT EXISTS "public"."coming_soon_signups" (
     "email" "text" NOT NULL,
     "postcode" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "source" "text"
+    "source" "text",
+    "discount_code" "text"
 );
 
 
@@ -987,7 +1108,8 @@ CREATE TABLE IF NOT EXISTS "public"."custom_products" (
     "image_url" "text",
     "is_new" boolean DEFAULT false NOT NULL,
     "is_best_seller" boolean DEFAULT false NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "stock_quantity" integer
 );
 
 
@@ -1099,7 +1221,9 @@ CREATE TABLE IF NOT EXISTS "public"."notifications" (
     "title" "text" NOT NULL,
     "body" "text" NOT NULL,
     "link" "text",
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "category" "text" DEFAULT 'announcement'::"text" NOT NULL,
+    CONSTRAINT "notifications_category_check" CHECK (("category" = ANY (ARRAY['order'::"text", 'announcement'::"text", 'offer'::"text"])))
 );
 
 
@@ -1107,6 +1231,11 @@ ALTER TABLE "public"."notifications" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."notifications"."user_id" IS 'NULL = broadcast to every signed-in customer.';
+
+
+
+COMMENT ON COLUMN "public"."notifications"."category" IS 'Type tag for display: order=status update, announcement=general broadcast, offer=promotion';
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."orders" (
@@ -1167,6 +1296,8 @@ CREATE TABLE IF NOT EXISTS "public"."pending_checkouts" (
     "discount_id" "uuid",
     "discount_code" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "stock_lines" "jsonb",
+    "delivery_postcode" "text",
     "abandoned_reminder_sent_at" timestamp with time zone
 );
 
@@ -1214,7 +1345,9 @@ CREATE TABLE IF NOT EXISTS "public"."product_overrides" (
     "allergens" "text"[],
     "allergy_note" "text",
     "nutrition" "text",
-    "cooking_tip" "text"
+    "cooking_tip" "text",
+    "stock_quantity" integer,
+    "deleted" boolean
 );
 
 
@@ -1279,7 +1412,8 @@ CREATE TABLE IF NOT EXISTS "public"."push_subscriptions" (
 ALTER TABLE "public"."push_subscriptions" OWNER TO "postgres";
 
 
-COMMENT ON COLUMN "public"."push_subscriptions"."endpoint" IS 'The browser push service URL for this one subscribed device — unique per device/browser, not per user, since one customer can have several.';
+COMMENT ON COLUMN "public"."push_subscriptions"."endpoint" IS 'Browser push service URL — unique per device/browser';
+
 
 
 CREATE TABLE IF NOT EXISTS "public"."rate_limit_hits" (
@@ -1544,6 +1678,14 @@ CREATE OR REPLACE TRIGGER "trg_notify_order_status_change" AFTER INSERT OR UPDAT
 
 
 
+CREATE OR REPLACE TRIGGER "trg_prevent_self_admin_escalation" BEFORE UPDATE ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."prevent_self_admin_escalation"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_set_review_verified_purchase" BEFORE INSERT OR UPDATE ON "public"."product_reviews" FOR EACH ROW EXECUTE FUNCTION "public"."set_review_verified_purchase"();
+
+
+
 ALTER TABLE ONLY "public"."admin_audit_log"
     ADD CONSTRAINT "admin_audit_log_admin_user_id_fkey" FOREIGN KEY ("admin_user_id") REFERENCES "auth"."users"("id");
 
@@ -1745,10 +1887,6 @@ CREATE POLICY "Users can edit their own review" ON "public"."product_reviews" FO
 
 
 
-CREATE POLICY "Users can insert own orders" ON "public"."orders" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
-
-
-
 CREATE POLICY "Users can manage their own push subscriptions" ON "public"."push_subscriptions" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
 
 
@@ -1893,15 +2031,200 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 GRANT ALL ON FUNCTION "public"."assign_order_number"() TO "anon";
 GRANT ALL ON FUNCTION "public"."assign_order_number"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."assign_order_number"() TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."decrement_stock"("p_lines" "jsonb") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."decrement_stock"("p_lines" "jsonb") TO "anon";
+GRANT ALL ON FUNCTION "public"."decrement_stock"("p_lines" "jsonb") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."decrement_stock"("p_lines" "jsonb") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "anon";
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") TO "service_role";
 
 
 
@@ -1994,6 +2317,7 @@ GRANT ALL ON FUNCTION "public"."send_abandoned_cart_reminders"() TO "authenticat
 GRANT ALL ON FUNCTION "public"."send_abandoned_cart_reminders"() TO "service_role";
 
 
+
 GRANT ALL ON FUNCTION "public"."send_due_subscription_reminders"() TO "anon";
 GRANT ALL ON FUNCTION "public"."send_due_subscription_reminders"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."send_due_subscription_reminders"() TO "service_role";
@@ -2003,6 +2327,12 @@ GRANT ALL ON FUNCTION "public"."send_due_subscription_reminders"() TO "service_r
 GRANT ALL ON FUNCTION "public"."send_order_status_email"("p_order_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."send_order_status_email"("p_order_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."send_order_status_email"("p_order_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."set_review_verified_purchase"() TO "anon";
+GRANT ALL ON FUNCTION "public"."set_review_verified_purchase"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."set_review_verified_purchase"() TO "service_role";
 
 
 
@@ -2027,6 +2357,27 @@ GRANT ALL ON FUNCTION "public"."unsubscribe_newsletter"("p_token" "uuid") TO "se
 GRANT ALL ON FUNCTION "public"."unsubscribe_reminder"("p_token" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."unsubscribe_reminder"("p_token" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."unsubscribe_reminder"("p_token" "uuid") TO "service_role";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2186,10 +2537,19 @@ GRANT ALL ON TABLE "public"."subscription_reminders" TO "service_role";
 
 
 
+
+
+
+
+
+
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "service_role";
+
+
+
 
 
 
@@ -2200,7 +2560,41 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUN
 
 
 
+
+
+
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
