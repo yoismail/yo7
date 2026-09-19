@@ -5153,13 +5153,21 @@
            section's "View all" link is how the rest gets seen. Mobile is
            untouched — still the original swipe strip below 901px. */
         @media (min-width: 901px) {
-            /* minmax(180px, 1fr), matching .cat-flat-scroll (Shop by
-               category) below — columns stretch to fill the row evenly so
-               the last column's right edge lines up with the section's
-               right edge instead of leaving empty space there. */
+            /* auto-fit + a capped max (220px, these cards' own intended
+               width below this breakpoint), not auto-fill + 1fr — 1fr
+               stretched every card to fill whatever was left in the row,
+               so a short row (a handful of special offers, or a trailing
+               row with one leftover best-seller) either blew up into a
+               few oversized cards or stranded one normal-sized card next
+               to a wide dead gap, on any screen wide enough for more
+               columns than there were items. auto-fit collapses the
+               unused columns instead, so a short row is just normal-sized
+               cards left-aligned with quiet space after them, the same
+               shape a deliberately laid-out desktop row would have. */
             .offer-carousel, .new-carousel, .best-seller-carousel {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(180px, 220px));
+                justify-content: start;
                 gap: 18px;
                 overflow: visible;
                 cursor: default;
@@ -5284,13 +5292,21 @@
             margin: 6px 0 18px; font-family: var(--display); font-size: 12.5px;
             letter-spacing: 0.05em; color: var(--text-muted); text-transform: uppercase;
         }
+        /* auto-fit + a capped max, not auto-fill + 1fr — see the matching
+           comment on .offer-carousel/.new-carousel/.best-seller-carousel.
+           Most visible on a category page or search result with a
+           trailing partial row, or few enough products to fit one row on
+           a wide desktop screen: 1fr stretched every card to fill
+           whatever was left, instead of leaving normal-sized cards with
+           quiet space after them. */
         .shop-all-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(190px, 260px));
+            justify-content: start;
             gap: 18px;
         }
         @media (max-width: 560px) {
-            .shop-all-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+            .shop-all-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         }
         .grid-load-more {
             display: flex; justify-content: center; margin: 32px 0 8px;
@@ -8101,16 +8117,20 @@
         }
 
         /* ================= ORDER HISTORY ================= */
-        /* "Your orders" is a single narrow column throughout (loyalty
-           note, referral card, order list), not a wide grid like the shop
+        /* "Your orders" and "Notifications" are both a single narrow
+           column throughout (loyalty note, referral card, order/
+           notification list, empty states), not a wide grid like the shop
            pages that .wrap's 1600px is really sized for — left at that
            width, the loyalty note and referral card in particular just
            stretched edge to edge with a lot of empty space around a
            narrow code/button, looking sparse and unfinished on a wide
            desktop screen despite being fine on mobile, where 1600px never
-           mattered. Scoped to this page only, everywhere else keeps the
-           full-width .wrap. */
-        #view-orders .wrap {
+           mattered. Scoped to these two pages only — the admin dashboard
+           and admin order detail also reuse .orders-section but need the
+           full width for their tables, so this can't just target that
+           class everywhere. */
+        #view-orders .wrap,
+        #view-notifications .wrap {
             max-width: 760px;
         }
         .orders-section {
@@ -12926,7 +12946,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.16';
+        const BUILD_VERSION = '2026-09-19.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
