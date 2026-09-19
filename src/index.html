@@ -13011,7 +13011,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.23';
+        const BUILD_VERSION = '2026-09-19.24';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17524,7 +17524,17 @@
                 return;
             }
             if (!currentSupabaseUser) {
-                el.innerHTML = '<div class="order-history-empty">Log in to see your orders. <a href="#/login" onclick="postLoginRedirect=\'#/orders\'">Log in</a></div>';
+                // A hard refresh lands here before restoreSupabaseSession()
+                // has had a chance to check for an existing session, so an
+                // already-logged-in customer isn't actually logged out, we
+                // just don't know yet — see the matching comment on
+                // renderAdminPage() for the full story. Showing the "log
+                // in" prompt here would flash it up for a moment before
+                // that check resolves and re-renders this page correctly,
+                // so show a neutral loading state instead until it has.
+                el.innerHTML = supabaseSessionRestored
+                    ? '<div class="order-history-empty">Log in to see your orders. <a href="#/login" onclick="postLoginRedirect=\'#/orders\'">Log in</a></div>'
+                    : '<div class="order-history-loading">Loading your orders…</div>';
                 return;
             }
             el.innerHTML = '<div class="order-history-loading">Loading your orders…</div>';
@@ -17715,10 +17725,22 @@
             const list = document.getElementById('notifList');
             const empty = document.getElementById('notifEmpty');
             if (!list || !empty) return;
-            if (!supabaseClient || !currentSupabaseUser) {
+            if (!supabaseClient) {
                 list.innerHTML = '';
                 empty.style.display = 'block';
                 empty.innerHTML = 'Log in to see your notifications. <a href="#/login" onclick="postLoginRedirect=\'#/notifications\'">Log in</a>';
+                return;
+            }
+            if (!currentSupabaseUser) {
+                // Same "haven't checked the session yet" case as
+                // renderOrderHistory()/renderAdminPage() — avoids flashing
+                // the login prompt on a hard refresh for someone who's
+                // actually already signed in.
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                empty.innerHTML = supabaseSessionRestored
+                    ? 'Log in to see your notifications. <a href="#/login" onclick="postLoginRedirect=\'#/notifications\'">Log in</a>'
+                    : 'Loading your notifications…';
                 return;
             }
             const items = await loadNotificationsWithReadState();
