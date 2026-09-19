@@ -2664,7 +2664,12 @@
         }
         .bundles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            /* auto-fit + a capped max (not 1fr) keeps a short trailing row's
+               lone card left-aligned at its normal size instead of leaving
+               unused grid cells beside it (grid column tracks are shared
+               across every row, not recomputed per row like flex). */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+            justify-content: start;
             gap: 22px;
             margin-top: 12px;
         }
@@ -8352,6 +8357,14 @@
         .admin-panel-section.panel-activity { --panel-accent: #9a7f00; --panel-accent-tint: rgba(154, 127, 0, 0.14); }
         .admin-panel-section.panel-editmode { --panel-accent: #C1552C; --panel-accent-tint: rgba(193, 85, 44, 0.12); }
         .admin-panel-section.panel-admins { --panel-accent: #9D6B11; --panel-accent-tint: rgba(157, 107, 17, 0.14); }
+        /* Announcement and add-admin are single form fields, not tables, so
+           letting them stretch to the full ~1400px panel width on desktop
+           (from .field/.admin-inline-form's flex:1) left one long thin
+           input with a wall of empty space beside it. Capping just these
+           two forms keeps the panel itself full width (room for the
+           orders table, analytics, etc.) while the form fields read like a
+           normal form. */
+        #announcementForm, #addAdminForm { max-width: 640px; }
         .admin-inline-form { display: flex; gap: 10px; flex-wrap: wrap; }
         .admin-inline-form input {
             flex: 1;
@@ -12946,7 +12959,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.17';
+        const BUILD_VERSION = '2026-09-19.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
