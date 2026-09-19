@@ -510,21 +510,30 @@ Deno.serve(async (req) => {
         const today = new Date().toISOString().slice(0, 10);
         // Referral codes (see get_or_create_referral_code / referral_codes)
         // are plain discount_codes rows under the hood, so they ride this
-        // same validation path unmodified except for this one extra rule:
-        // the referrer can't redeem their own code for a discount, only a
-        // friend can.
-        let isOwnReferralCode = false;
-        let isReferralCode = false;
-        if (userId) {
-          const { data: referral } = await db
-            .from("referral_codes")
-            .select("user_id")
-            .eq("discount_code_id", d.id)
-            .maybeSingle();
-          isOwnReferralCode = referral?.user_id === userId;
-          isReferralCode = !!referral;
+        // same validation path unmodified except for two extra rules: the
+        // referrer can't redeem their own code, and only a genuinely new
+        // customer (signed in, zero prior orders) can redeem someone
+        // else's — this lookup runs regardless of sign-in state, a guest
+        // checkout is exactly the case that has to be caught here, not
+        // just skipped.
+        const { data: referral } = await db
+          .from("referral_codes")
+          .select("user_id")
+          .eq("discount_code_id", d.id)
+          .maybeSingle();
+        const isReferralCode = !!referral;
+        const isOwnReferralCode = userId != null && referral?.user_id === userId;
+        let isEligibleNewCustomer = true;
+        if (isReferralCode && userId) {
+          const { count } = await db
+            .from("orders")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", userId);
+          isEligibleNewCustomer = (count ?? 0) === 0;
         }
         if (isOwnReferralCode) discountError = "You can't use your own referral code.";
+        else if (isReferralCode && !userId) discountError = "Log in or create an account to use a referral code.";
+        else if (isReferralCode && !isEligibleNewCustomer) discountError = "Referral codes are only valid for new customers.";
         else if (d.start_date && today < d.start_date) discountError = `That code isn't valid until ${d.start_date}.`;
         else if (d.end_date && today > d.end_date) discountError = "That discount code has expired.";
         else if (typeof d.min_order === "number" && subtotal < d.min_order) discountError = `This code needs a minimum order of £${d.min_order.toFixed(2)}.`;
