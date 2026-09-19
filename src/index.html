@@ -5297,18 +5297,26 @@
             margin: 6px 0 18px; font-family: var(--display); font-size: 12.5px;
             letter-spacing: 0.05em; color: var(--text-muted); text-transform: uppercase;
         }
-        /* auto-fit + a capped max, not auto-fill + 1fr — see the matching
-           comment on .offer-carousel/.new-carousel/.best-seller-carousel.
-           Most visible on a category page or search result with a
-           trailing partial row, or few enough products to fit one row on
-           a wide desktop screen: 1fr stretched every card to fill
-           whatever was left, instead of leaving normal-sized cards with
-           quiet space after them. */
+        /* This grid is shared by both the full 249-item Shop page (always
+           several fully-packed rows) and pages that can show just a
+           handful of cards (Special Offers, Buy Again, a narrow search).
+           A capped minmax max (like the carousels use) reads as a definite
+           track size to the browser, so auto-fit computes the column
+           COUNT from that cap rather than from the min — on Shop that
+           silently fit one fewer column than the viewport actually has
+           room for, wasting a whole card's width down every single row,
+           not just a trailing one. Keeping the max as 1fr (indefinite)
+           makes column count derive from the min instead, so a wide dense
+           grid like Shop uses all the width it has; the max-width on the
+           card itself (below) is what stops a short list's cards from
+           stretching to fill a mostly-empty row. */
         .shop-all-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 260px));
-            justify-content: start;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 18px;
+        }
+        .shop-all-grid > .product-card {
+            max-width: 260px;
         }
         @media (max-width: 560px) {
             .shop-all-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
@@ -12970,7 +12978,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.19';
+        const BUILD_VERSION = '2026-09-19.20';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
