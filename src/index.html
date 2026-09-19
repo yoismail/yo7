@@ -12184,7 +12184,7 @@
                 body: { action: 'validate-discount', code, items: cartLineItemsForServer() },
             });
             if (error || !data) return { ok: false, error: 'Couldn\'t check that code right now, try again in a moment.' };
-            if (!data.ok) return { ok: false, error: data.error || 'That code isn\'t valid.' };
+            if (!data.ok) return { ok: false, error: data.error || 'That code isn\'t valid.', requiresLogin: !!data.requiresLogin };
             return { ok: true, discount: data.discount };
         }
         function qualifyingCartItems(d) {
@@ -12840,7 +12840,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.6';
+        const BUILD_VERSION = '2026-09-19.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16627,6 +16627,17 @@
                     msg.textContent = `"${appliedDiscount.code}" applied.`;
                     msg.className = 'discount-code-msg success';
                     input.value = '';
+                } else if (result.requiresLogin) {
+                    // The only discount error worth a real link rather than
+                    // plain text — everywhere else just points at retyping
+                    // the code, this one needs an actual page to go to.
+                    // The message string itself is server-authored (a fixed
+                    // set of hardcoded strings, never customer input), so
+                    // innerHTML here isn't taking on any injection risk.
+                    msg.innerHTML = `Referral codes need an account. <a href="#/login">Log in or sign up</a>, then come back and re-enter the code.`;
+                    msg.className = 'discount-code-msg error';
+                    const loginLink = msg.querySelector('a');
+                    if (loginLink) loginLink.addEventListener('click', () => { postLoginRedirect = '#/checkout'; });
                 } else {
                     msg.textContent = result.error;
                     msg.className = 'discount-code-msg error';

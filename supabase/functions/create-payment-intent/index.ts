@@ -496,6 +496,11 @@ Deno.serve(async (req) => {
     // and the automatic loyalty reward never both land on the same order
     // (see the comment there for why).
     let appliedDiscountIsReferral = false;
+    // True only for the specific "this is a referral code but you're
+    // not signed in" rejection — lets the client turn that one error
+    // into an actual "log in" link instead of a dead end, without
+    // fragile string-matching discountError itself.
+    let discountRequiresLogin = false;
     const discountCode = typeof discountCodeRaw === "string" ? discountCodeRaw.trim() : "";
     let discountError: string | null = null;
     if (discountCode) {
@@ -532,8 +537,10 @@ Deno.serve(async (req) => {
           isEligibleNewCustomer = (count ?? 0) === 0;
         }
         if (isOwnReferralCode) discountError = "You can't use your own referral code.";
-        else if (isReferralCode && !userId) discountError = "Log in or create an account to use a referral code.";
-        else if (isReferralCode && !isEligibleNewCustomer) discountError = "Referral codes are only valid for new customers.";
+        else if (isReferralCode && !userId) {
+          discountError = "Log in or create an account to use a referral code.";
+          discountRequiresLogin = true;
+        } else if (isReferralCode && !isEligibleNewCustomer) discountError = "Referral codes are only valid for new customers.";
         else if (d.start_date && today < d.start_date) discountError = `That code isn't valid until ${d.start_date}.`;
         else if (d.end_date && today > d.end_date) discountError = "That discount code has expired.";
         else if (typeof d.min_order === "number" && subtotal < d.min_order) discountError = `This code needs a minimum order of £${d.min_order.toFixed(2)}.`;
@@ -641,7 +648,7 @@ Deno.serve(async (req) => {
 
     return {
       ok: true as const,
-      subtotal, delivery, discountAmount, discountError, discountId: discountRow?.id ?? null, discountDef, freeDelivery,
+      subtotal, delivery, discountAmount, discountError, discountRequiresLogin, discountId: discountRow?.id ?? null, discountDef, freeDelivery,
       loyaltyDiscountAmount, loyaltyPct, total, totalWeight, stockLines,
     };
   }
@@ -661,7 +668,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: false, error: result.error }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
     }
     if (result.discountError) {
-      return new Response(JSON.stringify({ ok: false, error: result.discountError }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ ok: false, error: result.discountError, requiresLogin: result.discountRequiresLogin }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
     }
     return new Response(JSON.stringify({ ok: true, discount: result.discountDef }), {
       status: 200,
