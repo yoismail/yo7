@@ -398,6 +398,16 @@ begin
   end if;
 
   insert into public.loyalty_rewards (user_id, pct) values (v_user_id, v_pct);
+
+  insert into public.notifications (user_id, title, body, link, category)
+    values (
+      v_user_id,
+      'Reward unlocked',
+      'You just unlocked ' || v_pct || '% off your next order.',
+      '#/checkout',
+      'reward'
+    );
+
   pct := v_pct;
   return next;
 end;
@@ -1271,7 +1281,7 @@ CREATE TABLE IF NOT EXISTS "public"."notifications" (
     "link" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "category" "text" DEFAULT 'announcement'::"text" NOT NULL,
-    CONSTRAINT "notifications_category_check" CHECK (("category" = ANY (ARRAY['order'::"text", 'announcement'::"text", 'offer'::"text", 'restock'::"text"])))
+    CONSTRAINT "notifications_category_check" CHECK (("category" = ANY (ARRAY['order'::"text", 'announcement'::"text", 'offer'::"text", 'restock'::"text", 'reward'::"text"])))
 );
 
 
