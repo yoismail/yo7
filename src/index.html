@@ -6867,18 +6867,42 @@
         .confirm-loyalty-note {
             max-width: 420px; margin: 0 auto 28px; text-align: center; font-size: 13.5px;
         }
+        /* Same bright-yellow-plus-left-accent-border language as the iOS
+           push hint (.push-toggle-hint.ios-steps) — this card is worth a
+           customer actually noticing on a page (Your Orders) they mostly
+           skim for order status, not blending in as one more plain white
+           box among the order rows below it. */
         .referral-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(var(--border-rgb), 0.1);
+            background: rgba(225, 225, 0, 0.12);
+            border: 1px solid rgba(225, 225, 0, 0.4);
+            border-left: 4px solid var(--orange);
             border-radius: 14px;
             padding: 16px 18px;
             margin-bottom: 16px;
         }
+        .referral-card-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 4px;
+        }
+        .referral-card-icon {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--orange);
+            color: var(--aubergine-deep);
+        }
+        .referral-card-icon svg { width: 16px; height: 16px; }
         .referral-card h3 {
             font-family: var(--display);
             font-size: 15px;
             color: var(--heading);
-            margin: 0 0 4px;
+            margin: 0;
         }
         .referral-card p {
             font-size: 13px;
@@ -12987,7 +13011,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.22';
+        const BUILD_VERSION = '2026-09-19.23';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17439,7 +17463,10 @@
             if (!supabaseClient || !currentSupabaseUser) { el.style.display = 'none'; return; }
             el.style.display = '';
             el.innerHTML = `
-      <h3>Refer a friend</h3>
+      <div class="referral-card-heading">
+        <span class="referral-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
+        <h3>Refer a friend</h3>
+      </div>
       <p>Give a friend <strong>${loyaltyRewardPct}% off</strong> their first order over <strong>${money(referralMinOrder)}</strong>, and you'll get <strong>${loyaltyRewardPct}% off</strong> your next one once they use it.</p>
       <div class="referral-code-row"><code id="referralCodeText">Loading…</code><button type="button" class="btn btn-outline-dark" id="referralCopyBtn" disabled>Copy code</button></div>
       <div class="referral-share-row" id="referralShareRow" style="display:none;">
