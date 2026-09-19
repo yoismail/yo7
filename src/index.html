@@ -1421,16 +1421,27 @@
                 display: none !important;
             }
 
-            /* Signed-out: a plain square icon button, same treatment as
-               every other icon-only control on this bar — tapping it is a
-               direct link to #/login, not a menu, so there's nothing for
-               a caret to indicate. */
+            /* Signed-out: a bare person icon reads as "profile" or
+               "account settings" to plenty of people, not obviously as
+               the one way in to sign up or log in at all — a first-time
+               visitor has no other cue it does anything. A short "Log
+               in" label (via ::after, not the hidden #accountLabel span
+               above, which still carries the long "Sign up / Log in"
+               text used everywhere the full label fits) is cheap enough
+               in width to keep even at 375px, unlike the full phrase. */
             .nav-account:not(.is-logged-in) {
-                width: 34px;
+                width: auto;
                 height: 34px;
-                padding: 0;
+                padding: 0 10px 0 8px;
+                gap: 4px;
                 justify-content: center;
                 border-radius: 11px;
+            }
+            .nav-account:not(.is-logged-in)::after {
+                content: 'Log in';
+                font-size: 11px;
+                font-weight: 700;
+                white-space: nowrap;
             }
 
             /* Signed-in: stays a (much smaller) pill rather than a bare
@@ -8178,6 +8189,37 @@
             margin-bottom: 16px;
             line-height: 1.5;
         }
+        /* The one hint here worth actually stopping someone mid-scroll for
+           — it's the difference between never getting push notifications
+           on an iPhone and getting them, and the fix isn't obvious unless
+           you already know Safari has an "Add to Home Screen" option.
+           Same bright-yellow-plus-dark-border-accent language the rest of
+           the site already uses for "this deserves your attention". */
+        .push-toggle-hint.ios-steps {
+            display: flex;
+            gap: 12px;
+            color: var(--heading-mid);
+            background: rgba(225, 225, 0, 0.12);
+            border: 1px solid rgba(225, 225, 0, 0.4);
+            border-left: 4px solid var(--orange);
+        }
+        .push-toggle-hint.ios-steps .push-hint-icon {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--orange);
+            color: var(--aubergine-deep);
+        }
+        .push-toggle-hint.ios-steps .push-hint-icon svg { width: 17px; height: 17px; }
+        .push-toggle-hint.ios-steps strong { color: var(--heading); font-family: var(--display); font-size: 14px; display: block; margin-bottom: 4px; }
+        .push-toggle-hint.ios-steps ol { margin: 6px 0 0; padding-left: 19px; }
+        .push-toggle-hint.ios-steps li { margin-bottom: 4px; }
+        .push-toggle-hint.ios-steps li:last-child { margin-bottom: 0; }
+        .push-toggle-hint.ios-steps .share-icon-inline { display: inline-flex; vertical-align: -3px; width: 15px; height: 15px; margin: 0 1px; }
         @media (max-width: 520px) {
             .push-toggle-card { flex-direction: column; align-items: flex-start; }
             .push-toggle-card .btn { width: 100%; }
@@ -12849,7 +12891,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.9';
+        const BUILD_VERSION = '2026-09-19.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17581,8 +17623,20 @@
             // customer about, rather than just going quiet.
             if (isIosNonStandalone()) {
                 card.style.display = 'none';
-                hint.style.display = 'block';
-                hint.textContent = 'Add Yo7 Foods to your Home Screen to turn on push notifications. iPhone only allows them for installed apps.';
+                hint.className = 'push-toggle-hint ios-steps';
+                hint.style.display = 'flex';
+                const shareIcon = '<svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
+                hint.innerHTML = `
+      <span class="push-hint-icon">${shareIcon}</span>
+      <span>
+        <strong>Turn on notifications in 2 taps</strong>
+        iPhone only allows notifications for apps added to your Home Screen, not for websites open in Safari. Here's how:
+        <ol>
+          <li>Tap the Share button ${shareIcon} at the bottom of the Safari screen.</li>
+          <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+        </ol>
+        Then open Yo7 Foods from the icon on your Home Screen (not from Safari) to turn notifications on.
+      </span>`;
                 return;
             }
             if (!pushSupported()) {
@@ -17592,6 +17646,7 @@
             }
             if (Notification.permission === 'denied') {
                 card.style.display = 'none';
+                hint.className = 'push-toggle-hint';
                 hint.style.display = 'block';
                 hint.textContent = 'Notifications are blocked for this site in your browser settings. Allow them there to turn push notifications back on.';
                 return;
