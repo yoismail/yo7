@@ -5702,6 +5702,33 @@
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
+        .card-notify-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+            margin-top: 8px;
+            padding: 7px 8px;
+            border-radius: 8px;
+            border: none;
+            background: var(--orange);
+            color: var(--aubergine-deep);
+            font-family: var(--body);
+            font-weight: 700;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .card-notify-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+        .card-notify-btn:hover { transform: translateY(-1px); }
+        .card-notify-btn:active:not(:disabled) { transform: translateY(0); }
+        .card-notify-btn:disabled {
+            background: rgba(var(--border-rgb), 0.08);
+            color: var(--text-muted);
+            cursor: default;
+            transform: none;
+        }
         /* These three carousels' cards are noticeably narrower than the
            main shop grid's (168px on mobile) — a sale price alone already
            fills that with three pieces (price, was-price, -X% pill), and
@@ -5971,6 +5998,7 @@
         .pd-stock-alert.is-subscribed .btn {
             background: rgba(var(--border-rgb), 0.08);
             border-color: transparent;
+            box-shadow: none;
             color: var(--text-muted);
             cursor: default;
         }
@@ -9331,7 +9359,7 @@
                             <button class="btn btn-primary" id="pdBuyNow" type="button">Buy now</button>
                         </div>
                         <div class="pd-stock-alert" id="pdStockAlert" style="display:none;">
-                            <button class="btn btn-outline-dark" type="button" id="pdStockAlertBtn">Notify me when back in stock</button>
+                            <button class="btn btn-primary" type="button" id="pdStockAlertBtn">Notify me when back in stock</button>
                         </div>
                         <a href="#/checkout" class="continue-shopping-link" id="pdContinueCheckoutLink" style="display:none;">Continue to checkout &rarr;</a>
                         <div class="pd-delivery-window" id="pdDeliveryWindow" title="An estimate; timing is carried out by a third-party courier and can vary.">
@@ -12770,7 +12798,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.3';
+        const BUILD_VERSION = '2026-09-19.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14200,6 +14228,7 @@
     <div class="empty-state-suggestions-label">Popular right now</div>
     <div class="product-grid">${items.map((p, i) => productCardHTML(p, i)).join('')}</div>`;
             scheduleLoadProductCardRatings();
+            scheduleLoadStockAlertStates();
         }
         async function loadRealBestSellers() {
             if (!supabaseClient) return;
@@ -14843,6 +14872,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
+          ${outOfStock ? `<button class="card-notify-btn" type="button" data-notify-key="${p.catSlug}::${pidx}" onclick="event.preventDefault(); event.stopPropagation(); subscribeToStockAlertFromCard('${p.catSlug}', ${pidx}, this);">${cardNotifyBtnInnerHTML()}</button>` : ''}
         </div>
       </a>
       <div class="edit-panel-slot"></div>
@@ -14887,6 +14917,7 @@
                 if (empty) empty.style.display = 'none';
                 grid.innerHTML = items.map((p, i) => productCardHTML(p, i)).join('');
                 scheduleLoadProductCardRatings();
+                scheduleLoadStockAlertStates();
             }
         }
 
@@ -14910,6 +14941,7 @@
                     empty.style.display = 'none';
                     grid.innerHTML = state.items.slice(0, state.visible).map((p, i) => productCardHTML(p, i)).join('');
                     scheduleLoadProductCardRatings();
+                    scheduleLoadStockAlertStates();
                 }
                 const loadMoreWrap = document.getElementById(loadMoreId);
                 const remaining = state.items.length - state.visible;
@@ -15439,6 +15471,68 @@
             }
             renderStockAlertButton(catSlug, idx, true);
         }
+
+        // Same "Notify me when back in stock" alert as the product page,
+        // but actionable straight from the grid card — an out-of-stock
+        // card used to just show a greyed-out, unclickable "+" and nothing
+        // else, easy to scroll straight past without realising there was
+        // anything to do here. Subscribed state is checked in one batched
+        // query per grid render (see scheduleLoadStockAlertStates), not one
+        // query per card, the same pattern loadProductCardRatings already
+        // uses for review stars.
+        const CARD_NOTIFY_BTN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+        function cardNotifyBtnInnerHTML() { return `${CARD_NOTIFY_BTN_ICON}Notify me`; }
+        let stockAlertFetchedKeys = new Set(); // product_keys this account's subscription status has already been checked for
+        let stockAlertSubscribedKeys = new Set(); // subset of the above this account is actually subscribed to
+        let stockAlertStatesLoadTimer = null;
+        function scheduleLoadStockAlertStates() {
+            clearTimeout(stockAlertStatesLoadTimer);
+            stockAlertStatesLoadTimer = setTimeout(loadStockAlertStates, 150);
+        }
+        async function loadStockAlertStates() {
+            const btnEls = Array.from(document.querySelectorAll('.card-notify-btn[data-notify-key]'));
+            if (btnEls.length === 0) return;
+            if (supabaseClient && currentSupabaseUser) {
+                const keys = [...new Set(btnEls.map(el => el.dataset.notifyKey))].filter(k => !stockAlertFetchedKeys.has(k));
+                if (keys.length > 0) {
+                    const { data, error } = await supabaseClient.from('stock_alerts').select('product_key').eq('user_id', currentSupabaseUser.id).in('product_key', keys);
+                    if (!error && data) data.forEach(r => stockAlertSubscribedKeys.add(r.product_key));
+                    keys.forEach(k => stockAlertFetchedKeys.add(k));
+                }
+            }
+            renderStockAlertButtonStates();
+        }
+        function renderStockAlertButtonStates() {
+            document.querySelectorAll('.card-notify-btn[data-notify-key]').forEach(btn => {
+                const subscribed = stockAlertSubscribedKeys.has(btn.dataset.notifyKey);
+                btn.disabled = subscribed;
+                btn.innerHTML = subscribed ? "You'll be notified" : cardNotifyBtnInnerHTML();
+            });
+        }
+        async function subscribeToStockAlertFromCard(catSlug, idx, btnEl) {
+            const productKey = `${catSlug}::${idx}`;
+            if (!supabaseClient || !currentSupabaseUser) {
+                postLoginRedirect = window.location.hash;
+                window.location.hash = '#/login';
+                return;
+            }
+            btnEl.disabled = true;
+            btnEl.innerHTML = 'Setting up…';
+            const { error } = await supabaseClient.from('stock_alerts').upsert({
+                user_id: currentSupabaseUser.id,
+                product_key: productKey,
+            }, { onConflict: 'user_id,product_key', ignoreDuplicates: true });
+            if (error) {
+                console.error('subscribeToStockAlertFromCard failed:', error);
+                btnEl.disabled = false;
+                btnEl.innerHTML = cardNotifyBtnInnerHTML();
+                return;
+            }
+            stockAlertFetchedKeys.add(productKey);
+            stockAlertSubscribedKeys.add(productKey);
+            btnEl.innerHTML = "You'll be notified";
+        }
+        window.subscribeToStockAlertFromCard = subscribeToStockAlertFromCard;
 
         // Real co-purchase data (see get_frequently_bought_together in the
         // setup notes) rather than another hand-curated list — an admin
@@ -19093,6 +19187,13 @@
             loadReorderSuggestion();
             loadBuyAgainSuggestions();
             loadUnreadNotificationCount();
+            // Stock alert subscribed/fetched state is per-account — a fresh
+            // sign-in (or switching accounts) needs to re-check against the
+            // new account, not keep showing the previous one's (or a
+            // guest's empty) cache.
+            stockAlertFetchedKeys = new Set();
+            stockAlertSubscribedKeys = new Set();
+            scheduleLoadStockAlertStates();
         }
         function clearUser() {
             currentUser = null;
@@ -19138,6 +19239,9 @@
             // whoever's using this browser next.
             syncLoyaltyState();
             renderCartList();
+            stockAlertFetchedKeys = new Set();
+            stockAlertSubscribedKeys = new Set();
+            scheduleLoadStockAlertStates();
         }
         // Checked fresh from the database on every login/session-restore
         // rather than trusted from anything client-side, the actual access
