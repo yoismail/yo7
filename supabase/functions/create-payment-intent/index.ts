@@ -491,6 +491,11 @@ Deno.serve(async (req) => {
     // always recomputed here, server-side, at charge time regardless of
     // what this preview says.
     let discountDef: Record<string, unknown> | null = null;
+    // Set only once a referral code actually validates and applies below —
+    // read by the loyalty-reward block further down so a referral discount
+    // and the automatic loyalty reward never both land on the same order
+    // (see the comment there for why).
+    let appliedDiscountIsReferral = false;
     const discountCode = typeof discountCodeRaw === "string" ? discountCodeRaw.trim() : "";
     let discountError: string | null = null;
     if (discountCode) {
@@ -509,6 +514,7 @@ Deno.serve(async (req) => {
         // the referrer can't redeem their own code for a discount, only a
         // friend can.
         let isOwnReferralCode = false;
+        let isReferralCode = false;
         if (userId) {
           const { data: referral } = await db
             .from("referral_codes")
@@ -516,6 +522,7 @@ Deno.serve(async (req) => {
             .eq("discount_code_id", d.id)
             .maybeSingle();
           isOwnReferralCode = referral?.user_id === userId;
+          isReferralCode = !!referral;
         }
         if (isOwnReferralCode) discountError = "You can't use your own referral code.";
         else if (d.start_date && today < d.start_date) discountError = `That code isn't valid until ${d.start_date}.`;
@@ -538,10 +545,12 @@ Deno.serve(async (req) => {
           }
           if (!discountError) {
             discountRow = { id: d.id, max_per_customer: d.max_per_customer };
+            appliedDiscountIsReferral = isReferralCode;
             discountDef = {
               id: d.id, code: d.code, type: d.type, value: d.value,
               buyQty: d.buy_qty, getQty: d.get_qty,
               qualifyingScope: d.qualifying_scope, qualifyingCategory: d.qualifying_category, qualifyingProductId: d.qualifying_product_id,
+              isReferral: isReferralCode,
             };
             const qualifyingSubtotal = round2(qualifying.reduce((s, l) => s + l.unitPrice * l.qty, 0));
             if (d.type === "percent") discountAmount = round2(qualifyingSubtotal * (d.value / 100));
@@ -585,9 +594,15 @@ Deno.serve(async (req) => {
 
     // ---- loyalty reward (only ever applies to a signed-in account, and
     // only the account's own real, unused reward — never client-claimed) ----
+    // Skipped entirely when a referral code is the discount in play: a
+    // referred friend's order already gets the referral discount, and
+    // stacking the automatic welcome/loyalty reward on top of that on the
+    // very same order was the actual bug being fixed here — the reward
+    // itself isn't lost, it just sits unused for their next order, same
+    // as it always would if they simply hadn't had a code to type in.
     let loyaltyDiscountAmount = 0;
     let loyaltyPct: number | null = null;
-    if (userId) {
+    if (userId && !appliedDiscountIsReferral) {
       const { data: reward } = await db
         .from("loyalty_rewards")
         .select("pct")

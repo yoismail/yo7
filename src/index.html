@@ -11932,6 +11932,14 @@
             }
             const pending = pendingLoyaltyReward();
             if (pending) {
+                // A referral code takes the place of the loyalty reward on
+                // this specific order (see the matching guard in
+                // updateSummaries/computeVerifiedTotal) rather than
+                // stacking with it — the reward itself is still there,
+                // saved for whenever they next check out without one.
+                if (activelyApplying && appliedDiscount && appliedDiscount.isReferral) {
+                    return `You've got <strong>${pending.pct}% off</strong> saved for your next order, this one's already using a referral code instead.`;
+                }
                 return activelyApplying
                     ? `You've got <strong>${pending.pct}% off</strong> this order, already applied below.`
                     : `You've got <strong>${pending.pct}% off</strong> your next order, it applies automatically at checkout.`;
@@ -12832,7 +12840,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.5';
+        const BUILD_VERSION = '2026-09-19.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16436,13 +16444,28 @@
                 appliedDiscount = null;
                 showToast("Your discount code no longer applies, your basket changed.");
             }
+            // Applying/removing a discount code only ever calls
+            // updateSummaries(), not a full renderCartList(), so the
+            // loyalty note (which mentions whether the reward is applied
+            // to *this* order) needs refreshing here too, otherwise it'd
+            // keep showing whatever was true before the code was typed in.
+            const loyaltyNoteEl = document.getElementById('loyaltyNote');
+            if (loyaltyNoteEl) {
+                loyaltyNoteEl.classList.toggle('loyalty-note-earned', !!pendingLoyaltyReward());
+                loyaltyNoteEl.innerHTML = loyaltyStatusHTML(true);
+            }
             const sub = cartSubtotal();
             const postcodeField = document.getElementById('dPostcode');
             const postcode = postcodeField ? postcodeField.value : '';
             const { fee: resolvedFee } = resolveDeliveryFee(postcode);
             const delivery = (cart.length && fulfilmentMethod === 'delivery') ? resolvedFee : 0;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
-            const pendingReward = pendingLoyaltyReward();
+            // A referral code and the loyalty reward never both apply to
+            // the same order (mirrors the same rule in create-payment-intent's
+            // pricing action) — otherwise a referred friend would get their
+            // referral discount stacked with their own pending welcome
+            // reward, effectively doubling it on their first order.
+            const pendingReward = (appliedDiscount && appliedDiscount.isReferral) ? null : pendingLoyaltyReward();
             const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
             const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
@@ -16718,7 +16741,9 @@
             const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
             const delivery = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
-            const pendingReward = pendingLoyaltyReward();
+            // See the matching comment where this same guard first appears,
+            // above in updateSummaries().
+            const pendingReward = (appliedDiscount && appliedDiscount.isReferral) ? null : pendingLoyaltyReward();
             const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
 
