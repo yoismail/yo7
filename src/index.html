@@ -12891,7 +12891,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.10';
+        const BUILD_VERSION = '2026-09-19.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17595,6 +17595,19 @@
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
             return isIos && !isStandalone;
         }
+        // Every iOS browser is required to run on Apple's WebKit engine,
+        // so Chrome/Firefox/Edge on an iPhone all still say "Safari" in
+        // their user agent for compatibility — but Apple only exposes the
+        // actual "Add to Home Screen -> installable app with push" path
+        // through Safari's own UI, not to any browser built on top of it.
+        // Their own tokens (CriOS/FxiOS/EdgiOS/OPiOS) are what actually
+        // distinguish them, so those get a different message entirely
+        // rather than steps that don't apply to them at all.
+        function isIosSafari() {
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            const isOtherIosBrowser = /crios|fxios|edgios|opios|duckduckgo|mercury|ucbrowser/i.test(navigator.userAgent);
+            return isIos && !isOtherIosBrowser;
+        }
         async function getCurrentPushSubscription() {
             if (!pushSupported()) return null;
             try {
@@ -17625,6 +17638,20 @@
                 card.style.display = 'none';
                 hint.className = 'push-toggle-hint ios-steps';
                 hint.style.display = 'flex';
+                if (!isIosSafari()) {
+                    // Apple doesn't give any other iOS browser the
+                    // "install as an app" path at all, so there are no
+                    // steps to give here, just where to actually get them.
+                    const compassIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2 6.4-6.4 2 2-6.4 6.4-2z"/></svg>';
+                    hint.innerHTML = `
+      <span class="push-hint-icon">${compassIcon}</span>
+      <span>
+        <strong>Notifications need Safari on iPhone</strong>
+        iPhone only allows push notifications through Safari, not through Chrome, Firefox or other browsers there, even though this page looks the same in all of them.
+        Open <strong>yo7foods.co.uk</strong> in Safari instead, and you'll see the steps to turn notifications on there.
+      </span>`;
+                    return;
+                }
                 const shareIcon = '<svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
                 hint.innerHTML = `
       <span class="push-hint-icon">${shareIcon}</span>
@@ -17632,8 +17659,8 @@
         <strong>Turn on notifications in 2 taps</strong>
         iPhone only allows notifications for apps added to your Home Screen, not for websites open in Safari. Here's how:
         <ol>
-          <li>Tap the Share button ${shareIcon} at the bottom of the Safari screen.</li>
-          <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+          <li>Tap the Share button ${shareIcon} at the bottom of the Safari screen</li>
+          <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
         </ol>
         Then open Yo7 Foods from the icon on your Home Screen (not from Safari) to turn notifications on.
       </span>`;
