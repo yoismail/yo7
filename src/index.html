@@ -6847,6 +6847,38 @@
         @media (max-width: 520px) {
             .referral-code-row { flex-direction: column; align-items: stretch; }
         }
+        .referral-share-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .referral-share-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(var(--border-rgb), 0.16);
+            background: transparent;
+            color: var(--heading-mid);
+            font-family: var(--body);
+            font-weight: 600;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .referral-share-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .referral-share-btn:hover { background: rgba(var(--border-rgb), 0.06); }
+        .referral-share-btn.whatsapp { color: #25D366; border-color: rgba(37, 211, 102, 0.35); }
+        .referral-share-btn.whatsapp:hover { background: rgba(37, 211, 102, 0.08); }
+        .referral-terms {
+            font-size: 11.5px;
+            color: var(--text-faint);
+            line-height: 1.5;
+            margin: 12px 0 0;
+        }
         .discount-code-row {
             display: flex;
             gap: 8px;
@@ -11842,13 +11874,15 @@
            become async. */
         let loyaltySpendThreshold = 100;
         let loyaltyRewardPct = 10;
+        let referralMinOrder = 50; // minimum basket a referred friend needs to redeem a referral code, see get_or_create_referral_code()
         let loyaltyCachedReward = null; // {pct} if this account has an unused reward right now, else null
         async function loadLoyaltySettings() {
             if (!supabaseClient) return;
-            const { data, error } = await supabaseClient.from('loyalty_settings').select('spend_threshold, reward_pct').limit(1).single();
+            const { data, error } = await supabaseClient.from('loyalty_settings').select('spend_threshold, reward_pct, referral_min_order').limit(1).single();
             if (error || !data) return;
             loyaltySpendThreshold = data.spend_threshold;
             loyaltyRewardPct = data.reward_pct;
+            referralMinOrder = data.referral_min_order;
         }
         // Refreshes the local cache from Supabase. Call after anything
         // that could change it (login, checkout, logout), the rest of the
@@ -12798,7 +12832,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.4';
+        const BUILD_VERSION = '2026-09-19.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17166,6 +17200,9 @@
             el.style.display = '';
         }
         let referralCodeCache = null; // this account's own code, once fetched, so revisiting the page doesn't re-call the RPC
+        function referralShareMessage(code) {
+            return `Get ${loyaltyRewardPct}% off your order at Yo7 Foods with my code ${code} (orders over ${money(referralMinOrder)}): https://yo7foods.co.uk`;
+        }
         async function renderReferralCard() {
             const el = document.getElementById('referralCard');
             if (!el) return;
@@ -17173,8 +17210,13 @@
             el.style.display = '';
             el.innerHTML = `
       <h3>Refer a friend</h3>
-      <p>Give a friend <strong>${loyaltyRewardPct}% off</strong> their order, and you'll get <strong>${loyaltyRewardPct}% off</strong> your next one once they use it.</p>
-      <div class="referral-code-row"><code id="referralCodeText">Loading…</code><button type="button" class="btn btn-outline-dark" id="referralCopyBtn" disabled>Copy code</button></div>`;
+      <p>Give a friend <strong>${loyaltyRewardPct}% off</strong> their first order over <strong>${money(referralMinOrder)}</strong>, and you'll get <strong>${loyaltyRewardPct}% off</strong> your next one once they use it.</p>
+      <div class="referral-code-row"><code id="referralCodeText">Loading…</code><button type="button" class="btn btn-outline-dark" id="referralCopyBtn" disabled>Copy code</button></div>
+      <div class="referral-share-row" id="referralShareRow" style="display:none;">
+        <button type="button" class="referral-share-btn whatsapp" id="referralWhatsappBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>WhatsApp</button>
+        <button type="button" class="referral-share-btn" id="referralShareBtn" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
+      </div>
+      <p class="referral-terms">Your friend enters this code at checkout. Once their order goes through, your reward shows up here and applies automatically at your next checkout. One code per account, and you can't redeem your own.</p>`;
             const { data, error } = await supabaseClient.rpc('get_or_create_referral_code');
             const codeEl = document.getElementById('referralCodeText');
             const copyBtn = document.getElementById('referralCopyBtn');
@@ -17192,6 +17234,25 @@
                         showToast('Referral code copied.');
                     } catch (e) {
                         showToast('Could not copy automatically, code shown above.');
+                    }
+                };
+            }
+            const shareRow = document.getElementById('referralShareRow');
+            if (shareRow) shareRow.style.display = 'flex';
+            const whatsappBtn = document.getElementById('referralWhatsappBtn');
+            if (whatsappBtn) {
+                whatsappBtn.onclick = () => {
+                    window.open(`https://wa.me/?text=${encodeURIComponent(referralShareMessage(data))}`, '_blank', 'noopener');
+                };
+            }
+            const shareBtn = document.getElementById('referralShareBtn');
+            if (shareBtn && navigator.share) {
+                shareBtn.style.display = '';
+                shareBtn.onclick = async () => {
+                    try {
+                        await navigator.share({ title: 'Yo7 Foods', text: referralShareMessage(data) });
+                    } catch (e) {
+                        if (e && e.name === 'AbortError') return; // person closed the share sheet, not an error
                     }
                 };
             }
@@ -21270,6 +21331,10 @@
     <div class="field-row">
       <div class="field"><label for="loyaltyThresholdInput">Spend needed for a reward (£)</label><input type="number" min="1" id="loyaltyThresholdInput" value="${loyaltySpendThreshold}"></div>
       <div class="field"><label for="loyaltyRewardInput">Reward %</label><input type="number" min="0" max="50" id="loyaltyRewardInput" value="${loyaltyRewardPct}"></div>
+    </div>
+    <p class="delivery-admin-note">A referred friend's order must reach this before their referral code applies, protecting the discount from being used on a token order. Only affects referral codes generated after a change, codes already shared keep whatever minimum they were created with.</p>
+    <div class="field-row">
+      <div class="field"><label for="referralMinOrderInput">Referral: minimum order (£)</label><input type="number" min="0" id="referralMinOrderInput" value="${referralMinOrder}"></div>
     </div>`;
             document.getElementById('loyaltyThresholdInput').addEventListener('change', async (e) => {
                 const n = parseFloat(e.target.value);
@@ -21288,6 +21353,14 @@
                     if (!error) logAdminAction('loyalty_settings_updated', 'loyalty_settings', null, { rewardPct: loyaltyRewardPct });
                 }
                 renderCartList();
+            });
+            document.getElementById('referralMinOrderInput').addEventListener('change', async (e) => {
+                const n = parseFloat(e.target.value);
+                referralMinOrder = (!isNaN(n) && n >= 0) ? n : 50;
+                if (supabaseClient) {
+                    const { error } = await supabaseClient.from('loyalty_settings').update({ referral_min_order: referralMinOrder }).eq('id', true);
+                    if (!error) logAdminAction('loyalty_settings_updated', 'loyalty_settings', null, { referralMinOrder });
+                }
             });
         }
         const addBundleBtn = document.getElementById('addBundleBtn');

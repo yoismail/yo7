@@ -312,6 +312,7 @@ declare
   v_code text;
   v_discount_id uuid;
   v_pct numeric;
+  v_min_order numeric;
 begin
   if v_user_id is null then
     raise exception 'Not authorized';
@@ -326,7 +327,7 @@ begin
     return v_existing;
   end if;
 
-  select coalesce(reward_pct, 10) into v_pct from public.loyalty_settings limit 1;
+  select coalesce(reward_pct, 10), coalesce(referral_min_order, 50) into v_pct, v_min_order from public.loyalty_settings limit 1;
 
   select upper(regexp_replace(coalesce(split_part(full_name, ' ', 1), ''), '[^a-zA-Z]', '', 'g'))
     into v_base
@@ -344,8 +345,8 @@ begin
     exit when not exists (select 1 from public.discount_codes where lower(code) = lower(v_code));
   end loop;
 
-  insert into public.discount_codes (code, name, type, value, qualifying_scope, max_per_customer, active)
-    values (v_code, 'Referral code', 'percent', v_pct, 'all', 1, true)
+  insert into public.discount_codes (code, name, type, value, qualifying_scope, max_per_customer, min_order, active)
+    values (v_code, 'Referral code', 'percent', v_pct, 'all', 1, v_min_order, true)
     returning id into v_discount_id;
 
   insert into public.referral_codes (user_id, discount_code_id) values (v_user_id, v_discount_id);
@@ -1336,11 +1337,15 @@ CREATE TABLE IF NOT EXISTS "public"."loyalty_settings" (
     "id" boolean DEFAULT true NOT NULL,
     "spend_threshold" numeric DEFAULT 100 NOT NULL,
     "reward_pct" numeric DEFAULT 10 NOT NULL,
+    "referral_min_order" numeric DEFAULT 50 NOT NULL,
     CONSTRAINT "loyalty_settings_singleton" CHECK ("id")
 );
 
 
 ALTER TABLE "public"."loyalty_settings" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."loyalty_settings"."referral_min_order" IS 'Minimum basket subtotal a referred friend must reach to redeem a referral code, baked into that discount_codes row''s min_order at the moment get_or_create_referral_code() generates it. Changing this only affects codes generated afterward, existing codes keep whatever value they were created with.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."newsletter_subscribers" (
