@@ -5963,6 +5963,19 @@
             margin-bottom: 28px;
         }
 
+        .pd-stock-alert {
+            margin-top: -18px;
+            margin-bottom: 22px;
+        }
+        .pd-stock-alert .btn { width: 100%; }
+        .pd-stock-alert.is-subscribed .btn {
+            background: rgba(var(--border-rgb), 0.08);
+            border-color: transparent;
+            color: var(--text-muted);
+            cursor: default;
+        }
+        .pd-stock-alert.is-subscribed .btn:hover { transform: none; }
+
         .pd-delivery-window {
             display: flex;
             align-items: center;
@@ -8022,6 +8035,8 @@
         .notif-type-tag.type-announcement { background: #90B8001F; color: var(--chartreuse-rich); }
         [data-theme="dark"] .notif-type-tag.type-announcement { color: var(--chartreuse-soft); }
         .notif-type-tag.type-offer { background: rgba(193, 85, 44, 0.12); color: #C1552C; }
+        .notif-type-tag.type-restock { background: rgba(59, 110, 165, 0.12); color: #3B6EA5; }
+        [data-theme="dark"] .notif-type-tag.type-restock { color: #7BAAD9; }
         .notif-new-pill {
             font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
             color: #fff; background: var(--chartreuse-rich); padding: 3px 8px; border-radius: 999px;
@@ -9272,6 +9287,9 @@
                                 Add to basket
                             </button>
                             <button class="btn btn-primary" id="pdBuyNow" type="button">Buy now</button>
+                        </div>
+                        <div class="pd-stock-alert" id="pdStockAlert" style="display:none;">
+                            <button class="btn btn-outline-dark" type="button" id="pdStockAlertBtn">Notify me when back in stock</button>
                         </div>
                         <a href="#/checkout" class="continue-shopping-link" id="pdContinueCheckoutLink" style="display:none;">Continue to checkout &rarr;</a>
                         <div class="pd-delivery-window" id="pdDeliveryWindow" title="An estimate; timing is carried out by a third-party courier and can vary.">
@@ -12697,7 +12715,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-17.3';
+        const BUILD_VERSION = '2026-09-19.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15306,6 +15324,7 @@
             addBtn.disabled = outOfStock;
             buyBtn.disabled = outOfStock;
             buyBtn.textContent = outOfStock ? 'Out of stock' : 'Buy now';
+            renderStockAlertButton(catSlug, Number(idx), outOfStock);
 
             updatePdPrice();
 
@@ -15314,6 +15333,56 @@
             renderProductDetailsSection(p, catSlug);
             renderProductReviews(catSlug, Number(idx));
             loadFrequentlyBoughtTogether(catSlug, idx);
+        }
+
+        // "Notify me when back in stock" — hidden entirely unless the
+        // product is actually out of stock. Checks whether this signed-in
+        // customer already has an alert set (async, so the button starts
+        // hidden and only appears once this resolves, rather than
+        // flashing the "Notify me" state for a moment on every visit even
+        // when they're already subscribed).
+        async function renderStockAlertButton(catSlug, idx, outOfStock) {
+            const wrap = document.getElementById('pdStockAlert');
+            const btn = document.getElementById('pdStockAlertBtn');
+            if (!wrap || !btn) return;
+            if (!outOfStock) { wrap.style.display = 'none'; return; }
+
+            const productKey = `${catSlug}::${idx}`;
+            let alreadySubscribed = false;
+            if (supabaseClient && currentSupabaseUser) {
+                const { data } = await supabaseClient
+                    .from('stock_alerts')
+                    .select('id')
+                    .eq('user_id', currentSupabaseUser.id)
+                    .eq('product_key', productKey)
+                    .maybeSingle();
+                alreadySubscribed = !!data;
+            }
+
+            wrap.style.display = 'block';
+            wrap.classList.toggle('is-subscribed', alreadySubscribed);
+            btn.disabled = alreadySubscribed;
+            btn.textContent = alreadySubscribed ? "You'll be notified" : 'Notify me when back in stock';
+            btn.onclick = alreadySubscribed ? null : () => subscribeToStockAlert(catSlug, idx);
+        }
+        async function subscribeToStockAlert(catSlug, idx) {
+            if (!supabaseClient || !currentSupabaseUser) {
+                postLoginRedirect = `#/product/${catSlug}/${idx}`;
+                window.location.hash = '#/login';
+                return;
+            }
+            const btn = document.getElementById('pdStockAlertBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Setting up…'; }
+            const { error } = await supabaseClient.from('stock_alerts').upsert({
+                user_id: currentSupabaseUser.id,
+                product_key: `${catSlug}::${idx}`,
+            }, { onConflict: 'user_id,product_key', ignoreDuplicates: true });
+            if (error) {
+                console.error('subscribeToStockAlert failed:', error);
+                if (btn) { btn.disabled = false; btn.textContent = 'Notify me when back in stock'; }
+                return;
+            }
+            renderStockAlertButton(catSlug, idx, true);
         }
 
         // Real co-purchase data (see get_frequently_bought_together in the
@@ -17119,8 +17188,9 @@
             order: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
             announcement: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>',
             offer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
+            restock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
         };
-        const NOTIF_TYPE_LABELS = { order: 'Order update', announcement: 'Announcement', offer: 'Special offer' };
+        const NOTIF_TYPE_LABELS = { order: 'Order update', announcement: 'Announcement', offer: 'Special offer', restock: 'Back in stock' };
         function notifItemHTML(n) {
             const createdAt = new Date(n.created_at);
             const dateLabel = createdAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })

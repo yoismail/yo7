@@ -172,6 +172,54 @@ $$;
 ALTER FUNCTION "public"."dispatch_push_notification"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."dispatch_stock_alerts"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_became_available boolean;
+  v_row record;
+begin
+  -- Fires on every insert/update of a product_overrides row regardless
+  -- of what changed (price, description, etc.) — only actually do
+  -- anything when stock genuinely just became available. On UPDATE that
+  -- means the old value was 'out' and the new one isn't; on INSERT
+  -- (this row's first-ever override) there's no old value to compare,
+  -- so any non-'out' value counts — a customer could only have an alert
+  -- on this product if they saw it as out of stock at subscribe time,
+  -- whether that was the baked-in catalogue default or an earlier
+  -- override, so this is still a genuine restock from their point of view.
+  v_became_available := (new.stock is distinct from 'out')
+    and (tg_op = 'INSERT' or old.stock = 'out');
+
+  if not v_became_available then
+    return new;
+  end if;
+
+  for v_row in select user_id from public.stock_alerts where product_key = new.product_key loop
+    insert into public.notifications (user_id, title, body, link, category)
+      values (
+        v_row.user_id,
+        'Back in stock',
+        coalesce(new.name, 'An item on your list') || ' is back in stock.',
+        '#/product/' || replace(new.product_key, '::', '/'),
+        'restock'
+      );
+  end loop;
+
+  -- One-shot: once notified, the alert's done its job. A customer who
+  -- wants to hear about a future restock subscribes again, same as any
+  -- other back-in-stock alert.
+  delete from public.stock_alerts where product_key = new.product_key;
+
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."dispatch_stock_alerts"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text" DEFAULT 'Paid online'::"text") RETURNS TABLE("order_id" "uuid", "order_number" "text", "is_new" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -1223,7 +1271,7 @@ CREATE TABLE IF NOT EXISTS "public"."notifications" (
     "link" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "category" "text" DEFAULT 'announcement'::"text" NOT NULL,
-    CONSTRAINT "notifications_category_check" CHECK (("category" = ANY (ARRAY['order'::"text", 'announcement'::"text", 'offer'::"text"])))
+    CONSTRAINT "notifications_category_check" CHECK (("category" = ANY (ARRAY['order'::"text", 'announcement'::"text", 'offer'::"text", 'restock'::"text"])))
 );
 
 
@@ -1437,6 +1485,20 @@ ALTER TABLE "public"."rate_limit_hits" ALTER COLUMN "id" ADD GENERATED ALWAYS AS
 
 
 
+CREATE TABLE IF NOT EXISTS "public"."stock_alerts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "product_key" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."stock_alerts" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."stock_alerts"."product_key" IS 'catSlug::idx, same format product_overrides.product_key already uses.';
+
+
 CREATE TABLE IF NOT EXISTS "public"."subscription_reminders" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid" NOT NULL,
@@ -1597,6 +1659,16 @@ ALTER TABLE ONLY "public"."rate_limit_hits"
 
 
 
+ALTER TABLE ONLY "public"."stock_alerts"
+    ADD CONSTRAINT "stock_alerts_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."stock_alerts"
+    ADD CONSTRAINT "stock_alerts_user_id_product_key_key" UNIQUE ("user_id", "product_key");
+
+
+
 ALTER TABLE ONLY "public"."subscription_reminders"
     ADD CONSTRAINT "subscription_reminders_pkey" PRIMARY KEY ("id");
 
@@ -1642,6 +1714,10 @@ CREATE INDEX "rate_limit_hits_bucket_time_idx" ON "public"."rate_limit_hits" USI
 
 
 
+CREATE INDEX "stock_alerts_product_key_idx" ON "public"."stock_alerts" USING "btree" ("product_key");
+
+
+
 CREATE UNIQUE INDEX "subscription_reminders_active_user_product" ON "public"."subscription_reminders" USING "btree" ("user_id", "product_key") WHERE "active";
 
 
@@ -1663,6 +1739,10 @@ CREATE OR REPLACE TRIGGER "on_order_record_discount_redemption" AFTER INSERT ON 
 
 
 CREATE OR REPLACE TRIGGER "orders_sync_subscription_reminders" AFTER INSERT ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."sync_subscription_reminders"();
+
+
+
+CREATE OR REPLACE TRIGGER "product_overrides_dispatch_stock_alerts" AFTER INSERT OR UPDATE ON "public"."product_overrides" FOR EACH ROW EXECUTE FUNCTION "public"."dispatch_stock_alerts"();
 
 
 
@@ -1758,6 +1838,11 @@ ALTER TABLE ONLY "public"."profiles"
 
 ALTER TABLE ONLY "public"."push_subscriptions"
     ADD CONSTRAINT "push_subscriptions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."stock_alerts"
+    ADD CONSTRAINT "stock_alerts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -1891,6 +1976,10 @@ CREATE POLICY "Users can manage their own push subscriptions" ON "public"."push_
 
 
 
+CREATE POLICY "Users can manage their own stock alerts" ON "public"."stock_alerts" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can mark their own notifications read" ON "public"."notification_reads" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
@@ -2003,6 +2092,9 @@ ALTER TABLE "public"."push_subscriptions" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."rate_limit_hits" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."stock_alerts" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."subscription_reminders" ENABLE ROW LEVEL SECURITY;
@@ -2218,6 +2310,12 @@ GRANT ALL ON FUNCTION "public"."decrement_stock"("p_lines" "jsonb") TO "service_
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "anon";
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."dispatch_stock_alerts"() TO "anon";
+GRANT ALL ON FUNCTION "public"."dispatch_stock_alerts"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."dispatch_stock_alerts"() TO "service_role";
 
 
 
@@ -2528,6 +2626,12 @@ GRANT ALL ON TABLE "public"."rate_limit_hits" TO "service_role";
 GRANT ALL ON SEQUENCE "public"."rate_limit_hits_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."rate_limit_hits_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."rate_limit_hits_id_seq" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."stock_alerts" TO "anon";
+GRANT ALL ON TABLE "public"."stock_alerts" TO "authenticated";
+GRANT ALL ON TABLE "public"."stock_alerts" TO "service_role";
 
 
 
