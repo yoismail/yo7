@@ -3698,7 +3698,12 @@
         }
 
         /* ================= SPECIAL OFFER SECTION ================= */
-        .hero-glimpse-strip { background: var(--page-bg); padding: 22px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
+        /* border-top added alongside the existing border-bottom — same
+           background as the page and no line above it meant this strip
+           had nothing separating it from whatever section precedes it
+           (Buy it again, when that's showing), so "Shop by department"
+           read as part of that section instead of its own. */
+        .hero-glimpse-strip { background: var(--page-bg); padding: 22px 0; border-top: 1px solid rgba(var(--border-rgb), 0.08); border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
         .hero-glimpse-title {
             text-align: center;
             font-family: var(--display);
@@ -12909,7 +12914,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.14';
+        const BUILD_VERSION = '2026-09-19.15';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
