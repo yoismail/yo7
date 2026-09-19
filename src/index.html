@@ -12909,7 +12909,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.13';
+        const BUILD_VERSION = '2026-09-19.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16678,6 +16678,53 @@
             return result;
         }
         dPostcodeField.addEventListener('blur', () => { if (fulfilmentMethod === 'delivery') checkPostcodeField(); });
+
+        /* ================= PREFILL FROM LAST ORDER =================
+           "Log in to see your orders and save your delivery details" is
+           the login page's own pitch, but until now nothing actually
+           saved anything, every checkout started blank even for a
+           returning signed-in customer. Rather than a separate saved-
+           address feature (its own table, an address book UI to manage
+           it), this reuses what's already sitting right there: their
+           most recent delivery order's name/phone/address, prefilled
+           into the same form, still fully editable. orders.delivery_address
+           is one combined "street, town postcode" string (see
+           create-payment-intent), so it's split back apart using the
+           postcode column (exact, no guessing) to find where the town
+           starts. */
+        function parseDeliveryAddress(combined, postcode) {
+            let rest = (combined || '').trim();
+            if (postcode && rest.endsWith(postcode)) {
+                rest = rest.slice(0, rest.length - postcode.length).trim();
+            }
+            const lastComma = rest.lastIndexOf(',');
+            if (lastComma === -1) return { address: rest, town: '' };
+            return { address: rest.slice(0, lastComma).trim(), town: rest.slice(lastComma + 1).trim() };
+        }
+        async function prefillDeliveryFromLastOrder() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const nameField = document.getElementById('dName');
+            if (!nameField || nameField.value.trim()) return; // already filled in, by this or by the customer — never overwrite
+            const { data, error } = await supabaseClient
+                .from('orders')
+                .select('delivery_name, delivery_address, delivery_phone, delivery_postcode')
+                .eq('user_id', currentSupabaseUser.id)
+                .eq('fulfilment_method', 'delivery')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (error || !data || nameField.value.trim()) return; // re-checked post-await in case they started typing while this was in flight
+            nameField.value = data.delivery_name || '';
+            const phoneField = document.getElementById('dPhone');
+            if (phoneField) phoneField.value = data.delivery_phone || '';
+            const postcodeField = document.getElementById('dPostcode');
+            if (postcodeField) postcodeField.value = data.delivery_postcode || '';
+            const { address, town } = parseDeliveryAddress(data.delivery_address, data.delivery_postcode);
+            const addressField = document.getElementById('dAddress');
+            if (addressField) addressField.value = address;
+            const townField = document.getElementById('dTown');
+            if (townField) townField.value = town;
+        }
 
         /* ================= DISCOUNT CODE ENTRY ================= */
         const applyDiscountBtn = document.getElementById('applyDiscountBtn');
@@ -21079,6 +21126,7 @@
                 showView('view-checkout');
                 renderCartList();
                 showCheckoutStep('cart');
+                prefillDeliveryFromLastOrder();
             } else if (hash === '#/order-confirmation') {
                 showView('view-confirm');
                 renderConfirmation();
