@@ -514,9 +514,12 @@ begin
 
   select * into v_copy from public.order_status_email_copy(new.status, new.cancellation_reason);
 
-  -- In-app notification — NOW with category = 'order'
+  -- In-app notification — NOW with category = 'order'. Title carries the
+  -- order number (the push notification payload is built straight from
+  -- this title/body, so without it here a customer with more than one
+  -- order in flight has no way to tell which one a push is even about).
   insert into public.notifications (user_id, title, body, link, category)
-    values (new.user_id, v_copy.headline, v_copy.body, '#/orders', 'order');
+    values (new.user_id, v_copy.headline || ' · ' || coalesce(new.order_number, new.id::text), v_copy.body, '#/orders', 'order');
 
   -- Email section — only runs if Resend configured
   select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
@@ -970,9 +973,13 @@ begin
 
   select * into v_copy from public.order_status_email_copy(v_order.status, v_order.cancellation_reason);
 
-  -- In-app notification with category = 'order'
+  -- In-app notification with category = 'order'. Title carries the order
+  -- number — see the matching comment in notify_order_status_change() for
+  -- why (this is the function that actually fires on every admin status
+  -- change, e.g. "out for delivery", so it's the one the screenshot bug
+  -- report was about).
   insert into public.notifications (user_id, title, body, link, category)
-    values (v_order.user_id, v_copy.headline, v_copy.body, '#/orders', 'order');
+    values (v_order.user_id, v_copy.headline || ' · ' || coalesce(v_order.order_number, v_order.id::text), v_copy.body, '#/orders', 'order');
 
   -- Email delivery
   select email into v_email from public.profiles where id = v_order.user_id;
