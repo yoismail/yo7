@@ -13011,7 +13011,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.25';
+        const BUILD_VERSION = '2026-09-19.26';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22009,11 +22009,41 @@
         observeReveals();
         updateCartBadge();
         handleStripeRedirectReturn();
-        // A fresh load/reload/shared-link visit to a real path (e.g.
-        // /shop/, or one of the pre-generated pages like /about/) has no
-        // hash at all yet — route() itself derives it from the real path
-        // (see syncHashFromPath() inside it) before doing anything else.
-        route();
+        // A password-recovery link (or any other Supabase auth callback —
+        // signup confirmation, magic link, email change) lands here with
+        // its access_token/type=... still sitting raw in window.location
+        // .hash, which the SDK itself parses asynchronously to establish
+        // the session. route() below rewrites the address bar from
+        // whatever hash it finds (via syncAddressBarToHash) to a clean
+        // path — for this raw payload, that destroys the very hash the
+        // SDK needs before it gets a chance to read it, if this call wins
+        // the race (both run essentially immediately on load, so which one
+        // gets there first isn't guaranteed). That's what actually caused
+        // the reported bug: the reset-password page appearing then
+        // "logging back in" to an unrelated, already-established session
+        // instead (whatever route() fell back to showing once the mangled
+        // hash matched no known route), and a second click on the same
+        // link failing outright since the token had already been consumed/
+        // destroyed once. Skipping this one boot-time call when the URL
+        // matches that shape lets the SDK process it undisturbed first —
+        // the PASSWORD_RECOVERY handler above navigates to
+        // #/reset-password once it actually has, which is what triggers
+        // route() (via the hashchange listener) for this load instead.
+        const isSupabaseAuthCallback = supabaseClient && /(^|[#&])type=(recovery|signup|invite|magiclink|email_change)(&|$)/.test(window.location.hash);
+        if (!isSupabaseAuthCallback) {
+            // A fresh load/reload/shared-link visit to a real path (e.g.
+            // /shop/, or one of the pre-generated pages like /about/) has no
+            // hash at all yet — route() itself derives it from the real path
+            // (see syncHashFromPath() inside it) before doing anything else.
+            route();
+        } else {
+            // Safety net for an expired/invalid link or an SDK hiccup —
+            // don't leave the page blank forever if nothing ends up
+            // consuming this hash and navigating away from it.
+            setTimeout(() => {
+                if (/(^|[#&])type=(recovery|signup|invite|magiclink|email_change)(&|$)/.test(window.location.hash)) route();
+            }, 4000);
+        }
         // The footer starts hidden (see .boot-hidden) so it can't render
         // above the real page while everything up to and including this
         // route() call was still loading — now that the correct view is
