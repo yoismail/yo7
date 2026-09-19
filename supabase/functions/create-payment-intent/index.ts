@@ -503,7 +503,22 @@ Deno.serve(async (req) => {
       else if (d.active === false) discountError = "That discount code is no longer active.";
       else {
         const today = new Date().toISOString().slice(0, 10);
-        if (d.start_date && today < d.start_date) discountError = `That code isn't valid until ${d.start_date}.`;
+        // Referral codes (see get_or_create_referral_code / referral_codes)
+        // are plain discount_codes rows under the hood, so they ride this
+        // same validation path unmodified except for this one extra rule:
+        // the referrer can't redeem their own code for a discount, only a
+        // friend can.
+        let isOwnReferralCode = false;
+        if (userId) {
+          const { data: referral } = await db
+            .from("referral_codes")
+            .select("user_id")
+            .eq("discount_code_id", d.id)
+            .maybeSingle();
+          isOwnReferralCode = referral?.user_id === userId;
+        }
+        if (isOwnReferralCode) discountError = "You can't use your own referral code.";
+        else if (d.start_date && today < d.start_date) discountError = `That code isn't valid until ${d.start_date}.`;
         else if (d.end_date && today > d.end_date) discountError = "That discount code has expired.";
         else if (typeof d.min_order === "number" && subtotal < d.min_order) discountError = `This code needs a minimum order of £${d.min_order.toFixed(2)}.`;
         else {

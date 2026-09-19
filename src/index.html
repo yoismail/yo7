@@ -6779,6 +6779,46 @@
         .confirm-loyalty-note {
             max-width: 420px; margin: 0 auto 28px; text-align: center; font-size: 13.5px;
         }
+        .referral-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 16px;
+        }
+        .referral-card h3 {
+            font-family: var(--display);
+            font-size: 15px;
+            color: var(--heading);
+            margin: 0 0 4px;
+        }
+        .referral-card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 0 0 12px;
+        }
+        .referral-card p strong { color: var(--heading-mid); font-weight: 700; }
+        .referral-code-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .referral-code-row code {
+            flex: 1;
+            font-family: var(--body);
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.02em;
+            color: var(--heading);
+            background: rgba(var(--border-rgb), 0.08);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .referral-code-row .btn { flex-shrink: 0; white-space: nowrap; }
+        @media (max-width: 520px) {
+            .referral-code-row { flex-direction: column; align-items: stretch; }
+        }
         .discount-code-row {
             display: flex;
             gap: 8px;
@@ -10580,6 +10620,13 @@
                      Hidden by default, shown by renderOrdersLoyaltyNote()
                      (called from renderOrderHistory()) only when signed in. -->
                 <div class="loyalty-note" id="ordersLoyaltyNote" style="display:none;"></div>
+                <!-- "Give X, get X": share this code, a friend gets a
+                     discount on their order, you get a loyalty_rewards
+                     entry (same mechanism/display as the spend-threshold
+                     reward above) once theirs goes through. See
+                     get_or_create_referral_code() and the referral bits of
+                     record_discount_redemption() for the backend half. -->
+                <div class="referral-card" id="referralCard" style="display:none;"></div>
                 <div id="orderHistoryList" class="order-history-list"></div>
             </div>
         </section>
@@ -11734,7 +11781,13 @@
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.from('discount_codes').select('*').order('created_at', { ascending: false }).limit(200);
             if (error) { console.error('Could not load discount codes:', error.message); return; }
-            discounts = (data || []).map(d => ({
+            // Customers' own referral codes are discount_codes rows under the
+            // hood (see get_or_create_referral_code) but aren't something an
+            // admin manages here, so they're excluded from this list the same
+            // way a customer's cart or profile row would be.
+            const { data: referralLinks } = await supabaseClient.from('referral_codes').select('discount_code_id');
+            const referralDiscountIds = new Set((referralLinks || []).map(r => r.discount_code_id));
+            discounts = (data || []).filter(d => !referralDiscountIds.has(d.id)).map(d => ({
                 id: d.id, name: d.name, code: d.code, type: d.type, value: d.value,
                 buyQty: d.buy_qty, getQty: d.get_qty,
                 qualifyingScope: d.qualifying_scope, qualifyingCategory: d.qualifying_category, qualifyingProductId: d.qualifying_product_id,
@@ -12717,7 +12770,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.2';
+        const BUILD_VERSION = '2026-09-19.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17018,8 +17071,40 @@
             el.innerHTML = loyaltyStatusHTML();
             el.style.display = '';
         }
+        let referralCodeCache = null; // this account's own code, once fetched, so revisiting the page doesn't re-call the RPC
+        async function renderReferralCard() {
+            const el = document.getElementById('referralCard');
+            if (!el) return;
+            if (!supabaseClient || !currentSupabaseUser) { el.style.display = 'none'; return; }
+            el.style.display = '';
+            el.innerHTML = `
+      <h3>Refer a friend</h3>
+      <p>Give a friend <strong>${loyaltyRewardPct}% off</strong> their order, and you'll get <strong>${loyaltyRewardPct}% off</strong> your next one once they use it.</p>
+      <div class="referral-code-row"><code id="referralCodeText">Loading…</code><button type="button" class="btn btn-outline-dark" id="referralCopyBtn" disabled>Copy code</button></div>`;
+            const { data, error } = await supabaseClient.rpc('get_or_create_referral_code');
+            const codeEl = document.getElementById('referralCodeText');
+            const copyBtn = document.getElementById('referralCopyBtn');
+            if (error || !data) {
+                if (codeEl) codeEl.textContent = "Couldn't load your code, try again shortly.";
+                return;
+            }
+            referralCodeCache = data;
+            if (codeEl) codeEl.textContent = data;
+            if (copyBtn) {
+                copyBtn.disabled = false;
+                copyBtn.onclick = async () => {
+                    try {
+                        await navigator.clipboard.writeText(data);
+                        showToast('Referral code copied.');
+                    } catch (e) {
+                        showToast('Could not copy automatically, code shown above.');
+                    }
+                };
+            }
+        }
         async function renderOrderHistory() {
             renderOrdersLoyaltyNote();
+            renderReferralCard();
             const el = document.getElementById('orderHistoryList');
             if (!el) return;
             if (!supabaseClient) {

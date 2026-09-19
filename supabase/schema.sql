@@ -301,6 +301,63 @@ $$;
 ALTER FUNCTION "public"."get_best_sellers"("p_days" integer, "p_limit" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_or_create_referral_code"() RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_user_id uuid := auth.uid();
+  v_existing text;
+  v_base text;
+  v_code text;
+  v_discount_id uuid;
+  v_pct numeric;
+begin
+  if v_user_id is null then
+    raise exception 'Not authorized';
+  end if;
+
+  select dc.code into v_existing
+  from public.referral_codes rc
+  join public.discount_codes dc on dc.id = rc.discount_code_id
+  where rc.user_id = v_user_id;
+
+  if v_existing is not null then
+    return v_existing;
+  end if;
+
+  select coalesce(reward_pct, 10) into v_pct from public.loyalty_settings limit 1;
+
+  select upper(regexp_replace(coalesce(split_part(full_name, ' ', 1), ''), '[^a-zA-Z]', '', 'g'))
+    into v_base
+  from public.profiles where id = v_user_id;
+
+  if v_base is null or v_base = '' then
+    v_base := 'FRIEND';
+  end if;
+
+  loop
+    -- md5/random/clock_timestamp are built-ins (always resolvable
+    -- regardless of search_path), unlike gen_random_uuid(), which lives in
+    -- the extensions schema this function's search_path doesn't include.
+    v_code := left(v_base, 10) || '-' || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 5));
+    exit when not exists (select 1 from public.discount_codes where lower(code) = lower(v_code));
+  end loop;
+
+  insert into public.discount_codes (code, name, type, value, qualifying_scope, max_per_customer, active)
+    values (v_code, 'Referral code', 'percent', v_pct, 'all', 1, true)
+    returning id into v_discount_id;
+
+  insert into public.referral_codes (user_id, discount_code_id) values (v_user_id, v_discount_id);
+
+  return v_code;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."get_or_create_referral_code"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_units_sold"("p_product_keys" "text"[]) RETURNS TABLE("product_key" "text", "units_sold" bigint)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -630,10 +687,42 @@ CREATE OR REPLACE FUNCTION "public"."record_discount_redemption"() RETURNS "trig
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
+declare
+  v_referrer_id uuid;
+  v_pct numeric;
+  v_reward_id uuid;
 begin
   if new.discount_id is not null then
     insert into public.discount_redemptions (discount_id, user_id, order_id)
     values (new.discount_id, new.user_id, new.id);
+
+    -- Referral program: if the code this order used is someone's personal
+    -- referral code, that's the "get" half of give-X-get-X, rewarding the
+    -- referrer now that their friend's order is real. Guest checkouts
+    -- (new.user_id is null) don't have anywhere to put a reward, so they
+    -- skip this without erroring, same as a non-referral code would.
+    select rc.user_id, dc.value into v_referrer_id, v_pct
+    from public.referral_codes rc
+    join public.discount_codes dc on dc.id = rc.discount_code_id
+    where rc.discount_code_id = new.discount_id;
+
+    if v_referrer_id is not null and new.user_id is not null and v_referrer_id <> new.user_id then
+      insert into public.loyalty_rewards (user_id, pct, source_order_id)
+      values (v_referrer_id, v_pct, new.id)
+      on conflict (source_order_id) where (source_order_id is not null) do nothing
+      returning id into v_reward_id;
+
+      if v_reward_id is not null then
+        insert into public.notifications (user_id, title, body, link, category)
+        values (
+          v_referrer_id,
+          'Reward unlocked',
+          'A friend just used your referral code. You''ve unlocked ' || v_pct || '% off your next order.',
+          '#/checkout',
+          'reward'
+        );
+      end if;
+    end if;
   end if;
   return new;
 end;
@@ -1232,11 +1321,15 @@ CREATE TABLE IF NOT EXISTS "public"."loyalty_rewards" (
     "pct" numeric NOT NULL,
     "used" boolean DEFAULT false NOT NULL,
     "earned_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "used_at" timestamp with time zone
+    "used_at" timestamp with time zone,
+    "source_order_id" "uuid"
 );
 
 
 ALTER TABLE "public"."loyalty_rewards" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."loyalty_rewards"."source_order_id" IS 'Set only for a reward earned via the referral program: the referred friend''s order that triggered it. Null for the spend-threshold and welcome-signup rewards. Unique when set, so issue_referral_reward_if_earned can''t double-reward the same order.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."loyalty_settings" (
@@ -1495,6 +1588,20 @@ ALTER TABLE "public"."rate_limit_hits" ALTER COLUMN "id" ADD GENERATED ALWAYS AS
 
 
 
+CREATE TABLE IF NOT EXISTS "public"."referral_codes" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "discount_code_id" "uuid" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."referral_codes" OWNER TO "postgres";
+
+
+COMMENT ON TABLE "public"."referral_codes" IS 'One row per customer who has generated their personal referral code. discount_code_id points at the auto-created discount_codes row (percent off, max_per_customer 1) that IS the shareable code; this table is just the ownership link back to the referrer.';
+
+
 CREATE TABLE IF NOT EXISTS "public"."stock_alerts" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid" NOT NULL,
@@ -1669,6 +1776,21 @@ ALTER TABLE ONLY "public"."rate_limit_hits"
 
 
 
+ALTER TABLE ONLY "public"."referral_codes"
+    ADD CONSTRAINT "referral_codes_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."referral_codes"
+    ADD CONSTRAINT "referral_codes_discount_code_id_key" UNIQUE ("discount_code_id");
+
+
+
+ALTER TABLE ONLY "public"."referral_codes"
+    ADD CONSTRAINT "referral_codes_user_id_key" UNIQUE ("user_id");
+
+
+
 ALTER TABLE ONLY "public"."stock_alerts"
     ADD CONSTRAINT "stock_alerts_pkey" PRIMARY KEY ("id");
 
@@ -1697,6 +1819,10 @@ CREATE INDEX "discount_redemptions_by_email" ON "public"."discount_redemptions" 
 
 
 CREATE INDEX "discount_redemptions_by_user" ON "public"."discount_redemptions" USING "btree" ("discount_id", "user_id") WHERE ("user_id" IS NOT NULL);
+
+
+
+CREATE UNIQUE INDEX "loyalty_rewards_source_order_id_idx" ON "public"."loyalty_rewards" USING "btree" ("source_order_id") WHERE ("source_order_id" IS NOT NULL);
 
 
 
@@ -1802,6 +1928,11 @@ ALTER TABLE ONLY "public"."discount_redemptions"
 
 
 ALTER TABLE ONLY "public"."loyalty_rewards"
+    ADD CONSTRAINT "loyalty_rewards_source_order_id_fkey" FOREIGN KEY ("source_order_id") REFERENCES "public"."orders"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."loyalty_rewards"
     ADD CONSTRAINT "loyalty_rewards_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
@@ -1848,6 +1979,16 @@ ALTER TABLE ONLY "public"."profiles"
 
 ALTER TABLE ONLY "public"."push_subscriptions"
     ADD CONSTRAINT "push_subscriptions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."referral_codes"
+    ADD CONSTRAINT "referral_codes_discount_code_id_fkey" FOREIGN KEY ("discount_code_id") REFERENCES "public"."discount_codes"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."referral_codes"
+    ADD CONSTRAINT "referral_codes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -1911,6 +2052,10 @@ CREATE POLICY "Admins can view coming soon signups" ON "public"."coming_soon_sig
 
 
 CREATE POLICY "Admins can view redemptions" ON "public"."discount_redemptions" FOR SELECT USING ("public"."is_admin_user"());
+
+
+
+CREATE POLICY "Admins can view referral codes" ON "public"."referral_codes" FOR SELECT USING ("public"."is_admin_user"());
 
 
 
@@ -2026,6 +2171,10 @@ CREATE POLICY "Users can view their own read markers" ON "public"."notification_
 
 
 
+CREATE POLICY "Users can view their own referral code" ON "public"."referral_codes" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can view their own subscription reminders" ON "public"."subscription_reminders" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
@@ -2102,6 +2251,9 @@ ALTER TABLE "public"."push_subscriptions" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."rate_limit_hits" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."referral_codes" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."stock_alerts" ENABLE ROW LEVEL SECURITY;
@@ -2339,6 +2491,12 @@ GRANT ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_i
 GRANT ALL ON FUNCTION "public"."get_best_sellers"("p_days" integer, "p_limit" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."get_best_sellers"("p_days" integer, "p_limit" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_best_sellers"("p_days" integer, "p_limit" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_or_create_referral_code"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_or_create_referral_code"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_or_create_referral_code"() TO "service_role";
 
 
 
@@ -2636,6 +2794,12 @@ GRANT ALL ON TABLE "public"."rate_limit_hits" TO "service_role";
 GRANT ALL ON SEQUENCE "public"."rate_limit_hits_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."rate_limit_hits_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."rate_limit_hits_id_seq" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."referral_codes" TO "anon";
+GRANT ALL ON TABLE "public"."referral_codes" TO "authenticated";
+GRANT ALL ON TABLE "public"."referral_codes" TO "service_role";
 
 
 
