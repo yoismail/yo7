@@ -2664,14 +2664,23 @@
         }
         .bundles-grid {
             display: grid;
-            /* auto-fit + a capped max (not 1fr) keeps a short trailing row's
-               lone card left-aligned at its normal size instead of leaving
-               unused grid cells beside it (grid column tracks are shared
-               across every row, not recomputed per row like flex). */
-            grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
-            justify-content: start;
+            /* A capped max here (not 1fr) reads as a definite track size,
+               so auto-fit computes the column COUNT from that cap instead
+               of the min — fine while Bundles/Combos only ever has a
+               handful of admin-added cards, but it quietly fits one fewer
+               column than the viewport has room for, the same bug that hit
+               the 249-item Shop grid once a list is big enough to fill full
+               rows. Bundles/Combos has no hard cap on how many an admin can
+               add, so keeping the max as 1fr (column count from the min
+               instead) and capping the card's own width below avoids the
+               same regression if that list ever grows dense. */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 22px;
             margin-top: 12px;
+        }
+        .bundles-grid > .bundle-card,
+        .bundles-grid > .combo-card {
+            max-width: 340px;
         }
         .bundles-scroll { gap: 20px; padding: 4px 2px 10px; }
         .bundles-scroll .bundle-card { flex: 0 0 300px; max-width: 300px; scroll-snap-align: start; }
@@ -5158,21 +5167,25 @@
            section's "View all" link is how the rest gets seen. Mobile is
            untouched — still the original swipe strip below 901px. */
         @media (min-width: 901px) {
-            /* auto-fit + a capped max (220px, these cards' own intended
-               width below this breakpoint), not auto-fill + 1fr — 1fr
-               stretched every card to fill whatever was left in the row,
-               so a short row (a handful of special offers, or a trailing
-               row with one leftover best-seller) either blew up into a
-               few oversized cards or stranded one normal-sized card next
-               to a wide dead gap, on any screen wide enough for more
-               columns than there were items. auto-fit collapses the
-               unused columns instead, so a short row is just normal-sized
-               cards left-aligned with quiet space after them, the same
-               shape a deliberately laid-out desktop row would have. */
+            /* auto-fit with an indefinite max (1fr), not a capped one —
+               a capped max (e.g. minmax(180px, 220px)) reads as a definite
+               track size, so auto-fit computes the column COUNT from that
+               cap instead of the min. That silently fits one fewer column
+               than the row actually has room for on any grid dense enough
+               to fill full rows (this bit the 249-item Shop grid: a whole
+               card's width wasted down every row, not just a trailing
+               one). These strips are capped to 8 cards via nth-child below,
+               so that never showed up here with today's catalogue, but
+               nothing stops it recurring at a wider viewport where 8 cards
+               span more than one row. Column count comes from the min
+               instead; each card's own base max-width (220px, from its
+               plain flex-row rule below this breakpoint) is what keeps a
+               short row's cards from stretching to fill the leftover
+               space, the same job the old capped max was doing, just
+               without also miscounting columns. */
             .offer-carousel, .new-carousel, .best-seller-carousel {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(180px, 220px));
-                justify-content: start;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                 gap: 18px;
                 overflow: visible;
                 cursor: default;
@@ -5184,10 +5197,6 @@
                    to a single column instead of spreading across the row. */
                 flex: 1;
                 min-width: 0;
-            }
-            .offer-card, .new-card, .best-seller-card {
-                max-width: none;
-                width: 100%;
             }
             .offer-carousel > :nth-child(n+9),
             .new-carousel > :nth-child(n+9),
@@ -12978,7 +12987,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.20';
+        const BUILD_VERSION = '2026-09-19.21';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
