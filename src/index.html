@@ -11932,13 +11932,15 @@
             }
             const pending = pendingLoyaltyReward();
             if (pending) {
-                // A referral code takes the place of the loyalty reward on
-                // this specific order (see the matching guard in
-                // updateSummaries/computeVerifiedTotal) rather than
-                // stacking with it — the reward itself is still there,
-                // saved for whenever they next check out without one.
+                // A referral code takes the place of the loyalty reward
+                // rather than stacking with it (see the matching guard in
+                // updateSummaries/computeVerifiedTotal) — and since only a
+                // brand-new customer can redeem a referral code at all,
+                // whatever's pending here can only be the welcome bonus,
+                // which record_discount_redemption() voids outright once
+                // this order goes through, not saved for later.
                 if (activelyApplying && appliedDiscount && appliedDiscount.isReferral) {
-                    return `You've got <strong>${pending.pct}% off</strong> saved for your next order, this one's already using a referral code instead.`;
+                    return `This order is using a referral code, so your welcome reward won't be applied.`;
                 }
                 return activelyApplying
                     ? `You've got <strong>${pending.pct}% off</strong> this order, already applied below.`
@@ -12840,7 +12842,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.7';
+        const BUILD_VERSION = '2026-09-19.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }

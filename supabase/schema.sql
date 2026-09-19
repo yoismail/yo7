@@ -707,21 +707,34 @@ begin
     join public.discount_codes dc on dc.id = rc.discount_code_id
     where rc.discount_code_id = new.discount_id;
 
-    if v_referrer_id is not null and new.user_id is not null and v_referrer_id <> new.user_id then
-      insert into public.loyalty_rewards (user_id, pct, source_order_id)
-      values (v_referrer_id, v_pct, new.id)
-      on conflict (source_order_id) where (source_order_id is not null) do nothing
-      returning id into v_reward_id;
+    if v_referrer_id is not null and new.user_id is not null then
+      -- The buyer's own pending reward, if they have one, can only be
+      -- the automatic welcome bonus: redeeming a referral code already
+      -- requires zero prior orders (enforced at checkout), so there's no
+      -- way they've earned a real spend-threshold reward yet. Voided
+      -- outright rather than just skipped on this order, a referred
+      -- customer gets the referral discount instead of the welcome one,
+      -- not both, one after the other.
+      update public.loyalty_rewards
+      set used = true, used_at = now()
+      where user_id = new.user_id and used = false;
 
-      if v_reward_id is not null then
-        insert into public.notifications (user_id, title, body, link, category)
-        values (
-          v_referrer_id,
-          'Reward unlocked',
-          'A friend just used your referral code. You''ve unlocked ' || v_pct || '% off your next order.',
-          '#/checkout',
-          'reward'
-        );
+      if v_referrer_id <> new.user_id then
+        insert into public.loyalty_rewards (user_id, pct, source_order_id)
+        values (v_referrer_id, v_pct, new.id)
+        on conflict (source_order_id) where (source_order_id is not null) do nothing
+        returning id into v_reward_id;
+
+        if v_reward_id is not null then
+          insert into public.notifications (user_id, title, body, link, category)
+          values (
+            v_referrer_id,
+            'Reward unlocked',
+            'A friend just used your referral code. You''ve unlocked ' || v_pct || '% off your next order.',
+            '#/checkout',
+            'reward'
+          );
+        end if;
       end if;
     end if;
   end if;
