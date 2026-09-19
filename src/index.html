@@ -6800,7 +6800,13 @@
         .loyalty-note-earned {
             font-size: 13.5px;
             font-weight: 600;
-            color: var(--ink);
+            /* var(--aubergine-deep), not var(--ink) — this background is
+               always the same bright yellow regardless of theme, but
+               --ink flips to a near-white in dark mode, which made the
+               text unreadable against it. --aubergine-deep has no dark-
+               mode override, same as .btn-primary's text on this exact
+               background. */
+            color: var(--aubergine-deep);
             background: var(--orange);
             border: 1px solid rgba(var(--border-rgb), 0.2);
         }
@@ -11940,7 +11946,8 @@
                 // which record_discount_redemption() voids outright once
                 // this order goes through, not saved for later.
                 if (activelyApplying && appliedDiscount && appliedDiscount.isReferral) {
-                    return `This order is using a referral code, so your welcome reward won't be applied.`;
+                    const from = appliedDiscount.referrerFirstName ? `${escapeHtml(appliedDiscount.referrerFirstName)}'s` : 'a friend\'s';
+                    return `You're using ${from} referral code for <strong>${appliedDiscount.value}% off</strong>, so your welcome reward won't be applied.`;
                 }
                 return activelyApplying
                     ? `You've got <strong>${pending.pct}% off</strong> this order, already applied below.`
@@ -12842,7 +12849,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.8';
+        const BUILD_VERSION = '2026-09-19.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }

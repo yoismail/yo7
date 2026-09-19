@@ -562,11 +562,24 @@ Deno.serve(async (req) => {
           if (!discountError) {
             discountRow = { id: d.id, max_per_customer: d.max_per_customer };
             appliedDiscountIsReferral = isReferralCode;
+            // First name only, shown back to whoever's redeeming the code
+            // ("Ismail's referral code") — never anything more identifying
+            // than that, and only fetched once the code has actually
+            // passed every other check, not on a rejected attempt.
+            let referrerFirstName: string | null = null;
+            if (isReferralCode && referral) {
+              const { data: referrerProfile } = await db
+                .from("profiles")
+                .select("full_name")
+                .eq("id", referral.user_id)
+                .maybeSingle();
+              referrerFirstName = referrerProfile?.full_name?.split(" ")[0] ?? null;
+            }
             discountDef = {
               id: d.id, code: d.code, type: d.type, value: d.value,
               buyQty: d.buy_qty, getQty: d.get_qty,
               qualifyingScope: d.qualifying_scope, qualifyingCategory: d.qualifying_category, qualifyingProductId: d.qualifying_product_id,
-              isReferral: isReferralCode,
+              isReferral: isReferralCode, referrerFirstName,
             };
             const qualifyingSubtotal = round2(qualifying.reduce((s, l) => s + l.unitPrice * l.qty, 0));
             if (d.type === "percent") discountAmount = round2(qualifyingSubtotal * (d.value / 100));
