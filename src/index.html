@@ -12987,7 +12987,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.21';
+        const BUILD_VERSION = '2026-09-19.22';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -20574,35 +20574,72 @@
             if (!supabaseClient) { supabaseSessionRestored = true; return; }
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session && session.user) {
-                const name = (session.user.user_metadata && session.user.user_metadata.full_name) || session.user.email.split('@')[0];
-                setUser(name, session.user, { freshSignIn: false });
-                await refreshAdminStatus();
+                // setUser() fans out into cart/loyalty/reorder rendering
+                // that reads several other independently-loaded settings —
+                // genuinely unrelated to whether the session itself
+                // restored fine. Without this try/catch, one of those
+                // throwing (a transient bad response, a settings row that
+                // hasn't loaded yet) would abort this function before
+                // supabaseSessionRestored ever flips true, silently
+                // breaking every route's below-the-fold refresh fix at
+                // once, not just whichever page happened to be open.
+                try {
+                    const name = (session.user.user_metadata && session.user.user_metadata.full_name) || session.user.email.split('@')[0];
+                    setUser(name, session.user, { freshSignIn: false });
+                    await refreshAdminStatus();
+                } catch (err) {
+                    console.error('Error while restoring session state:', err);
+                }
             }
-            // A hard refresh landing straight on an admin route runs the
-            // very first route() at boot before this session (and
+            // A hard refresh landing straight on a route whose render gates
+            // on currentSupabaseUser (Your Orders, Notifications, Buy
+            // Again, the admin dashboard, an admin order detail page) runs
+            // the very first route() at boot before this session (and
             // currentIsAdmin, resolved inside setUser's refreshAdminStatus
             // call above) is known, so that first paint can get stuck
-            // showing "not found" / a login-form flash even for an
-            // already-logged-in admin, since nothing else re-renders it
-            // afterward. supabaseSessionRestored flips true regardless of
-            // whether a session was actually found, so renderAdminPage()
-            // knows a genuinely logged-out visit apart from "haven't
-            // checked yet" — re-running route() once it's set corrects
-            // either case. Scoped to #/admin routes only, so it doesn't
-            // touch any other page's render (e.g. re-triggering carousel
-            // setup).
+            // showing "log in to see this" / "not found" / an empty list
+            // even for an already-logged-in visitor, since nothing else
+            // re-renders it afterward. supabaseSessionRestored flips true
+            // regardless of whether a session was actually found, so each
+            // of those render functions can tell a genuinely logged-out
+            // visit apart from "haven't checked yet" — re-running route()
+            // once it's set corrects either case. preserveScroll matters
+            // here specifically: route() otherwise jumps to the top of the
+            // page on every call, which would yank a visitor back up if
+            // they'd already started reading/scrolling in the (typically
+            // well under a second, but not instant) window before this
+            // async check resolves.
             //
             // window.location.hash itself can't be trusted here: route()'s
             // own syncAddressBarToHash rewrites the address bar to a clean
-            // path (/admin/) and clears the hash on every render, and that
-            // first boot render has already happened by the time this
+            // path (e.g. /orders/) and clears the hash on every render, and
+            // that first boot render has already happened by the time this
             // async session check resolves. Checking the hash directly
             // silently never re-ran route() on a hard refresh, which is
-            // exactly what made this fix not actually fire. pathToHash
-            // derives the route straight from the real, persistent
-            // location.pathname instead, same as syncHashFromPath does.
+            // exactly what made an earlier, #/admin-only version of this
+            // fix not actually fire. pathToHash derives the route straight
+            // from the real, persistent location.pathname instead, same as
+            // syncHashFromPath does.
             supabaseSessionRestored = true;
-            if (pathToHash(window.location.pathname).startsWith('#/admin') || window.location.hash.startsWith('#/admin')) route();
+            const currentHash = pathToHash(window.location.pathname) || window.location.hash;
+            const needsSessionRerender =
+                currentHash === '#/orders' ||
+                currentHash === '#/notifications' ||
+                currentHash === '#/buy-again' ||
+                currentHash === '#/admin' || currentHash === '#/admin/orders' ||
+                currentHash.startsWith('#/admin/order/');
+            if (needsSessionRerender) {
+                route({ preserveScroll: true });
+            } else if (currentHash === '#/checkout') {
+                // Full route() re-dispatch would also reset the checkout
+                // back to its first step and re-render the cart, wrong if
+                // a visitor had already moved past it in the time this
+                // check took — prefillDeliveryFromLastOrder() alone is
+                // idempotent (never overwrites a field that's already
+                // filled in) and is the only part of that route dispatch
+                // that actually needed the session to be ready.
+                prefillDeliveryFromLastOrder();
+            }
         }
         restoreSupabaseSession();
 
