@@ -13011,7 +13011,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.24';
+        const BUILD_VERSION = '2026-09-19.25';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18249,9 +18249,24 @@
             notFoundEl.style.display = 'none';
             loadingEl.style.display = 'block';
             loadingEl.textContent = 'Loading order…';
-            if (!supabaseClient || !currentSupabaseUser || !currentIsAdmin) {
+            if (!supabaseClient) {
                 loadingEl.style.display = 'none';
                 notFoundEl.style.display = 'block';
+                return;
+            }
+            if (!currentSupabaseUser || !currentIsAdmin) {
+                // A hard refresh lands here before restoreSupabaseSession()
+                // has had a chance to check the session (and confirm admin
+                // status), so an already-logged-in admin isn't actually
+                // logged out, we just don't know yet — same story as
+                // renderAdminPage()/renderOrderHistory(). Staying on the
+                // loading state instead of flashing "Order not found"
+                // avoids that false read; restoreSupabaseSession()
+                // re-renders this page once it actually knows either way.
+                if (supabaseSessionRestored) {
+                    loadingEl.style.display = 'none';
+                    notFoundEl.style.display = 'block';
+                }
                 return;
             }
             const { data: order, error } = await supabaseClient
