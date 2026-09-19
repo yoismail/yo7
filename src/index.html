@@ -8101,6 +8101,18 @@
         }
 
         /* ================= ORDER HISTORY ================= */
+        /* "Your orders" is a single narrow column throughout (loyalty
+           note, referral card, order list), not a wide grid like the shop
+           pages that .wrap's 1600px is really sized for — left at that
+           width, the loyalty note and referral card in particular just
+           stretched edge to edge with a lot of empty space around a
+           narrow code/button, looking sparse and unfinished on a wide
+           desktop screen despite being fine on mobile, where 1600px never
+           mattered. Scoped to this page only, everywhere else keeps the
+           full-width .wrap. */
+        #view-orders .wrap {
+            max-width: 760px;
+        }
         .orders-section {
             padding: 48px 0 100px;
             background:
@@ -12914,7 +12926,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.15';
+        const BUILD_VERSION = '2026-09-19.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
