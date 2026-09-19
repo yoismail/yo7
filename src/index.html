@@ -10844,6 +10844,11 @@
         </header>
         <section class="orders-section">
             <div class="wrap">
+                <div id="adminCheckingSection" style="display:none;">
+                    <div class="auth-box" style="margin:0 auto; text-align:center;">
+                        <p class="sub" style="margin:0;">Checking your admin access&hellip;</p>
+                    </div>
+                </div>
                 <div id="adminLoginSection" style="display:none;">
                     <div class="auth-box" style="margin:0 auto;">
                         <h1>Admin login</h1>
@@ -12827,6 +12832,12 @@
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         let currentUser = null;
         let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
+        // Starts false on every page load, flips true once restoreSupabaseSession()
+        // has resolved once (whether or not it found a session). Lets
+        // renderAdminPage() tell "not logged in yet" apart from "haven't
+        // checked yet" on a hard refresh, so an already-logged-in admin
+        // doesn't see the login form flash up before their session loads.
+        let supabaseSessionRestored = false;
         let currentIsAdmin = false; // set from profiles.is_admin after login, gates the admin orders dashboard
 
         // Fire-and-forget: an audit-log write failing (e.g. a dropped
@@ -12959,7 +12970,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.18';
+        const BUILD_VERSION = '2026-09-19.19';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18670,7 +18681,8 @@
             const loginSection = document.getElementById('adminLoginSection');
             const deniedSection = document.getElementById('adminDeniedSection');
             const dashSection = document.getElementById('adminDashboardSection');
-            [loginSection, deniedSection, dashSection].forEach(s => { if (s) s.style.display = 'none'; });
+            const checkingSection = document.getElementById('adminCheckingSection');
+            [loginSection, deniedSection, dashSection, checkingSection].forEach(s => { if (s) s.style.display = 'none'; });
             if (!supabaseClient) {
                 loginSection.style.display = 'block';
                 setAuthError('adminLoginError', 'Admin login needs accounts connected first, this is preview mode right now.');
@@ -18678,6 +18690,17 @@
                 return;
             }
             if (!currentSupabaseUser) {
+                // A hard refresh lands here before restoreSupabaseSession()
+                // has had a chance to check for an existing session, so an
+                // already-logged-in admin isn't actually logged out, we just
+                // don't know yet. Showing the login form here would flash
+                // it up for a split second before restoreSupabaseSession()
+                // re-renders this page correctly, so show a neutral loading
+                // state instead until that first check has actually happened.
+                if (!supabaseSessionRestored) {
+                    checkingSection.style.display = 'block';
+                    return;
+                }
                 loginSection.style.display = 'block';
                 autoEnterEditMode = false;
                 return;
@@ -20531,23 +20554,38 @@
         // library persists it in localStorage itself); without this, a
         // logged-in visitor would appear logged out every time they reload.
         async function restoreSupabaseSession() {
-            if (!supabaseClient) return;
+            if (!supabaseClient) { supabaseSessionRestored = true; return; }
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session && session.user) {
                 const name = (session.user.user_metadata && session.user.user_metadata.full_name) || session.user.email.split('@')[0];
                 setUser(name, session.user, { freshSignIn: false });
-                // A hard refresh landing straight on an admin route runs the
-                // very first route() at boot before this session (and
-                // currentIsAdmin, resolved inside setUser's refreshAdminStatus
-                // call) is known, so that first paint can get stuck showing
-                // "not found" / the login form even for an already-logged-in
-                // admin, since nothing else re-renders it afterward. Re-running
-                // route() once admin status has actually settled corrects
-                // that. Scoped to #/admin routes only, so it doesn't touch
-                // any other page's render (e.g. re-triggering carousel setup).
                 await refreshAdminStatus();
-                if (window.location.hash.startsWith('#/admin')) route();
             }
+            // A hard refresh landing straight on an admin route runs the
+            // very first route() at boot before this session (and
+            // currentIsAdmin, resolved inside setUser's refreshAdminStatus
+            // call above) is known, so that first paint can get stuck
+            // showing "not found" / a login-form flash even for an
+            // already-logged-in admin, since nothing else re-renders it
+            // afterward. supabaseSessionRestored flips true regardless of
+            // whether a session was actually found, so renderAdminPage()
+            // knows a genuinely logged-out visit apart from "haven't
+            // checked yet" — re-running route() once it's set corrects
+            // either case. Scoped to #/admin routes only, so it doesn't
+            // touch any other page's render (e.g. re-triggering carousel
+            // setup).
+            //
+            // window.location.hash itself can't be trusted here: route()'s
+            // own syncAddressBarToHash rewrites the address bar to a clean
+            // path (/admin/) and clears the hash on every render, and that
+            // first boot render has already happened by the time this
+            // async session check resolves. Checking the hash directly
+            // silently never re-ran route() on a hard refresh, which is
+            // exactly what made this fix not actually fire. pathToHash
+            // derives the route straight from the real, persistent
+            // location.pathname instead, same as syncHashFromPath does.
+            supabaseSessionRestored = true;
+            if (pathToHash(window.location.pathname).startsWith('#/admin') || window.location.hash.startsWith('#/admin')) route();
         }
         restoreSupabaseSession();
 
