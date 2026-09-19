@@ -8219,7 +8219,25 @@
         .push-toggle-hint.ios-steps ol { margin: 6px 0 0; padding-left: 19px; }
         .push-toggle-hint.ios-steps li { margin-bottom: 4px; }
         .push-toggle-hint.ios-steps li:last-child { margin-bottom: 0; }
-        .push-toggle-hint.ios-steps .share-icon-inline { display: inline-flex; vertical-align: -3px; width: 15px; height: 15px; margin: 0 1px; }
+        /* Sized and boxed like a small chip rather than a plain inline
+           glyph — the whole point of showing it is "this exact shape is
+           what to look for on your screen", which a 15px icon sitting
+           quietly inside a sentence didn't achieve; easy to read straight
+           past it without registering it at all. */
+        .push-toggle-hint.ios-steps .share-icon-inline {
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: -7px;
+            width: 22px;
+            height: 22px;
+            margin: 0 3px;
+            padding: 3px;
+            border-radius: 7px;
+            background: rgba(225, 225, 0, 0.3);
+            border: 1px solid rgba(225, 225, 0, 0.6);
+        }
         @media (max-width: 520px) {
             .push-toggle-card { flex-direction: column; align-items: flex-start; }
             .push-toggle-card .btn { width: 100%; }
@@ -12891,7 +12909,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.11';
+        const BUILD_VERSION = '2026-09-19.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17659,7 +17677,7 @@
         <strong>Turn on notifications in 2 taps</strong>
         iPhone only allows notifications for apps added to your Home Screen, not for websites open in Safari. Here's how:
         <ol>
-          <li>Tap the Share button ${shareIcon} at the bottom of the Safari screen</li>
+          <li>Tap the Share icon ${shareIcon} (a square with an arrow) at the bottom of the Safari screen</li>
           <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
         </ol>
         Then open Yo7 Foods from the icon on your Home Screen (not from Safari) to turn notifications on.
