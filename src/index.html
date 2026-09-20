@@ -4326,6 +4326,7 @@
             .footer-newsletter-grid .footer-newsletter-icon {
                 width: 32px;
                 height: 32px;
+                border-radius: 10px;
             }
             .footer-newsletter-grid .footer-newsletter-icon svg {
                 width: 15px;
@@ -4370,6 +4371,12 @@
             border-radius: 22px;
             box-shadow: 0 2px 6px rgba(44, 28, 16, 0.04), 0 30px 60px rgba(44, 28, 16, 0.09);
             overflow: hidden;
+            /* Lets the compound pill / side-by-side field layouts below
+               react to the CARD's own width, not the viewport's — the
+               same markup sits full-width on mobile and roughly
+               half-width next to its sibling on desktop, two very
+               different available widths at the same viewport size. */
+            container-type: inline-size;
         }
         [data-theme="dark"] .footer-newsletter {
             background: var(--card-bg);
@@ -4384,14 +4391,27 @@
             background: linear-gradient(90deg, transparent, var(--chartreuse), transparent);
             opacity: 0.7;
         }
+        /* Same oversized-glyph-bled-off-the-corner language as
+           .combo-ticket-watermark, just reusing each card's own icon
+           instead of a category glyph — a quiet signature touch behind
+           the copy rather than a plain flat card. */
+        .footer-newsletter-watermark {
+            position: absolute; z-index: 0; pointer-events: none;
+            right: -22px; bottom: -28px; width: 160px; height: 160px;
+            opacity: 0.05; color: #2C1C10;
+            transform: rotate(-12deg);
+        }
+        [data-theme="dark"] .footer-newsletter-watermark { color: var(--heading); opacity: 0.06; }
         .footer-newsletter-text {
             position: relative; z-index: 2;
             display: flex; align-items: center; gap: 16px;
         }
         .footer-newsletter-icon {
-            width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
-            background: rgba(144,184,0,0.16); color: var(--chartreuse-rich);
+            width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px;
+            background: linear-gradient(145deg, rgba(144,184,0,0.24), rgba(144,184,0,0.09));
+            color: var(--chartreuse-rich);
             display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 16px rgba(144,184,0,0.2);
         }
         .footer-newsletter-icon svg { width: 19px; height: 19px; }
         .footer-newsletter h4 {
@@ -4400,11 +4420,12 @@
         [data-theme="dark"] .footer-newsletter h4 { color: var(--heading); }
         .footer-newsletter p { font-size: 13px; color: #6b5c4f; }
         [data-theme="dark"] .footer-newsletter p { color: var(--text-muted); }
-        /* Each field on its own full-width row rather than trying to fit
-           side by side and wrapping unpredictably depending on how many
-           fields a given form has (see .footer-newsletter's own comment
-           above) — a consistent stack reads the same deliberate way on
-           both cards regardless of field count. */
+        /* Each field on its own full-width row by default — a consistent
+           stack that never wraps unpredictably regardless of field count.
+           The container queries below layer on a more considered, less
+           generic desktop treatment once the card itself (not just the
+           viewport) has the room for it: see #newsletterForm and
+           #heroCaptureForm. */
         .newsletter-form {
             position: relative; z-index: 2;
             display: flex; flex-direction: column; gap: 10px;
@@ -4442,6 +4463,53 @@
             background: #C9C900;
             transform: translateY(0);
         }
+        /* newsletterForm has a single field, so past 320px of card width
+           it merges into one compound pill (input + button sharing one
+           outline) instead of two stacked full-width bars — the familiar
+           "generic form" look is the thing that reads as an afterthought,
+           not this. */
+        @container (min-width: 320px) {
+            #newsletterForm {
+                flex-direction: row;
+                align-items: center;
+                gap: 4px;
+                background: rgba(225, 225, 0, 0.1);
+                border: 1.5px solid rgba(225, 225, 0, 0.35);
+                border-radius: 999px;
+                padding: 5px 5px 5px 18px;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+            #newsletterForm:focus-within {
+                border-color: var(--chartreuse);
+                box-shadow: 0 0 0 3px rgba(144, 184, 0, 0.16);
+            }
+            #newsletterForm input {
+                flex: 1;
+                min-width: 0;
+                padding: 10px 4px;
+                border: none;
+                background: transparent;
+            }
+            #newsletterForm input:focus { box-shadow: none; }
+            #newsletterForm button {
+                width: auto;
+                flex-shrink: 0;
+                border-radius: 999px;
+            }
+        }
+        /* heroCaptureForm has two real, distinct fields (not one compound
+           value), so it gets its own row instead of a pill — email and
+           postcode side by side once there's room, the "Secure 10% Off"
+           button kept on its own full-width line underneath since it's a
+           different kind of action, not a third field in the row. */
+        @container (min-width: 320px) {
+            #heroCaptureForm {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            #heroCaptureForm input { flex: 1 1 150px; width: auto; }
+            #heroCaptureForm button { flex: 1 1 100%; }
+        }
 
         /* Distinguishes the "10% off" card from the plain newsletter one
            right next to it via its accent colour alone — same wax-seal
@@ -4463,8 +4531,9 @@
             background: linear-gradient(90deg, transparent, var(--orange), transparent);
         }
         .footer-interest .footer-newsletter-icon {
-            background: rgba(225, 225, 0, 0.32);
+            background: linear-gradient(145deg, rgba(225,225,0,0.4), rgba(225,225,0,0.14));
             color: var(--aubergine-deep);
+            box-shadow: 0 6px 16px rgba(225,225,0,0.25);
         }
         .footer-interest .newsletter-form input {
             border-color: rgba(225, 225, 0, 0.45);
@@ -11336,6 +11405,7 @@
         <div class="wrap">
             <div class="footer-newsletter-grid">
             <div class="footer-newsletter">
+                <svg class="footer-newsletter-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
@@ -11358,6 +11428,7 @@
                  the hero's whole CTA before Shop Now took over that job;
                  kept fully intact here, just less prominent. -->
             <div class="footer-newsletter footer-interest hero-capture-wrap" id="heroCaptureWrap">
+                <svg class="footer-newsletter-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
@@ -13273,7 +13344,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.9';
+        const BUILD_VERSION = '2026-09-20.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
