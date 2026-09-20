@@ -378,6 +378,7 @@ ALTER FUNCTION "public"."get_units_sold"("p_product_keys" "text"[]) OWNER TO "po
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
     AS $$
 begin
   insert into public.profiles (id, full_name, phone, email)
@@ -1839,6 +1840,16 @@ CREATE INDEX "admin_audit_log_created_at_idx" ON "public"."admin_audit_log" USIN
 
 
 
+-- Discount codes are looked up case-insensitively at checkout
+-- (.ilike('code', ...)) — this table also grows with every customer who
+-- generates a referral code (get_or_create_referral_code()), not just
+-- admin-curated promos, so a plain-text scan here gets slower as the
+-- customer base grows, not just the promo list. A functional index on
+-- lower(code) is what actually gets used by a case-insensitive lookup.
+CREATE INDEX "discount_codes_code_lower_idx" ON "public"."discount_codes" USING "btree" ("lower"("code"));
+
+
+
 CREATE INDEX "discount_redemptions_by_email" ON "public"."discount_redemptions" USING "btree" ("discount_id", "guest_email") WHERE ("guest_email" IS NOT NULL);
 
 
@@ -1851,7 +1862,23 @@ CREATE UNIQUE INDEX "loyalty_rewards_source_order_id_idx" ON "public"."loyalty_r
 
 
 
+-- syncLoyaltyState() runs this lookup (eq user_id, eq used=false) on
+-- essentially every logged-in page load — a partial index, matching the
+-- WHERE clause exactly, keeps it small (only ever-growing history of USED
+-- rewards is excluded) and fast regardless of how large the table gets.
+CREATE INDEX "loyalty_rewards_user_id_unused_idx" ON "public"."loyalty_rewards" USING "btree" ("user_id") WHERE (NOT "used");
+
+
+
 CREATE UNIQUE INDEX "newsletter_subscribers_token_idx" ON "public"."newsletter_subscribers" USING "btree" ("unsubscribe_token");
+
+
+
+-- notification_reads' own primary key is (notification_id, user_id) —
+-- leftmost-prefix rules mean that composite can't serve a lookup filtered
+-- by user_id alone, which is exactly what loadUnreadNotificationCount()
+-- and loadNotificationsWithReadState() do on every logged-in page load.
+CREATE INDEX "notification_reads_user_id_idx" ON "public"."notification_reads" USING "btree" ("user_id");
 
 
 
@@ -1867,6 +1894,16 @@ CREATE UNIQUE INDEX "orders_stripe_payment_intent_id_key" ON "public"."orders" U
 
 
 
+-- renderOrderHistory() (Your Orders) and subscribeMyOrders()'s realtime
+-- filter both do eq(user_id) + order(created_at desc) — without an index,
+-- that's a full sequential scan of the whole orders table on every single
+-- customer's every visit to that page, not just a one-off admin query.
+-- Matching the query's own column order (and sort direction) means the
+-- index can serve it directly without an extra sort step.
+CREATE INDEX "orders_user_id_created_at_idx" ON "public"."orders" USING "btree" ("user_id", "created_at" DESC);
+
+
+
 CREATE INDEX "push_subscriptions_user_id_idx" ON "public"."push_subscriptions" USING "btree" ("user_id");
 
 
@@ -1876,6 +1913,13 @@ CREATE INDEX "rate_limit_hits_bucket_time_idx" ON "public"."rate_limit_hits" USI
 
 
 CREATE INDEX "stock_alerts_product_key_idx" ON "public"."stock_alerts" USING "btree" ("product_key");
+
+
+
+-- scheduleLoadStockAlertStates()'s batched "which of these am I already
+-- subscribed to" check filters by user_id (plus product_key, already
+-- indexed above) on every category/product page with an out-of-stock item.
+CREATE INDEX "stock_alerts_user_id_idx" ON "public"."stock_alerts" USING "btree" ("user_id");
 
 
 
