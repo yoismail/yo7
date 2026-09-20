@@ -5272,6 +5272,19 @@
             outline: none; border-color: var(--orange);
             box-shadow: 0 2px 6px rgba(var(--border-rgb), 0.06), 0 14px 30px rgba(var(--border-rgb), 0.08);
         }
+        .admin-orders-search-wrap { position: relative; margin-bottom: 14px; }
+        .admin-orders-search-wrap svg {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            width: 16px; height: 16px; color: var(--text-muted); pointer-events: none;
+        }
+        .admin-orders-search-wrap input {
+            width: 100%; box-sizing: border-box; padding: 11px 16px 11px 40px;
+            border-radius: 10px; border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            font-family: var(--body); font-size: 14px;
+            background: var(--card-bg); color: var(--ink);
+            transition: border-color 0.2s ease;
+        }
+        .admin-orders-search-wrap input:focus { outline: none; border-color: var(--chartreuse); }
         .cat-pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
         .cat-pill {
             font-family: var(--display); font-weight: 600; font-size: 13px;
@@ -10919,6 +10932,10 @@
                 <div id="adminDashboardSection" style="display:none;">
                     <div class="admin-panel-section panel-orders">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 3v18"/><path d="M4 7.5l8 4.5 8-4.5"/></svg></span>Manage orders</h2>
+                        <div class="admin-orders-search-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            <input type="text" id="adminOrdersSearchInput" placeholder="Search by order number, name, phone or postcode…" autocomplete="off" aria-label="Search orders">
+                        </div>
                         <div id="adminOrdersList"></div>
                     </div>
                     <div class="modal-overlay" id="cancelOrderModal" style="display:none;">
@@ -13022,7 +13039,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.1';
+        const BUILD_VERSION = '2026-09-20.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18106,13 +18123,32 @@
             data.forEach(p => { byId[p.id] = p; });
             return byId;
         }
-        // Orders are paged client-side, 10 at a time — the full set is
-        // fetched once and cached here, renderAdminOrdersPage() just slices
-        // it, so paging back and forth doesn't re-hit the database.
+        // Orders are paged server-side with .range(), 10 at a time — each
+        // page turn or search keystroke re-queries the database instead of
+        // slicing a locally cached list. The old version fetched the most
+        // recent 500 orders once and paged through that in memory, which
+        // meant any order past the 500th most recent was simply invisible
+        // and unsearchable, a gap that gets worse the more the business
+        // grows. Range-based paging has no such ceiling.
         const ADMIN_ORDERS_PAGE_SIZE = 10;
-        let adminOrdersCache = [];
         let adminOrdersPage = 0;
+        let adminOrdersSearch = '';
+        // Strips/escapes characters that are meaningful to a PostgREST
+        // .or() filter string (comma separates conditions, parentheses
+        // group them) or to ILIKE itself (% and _ are wildcards), so a
+        // customer's actual name/phone/postcode is matched literally and
+        // can't be used to inject extra filter conditions.
+        function sanitizeAdminOrderSearchTerm(raw) {
+            return raw.replace(/[%_]/g, '\\$&').replace(/[,()]/g, '');
+        }
         async function renderAdminOrders() {
+            adminOrdersPage = 0;
+            adminOrdersSearch = '';
+            const input = document.getElementById('adminOrdersSearchInput');
+            if (input) input.value = '';
+            await fetchAdminOrdersPage();
+        }
+        async function fetchAdminOrdersPage() {
             const el = document.getElementById('adminOrdersList');
             if (!el) return;
             if (!supabaseClient) {
@@ -18128,32 +18164,50 @@
                 return;
             }
             el.innerHTML = '<div class="order-history-loading">Loading orders…</div>';
-            const { data, error } = await supabaseClient
-                .from('orders')
-                .select('*')
+            const term = sanitizeAdminOrderSearchTerm(adminOrdersSearch.trim());
+            let query = supabaseClient.from('orders').select('*', { count: 'exact' });
+            if (term) {
+                // Order fields that carry the customer's details directly
+                // (delivery_name/phone/postcode are stored on the order
+                // itself) plus a name/email match against profiles, so a
+                // search for a customer's account name finds their orders
+                // too even though orders doesn't store that itself.
+                const { data: profileMatches } = await supabaseClient
+                    .from('profiles')
+                    .select('id')
+                    .or(`full_name.ilike.%${term}%,email.ilike.%${term}%`)
+                    .limit(50);
+                const orParts = [
+                    `order_number.ilike.%${term}%`,
+                    `delivery_name.ilike.%${term}%`,
+                    `delivery_phone.ilike.%${term}%`,
+                    `delivery_postcode.ilike.%${term}%`,
+                ];
+                if (profileMatches && profileMatches.length) {
+                    orParts.push(`user_id.in.(${profileMatches.map(p => p.id).join(',')})`);
+                }
+                query = query.or(orParts.join(','));
+            }
+            const start = adminOrdersPage * ADMIN_ORDERS_PAGE_SIZE;
+            const { data, error, count } = await query
                 .order('created_at', { ascending: false })
-                .limit(500);
+                .range(start, start + ADMIN_ORDERS_PAGE_SIZE - 1);
             if (error) {
                 el.innerHTML = '<div class="order-history-error">Couldn\'t load orders right now, please try again shortly.</div>';
                 return;
             }
             if (!data || data.length === 0) {
-                el.innerHTML = '<div class="order-history-empty">No orders yet.</div>';
+                el.innerHTML = `<div class="order-history-empty">${term ? 'No orders match your search.' : 'No orders yet.'}</div>`;
                 return;
             }
             const profilesById = await fetchProfilesByIds(data.map(o => o.user_id));
             data.forEach(o => { o.profiles = profilesById[o.user_id] || null; });
-            adminOrdersCache = data;
-            adminOrdersPage = 0;
-            renderAdminOrdersPage();
+            renderAdminOrdersTable(data, count || data.length);
         }
-        function renderAdminOrdersPage() {
+        function renderAdminOrdersTable(pageOrders, totalCount) {
             const el = document.getElementById('adminOrdersList');
             if (!el) return;
-            const totalPages = Math.max(1, Math.ceil(adminOrdersCache.length / ADMIN_ORDERS_PAGE_SIZE));
-            if (adminOrdersPage >= totalPages) adminOrdersPage = totalPages - 1;
-            const start = adminOrdersPage * ADMIN_ORDERS_PAGE_SIZE;
-            const pageOrders = adminOrdersCache.slice(start, start + ADMIN_ORDERS_PAGE_SIZE);
+            const totalPages = Math.max(1, Math.ceil(totalCount / ADMIN_ORDERS_PAGE_SIZE));
             el.innerHTML = `
     <div class="admin-orders-table-wrap">
         <table class="admin-orders-table">
@@ -18177,15 +18231,28 @@
         <button type="button" class="analytics-month-btn" id="adminOrdersPrevPage" aria-label="Previous page" ${adminOrdersPage === 0 ? 'disabled' : ''}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <span>Page ${adminOrdersPage + 1} of ${totalPages} &middot; ${adminOrdersCache.length} order${adminOrdersCache.length === 1 ? '' : 's'}</span>
+        <span>Page ${adminOrdersPage + 1} of ${totalPages} &middot; ${totalCount} order${totalCount === 1 ? '' : 's'}</span>
         <button type="button" class="analytics-month-btn" id="adminOrdersNextPage" aria-label="Next page" ${adminOrdersPage >= totalPages - 1 ? 'disabled' : ''}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
     </div>` : ''}`;
             const prevBtn = document.getElementById('adminOrdersPrevPage');
             const nextBtn = document.getElementById('adminOrdersNextPage');
-            if (prevBtn) prevBtn.addEventListener('click', () => { adminOrdersPage--; renderAdminOrdersPage(); });
-            if (nextBtn) nextBtn.addEventListener('click', () => { adminOrdersPage++; renderAdminOrdersPage(); });
+            if (prevBtn) prevBtn.addEventListener('click', () => { adminOrdersPage--; fetchAdminOrdersPage(); });
+            if (nextBtn) nextBtn.addEventListener('click', () => { adminOrdersPage++; fetchAdminOrdersPage(); });
+        }
+        // The search input lives outside #adminOrdersList (see the
+        // adminDashboardSection markup) specifically so it survives every
+        // re-render below it — if it were part of the innerHTML being
+        // replaced on each keystroke, the input would lose focus after
+        // every debounced search.
+        const adminOrdersSearchInputEl = document.getElementById('adminOrdersSearchInput');
+        if (adminOrdersSearchInputEl) {
+            adminOrdersSearchInputEl.addEventListener('input', debounce(() => {
+                adminOrdersSearch = adminOrdersSearchInputEl.value;
+                adminOrdersPage = 0;
+                fetchAdminOrdersPage();
+            }, 350));
         }
 
         // A reason is required before an admin can cancel an order, both so
@@ -18492,9 +18559,11 @@
             const d = new Date(iso);
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         }
-        // Same client-side paging pattern as Manage Orders (renderAdminOrdersPage):
-        // fetch the capped set once, cache it, then just slice/re-render on
-        // Prev/Next so paging back and forth doesn't re-hit the database.
+        // Client-side paging over a capped fetch (Manage Orders moved to
+        // real server-side .range() paging + search, see fetchAdminOrdersPage,
+        // but this activity log is a smaller, append-only, admin-only list
+        // where a capped fetch is still fine): fetch once, cache it, then
+        // just slice/re-render on Prev/Next so paging doesn't re-hit the DB.
         const ACTIVITY_LOG_PAGE_SIZE = 15;
         let activityLogCache = [];
         let activityLogPage = 0;
