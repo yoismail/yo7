@@ -6924,6 +6924,26 @@
             margin: 0 0 12px;
         }
         .referral-card p strong { color: var(--heading-mid); font-weight: 700; }
+        .referral-teaser {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(225, 225, 0, 0.12);
+            border: 1px solid rgba(225, 225, 0, 0.4);
+            border-left: 4px solid var(--orange);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            text-decoration: none;
+            transition: box-shadow 0.2s ease;
+        }
+        .referral-teaser:hover { box-shadow: 0 4px 14px rgba(var(--border-rgb), 0.1); }
+        .referral-teaser-icon {
+            flex-shrink: 0; width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: var(--orange); color: var(--aubergine-deep);
+        }
+        .referral-teaser-icon svg { width: 14px; height: 14px; }
+        .referral-teaser-text { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--heading); flex: 1; }
+        .referral-teaser-arrow { flex-shrink: 0; color: var(--text-muted); width: 18px; height: 18px; }
         .referral-code-row {
             display: flex;
             align-items: center;
@@ -8953,6 +8973,17 @@
                             </svg>
                             Order history
                         </a>
+                        <a href="#/refer" id="referNavLink" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 12 20 22 4 22 4 12" />
+                                <rect x="2" y="7" width="20" height="5" />
+                                <line x1="12" y1="22" x2="12" y2="7" />
+                                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                            </svg>
+                            Refer a friend
+                        </a>
                         <a href="#/admin" id="adminNavLink" style="display:none;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -8983,6 +9014,7 @@
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
             <a href="#/orders">My Orders</a>
+            <a href="#/refer">Refer a Friend</a>
             <a href="#/about">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
@@ -10850,13 +10882,19 @@
                      Hidden by default, shown by renderOrdersLoyaltyNote()
                      (called from renderOrderHistory()) only when signed in. -->
                 <div class="loyalty-note" id="ordersLoyaltyNote" style="display:none;"></div>
-                <!-- "Give X, get X": share this code, a friend gets a
-                     discount on their order, you get a loyalty_rewards
-                     entry (same mechanism/display as the spend-threshold
-                     reward above) once theirs goes through. See
-                     get_or_create_referral_code() and the referral bits of
-                     record_discount_redemption() for the backend half. -->
-                <div class="referral-card" id="referralCard" style="display:none;"></div>
+                <!-- The full "give X, get X" card now lives on its own
+                     page (#/refer, see view-refer) instead of sitting
+                     here ahead of someone's actual order history — this
+                     is just a discovery link back to it. Static markup,
+                     not JS-rendered: the reward % is admin-configurable
+                     (loyaltyRewardPct), so deliberately kept out of this
+                     teaser's text rather than risking it going stale;
+                     the real page shows the real number. -->
+                <a class="referral-teaser" href="#/refer">
+                    <span class="referral-teaser-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
+                    <span class="referral-teaser-text">Refer a friend, you both get a discount</span>
+                    <svg class="referral-teaser-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </a>
                 <div id="orderHistoryList" class="order-history-list"></div>
             </div>
         </section>
@@ -10883,6 +10921,23 @@
                 <div id="pushToggleHint" class="push-toggle-hint" style="display:none;"></div>
                 <div id="notifList" class="notif-list"></div>
                 <div class="order-history-empty" id="notifEmpty" style="display:none;">Nothing here yet. We'll let you know about order updates and anything else worth knowing.</div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= REFER A FRIEND ================= -->
+    <div id="view-refer" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Refer a Friend</div>
+                <h1>Refer a friend</h1>
+                <p>Share your code, they get a discount off their first order, you get one too.</p>
+            </div>
+        </header>
+        <section class="orders-section">
+            <div class="wrap">
+                <div class="referral-card" id="referralCard" style="display:none;"></div>
+                <div id="referLoggedOut" style="display:none;"></div>
             </div>
         </section>
     </div>
@@ -11195,6 +11250,7 @@
                         <a href="#/about">About Us</a>
                         <a href="#/checkout">Basket</a>
                         <a href="#/orders">My Orders</a>
+                        <a href="#/refer">Refer a Friend</a>
                         <a href="#/delivery-info">Delivery Info</a>
                         <a href="#/guide">New Here?</a>
                     </div>
@@ -13060,7 +13116,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.4';
+        const BUILD_VERSION = '2026-09-20.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17567,9 +17623,38 @@
                 };
             }
         }
+        // The #/refer page's own entry point — renderReferralCard() itself
+        // just quietly hides when logged out (fine for an embed sitting
+        // among other things), which would leave a dedicated page showing
+        // nothing at all. This adds the actual "log in to get your code"
+        // prompt around it, same checking/empty/loading-state pattern as
+        // renderOrderHistory()'s own guard clauses (see its comment on the
+        // supabaseSessionRestored check for why the flash it prevents
+        // matters here too — a hard refresh on this page shouldn't flash a
+        // "log in" prompt at an already-logged-in customer for a moment).
+        function renderReferPage() {
+            const el = document.getElementById('referLoggedOut');
+            if (!el) return;
+            if (!supabaseClient) {
+                el.className = 'order-history-empty';
+                el.innerHTML = 'We\'re unable to load your referral code right now. Please try again shortly.';
+                el.style.display = 'block';
+            } else if (!currentSupabaseUser) {
+                if (supabaseSessionRestored) {
+                    el.className = 'order-history-empty';
+                    el.innerHTML = 'Log in to get your own referral code. <a href="#/login" onclick="postLoginRedirect=\'#/refer\'">Log in</a>';
+                } else {
+                    el.className = 'order-history-loading';
+                    el.innerHTML = 'Checking your account…';
+                }
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+            renderReferralCard();
+        }
         async function renderOrderHistory() {
             renderOrdersLoyaltyNote();
-            renderReferralCard();
             const el = document.getElementById('orderHistoryList');
             if (!el) return;
             if (!supabaseClient) {
@@ -19704,6 +19789,8 @@
             accountCaret.style.display = 'inline-block';
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
+            const referNavLink = document.getElementById('referNavLink');
+            if (referNavLink) referNavLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             renderCartList();
             syncLoyaltyState().then(renderCartList);
             const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
@@ -19750,6 +19837,8 @@
             accountDropdown.classList.remove('open');
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
+            const referNavLink = document.getElementById('referNavLink');
+            if (referNavLink) referNavLink.style.display = 'none';
             const reorderSection = document.getElementById('reorderSection');
             if (reorderSection) reorderSection.style.display = 'none';
             const buyAgainSection = document.getElementById('buyAgainSection');
@@ -20850,6 +20939,7 @@
             const needsSessionRerender =
                 currentHash === '#/orders' ||
                 currentHash === '#/notifications' ||
+                currentHash === '#/refer' ||
                 currentHash === '#/buy-again' ||
                 currentHash === '#/admin' || currentHash === '#/admin/orders' ||
                 currentHash.startsWith('#/admin/order/');
@@ -21238,7 +21328,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -21517,6 +21607,9 @@
             } else if (hash === '#/notifications') {
                 showView('view-notifications');
                 renderNotificationsPage();
+            } else if (hash === '#/refer') {
+                showView('view-refer');
+                renderReferPage();
             } else if (hash === '#/admin' || hash === '#/admin/orders') {
                 showView('view-admin');
                 renderAdminPage();
