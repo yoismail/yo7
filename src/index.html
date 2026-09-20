@@ -4471,18 +4471,41 @@
             background: rgba(225, 225, 0, 0.14);
         }
 
+        /* A real grid, not the old flex justify-content:space-between —
+           that left the brand block pinned to the far left and the three
+           link columns pinned to the far right, with nothing to fill the
+           dead space between them on a wide desktop viewport. Each column
+           now gets a deliberate, evenly-weighted track instead. */
         .footer-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 32px;
+            display: grid;
+            grid-template-columns: minmax(220px, 1.15fr) repeat(3, minmax(140px, 1fr));
+            gap: 44px 32px;
             padding-bottom: 44px;
             border-bottom: 1px solid rgba(44, 28, 16, 0.1);
             margin-bottom: 28px;
         }
         [data-theme="dark"] .footer-top {
             border-bottom-color: rgba(var(--border-rgb), 0.14);
+        }
+        @media (max-width: 900px) {
+            /* Two even columns, brand block spanning both — was the
+               source of a real bug below 900px: with the old flex-wrap
+               layout, Site (short) and Contact (long, incl. the full
+               address) both fit on the same cramped row while Legal
+               dropped alone to the next, an uneven, unbalanced stack
+               that also clipped the address text at the edge. Every
+               column now gets its own full-width track. */
+            .footer-top {
+                grid-template-columns: 1fr 1fr;
+                gap: 36px 24px;
+            }
+            .footer-brand { grid-column: 1 / -1; }
+        }
+        @media (max-width: 560px) {
+            .footer-top {
+                grid-template-columns: 1fr;
+                gap: 36px;
+            }
         }
 
         .footer-mark {
@@ -4567,10 +4590,12 @@
         .footer-social-row a:active { background: var(--chartreuse-rich); }
         .footer-social-row svg { width: 17px; height: 17px; }
 
+        /* display: contents lifts the three .footer-col children straight
+           into .footer-top's own grid (columns 2-4), rather than boxing
+           them into a second nested layout that has to be kept in sync
+           with the parent's breakpoints. */
         .footer-links {
-            display: flex;
-            gap: 48px;
-            flex-wrap: wrap;
+            display: contents;
         }
 
         .footer-col h4 {
@@ -11357,7 +11382,7 @@
             </div>
             </div>
             <div class="footer-top">
-                <div>
+                <div class="footer-brand">
                     <a class="footer-mark" href="#/">
                         <svg viewBox="65 25 875 900">
                             <use href="#seal-mark" />
@@ -13248,7 +13273,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.7';
+        const BUILD_VERSION = '2026-09-20.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
