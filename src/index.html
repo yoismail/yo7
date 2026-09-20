@@ -3755,18 +3755,17 @@
         }
         /* Same oversized-glyph-behind-the-content language as
            .combo-ticket-watermark and the footer's own newsletter cards —
-           this card's own reorder icon, bled off the corner (see the
-           .reorder-card-watermark svg in the markup), rather than a plain
-           flat panel. Anchored to the LEFT, behind the icon, not the
-           right — .reorder-text is flex:1 and pushes .reorder-btn flush
-           against the card's right edge, so a right-anchored watermark
-           there just sat mostly hidden under the opaque button instead
-           of actually reading as a corner accent. */
+           this card's own reorder icon, bled off the bottom-right corner
+           (see the .reorder-card-watermark svg in the markup), rather
+           than a plain flat panel. .reorder-text is flex:1 and would
+           otherwise push .reorder-btn flush against the card's right
+           edge, right on top of this — .reorder-btn's own margin-right
+           below clears that space instead of moving the mark. */
         .reorder-card-watermark {
             position: absolute; z-index: 0; pointer-events: none;
-            left: -18px; bottom: -22px; width: 90px; height: 90px;
-            opacity: 0.06; color: var(--heading);
-            transform: rotate(8deg);
+            right: -20px; bottom: -24px; width: 120px; height: 120px;
+            opacity: 0.05; color: var(--heading);
+            transform: rotate(-10deg);
         }
         .reorder-icon {
             position: relative; z-index: 1;
@@ -3787,12 +3786,18 @@
         .reorder-text { flex: 1; min-width: 180px; }
         .reorder-title { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); margin-bottom: 3px; }
         .reorder-summary { font-size: 13.5px; color: var(--text-muted); }
-        .reorder-btn { white-space: nowrap; }
+        /* margin-right, not just white-space — nudges the button clear of
+           .reorder-card-watermark's own visible footprint in that same
+           corner (see its comment above) rather than sitting flush
+           against the card's edge on top of it. */
+        .reorder-btn { white-space: nowrap; margin-right: 56px; }
         @media (max-width: 560px) {
             /* Left to flex-wrap's default, a wrapped button lands small and
                left-aligned under the text — a deliberate full-width CTA
-               reads better once it's stacked. */
-            .reorder-btn { width: 100%; margin-top: 2px; }
+               reads better once it's stacked. The watermark's own corner
+               is clear once the button drops to its own full-width row,
+               so the margin above is only needed at the single-row width. */
+            .reorder-btn { width: 100%; margin-top: 2px; margin-right: 0; }
         }
 
         /* ================= SPECIAL OFFER SECTION ================= */
@@ -3818,26 +3823,22 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-        /* Was a plain flat pill with the department's own glyph shrunk down
-           to a barely-visible 1em inline character and a constant looping
-           glow — a lot of hand-drawn per-department icon work (see GROUPS'
-           own icon svgs) going mostly unseen. The icon now gets its own
-           badge, sized and framed like the icon tiles used everywhere else
-           this pass (footer cards, value cards, admin panels), with the
-           same five-colour accent rotation those already use, so each
-           department reads as its own considered chip instead of a plain
-           text tag. The constant pulse is gone in favour of a calmer
-           hover-lift, the same restrained language those other cards use
-           rather than fourteen chips glowing on their own timers. */
+        /* v2 — the first pass (a white chip + a softly-tinted icon) still
+           read as fourteen near-identical grey pills with a small
+           coloured hint. This version commits to the colour: a solid
+           accent-gradient badge with a white glyph, sitting on a chip
+           whose own background carries a faint wash of that same accent,
+           so the colour rotation is the chip's whole identity rather
+           than a detail inside it. */
         .hero-glimpse-pill {
             position: relative;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 7px 18px 7px 7px;
+            gap: 11px;
+            padding: 7px 20px 7px 7px;
             border-radius: 999px;
-            background: var(--card-bg);
-            border: 1px solid rgba(var(--border-rgb), 0.1);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 14%, var(--card-bg)), var(--card-bg) 65%);
+            border: 1px solid color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 24%, transparent);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 8px 18px rgba(var(--border-rgb), 0.05);
             font-family: var(--display);
             font-weight: 600;
@@ -3848,12 +3849,13 @@
         }
         .hero-glimpse-pill span.emoji {
             display: flex; align-items: center; justify-content: center;
-            width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px;
-            background: linear-gradient(145deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 9%, transparent));
-            color: var(--dept-accent, var(--chartreuse-rich));
+            width: 36px; height: 36px; flex-shrink: 0; border-radius: 999px;
+            background: linear-gradient(145deg, var(--dept-accent, var(--chartreuse-rich)), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 72%, black));
+            color: #fff;
+            box-shadow: 0 4px 10px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 45%, transparent);
             transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
         }
-        .hero-glimpse-pill span.emoji .glyph-icon { width: 17px; height: 17px; }
+        .hero-glimpse-pill span.emoji .glyph-icon { width: 18px; height: 18px; }
         .hero-glimpse-pill:nth-child(5n+1) { --dept-accent: var(--chartreuse-rich); }
         .hero-glimpse-pill:nth-child(5n+2) { --dept-accent: var(--aubergine-mid); }
         .hero-glimpse-pill:nth-child(5n+3) { --dept-accent: #9a7f00; }
@@ -3862,8 +3864,8 @@
         @media (hover: hover) and (pointer: fine) {
             .hero-glimpse-pill:hover {
                 transform: translateY(-3px);
-                border-color: color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 45%, transparent);
-                box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 16px 28px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 22%, transparent);
+                border-color: color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 55%, transparent);
+                box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 16px 28px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 26%, transparent);
             }
             .hero-glimpse-pill:hover span.emoji {
                 transform: scale(1.12) rotate(-4deg);
@@ -13518,7 +13520,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.18';
+        const BUILD_VERSION = '2026-09-20.19';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
