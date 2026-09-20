@@ -87,3 +87,37 @@ captured via `db dump` for reference/diffing, not `db push` migration
 tracking, since the project's schema history was never managed through
 the CLI. Apply schema changes directly (SQL editor or `db push` against
 a proper migration), then re-dump to keep this file in sync.
+
+### Keeping the `products` table in sync with `CATEGORIES`
+
+`supabase/functions/create-payment-intent` prices every real checkout
+from the `products` table — not from `CATEGORIES` in `src/index.html`,
+which is only what a customer sees while browsing. Those are two
+separate copies of the same seed data. Every *edit* to a seed product
+(price, stock, ...) already goes through the admin panel into
+`product_overrides`, which `trusted()` layers on top of `products` at
+checkout time and `applyProductOverrides()` layers on top of
+`CATEGORIES` client-side — so in normal operation the two stay
+correct without any of this. `products` only actually needs
+re-syncing when `CATEGORIES` itself is edited directly (a price/name/
+unit/weight/stock change made straight in the source, or a brand-new
+seed product added there instead of through the admin panel's own
+"Add product" form, which writes to `custom_products` instead and
+needs no sync at all). Skipping the sync in that case doesn't just
+leave stale display data — a seed product `trusted()` can't find in
+`products` at all fails checkout outright with "Unknown product".
+
+```
+python3 scripts/sync-products-table.py [output_path]
+```
+
+Writes a SQL file (an upsert per seed product, keyed on `products`'
+real primary key `(cat_slug, idx)`, safe to re-run) instead of writing
+to the database directly — same reasoning as the rest of this section,
+nothing here has live database credentials. Run it after any direct
+`CATEGORIES` edit, then run the SQL it writes via `psql` before that
+change ships. Not wired into `regenerate-pages.yml`: that workflow
+only ever reads through the public anon key, which has no write access
+to `products` (no admin-write RLS policy exists for it, by design —
+see `supabase/schema.sql`), so this has to stay a manual, human-run
+step with real database credentials.
