@@ -5075,6 +5075,22 @@
             padding: 52px 0 48px;
             border-bottom: 1px solid rgba(44, 28, 16, 0.08);
         }
+        /* This header sits at the very top of every secondary page (Shop,
+           About, Contact, every legal page, admin, etc.), so it was a
+           fixed white band clashing hard against the rest of the page
+           the moment dark mode was on, the exact same corner-glow +
+           dot-grain pairing as .auth-section, just re-based onto
+           --page-bg/--text-body so it actually flips with the theme
+           instead of staying a fixed light surface like the nav bar
+           deliberately still does. */
+        [data-theme="dark"] .shop-header {
+            background:
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                radial-gradient(circle at 88% -20%, rgba(166, 204, 46, 0.16), transparent 55%),
+                var(--page-bg);
+            color: var(--text-body);
+            border-bottom-color: rgba(var(--border-rgb), 0.14);
+        }
         .shop-header .wrap { position: relative; z-index: 2; }
 
         /* These two variants had no glow of their own — flat white — so
@@ -5087,12 +5103,20 @@
                 radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 #FFFFFF;
         }
+        [data-theme="dark"] .shop-header-contact,
+        [data-theme="dark"] .shop-header-story {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+        }
 
         .breadcrumb {
             font-size: 13px;
             color: #6b5c4f;
             margin-bottom: 16px;
         }
+        [data-theme="dark"] .breadcrumb { color: var(--text-muted); }
 
         .breadcrumb a {
             text-decoration: none;
@@ -5145,6 +5169,7 @@
             max-width: 60ch;
             font-size: 15px;
         }
+        [data-theme="dark"] .shop-header p { color: var(--text-muted); }
 
         .result-count {
             margin-top: 16px;
@@ -5413,6 +5438,7 @@
             max-width: 56ch;
             font-size: 15.5px;
         }
+        [data-theme="dark"] .shop-all-hero p { color: var(--text-muted); }
         .shop-all-section { padding-top: 40px; }
         .shop-all-search-wrap { position: relative; margin-bottom: 20px; }
         .shop-all-search-wrap svg {
@@ -13443,7 +13469,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.12';
+        const BUILD_VERSION = '2026-09-20.13';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
