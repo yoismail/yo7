@@ -139,6 +139,85 @@ $$;
 ALTER FUNCTION "public"."decrement_stock"("p_lines" "jsonb") OWNER TO "postgres";
 
 
+-- decrement_stock() runs once, at checkout, from stock_lines (a
+-- pre-aggregated product_key->qty map computed by create-payment-intent
+-- and only kept around in pending_checkouts until the order is
+-- finalized, then deleted) — there was never a mirror step that gives
+-- any of that back when an order is later cancelled or returned, so a
+-- tracked product's stock_quantity only ever went one direction,
+-- eroding a little more with every cancellation even though nothing
+-- was actually sold. This reconstructs the same product_key->qty lines
+-- fresh from orders.items (permanent, unlike pending_checkouts) using
+-- the same id shape parseProductCartId relies on client-side — id
+-- itself for a plain product ("catSlug::idx"), or its first two
+-- "::"-segments for a weight-variant/subscription id
+-- ("catSlug::idx::5kg", "catSlug::idx::sub4") — and adds each qty back
+-- to whichever of product_overrides/custom_products has that product's
+-- tracking on, mirroring decrement_stock's own priority order. Bundle
+-- and combo lines are skipped, same as decrement_stock never decremented
+-- them in the first place (see its own comment) — their components
+-- were never individually reserved, so there's nothing to give back.
+CREATE OR REPLACE FUNCTION "public"."restock_cancelled_order"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  rec record;
+  v_cat_slug text;
+  v_idx int;
+BEGIN
+  -- Only the transition INTO cancelled/returned restores stock, and
+  -- only once — re-saving an order that's already cancelled (editing
+  -- the admin note, say) has old.status already in this set, so it's a
+  -- no-op, not a second restock.
+  IF new.status NOT IN ('cancelled', 'returned') OR old.status IN ('cancelled', 'returned') THEN
+    RETURN new;
+  END IF;
+
+  -- Grouped by key first, same reason create-payment-intent aggregates
+  -- stock_lines by key before calling decrement_stock — two separate
+  -- lines for the same product (e.g. two different weight variants
+  -- bought together) must add back to the same underlying tracked
+  -- product once each, not race each other.
+  FOR rec IN
+    SELECT
+      split_part(line->>'id', '::', 1) || '::' || split_part(line->>'id', '::', 2) AS product_key,
+      sum(GREATEST(COALESCE((line->>'qty')::int, 0), 0)) AS qty
+    FROM jsonb_array_elements(COALESCE(new.items, '[]'::jsonb)) AS line
+    WHERE (line->>'id') ~ '^[a-z0-9-]+::[0-9]+'
+      AND (line->>'id') !~ '^(bundle|combo)::'
+    GROUP BY product_key
+  LOOP
+    IF rec.qty <= 0 THEN
+      CONTINUE;
+    END IF;
+
+    UPDATE public.product_overrides
+    SET stock_quantity = stock_quantity + rec.qty
+    WHERE product_key = rec.product_key AND stock_quantity IS NOT NULL;
+    IF FOUND THEN
+      CONTINUE;
+    END IF;
+
+    v_cat_slug := split_part(rec.product_key, '::', 1);
+    v_idx := NULLIF(split_part(rec.product_key, '::', 2), '')::int;
+    IF v_idx IS NULL THEN
+      CONTINUE;
+    END IF;
+
+    UPDATE public.custom_products
+    SET stock_quantity = stock_quantity + rec.qty
+    WHERE cat_slug = v_cat_slug AND idx = v_idx AND stock_quantity IS NOT NULL;
+  END LOOP;
+
+  RETURN new;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."restock_cancelled_order"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."dispatch_push_notification"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -271,6 +350,27 @@ BEGIN
 
   IF v_pending.stock_lines IS NOT NULL AND jsonb_array_length(v_pending.stock_lines) > 0 THEN
     PERFORM public.decrement_stock(v_pending.stock_lines);
+  END IF;
+
+  -- The loyalty reward create-payment-intent found unused and priced
+  -- into this exact charge, spent here and only here, inside the same
+  -- advisory-locked, exactly-once path as the order insert above —
+  -- this is what confirm-order's fast path AND stripe-webhook's
+  -- fallback both funnel through, so a reward gets marked spent no
+  -- matter which path actually finalizes the order, the same guarantee
+  -- discount-code redemption already had via its own AFTER INSERT
+  -- trigger. Previously this was a separate, order-agnostic client-side
+  -- RPC call (mark_loyalty_reward_used, now removed) made only after
+  -- confirm-order's fast path returned success — never reached at all
+  -- for a payment that settles via the webhook fallback (any
+  -- asynchronous/redirect payment method), letting that same reward be
+  -- spent again on a later order despite already having discounted a
+  -- real charge. The `AND used = false` guard makes this a no-op on a
+  -- second finalize attempt for the same payment, same pattern as
+  -- decrement_stock's own compare-and-swap.
+  IF v_pending.loyalty_reward_id IS NOT NULL THEN
+    UPDATE public.loyalty_rewards SET used = true, used_at = now()
+      WHERE id = v_pending.loyalty_reward_id AND used = false;
   END IF;
 
   DELETE FROM public.pending_checkouts WHERE payment_intent_id = p_payment_intent_id;
@@ -474,26 +574,6 @@ $$;
 
 
 ALTER FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "public"."mark_loyalty_reward_used"() RETURNS "void"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-begin
-  update public.loyalty_rewards
-  set used = true, used_at = now()
-  where id = (
-    select id from public.loyalty_rewards
-    where user_id = auth.uid() and used = false
-    order by earned_at asc
-    limit 1
-  );
-end;
-$$;
-
-
-ALTER FUNCTION "public"."mark_loyalty_reward_used"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."notify_order_status_change"() RETURNS "trigger"
@@ -1540,7 +1620,8 @@ CREATE TABLE IF NOT EXISTS "public"."pending_checkouts" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "stock_lines" "jsonb",
     "delivery_postcode" "text",
-    "abandoned_reminder_sent_at" timestamp with time zone
+    "abandoned_reminder_sent_at" timestamp with time zone,
+    "loyalty_reward_id" "uuid"
 );
 
 
@@ -1911,7 +1992,7 @@ CREATE INDEX "admin_audit_log_created_at_idx" ON "public"."admin_audit_log" USIN
 -- admin-curated promos, so a plain-text scan here gets slower as the
 -- customer base grows, not just the promo list. A functional index on
 -- lower(code) is what actually gets used by a case-insensitive lookup.
-CREATE INDEX "discount_codes_code_lower_idx" ON "public"."discount_codes" USING "btree" ("lower"("code"));
+CREATE UNIQUE INDEX "discount_codes_code_lower_idx" ON "public"."discount_codes" USING "btree" ("lower"("code"));
 
 
 
@@ -2028,6 +2109,10 @@ CREATE OR REPLACE TRIGGER "trg_notify_order_status_change" AFTER INSERT OR UPDAT
 
 
 
+CREATE OR REPLACE TRIGGER "trg_restock_cancelled_order" AFTER UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."restock_cancelled_order"();
+
+
+
 CREATE OR REPLACE TRIGGER "trg_prevent_self_admin_escalation" BEFORE UPDATE ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."prevent_self_admin_escalation"();
 
 
@@ -2098,6 +2183,11 @@ ALTER TABLE ONLY "public"."orders"
 
 ALTER TABLE ONLY "public"."pending_checkouts"
     ADD CONSTRAINT "pending_checkouts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."pending_checkouts"
+    ADD CONSTRAINT "pending_checkouts_loyalty_reward_id_fkey" FOREIGN KEY ("loyalty_reward_id") REFERENCES "public"."loyalty_rewards"("id") ON DELETE SET NULL;
 
 
 
@@ -2595,6 +2685,12 @@ GRANT ALL ON FUNCTION "public"."decrement_stock"("p_lines" "jsonb") TO "service_
 
 
 
+GRANT ALL ON FUNCTION "public"."restock_cancelled_order"() TO "anon";
+GRANT ALL ON FUNCTION "public"."restock_cancelled_order"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."restock_cancelled_order"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "anon";
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."dispatch_push_notification"() TO "service_role";
@@ -2653,12 +2749,6 @@ GRANT ALL ON FUNCTION "public"."is_admin_user"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") TO "service_role";
-
-
-
-GRANT ALL ON FUNCTION "public"."mark_loyalty_reward_used"() TO "anon";
-GRANT ALL ON FUNCTION "public"."mark_loyalty_reward_used"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."mark_loyalty_reward_used"() TO "service_role";
 
 
 

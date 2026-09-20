@@ -163,6 +163,23 @@ function parseProductCartId(id: string): { baseKey: string; variantLabel: string
 
 function round2(n: number) { return Math.round(n * 100) / 100; }
 
+// A "one specific product" discount is scoped to a bare product key
+// (catSlug::idx), but a cart line's own id can carry extra
+// "::"-suffixed segments for a weight variant or subscription (see
+// parseProductCartId above) — id.startsWith(qualifyingProductId) was
+// the original check, meant to still match "rice::1::5kg" against a
+// code scoped to "rice::1". It also matched "rice::10", "rice::11", …
+// "rice::19", "rice::100"+ against that same "rice::1" scope: any
+// other product whose numeric index happens to start with the same
+// digits, since startsWith has no concept of where one path segment
+// ends and the next begins. Requiring the very next character to be
+// "::" (or nothing at all, for an exact bare-key match) closes that
+// off while still matching every real variant/subscription suffix.
+function matchesQualifyingProduct(productId: string, qualifyingProductId: string | null | undefined): boolean {
+  if (!qualifyingProductId) return false;
+  return productId === qualifyingProductId || productId.startsWith(qualifyingProductId + "::");
+}
+
 // Supabase Edge Functions run behind Cloudflare, which sets its own
 // header; x-forwarded-for is the fallback for other paths in. Neither is
 // spoofable by the caller in a way that matters here — Cloudflare
@@ -504,12 +521,22 @@ Deno.serve(async (req) => {
     const discountCode = typeof discountCodeRaw === "string" ? discountCodeRaw.trim() : "";
     let discountError: string | null = null;
     if (discountCode) {
-      const { data: d } = await db
+      // .maybeSingle() errors (rather than silently picking one) if more
+      // than one row matches — e.g. two codes differing only by case,
+      // which the unique index on lower(code) should prevent going
+      // forward, but capturing this instead of discarding it means a
+      // pre-existing case-duplicate fails loudly with a real db error
+      // logged, rather than as a misleading "no such code" that looks
+      // like a customer typo.
+      const { data: d, error: discountLookupError } = await db
         .from("discount_codes")
         .select("*")
         .ilike("code", discountCode)
         .maybeSingle();
-      if (!d) discountError = "That code doesn't match any current discount.";
+      if (discountLookupError) {
+        console.error("discount_codes lookup failed:", discountLookupError.message);
+        discountError = "Couldn't check that code right now, please try again in a moment.";
+      } else if (!d) discountError = "That code doesn't match any current discount.";
       else if (d.active === false) discountError = "That discount code is no longer active.";
       else {
         const today = new Date().toISOString().slice(0, 10);
@@ -548,7 +575,7 @@ Deno.serve(async (req) => {
           const qualifying = d.qualifying_scope === "category"
             ? lines.filter((l) => l.catSlug === d.qualifying_category)
             : d.qualifying_scope === "product"
-            ? lines.filter((l) => l.productId.startsWith(d.qualifying_product_id ?? " "))
+            ? lines.filter((l) => matchesQualifyingProduct(l.productId, d.qualifying_product_id))
             : lines;
           if (qualifying.length === 0) discountError = "Your basket doesn't contain the items this code applies to.";
           else if (typeof d.max_per_customer === "number") {
@@ -631,16 +658,18 @@ Deno.serve(async (req) => {
     // as it always would if they simply hadn't had a code to type in.
     let loyaltyDiscountAmount = 0;
     let loyaltyPct: number | null = null;
+    let loyaltyRewardId: string | null = null;
     if (userId && !appliedDiscountIsReferral) {
       const { data: reward } = await db
         .from("loyalty_rewards")
-        .select("pct")
+        .select("id, pct")
         .eq("user_id", userId)
         .eq("used", false)
         .limit(1)
         .maybeSingle();
       if (reward) {
         loyaltyPct = reward.pct;
+        loyaltyRewardId = reward.id;
         loyaltyDiscountAmount = Math.min(round2(subtotal * reward.pct / 100), round2(subtotal - discountAmount));
       }
     }
@@ -662,7 +691,7 @@ Deno.serve(async (req) => {
     return {
       ok: true as const,
       subtotal, delivery, discountAmount, discountError, discountRequiresLogin, discountId: discountRow?.id ?? null, discountDef, freeDelivery,
-      loyaltyDiscountAmount, loyaltyPct, total, totalWeight, stockLines,
+      loyaltyDiscountAmount, loyaltyPct, loyaltyRewardId, total, totalWeight, stockLines,
     };
   }
 
@@ -772,6 +801,7 @@ Deno.serve(async (req) => {
         discount_code: typeof body.discountCode === "string" ? body.discountCode : null,
         stock_lines: priced.stockLines,
         delivery_postcode: typeof deliveryInfo.postcode === "string" ? deliveryInfo.postcode : null,
+        loyalty_reward_id: priced.loyaltyRewardId,
       });
       if (pendingError) console.error("pending_checkouts insert failed (order still relies on client fast path):", pendingError.message);
     }

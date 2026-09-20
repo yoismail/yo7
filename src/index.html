@@ -12087,15 +12087,6 @@
             await syncLoyaltyState();
             return (data && data[0]) ? data[0].pct : null;
         }
-        // Flags this account's unused reward as spent once an order that
-        // auto-applied it goes through, on every device signed into that
-        // account, not just this one.
-        async function markLoyaltyRewardUsed() {
-            if (!supabaseClient) return;
-            const { error } = await supabaseClient.rpc('mark_loyalty_reward_used');
-            if (error) console.error('Could not mark loyalty reward used:', error.message);
-            await syncLoyaltyState();
-        }
         function pendingLoyaltyReward() {
             return loyaltyCachedReward;
         }
@@ -12353,11 +12344,26 @@
         // fields) so the existing display math below keeps working
         // unchanged. The final, authoritative check happens again at
         // charge time regardless — this is only ever a preview.
+        // A cart item's own id can carry extra "::"-suffixed segments past
+        // its bare product key (catSlug::idx) for a weight variant or
+        // subscription — plain startsWith was matching "rice::1" against
+        // "rice::10", "rice::11", … too, any product whose numeric index
+        // happens to start with the same digits, since it has no concept
+        // of where one "::"-separated segment ends and the next begins.
+        // Requiring the next character to be "::" (or nothing, for an
+        // exact match) still matches every real variant/subscription
+        // suffix while ruling that out. Mirrors matchesQualifyingProduct
+        // in create-payment-intent/index.ts, the authoritative copy of
+        // this same check.
+        function matchesQualifyingProduct(itemId, qualifyingProductId) {
+            if (!qualifyingProductId) return false;
+            return itemId === qualifyingProductId || itemId.startsWith(qualifyingProductId + '::');
+        }
         function cartQualifiesForDiscount(d) {
             if (d.minOrder && cartSubtotal() < d.minOrder) return false;
             if (d.qualifyingScope === 'all' || !d.qualifyingScope) return cart.length > 0;
             if (d.qualifyingScope === 'category') return cart.some(i => i.catSlug === d.qualifyingCategory);
-            if (d.qualifyingScope === 'product') return cart.some(i => i.id.startsWith(d.qualifyingProductId));
+            if (d.qualifyingScope === 'product') return cart.some(i => matchesQualifyingProduct(i.id, d.qualifyingProductId));
             return false;
         }
         async function validateDiscount(code) {
@@ -12371,7 +12377,7 @@
         }
         function qualifyingCartItems(d) {
             if (d.qualifyingScope === 'category') return cart.filter(i => i.catSlug === d.qualifyingCategory);
-            if (d.qualifyingScope === 'product') return cart.filter(i => i.id.startsWith(d.qualifyingProductId));
+            if (d.qualifyingScope === 'product') return cart.filter(i => matchesQualifyingProduct(i.id, d.qualifyingProductId));
             return cart;
         }
         function computeDiscountAmount(d) {
@@ -12597,6 +12603,7 @@
                 const getQty = parseInt(document.getElementById('newDiscGetQty').value, 10) || 1;
                 const startDate = document.getElementById('newDiscStart').value || null;
                 const endDate = document.getElementById('newDiscEnd').value || null;
+                if (startDate && endDate && startDate > endDate) { showToast('Start date must be before end date, the code would never be valid otherwise.', 5000); return; }
                 const scope = document.getElementById('newDiscScope').value;
                 const minOrderRaw = document.getElementById('newDiscMinOrder').value;
                 const maxPerCustomerRaw = document.getElementById('newDiscMaxPerCustomer').value;
@@ -13039,7 +13046,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.2';
+        const BUILD_VERSION = '2026-09-20.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17323,13 +17330,17 @@
                 return { ok: false, message: `Your payment went through, but saving the order hit a problem on our end${showReason ? ` (${escapeHtml(reason)})` : ''}. Please contact us on WhatsApp or at hello@yo7foods.co.uk with this reference so we can sort it out: <strong>${paymentIntent.id}</strong>` };
             }
 
-            // Redemption itself is recorded server-side, by a trigger on
-            // the orders row confirm-order just inserted (see
-            // supabase-migration-20-discount-codes.sql) — nothing to do
-            // here.
+            // Discount-code redemption is recorded server-side by a trigger
+            // on the orders row confirm-order just inserted (see
+            // supabase-migration-20-discount-codes.sql); a spent loyalty
+            // reward is marked used server-side too, inside
+            // finalize_order_from_pending itself (the function both
+            // confirm-order's fast path and stripe-webhook's fallback
+            // funnel through) — nothing to do for either here except
+            // refresh this device's own cached view of it.
             lastOrder.number = data.orderNumber;
             if (data.paymentMethodSummary) lastOrder.paymentMethodSummary = data.paymentMethodSummary;
-            if (ctx.loyaltyDiscountAmount > 0) await markLoyaltyRewardUsed();
+            if (ctx.loyaltyDiscountAmount > 0) await syncLoyaltyState();
             // issueLoyaltyRewardIfEarned needs the new order's real id,
             // which confirm-order doesn't hand back (only the order
             // number) — looked up by the payment intent id it does return,
@@ -18443,22 +18454,35 @@
                     document.getElementById('cancelOrderReason').value = comment;
                     return;
                 }
-                // Captured before the update lands, so this reflects what was
-                // actually saved a moment ago, not the freshly-updated value
-                // renderAdminOrderDetail is about to overwrite it with below.
-                const statusChanged = !!currentAdminOrder && nextStatus !== (currentAdminOrder.status || 'placed');
                 aodSaveBtn.disabled = true;
                 aodSaveBtn.textContent = 'Saving…';
+                // currentAdminOrder can be stale — loaded whenever this page
+                // last rendered, not necessarily reflecting a status another
+                // admin (or this same admin, another tab) changed since.
+                // Re-checking the real current status right before writing,
+                // and only actually writing a new status when this admin
+                // genuinely picked a different one from the dropdown (rather
+                // than always writing whatever the dropdown happens to still
+                // show), means a comment-only save can no longer silently
+                // revert someone else's real, more recent status change —
+                // previously that also produced a false audit-log entry
+                // (statusChanged: false) even when a real regression had
+                // just happened, since it compared against this same stale
+                // value instead of the truth.
+                const loadedStatus = currentAdminOrder ? (currentAdminOrder.status || 'placed') : 'placed';
+                const { data: freshOrder } = await supabaseClient.from('orders').select('status').eq('id', currentAdminOrderId).maybeSingle();
+                const freshStatus = (freshOrder && freshOrder.status) || loadedStatus;
+                const statusToSave = nextStatus === loadedStatus ? freshStatus : nextStatus;
+                const statusChanged = statusToSave !== freshStatus;
                 const { error } = await supabaseClient.from('orders')
-                    .update({ status: nextStatus, admin_note: comment || null })
+                    .update({ status: statusToSave, admin_note: comment || null })
                     .eq('id', currentAdminOrderId);
                 aodSaveBtn.disabled = false;
                 aodSaveBtn.textContent = 'Save changes';
                 if (error) { setAuthError('aodUpdateError', 'Could not update that order: ' + error.message); return; }
                 const orderLabel = currentAdminOrder ? (currentAdminOrder.order_number || currentAdminOrder.id.slice(0, 8).toUpperCase()) : currentAdminOrderId;
-                const prevStatus = currentAdminOrder ? (currentAdminOrder.status || 'placed') : null;
                 logAdminAction('order_status_changed', 'order', orderLabel, {
-                    fromStatus: prevStatus, toStatus: nextStatus, statusChanged, comment: comment || null,
+                    fromStatus: freshStatus, toStatus: statusToSave, statusChanged, comment: comment || null,
                 });
                 // renderAdminOrderDetail resets the success banner to hidden as
                 // part of its own render, so it must finish first, otherwise the
@@ -18958,6 +18982,7 @@
                 btn.disabled = false;
                 btn.textContent = 'Send to all customers';
                 if (error) { setAuthError('announcementError', error.message); return; }
+                logAdminAction('announcement_sent', 'announcement', title, { body, link: link || null, category });
                 setAuthSuccess('announcementSuccess', 'Sent. Every customer will see it next time they open their notifications.');
                 e.target.reset();
             });
@@ -20008,6 +20033,17 @@
             const result = await persistProductOverride(catSlug, idx);
             if (!result.ok) showToast('Couldn\'t sync that size to the live site: ' + result.error.message, 6000);
         }
+        // A cart id strings a product's base key together with its
+        // trailing segments on "::" (a weight variant's own label and/or a
+        // "subN" subscription marker — see parseProductCartId in
+        // create-payment-intent), so a label containing "::" would make
+        // the id ambiguous to parse back apart, and a label that happens
+        // to look exactly like the subscription marker itself ("sub4")
+        // would be silently mistaken for one instead of a real variant
+        // label. Either way checkout would reject that variant outright.
+        function isValidVariantLabel(label) {
+            return !label.includes('::') && !/^sub\d+$/.test(label);
+        }
         // Updates only the variant list in place rather than re-rendering the
         // whole edit panel, re-rendering the panel would reset every other
         // field (price, base weight, stock, description) back to its last
@@ -20020,6 +20056,13 @@
             const saleVal = document.getElementById(`ep-varsale-${catSlug}-${idx}`).value;
             const weightVal = document.getElementById(`ep-varweight-${catSlug}-${idx}`).value;
             if (!label || isNaN(price) || price < 0) return;
+            // "::" is the cart id's own delimiter between a product's base
+            // key and its variant/subscription suffix (see
+            // parseProductCartId in create-payment-intent) — a label
+            // containing it would make the resulting cart id ambiguous to
+            // parse, and checkout would reject that variant outright as an
+            // "Unknown product variant" every time a customer picked it.
+            if (!isValidVariantLabel(label)) { showToast('That size label isn\'t valid, please use something else (avoid "::" and "sub" followed only by numbers).', 5500); return; }
             if (!product.weightVariants) product.weightVariants = [];
             const variant = { label, price };
             if (saleVal !== '') {
@@ -20056,6 +20099,7 @@
             if (field === 'label') {
                 const label = rawValue.trim();
                 if (!label) { renderVariantsList(catSlug, idx); return; }
+                if (!isValidVariantLabel(label)) { showToast('That size label isn\'t valid, please use something else (avoid "::" and "sub" followed only by numbers).', 5500); renderVariantsList(catSlug, idx); return; }
                 variant.label = label;
             } else if (field === 'price') {
                 const price = parseFloat(rawValue);
