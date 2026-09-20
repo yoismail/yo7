@@ -122,7 +122,12 @@ const COMBOS: BundleDef[] = [
 // request, not just the next cold start. Cheap enough to just do it
 // every time: one extra indexed lookup on a single-row table.
 async function loadPricingSettings(db: ReturnType<typeof createClient>) {
-  const { data } = await db.from("pricing_settings").select("*").eq("id", true).maybeSingle();
+  const { data, error } = await db.from("pricing_settings").select("*").eq("id", true).maybeSingle();
+  // Deliberately still falls back to the module-level defaults either
+  // way (a real error here shouldn't block checkout over stale delivery
+  // fee tiers) — this log is only so a real failure is visible in the
+  // function logs instead of looking identical to "row genuinely empty".
+  if (error) console.error("loadPricingSettings failed, using defaults:", error.message);
   if (!data) return;
   if (Array.isArray(data.delivery_weight_tiers) && data.delivery_weight_tiers.length) {
     DELIVERY_WEIGHT_TIERS = data.delivery_weight_tiers.map((t: { maxWeight: number | null; fee: number }) => ({ maxWeight: t.maxWeight === null ? Infinity : t.maxWeight, fee: t.fee }));
@@ -293,8 +298,18 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { data: userData } = await authClient.auth.getUser();
+  const { data: userData, error: getUserError } = await authClient.auth.getUser();
   const userId = userData?.user?.id ?? null;
+  // Still deliberately proceeds as a guest either way — checkout already
+  // gates on being signed in client-side, and this function shouldn't be
+  // the thing that blocks a real payment over a token-validation hiccup.
+  // Logged so a genuinely signed-in customer silently losing their
+  // loyalty-reward eligibility and pending_checkouts safety net to a
+  // transient failure here (rather than a real absence of a session) is
+  // at least visible, instead of being indistinguishable from a guest.
+  if (getUserError && req.headers.get("Authorization")) {
+    console.error("auth.getUser() failed for an authenticated request, proceeding as guest:", getUserError.message);
+  }
 
   // Second job this function does: once a payment's gone through, the
   // client only has a payment_method *id* (not brand/last4 — reading
@@ -353,24 +368,41 @@ Deno.serve(async (req) => {
     }
     const catSlugs = [...new Set([...productKeys].map((k) => k.split("::")[0]))];
 
-    const { data: productRows } = await db
-      .from("products")
-      .select("cat_slug, idx, price, sale_price, stock, weight")
-      .in("cat_slug", catSlugs);
-    // Admin-created products (the "Add a new product" form) never get a
-    // row in the seeded `products` table above — they only ever exist
-    // in custom_products, full details rather than a delta, same
-    // (cat_slug, idx) identity as everything else. Without this, any
-    // such product is invisible to this function entirely and the whole
-    // cart gets rejected as "Unknown product" the moment one is added.
-    const { data: customProductRows } = await db
-      .from("custom_products")
-      .select("cat_slug, idx, price, sale_price, stock, weight, stock_quantity")
-      .in("cat_slug", catSlugs);
-    const { data: overrideRows } = await db
-      .from("product_overrides")
-      .select("product_key, price, sale_price, stock, weight, weight_variants, stock_quantity")
-      .in("product_key", [...productKeys]);
+    // These three are the entire base of trusted()'s pricing — silently
+    // discarding a real error from any one of them (a network hiccup, an
+    // RLS policy change, a typo in a future edit) used to leave that
+    // table's rows simply missing from `base`/`overrides` with no signal
+    // that anything went wrong, indistinguishable from "this table is
+    // just empty for these keys". For `products` specifically that's the
+    // whole seeded catalogue — trusted() returns null for any key not in
+    // `base`, so a real error there would silently turn "every ordinary,
+    // never-admin-edited product" into "Unknown product: x" for every
+    // single cart, with no error logged anywhere pointing at why.
+    // Capturing and checking all three here means a real failure now
+    // rejects the charge outright with an honest reason, instead of
+    // quietly mispricing (or outright refusing) carts built from
+    // whichever rows happened to still load.
+    const [productsRes, customProductsRes, overridesRes] = await Promise.all([
+      db.from("products").select("cat_slug, idx, price, sale_price, stock, weight").in("cat_slug", catSlugs),
+      // Admin-created products (the "Add a new product" form) never get a
+      // row in the seeded `products` table above — they only ever exist
+      // in custom_products, full details rather than a delta, same
+      // (cat_slug, idx) identity as everything else. Without this, any
+      // such product is invisible to this function entirely and the whole
+      // cart gets rejected as "Unknown product" the moment one is added.
+      db.from("custom_products").select("cat_slug, idx, price, sale_price, stock, weight, stock_quantity").in("cat_slug", catSlugs),
+      db.from("product_overrides").select("product_key, price, sale_price, stock, weight, weight_variants, stock_quantity").in("product_key", [...productKeys]),
+    ]);
+    if (productsRes.error || customProductsRes.error || overridesRes.error) {
+      console.error(
+        "priceCart: catalogue lookup failed",
+        productsRes.error?.message, customProductsRes.error?.message, overridesRes.error?.message,
+      );
+      return { ok: false as const, error: "Couldn't verify pricing right now, please try again in a moment." };
+    }
+    const productRows = productsRes.data;
+    const customProductRows = customProductsRes.data;
+    const overrideRows = overridesRes.data;
 
     const base = new Map<string, ProductRow>();
     (productRows ?? []).forEach((r: ProductRow) => base.set(`${r.cat_slug}::${r.idx}`, r));
@@ -548,11 +580,20 @@ Deno.serve(async (req) => {
         // else's — this lookup runs regardless of sign-in state, a guest
         // checkout is exactly the case that has to be caught here, not
         // just skipped.
-        const { data: referral } = await db
+        // Left unchecked, a failed lookup here (data undefined on error)
+        // read exactly like "this genuinely isn't a referral code" —
+        // silently skipping every rule below it exists to enforce
+        // (can't redeem your own code, only a new customer can redeem
+        // someone else's) rather than failing the redemption attempt.
+        const { data: referral, error: referralLookupError } = await db
           .from("referral_codes")
           .select("user_id")
           .eq("discount_code_id", d.id)
           .maybeSingle();
+        if (referralLookupError) {
+          console.error("priceCart: referral_codes lookup failed", referralLookupError.message);
+          discountError = "Couldn't check that code right now, please try again in a moment.";
+        }
         const isReferralCode = !!referral;
         const isOwnReferralCode = userId != null && referral?.user_id === userId;
         let isEligibleNewCustomer = true;
@@ -563,7 +604,8 @@ Deno.serve(async (req) => {
             .eq("user_id", userId);
           isEligibleNewCustomer = (count ?? 0) === 0;
         }
-        if (isOwnReferralCode) discountError = "You can't use your own referral code.";
+        if (discountError) { /* referral lookup failed above, already set */ }
+        else if (isOwnReferralCode) discountError = "You can't use your own referral code.";
         else if (isReferralCode && !userId) {
           discountError = "Log in or create an account to use a referral code.";
           discountRequiresLogin = true;
@@ -660,13 +702,19 @@ Deno.serve(async (req) => {
     let loyaltyPct: number | null = null;
     let loyaltyRewardId: string | null = null;
     if (userId && !appliedDiscountIsReferral) {
-      const { data: reward } = await db
+      const { data: reward, error: rewardLookupError } = await db
         .from("loyalty_rewards")
         .select("id, pct")
         .eq("user_id", userId)
         .eq("used", false)
         .limit(1)
         .maybeSingle();
+      // Still deliberately doesn't fail the charge over this — a real
+      // error here just means a customer misses out on a discount
+      // they'd earned, not a charge that has to be blocked. Logged so
+      // that's at least visible instead of reading as "no reward to
+      // give", same reasoning as loadPricingSettings above.
+      if (rewardLookupError) console.error("loyalty_rewards lookup failed, proceeding without a reward:", rewardLookupError.message);
       if (reward) {
         loyaltyPct = reward.pct;
         loyaltyRewardId = reward.id;
