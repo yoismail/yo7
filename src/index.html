@@ -3742,12 +3742,16 @@
            .combo-ticket-watermark and the footer's own newsletter cards —
            this card's own reorder icon, bled off the corner (see the
            .reorder-card-watermark svg in the markup), rather than a plain
-           flat panel. */
+           flat panel. Anchored to the LEFT, behind the icon, not the
+           right — .reorder-text is flex:1 and pushes .reorder-btn flush
+           against the card's right edge, so a right-anchored watermark
+           there just sat mostly hidden under the opaque button instead
+           of actually reading as a corner accent. */
         .reorder-card-watermark {
             position: absolute; z-index: 0; pointer-events: none;
-            right: -20px; bottom: -24px; width: 120px; height: 120px;
-            opacity: 0.05; color: var(--heading);
-            transform: rotate(-10deg);
+            left: -18px; bottom: -22px; width: 90px; height: 90px;
+            opacity: 0.06; color: var(--heading);
+            transform: rotate(8deg);
         }
         .reorder-icon {
             position: relative; z-index: 1;
@@ -8570,12 +8574,17 @@
         }
         /* Same oversized-glyph-behind-the-content language as
            .combo-ticket-watermark and the homepage's reorder/WhatsApp
-           cards — this card's own bell icon, bled off the corner. */
+           cards — this card's own bell icon, bled off the corner.
+           Anchored LEFT, not right — .push-toggle-text is flex:1 and
+           pushes the "Turn on" button flush against the card's right
+           edge, so a right-anchored watermark there just sat mostly
+           hidden under the opaque button (see the same fix on
+           .reorder-card-watermark). */
         .push-toggle-card-watermark {
             position: absolute; z-index: 0; pointer-events: none;
-            right: -16px; bottom: -20px; width: 96px; height: 96px;
-            opacity: 0.05; color: var(--heading);
-            transform: rotate(-8deg);
+            left: -14px; bottom: -18px; width: 76px; height: 76px;
+            opacity: 0.06; color: var(--heading);
+            transform: rotate(8deg);
         }
         .push-toggle-icon {
             position: relative; z-index: 1;
@@ -13469,7 +13478,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.13';
+        const BUILD_VERSION = '2026-09-20.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
