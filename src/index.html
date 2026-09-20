@@ -2434,7 +2434,8 @@
             padding: 8px;
             box-sizing: content-box;
             border-radius: 12px;
-            background: var(--value-accent-tint, rgba(114, 148, 0, 0.14));
+            background: linear-gradient(145deg, color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 9%, transparent));
+            box-shadow: 0 6px 14px color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 22%, transparent);
             color: var(--value-accent, var(--chartreuse-rich));
             transition: transform 0.3s cubic-bezier(.16,.84,.44,1);
         }
@@ -2820,10 +2821,29 @@
             padding: 11px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
         }
 
-        .build-bundle-promo { background: #FAF2E3; padding: 48px 0; }
-        .build-bundle-promo-inner {
-            display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+        .build-bundle-promo { position: relative; background: #FAF2E3; padding: 48px 0; overflow: hidden; }
+        /* Same oversized-glyph-behind-the-content language as
+           .combo-ticket-watermark and the footer newsletter cards, reusing
+           the checklist icon from the Build a Bundle page's own empty
+           state rather than a one-off decorative mark. */
+        .build-bundle-promo-watermark {
+            position: absolute; z-index: 0; pointer-events: none;
+            right: 3%; bottom: -20%; width: 220px; height: 220px;
+            opacity: 0.05; color: #2C1C10;
+            transform: rotate(8deg);
         }
+        .build-bundle-promo-inner {
+            position: relative; z-index: 1;
+            display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+        }
+        .build-bundle-promo-icon {
+            width: 48px; height: 48px; flex-shrink: 0; border-radius: 15px;
+            background: linear-gradient(145deg, rgba(225,225,0,0.4), rgba(225,225,0,0.14));
+            color: #7a5a00;
+            box-shadow: 0 6px 16px rgba(225,225,0,0.25);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .build-bundle-promo-icon svg { width: 23px; height: 23px; }
         .build-bundle-promo-inner h2 {
             font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px);
             color: #2C1C10; letter-spacing: -0.01em; margin: 4px 0 8px;
@@ -2831,13 +2851,31 @@
         .build-bundle-promo-inner p { color: #6b5c4f; font-size: 14px; max-width: 46ch; }
         .build-bundle-promo-inner .btn { flex-shrink: 0; }
 
-        .whatsapp-list-section { background: var(--section-alt-bg); padding: 48px 0; }
+        .whatsapp-list-section { position: relative; background: var(--section-alt-bg); padding: 48px 0; overflow: hidden; }
+        /* Same oversized-glyph-behind-the-content language as
+           .combo-ticket-watermark and the footer newsletter cards, scaled
+           up for a full-width section rather than a small card. */
+        .whatsapp-list-watermark {
+            position: absolute; z-index: 0; pointer-events: none;
+            right: 4%; bottom: -18%; width: 260px; height: 260px;
+            opacity: 0.05; color: #25D366;
+            transform: rotate(-8deg);
+        }
         .whatsapp-list-inner {
+            position: relative; z-index: 1;
             display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap;
+            /* On .whatsapp-list-inner, not .whatsapp-list-form itself —
+               a container can't resolve a query that changes its OWN
+               flex-direction (a self-referential sizing cycle the
+               container-queries spec requires browsers to ignore), so
+               the container has to be an ancestor of the element the
+               query actually changes. */
+            container-type: inline-size;
         }
         .whatsapp-list-icon {
-            width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
-            background: #25D366; color: var(--cream);
+            width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0;
+            background: linear-gradient(145deg, #2FE470, #1DAE55); color: var(--cream);
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
             display: flex; align-items: center; justify-content: center;
         }
         .whatsapp-list-icon svg { width: 26px; height: 26px; }
@@ -2855,6 +2893,15 @@
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
             font-family: var(--body); font-size: 16px; resize: vertical;
             background: var(--card-bg); color: var(--text-body);
+        }
+        /* Once the form itself has the room, the send button sits beside
+           the textarea rather than on its own line underneath — reacts to
+           this form's own resolved width, not the viewport's, same
+           technique as the footer newsletter cards. */
+        @container (min-width: 420px) {
+            .whatsapp-list-form { flex-direction: row; align-items: flex-end; }
+            .whatsapp-list-form textarea { flex: 1; }
+            .whatsapp-list-form .whatsapp-order-btn { flex-shrink: 0; white-space: nowrap; }
         }
 
         /* ================= COMBO DEALS: "market ticket" design language =================
@@ -3684,13 +3731,29 @@
         /* ================= REORDER SUGGESTION (signed-in, returning customers) ================= */
         .reorder-section { padding: 20px 0 0; }
         .reorder-card {
+            position: relative;
             display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
             background: var(--card-bg); border: 1.5px solid rgba(144, 184, 0, 0.3);
             border-radius: 18px; padding: 20px 24px;
             box-shadow: 0 10px 30px rgba(6, 59, 0, 0.08);
+            overflow: hidden;
+        }
+        /* Same oversized-glyph-behind-the-content language as
+           .combo-ticket-watermark and the footer's own newsletter cards —
+           this card's own reorder icon, bled off the corner (see the
+           .reorder-card-watermark svg in the markup), rather than a plain
+           flat panel. */
+        .reorder-card-watermark {
+            position: absolute; z-index: 0; pointer-events: none;
+            right: -20px; bottom: -24px; width: 120px; height: 120px;
+            opacity: 0.05; color: var(--heading);
+            transform: rotate(-10deg);
         }
         .reorder-icon {
-            width: 44px; height: 44px; border-radius: 50%; background: rgba(144, 184, 0, 0.14);
+            position: relative; z-index: 1;
+            width: 44px; height: 44px; border-radius: 14px;
+            background: linear-gradient(145deg, rgba(144,184,0,0.24), rgba(144,184,0,0.09));
+            box-shadow: 0 6px 16px rgba(144,184,0,0.2);
             /* var(--heading), not var(--aubergine) — aubergine is one of the
                fixed-dark brand colours the site deliberately never swaps for
                dark mode (see the [data-theme="dark"] block's own comment),
@@ -3700,6 +3763,8 @@
             color: var(--heading); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .reorder-icon svg { width: 22px; height: 22px; }
+        .reorder-text { position: relative; z-index: 1; }
+        .reorder-btn { position: relative; z-index: 1; }
         .reorder-text { flex: 1; min-width: 180px; }
         .reorder-title { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); margin-bottom: 3px; }
         .reorder-summary { font-size: 13.5px; color: var(--text-muted); }
@@ -6360,8 +6425,9 @@
            nth-child colour-coding is stable. */
         .pd-detail-card .label svg {
             width: 15px; height: 15px; flex-shrink: 0;
-            padding: 7px; box-sizing: content-box; border-radius: 50%;
-            background: var(--value-accent-tint, rgba(114, 148, 0, 0.14));
+            padding: 7px; box-sizing: content-box; border-radius: 9px;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 9%, transparent));
+            box-shadow: 0 3px 8px color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 18%, transparent);
             color: var(--value-accent, var(--chartreuse-rich));
         }
         .pd-detail-card:nth-child(5n+1) svg { --value-accent: var(--chartreuse-rich); --value-accent-tint: rgba(114, 148, 0, 0.14); }
@@ -8124,8 +8190,9 @@
             margin-top: 0;
             padding: 8px;
             box-sizing: content-box;
-            border-radius: 50%;
-            background: var(--value-accent-tint, rgba(114, 148, 0, 0.14));
+            border-radius: 10px;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 9%, transparent));
+            box-shadow: 0 4px 10px color-mix(in srgb, var(--value-accent, var(--chartreuse-rich)) 20%, transparent);
             color: var(--value-accent, var(--chartreuse-rich));
         }
         .dinfo-card .pound-icon {
@@ -9292,6 +9359,7 @@
              rather than duplicating its cart/bundle/combo re-add logic. -->
         <section class="reorder-section" id="reorderSection" style="display:none;">
             <div class="wrap reorder-card">
+                <svg class="reorder-card-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 <div class="reorder-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 </div>
@@ -9456,8 +9524,12 @@
         </section>
 
         <section class="build-bundle-promo">
+            <svg class="build-bundle-promo-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
             <div class="wrap">
                 <div class="build-bundle-promo-inner reveal">
+                    <div class="build-bundle-promo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+                    </div>
                     <div>
                         <div class="section-eyebrow">New</div>
                         <h2>Know the dish? We'll guide the ingredients.</h2>
@@ -9469,6 +9541,7 @@
         </section>
 
         <section class="whatsapp-list-section">
+            <svg class="whatsapp-list-watermark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
             <div class="wrap">
                 <div class="whatsapp-list-inner reveal">
                     <div class="whatsapp-list-icon">
@@ -13344,7 +13417,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.10';
+        const BUILD_VERSION = '2026-09-20.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
