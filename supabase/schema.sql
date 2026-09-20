@@ -688,6 +688,65 @@ $$;
 ALTER FUNCTION "public"."prune_rate_limit_hits"("older_than" interval) OWNER TO "postgres";
 
 
+-- PostgREST exposes the incoming HTTP request's headers as the
+-- request.headers GUC (JSON text) for the duration of the request, the
+-- same header PostgREST reads to populate auth.jwt() — cf-connecting-ip
+-- first since Supabase sits behind Cloudflare, which overwrites that
+-- header itself rather than trusting whatever a client sends, same
+-- reasoning as create-payment-intent's getClientIp() on the edge
+-- function side. Falls back to x-forwarded-for for any other path in,
+-- then 'unknown' so a rate limit bucket always has a key rather than
+-- erroring a legitimate signup.
+CREATE OR REPLACE FUNCTION "public"."rpc_client_ip"() RETURNS "text"
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+  select coalesce(
+    nullif(split_part(current_setting('request.headers', true)::json->>'cf-connecting-ip', ',', 1), ''),
+    nullif(split_part(current_setting('request.headers', true)::json->>'x-forwarded-for', ',', 1), ''),
+    'unknown'
+  );
+$$;
+
+
+ALTER FUNCTION "public"."rpc_client_ip"() OWNER TO "postgres";
+
+
+-- Same fixed-window counter as the edge functions' checkRateLimit() —
+-- count this bucket's rows within the window, reject if at/over the
+-- limit, otherwise record this request and let it through. Postgres
+-- RPCs called directly via supabase-js (register_coming_soon_interest,
+-- subscribe_to_newsletter) never pass through the edge functions at
+-- all, so without this they had no rate limiting whatsoever: a script
+-- with the public anon key could call either one at any rate, each
+-- call sending a real email through Resend to whatever address it's
+-- given, an easy way to burn the account's send quota and put the
+-- sending domain's reputation at risk. Every call to either function
+-- ends in exactly one email per genuinely new signup either way, so this
+-- caps how fast an attacker can mint new ones, not how many real
+-- customers can sign up.
+CREATE OR REPLACE FUNCTION "public"."check_rpc_rate_limit"("p_bucket_prefix" "text", "p_limit" integer, "p_window_seconds" integer) RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_bucket_key text := p_bucket_prefix || ':' || public.rpc_client_ip();
+  v_count int;
+begin
+  select count(*) into v_count from public.rate_limit_hits
+    where bucket_key = v_bucket_key and created_at >= now() - (p_window_seconds || ' seconds')::interval;
+  if v_count >= p_limit then
+    return false;
+  end if;
+  insert into public.rate_limit_hits (bucket_key) values (v_bucket_key);
+  return true;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."check_rpc_rate_limit"("p_bucket_prefix" "text", "p_limit" integer, "p_window_seconds" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."record_discount_redemption"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -765,6 +824,9 @@ begin
   end if;
   if v_postcode is not null and v_postcode !~ '^[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}$' then
     raise exception 'Please enter a valid UK postcode.';
+  end if;
+  if not public.check_rpc_rate_limit('coming-soon-signup', 5, 600) then
+    raise exception 'Too many attempts, please try again in a few minutes.';
   end if;
 
   insert into public.coming_soon_signups (email, postcode, source)
@@ -1068,6 +1130,9 @@ declare
 begin
   if p_email is null or p_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
     raise exception 'Please enter a valid email address.';
+  end if;
+  if not public.check_rpc_rate_limit('newsletter-signup', 5, 600) then
+    raise exception 'Too many attempts, please try again in a few minutes.';
   end if;
 
   insert into public.newsletter_subscribers (email, source, active)
@@ -2624,6 +2689,18 @@ GRANT ALL ON FUNCTION "public"."prune_pending_checkouts"("older_than" interval) 
 GRANT ALL ON FUNCTION "public"."prune_rate_limit_hits"("older_than" interval) TO "anon";
 GRANT ALL ON FUNCTION "public"."prune_rate_limit_hits"("older_than" interval) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."prune_rate_limit_hits"("older_than" interval) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."rpc_client_ip"() TO "anon";
+GRANT ALL ON FUNCTION "public"."rpc_client_ip"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."rpc_client_ip"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."check_rpc_rate_limit"("p_bucket_prefix" "text", "p_limit" integer, "p_window_seconds" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."check_rpc_rate_limit"("p_bucket_prefix" "text", "p_limit" integer, "p_window_seconds" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."check_rpc_rate_limit"("p_bucket_prefix" "text", "p_limit" integer, "p_window_seconds" integer) TO "service_role";
 
 
 
