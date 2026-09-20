@@ -1823,27 +1823,28 @@
         @media (prefers-reduced-motion: reduce) {
             .hero-text-watermark, .confirm-watermark { animation: none; }
         }
-        /* .shop-header (About Us intro) is a fixed white/light panel in
-           both themes (see .shop-header-story), so this uses a fixed faded
-           ink colour rather than the theme-flipping var(--ink) the hero
-           and confirmation page use — var(--ink) would fade to near-white
-           and vanish here in dark mode. */
+        /* An open-book glyph instead of the "Yo7" wordmark the hero/
+           footer/confirmation watermarks use — this one sits on a page
+           that's specifically about the brand's own story, so its own
+           icon reads as more considered than repeating the sitewide
+           mark a fourth time. Was text before (see the pre-existing
+           .text-watermark base class other watermarks still use); now
+           an svg, so it needs its own position/size rules rather than
+           that class's font-based ones. color: var(--heading), not a
+           fixed value — .shop-header-story now flips with the theme
+           (see its own dark-mode override), so this needs to flip with
+           it too, the same reasoning .pd-delivery-window's own colour
+           swap uses. */
         .about-intro-watermark {
-            right: -3%;
-            /* em rather than % — same fix, and same reason, as
-               .hero-text-watermark above: a % bottom offset is relative to
-               .shop-header's height, which shrinks on mobile enough that
-               -22% clipped away most of the mark instead of the intended
-               partial bleed. */
-            bottom: -0.265em;
-            font-size: clamp(90px, 15vw, 220px);
-            color: rgba(44, 28, 16, 0.06);
-            /* Transform-only — no opacity keyframe like the hero/footer
-               text watermarks use, since this mark's faintness is baked
-               into its color's own alpha rather than a separate opacity
-               property (see the fixed-vs-theme-flipping note above); an
-               opacity pulse here would stack on top of that alpha and
-               read as flickering rather than glowing. */
+            position: absolute;
+            z-index: 1;
+            pointer-events: none;
+            right: -2%;
+            bottom: -14px;
+            width: clamp(90px, 15vw, 200px);
+            height: clamp(90px, 15vw, 200px);
+            color: var(--heading);
+            opacity: 0.07;
             transform-origin: 85% 100%;
             animation: introWatermarkLive 7.8s ease-in-out infinite;
             animation-delay: -3.5s;
@@ -1868,10 +1869,22 @@
            the "Order placed" heading regardless of how long the invoice
            under it ends up being. Excluded from print (see the print media
            query below) so it never bleeds into the saved/printed invoice. */
+        /* A checkmark, same glyph as .confirm-check right above it in the
+           markup, instead of the "Yo7" wordmark — this page's whole point
+           is "your order is confirmed", so its own icon fits better than
+           the sitewide mark repeated a third time. Was text before (see
+           .text-watermark, still used by the hero/footer marks); now an
+           svg, so sizing is width/height rather than font-size, position/
+           z-index/pointer-events moved onto this rule directly since it
+           no longer picks them up from that shared class. */
         .confirm-watermark {
+            position: absolute;
+            z-index: 1;
+            pointer-events: none;
             right: -3%;
             top: -10px;
-            font-size: clamp(80px, 14vw, 220px);
+            width: clamp(80px, 14vw, 200px);
+            height: clamp(80px, 14vw, 200px);
             color: var(--ink);
             opacity: var(--hero-watermark-op);
             /* Reuses the hero's own heroTextWatermarkLive keyframe outright
@@ -10201,7 +10214,7 @@
     <!-- ================= ORDER CONFIRMATION / INVOICE ================= -->
     <div id="view-confirm" class="hidden-view">
         <section class="confirm-section">
-            <div class="text-watermark confirm-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
+            <svg class="confirm-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             <div class="wrap">
                 <div class="confirm-head">
                     <div class="confirm-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -10365,7 +10378,7 @@
     <!-- ================= ABOUT US ================= -->
     <div id="view-about" class="hidden-view">
         <header class="shop-header shop-header-story">
-            <div class="text-watermark about-intro-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
+            <svg class="about-intro-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; About Us</div>
                 <h1>About Us</h1>
@@ -13478,7 +13491,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.14';
+        const BUILD_VERSION = '2026-09-20.15';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
