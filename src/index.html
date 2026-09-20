@@ -5444,6 +5444,17 @@
             transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
             white-space: nowrap;
         }
+        /* Fixed dark-brown border/text, no different from every other
+           colour on this strip before .shop-header supported dark mode —
+           now that its background actually goes dark, an unvisited chip
+           needs its own dark-mode colours instead of going near-invisible
+           text on a near-black strip (only .active/:hover stood out,
+           since that state's orange background/aubergine text already
+           has enough contrast in either theme). */
+        [data-theme="dark"] .cat-chip {
+            border-color: rgba(var(--border-rgb), 0.22);
+            color: var(--text-body);
+        }
 
         .cat-chip:hover,
         .cat-chip.active {
@@ -13507,7 +13518,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.17';
+        const BUILD_VERSION = '2026-09-20.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
