@@ -440,7 +440,7 @@ BEGIN
   -- second finalize attempt for the same payment, same pattern as
   -- decrement_stock's own compare-and-swap.
   IF v_pending.loyalty_reward_id IS NOT NULL THEN
-    UPDATE public.loyalty_rewards SET used = true, used_at = now()
+    UPDATE public.loyalty_rewards SET used = true, used_at = now(), redeemed_order_id = v_order_id
       WHERE id = v_pending.loyalty_reward_id AND used = false;
   END IF;
 
@@ -528,6 +528,51 @@ $$;
 
 
 ALTER FUNCTION "public"."get_or_create_referral_code"() OWNER TO "postgres";
+
+
+-- Backs the #/refer page's stats row ("X friends referred", "£Y saved
+-- so far"). friends_referred counts every real redemption of this
+-- account's own referral code (discount_redemptions rows against its
+-- discount_codes id) — not loyalty_rewards, since a friend's order is
+-- what counts as "referred" regardless of whether the referrer has
+-- since spent the reward it earned them. total_saved sums
+-- orders.discount for every referral-earned reward this account has
+-- actually spent (redeemed_order_id set) — safe to read the whole
+-- figure off that column rather than needing to isolate "just the
+-- loyalty portion" of it, because loyalty rewards never stack with a
+-- discount/referral code on the same order (see the comment on
+-- loyalty_rewards.redeemed_order_id), so whenever that's set, the
+-- order's entire discount figure IS this reward's value.
+CREATE OR REPLACE FUNCTION "public"."get_referral_stats"() RETURNS TABLE("friends_referred" bigint, "total_saved" numeric)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_user_id uuid := auth.uid();
+  v_discount_id uuid;
+begin
+  if v_user_id is null then
+    raise exception 'Not authorized';
+  end if;
+
+  select discount_code_id into v_discount_id from public.referral_codes where user_id = v_user_id;
+
+  if v_discount_id is null then
+    return query select 0::bigint, 0::numeric;
+    return;
+  end if;
+
+  return query
+  select
+    (select count(*) from public.discount_redemptions where discount_id = v_discount_id),
+    (select coalesce(sum(o.discount), 0) from public.loyalty_rewards lr
+       join public.orders o on o.id = lr.redeemed_order_id
+       where lr.user_id = v_user_id and lr.source_order_id is not null and lr.redeemed_order_id is not null);
+end;
+$$;
+
+
+ALTER FUNCTION "public"."get_referral_stats"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_units_sold"("p_product_keys" "text"[]) RETURNS TABLE("product_key" "text", "units_sold" bigint)
@@ -1560,7 +1605,8 @@ CREATE TABLE IF NOT EXISTS "public"."loyalty_rewards" (
     "used" boolean DEFAULT false NOT NULL,
     "earned_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "used_at" timestamp with time zone,
-    "source_order_id" "uuid"
+    "source_order_id" "uuid",
+    "redeemed_order_id" "uuid"
 );
 
 
@@ -1568,6 +1614,9 @@ ALTER TABLE "public"."loyalty_rewards" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."loyalty_rewards"."source_order_id" IS 'Set only for a reward earned via the referral program: the referred friend''s order that triggered it. Null for the spend-threshold and welcome-signup rewards. Unique when set, so issue_referral_reward_if_earned can''t double-reward the same order.';
+
+
+COMMENT ON COLUMN "public"."loyalty_rewards"."redeemed_order_id" IS 'The order THIS reward''s own discount was actually applied to when spent — set by finalize_order_from_pending in the same step that flips used to true. Distinct from source_order_id (which order EARNED a referral reward, not which order SPENT it). Lets get_referral_stats() look up orders.discount for that order to report an exact amount saved, since loyalty rewards never stack with a discount/referral code on the same order — whenever this is set, that order''s entire orders.discount figure is this reward''s value, not a mix of several things.';
 
 
 CREATE TABLE IF NOT EXISTS "public"."loyalty_settings" (
@@ -2078,6 +2127,9 @@ CREATE INDEX "discount_redemptions_by_user" ON "public"."discount_redemptions" U
 CREATE UNIQUE INDEX "loyalty_rewards_source_order_id_idx" ON "public"."loyalty_rewards" USING "btree" ("source_order_id") WHERE ("source_order_id" IS NOT NULL);
 
 
+CREATE UNIQUE INDEX "loyalty_rewards_redeemed_order_id_idx" ON "public"."loyalty_rewards" USING "btree" ("redeemed_order_id") WHERE ("redeemed_order_id" IS NOT NULL);
+
+
 
 -- syncLoyaltyState() runs this lookup (eq user_id, eq used=false) on
 -- essentially every logged-in page load — a partial index, matching the
@@ -2219,6 +2271,11 @@ ALTER TABLE ONLY "public"."discount_redemptions"
 
 ALTER TABLE ONLY "public"."loyalty_rewards"
     ADD CONSTRAINT "loyalty_rewards_source_order_id_fkey" FOREIGN KEY ("source_order_id") REFERENCES "public"."orders"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."loyalty_rewards"
+    ADD CONSTRAINT "loyalty_rewards_redeemed_order_id_fkey" FOREIGN KEY ("redeemed_order_id") REFERENCES "public"."orders"("id") ON DELETE SET NULL;
 
 
 
@@ -2796,6 +2853,12 @@ GRANT ALL ON FUNCTION "public"."get_best_sellers"("p_days" integer, "p_limit" in
 GRANT ALL ON FUNCTION "public"."get_or_create_referral_code"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_or_create_referral_code"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_or_create_referral_code"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_referral_stats"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_referral_stats"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_referral_stats"() TO "service_role";
 
 
 

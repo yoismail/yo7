@@ -6934,6 +6934,83 @@
             margin: 0 0 12px;
         }
         .referral-card p strong { color: var(--heading-mid); font-weight: 700; }
+        .referral-stats-row {
+            display: flex; gap: 10px;
+            margin: 0 0 12px;
+        }
+        .referral-stat {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.12);
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+        .referral-stat-num {
+            display: block;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--heading);
+        }
+        .referral-stat-label {
+            display: block;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        /* "How it works" / "Terms" on the #/refer page — plain reading
+           sections, deliberately not another bordered card: the
+           referral-card above is the one actionable/eye-catching thing
+           on this page, these are supporting material underneath it,
+           same width cap so they line up under it rather than running
+           the page's own full wrap width. */
+        .referral-info-section {
+            max-width: 560px;
+            margin: 0 auto 32px;
+        }
+        .referral-info-section h2 {
+            font-family: var(--display);
+            font-size: 18px;
+            color: var(--heading);
+            margin: 0 0 14px;
+        }
+        .referral-step {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .referral-step-num {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            background: rgba(114, 148, 0, 0.14);
+            color: var(--chartreuse-rich);
+        }
+        [data-theme="dark"] .referral-step-num { background: rgba(166, 204, 46, 0.18); color: var(--chartreuse-soft); }
+        .referral-step h3 {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 14.5px;
+            color: var(--heading);
+            margin: 0 0 3px;
+        }
+        .referral-step p { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+        .referral-terms-list {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
+        .referral-terms-list li { margin-bottom: 8px; }
         .referral-teaser {
             display: flex; align-items: center; gap: 10px;
             background: rgba(225, 225, 0, 0.12);
@@ -10948,6 +11025,51 @@
             <div class="wrap">
                 <div class="referral-card" id="referralCard" style="display:none;"></div>
                 <div id="referLoggedOut" style="display:none;"></div>
+                <!-- Static — not user-specific, so rendered straight into
+                     the page (no JS innerHTML build) and shown regardless
+                     of login state, same as the card's own description
+                     paragraph would be if a guest could see it. No
+                     hardcoded %/£ figures here on purpose: those are
+                     admin-configurable (loyalty_rewards.pct,
+                     loyalty_settings.referral_min_order) and already shown
+                     accurately in the card above once it loads — repeating
+                     a number here risks it going stale if an admin changes
+                     either setting later. -->
+                <div class="referral-info-section">
+                    <h2>How it works</h2>
+                    <div class="referral-step">
+                        <span class="referral-step-num">1</span>
+                        <div>
+                            <h3>Share your code</h3>
+                            <p>Copy your unique code above, or send it straight to a friend via WhatsApp or Share.</p>
+                        </div>
+                    </div>
+                    <div class="referral-step">
+                        <span class="referral-step-num">2</span>
+                        <div>
+                            <h3>They get a discount</h3>
+                            <p>Your friend enters the code at checkout on their first order with us, once it reaches the minimum spend shown above.</p>
+                        </div>
+                    </div>
+                    <div class="referral-step">
+                        <span class="referral-step-num">3</span>
+                        <div>
+                            <h3>You get rewarded</h3>
+                            <p>Once their order goes through, you automatically get a discount off your very next order — no code to enter, it just applies.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="referral-info-section">
+                    <h2>Terms</h2>
+                    <ul class="referral-terms-list">
+                        <li>Referral codes are for new customers only — a code can only be redeemed by someone who has never placed an order with Yo7 Foods before.</li>
+                        <li>You can't redeem your own referral code.</li>
+                        <li>Each account gets one referral code of its own, and can share it with as many friends as you like.</li>
+                        <li>Your friend's order must reach the minimum spend shown above for the code to apply.</li>
+                        <li>Your reward is a one-time discount off your next order, applied automatically — it doesn't stack with another discount or referral code on the same order.</li>
+                        <li>Rewards don't expire.</li>
+                    </ul>
+                </div>
             </div>
         </section>
     </div>
@@ -13126,7 +13248,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.6';
+        const BUILD_VERSION = '2026-09-20.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17587,13 +17709,29 @@
         <h3>Refer a friend</h3>
       </div>
       <p>Give a friend <strong>${loyaltyRewardPct}% off</strong> their first order over <strong>${money(referralMinOrder)}</strong>, and you'll get <strong>${loyaltyRewardPct}% off</strong> your next one once they use it.</p>
+      <div class="referral-stats-row">
+        <div class="referral-stat"><span class="referral-stat-num" id="referralStatFriends">–</span><span class="referral-stat-label">Friends referred</span></div>
+        <div class="referral-stat"><span class="referral-stat-num" id="referralStatSaved">–</span><span class="referral-stat-label">Saved so far</span></div>
+      </div>
       <div class="referral-code-row"><code id="referralCodeText">Loading…</code><button type="button" class="btn btn-outline-dark" id="referralCopyBtn" disabled>Copy code</button></div>
       <div class="referral-share-row" id="referralShareRow" style="display:none;">
         <button type="button" class="referral-share-btn whatsapp" id="referralWhatsappBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>WhatsApp</button>
         <button type="button" class="referral-share-btn" id="referralShareBtn" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
       </div>
       <p class="referral-terms">Your friend enters this code at checkout. Once their order goes through, your reward shows up here and applies automatically at your next checkout. One code per account, and you can't redeem your own.</p>`;
-            const { data, error } = await supabaseClient.rpc('get_or_create_referral_code');
+            // Independent reads (the code itself, and this account's
+            // referral stats) fetched in parallel rather than back to
+            // back — same reasoning as every other pair of unrelated
+            // Supabase calls on this page.
+            const [{ data, error }, statsRes] = await Promise.all([
+                supabaseClient.rpc('get_or_create_referral_code'),
+                supabaseClient.rpc('get_referral_stats'),
+            ]);
+            const friendsEl = document.getElementById('referralStatFriends');
+            const savedEl = document.getElementById('referralStatSaved');
+            const stats = !statsRes.error && Array.isArray(statsRes.data) ? statsRes.data[0] : null;
+            if (friendsEl) friendsEl.textContent = stats ? stats.friends_referred : '–';
+            if (savedEl) savedEl.textContent = stats ? money(stats.total_saved) : '–';
             const codeEl = document.getElementById('referralCodeText');
             const copyBtn = document.getElementById('referralCopyBtn');
             if (error || !data) {
