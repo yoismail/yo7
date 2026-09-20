@@ -11700,6 +11700,20 @@
             });
         }
         assignProductCodes();
+        // Captured here, before loadCustomProducts() (or anything else)
+        // ever appends to cat.products, and never touched again — the
+        // one place that still knows each category's true seed-product
+        // count once custom_products rows start getting merged into the
+        // very same cat.products array (loadCustomProducts assigns them
+        // by idx into it, see its own comment), at which point
+        // cat.products.length can no longer be trusted to mean "just the
+        // seed products". add_custom_product (see saveNewProduct) needs
+        // this so the database, not the client, can pick the next idx —
+        // the database has no other way to know where the seed range
+        // ends and the custom range begins, since the seed catalogue
+        // itself only ever exists as this in-page JS, never in the db.
+        const SEED_PRODUCT_COUNT = {};
+        CATEGORIES.forEach(cat => { SEED_PRODUCT_COUNT[cat.slug] = cat.products.length; });
         // Renamed/regrouped from the original 5 broad buckets to these —
         // the terms a customer already searches an African grocery site
         // for (Rice, Beans, Noodles, Garri & Flours, Meat & Poultry, ...)
@@ -13046,7 +13060,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.3';
+        const BUILD_VERSION = '2026-09-20.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -20536,7 +20550,7 @@
           <label class="apf-checkbox"><input type="checkbox" id="apf-isnew-${uid}" ${presetCategorySlug ? '' : 'checked'}> Feature in "New in stock"</label>
           <label class="apf-checkbox"><input type="checkbox" id="apf-isbestseller-${uid}"> Feature in "Best sellers"</label>
           <div class="apf-actions">
-            <button class="apf-save" type="button" onclick="saveNewProduct('${slotId}', '${uid}', ${presetCategorySlug ? `'${presetCategorySlug}'` : 'null'})">Add product</button>
+            <button class="apf-save" id="apf-save-${uid}" type="button" onclick="saveNewProduct('${slotId}', '${uid}', ${presetCategorySlug ? `'${presetCategorySlug}'` : 'null'})">Add product</button>
             <button class="apf-cancel" type="button" onclick="document.getElementById('${slotId}').innerHTML='';">Cancel</button>
           </div>
         </div>`;
@@ -20619,37 +20633,53 @@
             if (isBestSellerChecked) newProduct.isBestSeller = true;
             if (descVal) newProduct.description = descVal;
             if (newProductPhotoData[uid]) { newProduct.image = newProductPhotoData[uid]; delete newProductPhotoData[uid]; }
-            // Assigned as the next free slot in this category's own array —
-            // stable across reloads since loadCustomProducts() always
-            // merges every admin-added product back into this exact index
-            // before anything else runs, so a later edit-mode change to
-            // this same product (via product_overrides, keyed the same
-            // "catSlug::idx" way) lands on the right item.
-            const idx = cat.products.length;
-            cat.products.push(newProduct);
-            assignProductCodes();
-
-            document.getElementById(slotId).innerHTML = '';
-            route(); // re-render current view so the new product shows up immediately
 
             if (!supabaseClient) {
+                // Preview-mode fallback: nothing to persist and no other
+                // admin session to race against, so a local next-free-slot
+                // guess is fine here — this branch never touches the db.
+                cat.products.push(newProduct);
+                assignProductCodes();
+                document.getElementById(slotId).innerHTML = '';
+                route();
                 showToast('Added here, but accounts aren\'t connected yet, this is preview mode and won\'t survive a refresh.', 5000);
                 return;
             }
-            const { error } = await supabaseClient.from('custom_products').insert({
-                cat_slug: catSlug, idx, name, unit, price,
-                sale_price: newProduct.salePrice ?? null,
-                weight: newProduct.weight ?? null,
-                stock, stock_quantity: newProduct.stockQuantity ?? null,
-                description: descVal || null,
-                image_url: newProduct.image || null,
-                is_new: isNewChecked, is_best_seller: isBestSellerChecked,
+
+            // idx used to be guessed client-side as cat.products.length and
+            // written optimistically before the insert even started — two
+            // admins adding to the same category close together could both
+            // guess the same idx, and whichever insert lost the resulting
+            // primary-key collision left THIS tab still showing a product
+            // that was never actually saved. add_custom_product (see its
+            // own comment in schema.sql) picks idx atomically, server-side,
+            // so the real position is only known once it returns — this
+            // product is placed into cat.products at THAT index, not
+            // pushed, exactly like loadCustomProducts() does for every
+            // other admin-added product.
+            const submitBtn = document.getElementById(`apf-save-${uid}`);
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Adding…'; }
+            const { data: row, error } = await supabaseClient.rpc('add_custom_product', {
+                p_cat_slug: catSlug,
+                p_seed_count: SEED_PRODUCT_COUNT[catSlug] ?? cat.products.length,
+                p_name: name, p_unit: unit, p_price: price,
+                p_sale_price: newProduct.salePrice ?? null,
+                p_weight: newProduct.weight ?? null,
+                p_stock: stock, p_stock_quantity: newProduct.stockQuantity ?? null,
+                p_description: descVal || null,
+                p_image_url: newProduct.image || null,
+                p_is_new: isNewChecked, p_is_best_seller: isBestSellerChecked,
             });
-            if (error) {
-                showToast('Added here, but couldn\'t sync to the live site: ' + error.message, 6000);
-            } else {
-                logAdminAction('product_created', 'product', name, { catName: cat.name });
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add product'; }
+            if (error || !row) {
+                showToast('Couldn\'t create that product: ' + (error ? error.message : 'unknown error'), 6000);
+                return;
             }
+            cat.products[row.idx] = newProduct;
+            assignProductCodes();
+            document.getElementById(slotId).innerHTML = '';
+            route(); // re-render current view so the new product shows up
+            logAdminAction('product_created', 'product', name, { catName: cat.name });
         }
         window.saveNewProduct = saveNewProduct;
 

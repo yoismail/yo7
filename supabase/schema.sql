@@ -59,6 +59,77 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 
 
+-- saveNewProduct (index.html) used to insert straight into
+-- custom_products from the client, with idx computed client-side as
+-- cat.products.length — two admins adding to the same category at
+-- close enough to the same moment could both compute the same idx,
+-- and whichever insert lost the primary-key collision left that
+-- admin's own page showing a product that silently never made it into
+-- the database (surfaced only as a toast, with no rollback of the
+-- locally-rendered state). This makes idx assignment atomic and
+-- server-side instead: advisory-locked per category, same pattern
+-- finalize_order_from_pending already uses per payment, so two
+-- concurrent calls for the SAME category can never land on the same
+-- idx.
+--
+-- p_seed_count exists because idx is a single shared index space
+-- across a category's hardcoded seed products (0..seedCount-1, never
+-- stored in the database — the seed catalogue only ever exists as
+-- in-page JS) and its custom_products rows, which continue that same
+-- numbering from seedCount onward (see loadCustomProducts' own
+-- comment: cat.products[row.idx] = product, one unified array). The
+-- database has no other way to know where the seed range ends, so the
+-- client passes it in from SEED_PRODUCT_COUNT, captured once at load
+-- time before anything else can grow cat.products.
+CREATE OR REPLACE FUNCTION "public"."add_custom_product"(
+    "p_cat_slug" "text",
+    "p_seed_count" integer,
+    "p_name" "text",
+    "p_unit" "text",
+    "p_price" numeric,
+    "p_sale_price" numeric DEFAULT NULL::numeric,
+    "p_weight" numeric DEFAULT NULL::numeric,
+    "p_stock" "text" DEFAULT 'in'::"text",
+    "p_stock_quantity" integer DEFAULT NULL::integer,
+    "p_description" "text" DEFAULT NULL::"text",
+    "p_image_url" "text" DEFAULT NULL::"text",
+    "p_is_new" boolean DEFAULT false,
+    "p_is_best_seller" boolean DEFAULT false
+) RETURNS "public"."custom_products"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_idx int;
+  v_row public.custom_products%ROWTYPE;
+BEGIN
+  IF NOT public.is_admin_user() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('add_custom_product::' || p_cat_slug));
+
+  SELECT GREATEST(p_seed_count, COALESCE(MAX(idx) + 1, p_seed_count))
+    INTO v_idx
+    FROM public.custom_products WHERE cat_slug = p_cat_slug;
+
+  INSERT INTO public.custom_products (
+    cat_slug, idx, name, unit, price, sale_price, weight, stock, stock_quantity,
+    description, image_url, is_new, is_best_seller
+  ) VALUES (
+    p_cat_slug, v_idx, p_name, p_unit, p_price, p_sale_price, p_weight, p_stock, p_stock_quantity,
+    p_description, p_image_url, p_is_new, p_is_best_seller
+  )
+  RETURNING * INTO v_row;
+
+  RETURN v_row;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."assign_order_number"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -2669,6 +2740,12 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+
+
+
+GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) TO "anon";
+GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) TO "service_role";
 
 
 
