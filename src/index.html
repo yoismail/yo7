@@ -12879,6 +12879,17 @@
         // checked yet" on a hard refresh, so an already-logged-in admin
         // doesn't see the login form flash up before their session loads.
         let supabaseSessionRestored = false;
+        // Captured synchronously, this early, on purpose — a password
+        // recovery link lands here with Supabase's own access_token/
+        // type=recovery payload raw in window.location.hash, and both our
+        // own boot router and the PASSWORD_RECOVERY handler further down
+        // rewrite or consume that hash shortly after this point (see the
+        // comments on isSupabaseAuthCallback and restoreSupabaseSession
+        // for why). Re-deriving "is this a recovery load" from the hash
+        // later, after either of those has run, would be reading a value
+        // that's already changed. This constant is the one stable source
+        // of truth for the rest of boot.
+        const isPasswordRecoveryLoad = /(^|[#&])type=recovery(&|$)/.test(window.location.hash);
         let currentIsAdmin = false; // set from profiles.is_admin after login, gates the admin orders dashboard
 
         // Fire-and-forget: an audit-log write failing (e.g. a dropped
@@ -13011,7 +13022,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-19.26';
+        const BUILD_VERSION = '2026-09-20.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -20637,7 +20648,14 @@
         async function restoreSupabaseSession() {
             if (!supabaseClient) { supabaseSessionRestored = true; return; }
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session && session.user) {
+            // A password recovery link's session is real (Supabase needs it
+            // to know whose password updateUser() below is changing), but
+            // showing the nav as logged in before they've actually set a
+            // new password reads as "wait, I'm already logged in?" — the
+            // resetPasswordForm submit handler already calls setUser() for
+            // real once they've actually done that, which is the moment
+            // this should first become visible.
+            if (session && session.user && !isPasswordRecoveryLoad) {
                 // setUser() fans out into cart/loyalty/reorder rendering
                 // that reads several other independently-loaded settings —
                 // genuinely unrelated to whether the session itself
