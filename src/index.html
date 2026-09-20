@@ -6891,7 +6891,17 @@
             border-left: 4px solid var(--orange);
             border-radius: 14px;
             padding: 16px 18px;
-            margin-bottom: 16px;
+            margin: 0 auto 16px;
+            /* Now the #/refer page's sole piece of content (moved off
+               Orders, see the "give referral its own page" commit) —
+               without its own cap this stretched to the .wrap
+               container's own 1600px max-width on a wide desktop
+               screen, an oddly sparse-looking wide strip for a code
+               plus two buttons. 560px matches a compact-card width
+               (wider than .auth-box's 420px, which is genuinely just a
+               form) without looking cramped next to "WhatsApp"/"Share"
+               side by side. */
+            max-width: 560px;
         }
         .referral-card-heading {
             display: flex;
@@ -13116,7 +13126,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.5';
+        const BUILD_VERSION = '2026-09-20.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
