@@ -2152,14 +2152,6 @@ CREATE POLICY "Anyone can read loyalty settings" ON "public"."loyalty_settings" 
 
 
 
-CREATE POLICY "Anyone can register interest" ON "public"."coming_soon_signups" FOR INSERT WITH CHECK (true);
-
-
-
-CREATE POLICY "Anyone can subscribe" ON "public"."newsletter_subscribers" FOR INSERT WITH CHECK (true);
-
-
-
 CREATE POLICY "Anyone can view custom products" ON "public"."custom_products" FOR SELECT USING (true);
 
 
