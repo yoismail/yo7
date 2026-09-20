@@ -3801,7 +3801,7 @@
            had nothing separating it from whatever section precedes it
            (Buy it again, when that's showing), so "Shop by department"
            read as part of that section instead of its own. */
-        .hero-glimpse-strip { background: var(--page-bg); padding: 22px 0; border-top: 1px solid rgba(var(--border-rgb), 0.08); border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
+        .hero-glimpse-strip { background: var(--page-bg); padding: 26px 0; border-top: 1px solid rgba(var(--border-rgb), 0.08); border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
         .hero-glimpse-title {
             text-align: center;
             font-family: var(--display);
@@ -3810,54 +3810,64 @@
             letter-spacing: 0.18em;
             text-transform: uppercase;
             color: var(--heading-mid);
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
         .hero-glimpse-row {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
         }
+        /* Was a plain flat pill with the department's own glyph shrunk down
+           to a barely-visible 1em inline character and a constant looping
+           glow — a lot of hand-drawn per-department icon work (see GROUPS'
+           own icon svgs) going mostly unseen. The icon now gets its own
+           badge, sized and framed like the icon tiles used everywhere else
+           this pass (footer cards, value cards, admin panels), with the
+           same five-colour accent rotation those already use, so each
+           department reads as its own considered chip instead of a plain
+           text tag. The constant pulse is gone in favour of a calmer
+           hover-lift, the same restrained language those other cards use
+           rather than fourteen chips glowing on their own timers. */
         .hero-glimpse-pill {
             position: relative;
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 9px 16px;
+            gap: 10px;
+            padding: 7px 18px 7px 7px;
             border-radius: 999px;
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.1);
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 8px 18px rgba(var(--border-rgb), 0.05);
             font-family: var(--display);
             font-weight: 600;
-            font-size: 13px;
+            font-size: 13.5px;
             color: var(--heading);
             text-decoration: none;
-            /* Same breathing-glow idea as the hero buttons above, staggered
-               per pill via --pill-delay so the row reads as a slow, subtle
-               cascade rather than every pill pulsing in sync. */
-            animation: pillPulseGlow 3.4s ease-in-out infinite;
-            animation-delay: var(--pill-delay, 0s);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease;
         }
         .hero-glimpse-pill span.emoji {
-            display: inline-flex;
+            display: flex; align-items: center; justify-content: center;
+            width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 9%, transparent));
+            color: var(--dept-accent, var(--chartreuse-rich));
             transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
         }
-        @keyframes pillPulseGlow {
-            0%, 100% { border-color: rgba(var(--border-rgb), 0.1); box-shadow: 0 0 0 rgba(144, 184, 0, 0); }
-            50% { border-color: var(--chartreuse-rich); box-shadow: 0 4px 16px rgba(144, 184, 0, 0.24); }
-        }
+        .hero-glimpse-pill span.emoji .glyph-icon { width: 17px; height: 17px; }
+        .hero-glimpse-pill:nth-child(5n+1) { --dept-accent: var(--chartreuse-rich); }
+        .hero-glimpse-pill:nth-child(5n+2) { --dept-accent: var(--aubergine-mid); }
+        .hero-glimpse-pill:nth-child(5n+3) { --dept-accent: #9a7f00; }
+        .hero-glimpse-pill:nth-child(5n+4) { --dept-accent: #C1552C; }
+        .hero-glimpse-pill:nth-child(5n+5) { --dept-accent: #9D6B11; }
         @media (hover: hover) and (pointer: fine) {
             .hero-glimpse-pill:hover {
-                animation-play-state: paused;
-                border-color: var(--chartreuse-rich);
-                box-shadow: 0 4px 16px rgba(144, 184, 0, 0.3);
+                transform: translateY(-3px);
+                border-color: color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 45%, transparent);
+                box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 16px 28px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 22%, transparent);
             }
             .hero-glimpse-pill:hover span.emoji {
-                transform: scale(1.18) rotate(-6deg);
+                transform: scale(1.12) rotate(-4deg);
             }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-glimpse-pill { animation: none; }
         }
 
         /* A warm terracotta wash — the same colour the site already uses
@@ -12200,8 +12210,8 @@
         function renderHeroGlimpse() {
             const row = document.getElementById('heroGlimpseRow');
             if (!row) return;
-            row.innerHTML = GROUPS.map((g, i) => `
-      <a class="hero-glimpse-pill" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}" style="--pill-delay:${(i * 0.5).toFixed(2)}s"><span class="emoji">${g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+            row.innerHTML = GROUPS.map(g => `
+      <a class="hero-glimpse-pill" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji">${g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
         }
 
         /* ================= DELIVERY FEE (weight-based) =================
@@ -13497,7 +13507,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.16';
+        const BUILD_VERSION = '2026-09-20.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
