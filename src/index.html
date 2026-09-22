@@ -11799,6 +11799,17 @@
                 </div>
 
                 <div id="adminDashboardSection" style="display:none;">
+                    <div class="admin-panel-section panel-editmode">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg></span>Edit pages</h2>
+                        <p class="sub">Turn on edit mode, then browse the site to tweak product photos, prices, stock, and descriptions, saved for real, visible to every visitor once you hit Save. Bundles and combos (adding, editing, or removing) also save for real. Adding new products or dishes from here is still preview-only for now, that part resets on refresh.</p>
+                        <button type="button" class="btn btn-outline-dark" id="editModeToggle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px;">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                            <span id="editModeLabel">Enter edit mode</span>
+                        </button>
+                    </div>
                     <div class="admin-panel-section panel-orders">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 3v18"/><path d="M4 7.5l8 4.5 8-4.5"/></svg></span>Manage orders</h2>
                         <div class="admin-orders-search-wrap">
@@ -11867,17 +11878,6 @@
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 12 8 12 10 18 14 6 16 12 21 12"/></svg></span>Activity log</h2>
                         <p class="sub">A record of what's been changed in edit mode, and who changed it.</p>
                         <div id="activityLogList"><div class="skeleton-row"><div class="skeleton-block skeleton-row-icon"></div><div class="skeleton-row-lines"><div class="skeleton-block skeleton-row-line long"></div><div class="skeleton-block skeleton-row-line short"></div></div></div><div class="skeleton-row"><div class="skeleton-block skeleton-row-icon"></div><div class="skeleton-row-lines"><div class="skeleton-block skeleton-row-line long"></div><div class="skeleton-block skeleton-row-line short"></div></div></div><div class="skeleton-row"><div class="skeleton-block skeleton-row-icon"></div><div class="skeleton-row-lines"><div class="skeleton-block skeleton-row-line long"></div><div class="skeleton-block skeleton-row-line short"></div></div></div></div>
-                    </div>
-                    <div class="admin-panel-section panel-editmode">
-                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg></span>Edit pages</h2>
-                        <p class="sub">Turn on edit mode, then browse the site to tweak product photos, prices, stock, and descriptions, saved for real, visible to every visitor once you hit Save. Bundles and combos (adding, editing, or removing) also save for real. Adding new products or dishes from here is still preview-only for now, that part resets on refresh.</p>
-                        <button type="button" class="btn btn-outline-dark" id="editModeToggle">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:6px;">
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                            </svg>
-                            <span id="editModeLabel">Enter edit mode</span>
-                        </button>
                     </div>
                     <div class="admin-panel-section panel-admins">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></span>Add another admin</h2>
@@ -13945,7 +13945,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.30';
+        const BUILD_VERSION = '2026-09-22.31';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
