@@ -3012,15 +3012,29 @@
         .combos-scroll { padding-bottom: 6px; }
         .combos-scroll .combo-card { flex: 0 0 280px; max-width: 280px; scroll-snap-align: start; }
         .combo-card {
-            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08); border-radius: 20px;
+            background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-top: 4px solid var(--combo-accent, var(--chartreuse-rich)); border-radius: 20px;
             padding: 0; position: relative; display: flex; flex-direction: column;
             overflow: hidden; isolation: isolate;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
             transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
+        /* Same 5-colour accent rotation as about-value-card/admin panels/
+           the department tiles below — every combo card was the exact
+           same flat white rectangle before, distinguishable only by
+           reading the copy, this gives each one its own identity at a
+           glance instead. */
+        .combo-card:nth-child(5n+1) { --combo-accent: var(--chartreuse-rich); }
+        .combo-card:nth-child(5n+2) { --combo-accent: var(--aubergine-mid); }
+        .combo-card:nth-child(5n+3) { --combo-accent: #9a7f00; }
+        .combo-card:nth-child(5n+4) { --combo-accent: #C1552C; }
+        .combo-card:nth-child(5n+5) { --combo-accent: #9D6B11; }
+        .combo-ticket-head {
+            background: linear-gradient(160deg, color-mix(in srgb, var(--combo-accent, var(--chartreuse-rich)) 10%, transparent), transparent 70%);
+        }
         .combo-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 6px 14px rgba(var(--border-rgb), 0.08), 0 30px 54px rgba(var(--border-rgb), 0.18);
+            box-shadow: 0 6px 14px rgba(var(--border-rgb), 0.08), 0 30px 54px color-mix(in srgb, var(--combo-accent, var(--chartreuse-rich)) 20%, transparent);
         }
         .combo-card > * { position: relative; z-index: 1; }
         .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18.5px; color: var(--heading); letter-spacing: -0.01em; line-height: 1.25; }
@@ -3036,7 +3050,7 @@
         .combo-ticket-watermark {
             position: absolute; z-index: 0; pointer-events: none;
             right: -18px; bottom: -16px; font-size: 128px; line-height: 1;
-            opacity: 0.06; color: var(--heading);
+            opacity: 0.14; color: var(--combo-accent, var(--heading));
             transform: rotate(-13deg);
         }
         /* The tear-line: a real perforation, not a plain divider — two
@@ -3904,49 +3918,51 @@
             margin-bottom: 14px;
         }
         .hero-glimpse-row {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+            gap: 14px;
         }
-        /* Was a plain flat pill with the department's own glyph shrunk down
-           to a barely-visible 1em inline character and a constant looping
-           glow — a lot of hand-drawn per-department icon work (see GROUPS'
-           own icon svgs) going mostly unseen. The icon now gets its own
-           badge, sized and framed like the icon tiles used everywhere else
-           this pass (footer cards, value cards, admin panels), with the
-           same five-colour accent rotation those already use, so each
-           department reads as its own considered chip instead of a plain
-           text tag. The constant pulse is gone in favour of a calmer
-           hover-lift, the same restrained language those other cards use
-           rather than fourteen chips glowing on their own timers. (A
-           bolder solid-accent-fill version was tried and reverted per
-           feedback — this softer tint was preferred.) */
+        /* Third pass at this section: a flat pill with the icon shrunk to a
+           barely-visible 1em character and a constant glow, then a softer
+           tinted-icon pill (a bolder solid-fill version was tried in
+           between and reverted per feedback). Both still read as a thin
+           filter-bar row, low visual weight for what's meant to be a
+           showcase section, especially once 14 of them wrap across two
+           rows. This is a genuinely different shape rather than a third
+           pill variant: real tiles (closer to how Instacart/Ocado present
+           departments) — bigger surface area, a soft accent-tinted wash
+           across the whole tile instead of just the icon circle, icon
+           stacked above the name instead of beside it. Same five-colour
+           accent rotation and restrained hover-lift the rest of the site
+           already uses, just applied to a bigger canvas. */
         .hero-glimpse-pill {
             position: relative;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            padding: 7px 18px 7px 7px;
-            border-radius: 999px;
-            background: var(--card-bg);
-            border: 1px solid rgba(var(--border-rgb), 0.1);
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 8px 18px rgba(var(--border-rgb), 0.05);
+            padding: 22px 12px;
+            border-radius: 18px;
+            background: linear-gradient(155deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 13%, var(--card-bg)), var(--card-bg) 72%);
+            border: 1px solid color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 16%, rgba(var(--border-rgb), 0.08));
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.05);
             font-family: var(--display);
-            font-weight: 600;
+            font-weight: 700;
             font-size: 13.5px;
             color: var(--heading);
             text-decoration: none;
-            transition: transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease;
+            text-align: center;
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1), border-color 0.3s ease;
         }
         .hero-glimpse-pill span.emoji {
             display: flex; align-items: center; justify-content: center;
-            width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px;
-            background: linear-gradient(145deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 9%, transparent));
+            width: 50px; height: 50px; flex-shrink: 0; border-radius: 999px;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 30%, transparent), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 11%, transparent));
             color: var(--dept-accent, var(--chartreuse-rich));
             transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
         }
-        .hero-glimpse-pill span.emoji .glyph-icon { width: 17px; height: 17px; }
+        .hero-glimpse-pill span.emoji .glyph-icon { width: 25px; height: 25px; }
         .hero-glimpse-pill:nth-child(5n+1) { --dept-accent: var(--chartreuse-rich); }
         .hero-glimpse-pill:nth-child(5n+2) { --dept-accent: var(--aubergine-mid); }
         .hero-glimpse-pill:nth-child(5n+3) { --dept-accent: #9a7f00; }
@@ -3954,9 +3970,9 @@
         .hero-glimpse-pill:nth-child(5n+5) { --dept-accent: #9D6B11; }
         @media (hover: hover) and (pointer: fine) {
             .hero-glimpse-pill:hover {
-                transform: translateY(-3px);
+                transform: translateY(-6px);
                 border-color: color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 45%, transparent);
-                box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 16px 28px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 22%, transparent);
+                box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 20px 34px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 24%, transparent);
             }
             .hero-glimpse-pill:hover span.emoji {
                 transform: scale(1.12) rotate(-4deg);
@@ -13872,7 +13888,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.13';
+        const BUILD_VERSION = '2026-09-22.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
