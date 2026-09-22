@@ -9622,7 +9622,7 @@
                     <span class="cart-badge zero" id="notifBadge">0</span>
                 </a>
                 <div class="account-wrap" id="accountWrap">
-                    <a class="nav-account" id="accountBtn" href="#/login">
+                    <a class="nav-account" id="accountBtn" href="#/login" aria-haspopup="true" aria-expanded="false">
                         <span class="account-icon-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <circle cx="12" cy="8" r="4" />
@@ -9981,7 +9981,7 @@
                         <p>Type it out below and we'll prepare everything for you on WhatsApp, quick, simple, and exactly as you wrote it.</p>
                     </div>
                     <div class="whatsapp-list-form">
-                        <textarea id="whatsappListInput" rows="3" placeholder="e.g. 2 bags of rice, palm oil, a bag of garri, some crayfish..."></textarea>
+                        <textarea id="whatsappListInput" rows="3" placeholder="e.g. 2 bags of rice, palm oil, a bag of garri, some crayfish..." aria-label="Type your shopping list to send via WhatsApp"></textarea>
                         <button type="button" class="btn btn-outline-dark whatsapp-order-btn" id="whatsappListSendBtn">Send list on WhatsApp</button>
                     </div>
                 </div>
@@ -10357,7 +10357,7 @@
 
     <!-- ================= CHECKOUT ================= -->
     <div id="view-checkout" class="hidden-view">
-        <div class="modal-overlay" id="checkoutReviewModal" style="display:none;">
+        <div class="modal-overlay" id="checkoutReviewModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="crmProductName">
             <div class="modal-box modal-box-wide">
                 <button type="button" class="modal-close" id="crmCloseBtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                 <h3 id="crmProductName"></h3>
@@ -11784,9 +11784,9 @@
                         </div>
                         <div id="adminOrdersList"></div>
                     </div>
-                    <div class="modal-overlay" id="cancelOrderModal" style="display:none;">
+                    <div class="modal-overlay" id="cancelOrderModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="cancelOrderModalTitle">
                         <div class="modal-box">
-                            <h3>Cancel order <span id="cancelOrderNumber"></span></h3>
+                            <h3 id="cancelOrderModalTitle">Cancel order <span id="cancelOrderNumber"></span></h3>
                             <p class="sub">The customer will see this reason on their order. This can't be undone.</p>
                             <label for="cancelOrderReason">Reason for cancellation</label>
                             <textarea id="cancelOrderReason" rows="3" placeholder="e.g. Out of stock, customer requested, payment issue…" required></textarea>
@@ -11986,7 +11986,7 @@
                     </div>
                 </div>
                 <form class="newsletter-form" id="newsletterForm">
-                    <input type="email" id="newsletterEmail" placeholder="you@example.com" required>
+                    <input type="email" id="newsletterEmail" placeholder="you@example.com" required aria-label="Email address for newsletter signup">
                     <button type="submit">Subscribe</button>
                 </form>
             </div>
@@ -12009,8 +12009,8 @@
                     </div>
                 </div>
                 <form class="newsletter-form" id="heroCaptureForm">
-                    <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
-                    <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code">
+                    <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email" aria-label="Email address for 10% off code">
+                    <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code" aria-label="Postcode for 10% off code">
                     <button type="submit">Secure 10% Off</button>
                 </form>
                 <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
@@ -12108,10 +12108,10 @@
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-    <div class="modal-overlay" id="categoryEditModal" style="display:none;">
+    <div class="modal-overlay" id="categoryEditModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="categoryEditModalTitle">
         <div class="modal-box">
             <button type="button" class="modal-close" aria-label="Close" onclick="closeCategoryEditModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-            <h3>Edit category</h3>
+            <h3 id="categoryEditModalTitle">Edit category</h3>
             <div class="sub" id="catEditCatName"></div>
             <div>
                 <label for="catEditPhotoInput">Category photo</label>
@@ -13910,7 +13910,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.20';
+        const BUILD_VERSION = '2026-09-22.21';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -20870,7 +20870,8 @@
         accountBtn.addEventListener('click', (e) => {
             if (currentUser) {
                 e.preventDefault();
-                accountDropdown.classList.toggle('open');
+                const nowOpen = accountDropdown.classList.toggle('open');
+                accountBtn.setAttribute('aria-expanded', String(nowOpen));
             }
             // if logged out, default link behaviour navigates to #/login
         });
@@ -20884,6 +20885,7 @@
         document.addEventListener('click', (e) => {
             if (!document.getElementById('accountWrap').contains(e.target)) {
                 accountDropdown.classList.remove('open');
+                accountBtn.setAttribute('aria-expanded', 'false');
             }
         });
 
