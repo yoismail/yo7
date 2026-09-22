@@ -7610,9 +7610,9 @@
         .discount-code-row input {
             flex: 1;
             /* A flex item's default min-width is auto (its own content's
-               intrinsic width), not 0 — without this, this input refuses
-               to shrink past that on a narrow screen and pushes the Apply
-               button past the viewport edge instead of yielding gap. */
+               intrinsic width), not 0. Without this, the input refuses to
+               shrink past that width on a narrow screen, leaving no room
+               for the Apply button and pushing it past the viewport edge. */
             min-width: 0;
             padding: 10px 12px;
             border-radius: 8px;
@@ -13945,7 +13945,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.31';
+        const BUILD_VERSION = '2026-09-22.32';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
