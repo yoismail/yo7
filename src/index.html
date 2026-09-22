@@ -4790,7 +4790,7 @@
             background: rgba(44, 28, 16, 0.05);
             border: 1px solid rgba(44, 28, 16, 0.16);
             color: #2C1C10;
-            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
         }
         [data-theme="dark"] .footer-social-row a {
             background: rgba(var(--border-rgb), 0.08);
@@ -4800,19 +4800,6 @@
         .footer-social-row a:hover { background: var(--chartreuse); color: var(--aubergine-deep); transform: translateY(-2px); }
         .footer-social-row a:active { background: var(--chartreuse-rich); }
         .footer-social-row svg { width: 17px; height: 17px; }
-        /* Real brand colours instead of the generic monochrome circle,
-           same "recognisable at a glance" logic as .whatsapp-order-btn. */
-        .footer-social-row a[aria-label="WhatsApp"] {
-            background: #25D366; border-color: transparent; color: #fff;
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.32);
-        }
-        .footer-social-row a[aria-label="WhatsApp"]:hover { background: #20bd5a; color: #fff; transform: translateY(-2px) scale(1.06); box-shadow: 0 8px 18px rgba(37, 211, 102, 0.4); }
-        .footer-social-row a[aria-label="Instagram"] {
-            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
-            border-color: transparent; color: #fff;
-            box-shadow: 0 4px 12px rgba(214, 36, 159, 0.28);
-        }
-        .footer-social-row a[aria-label="Instagram"]:hover { color: #fff; transform: translateY(-2px) scale(1.06); filter: brightness(1.06); box-shadow: 0 8px 18px rgba(214, 36, 159, 0.36); }
 
         /* display: contents lifts the three .footer-col children straight
            into .footer-top's own grid (columns 2-4), rather than boxing
@@ -13581,7 +13568,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.5';
+        const BUILD_VERSION = '2026-09-22.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
