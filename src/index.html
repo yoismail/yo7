@@ -6654,9 +6654,21 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            position: relative;
             transition: background 0.2s, color 0.2s;
         }
+        /* Each step gets its own icon (basket/delivery/payment) instead of
+           a bare number, same "reuse the icon that already means this
+           elsewhere" logic as the rest of the site. Swaps for a checkmark
+           once that step is done, so the trail itself tells the story
+           instead of relying on colour alone. */
+        .cstep .dot-icon, .cstep .dot-check {
+            width: 13px;
+            height: 13px;
+        }
+        .cstep .dot-check { display: none; }
+        .cstep.done .dot-icon { display: none; }
+        .cstep.done .dot-check { display: block; }
 
         .cstep.active {
             color: var(--heading);
@@ -6676,6 +6688,10 @@
             width: 28px;
             height: 1.5px;
             background: var(--neutral-track);
+            transition: background 0.25s ease;
+        }
+        .cstep.done + .cstep-sep {
+            background: var(--aubergine);
         }
 
         .checkout-grid {
@@ -10083,11 +10099,20 @@
         <section class="checkout-section">
             <div class="wrap">
                 <div class="checkout-steps">
-                    <div class="cstep" id="cstep-cart"><span class="dot">1</span> Basket</div>
+                    <div class="cstep" id="cstep-cart"><span class="dot">
+                        <svg class="dot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
+                        <svg class="dot-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </span> Basket</div>
                     <div class="cstep-sep"></div>
-                    <div class="cstep" id="cstep-delivery"><span class="dot">2</span> Delivery</div>
+                    <div class="cstep" id="cstep-delivery"><span class="dot">
+                        <svg class="dot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v5h-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                        <svg class="dot-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </span> Delivery</div>
                     <div class="cstep-sep"></div>
-                    <div class="cstep" id="cstep-payment"><span class="dot">3</span> Payment</div>
+                    <div class="cstep" id="cstep-payment"><span class="dot">
+                        <svg class="dot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>
+                        <svg class="dot-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </span> Payment</div>
                 </div>
 
                 <!-- STEP 1: CART -->
@@ -13568,7 +13593,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.6';
+        const BUILD_VERSION = '2026-09-22.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17266,6 +17291,14 @@
             const order = ['cart', 'delivery', 'payment'];
             const idx = order.indexOf(step);
             order.forEach((s, i) => { if (i < idx) document.getElementById('cstep-' + s).classList.add('done'); });
+            // Same route-view-enter fade-and-rise the app already plays on
+            // every page navigation (see showView()), reused here so
+            // stepping through checkout doesn't feel like a harder cut than
+            // any other navigation on the site.
+            const activePanel = document.getElementById('checkout-step-' + step);
+            activePanel.classList.remove('route-view-enter');
+            void activePanel.offsetWidth;
+            activePanel.classList.add('route-view-enter');
             // Switching steps doesn't change the URL hash, so route()'s own
             // scroll-to-top (which only runs on hashchange) never fires here
             // — whatever scroll position the cart step was left at (e.g.
