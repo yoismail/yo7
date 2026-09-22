@@ -7105,6 +7105,50 @@
             transition: border-color 0.2s ease;
         }
 
+        /* Every <select> on the site, .field-wrapped or one of the many
+           bare admin ones (category/product pickers etc.), swapped from
+           the OS-default select box for a custom chevron in the same
+           style as .account-caret and the other dropdown carets
+           elsewhere — still a real native <select> underneath
+           (appearance:none only touches the visual chrome), so keyboard
+           and screen-reader behaviour is untouched.
+
+           The arrow-related declarations are !important: there turned out
+           to be half a dozen pre-existing, more-specific rules scattered
+           through the admin CSS (.edit-panel select, .add-product-form
+           select, .subscribe-frequency-row select, .delivery-admin-form
+           select, ...) that each re-set `background`/`padding` as a
+           shorthand for their own border/colour, which would otherwise
+           silently wipe the arrow on every one of them. Cheaper and more
+           robust than chasing down and patching each one (and whatever
+           select-styling rule gets added next) individually. */
+        select {
+            cursor: pointer;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            padding: 9px 34px 9px 12px;
+            padding-right: 34px !important;
+            border-radius: 10px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            font-family: var(--body);
+            font-size: 14px;
+            color: var(--heading);
+            background-color: var(--card-bg);
+            background-repeat: no-repeat !important;
+            background-position: right 11px center !important;
+            background-size: 15px !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b5f58' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+            transition: border-color 0.2s ease;
+        }
+        select:focus {
+            outline: none;
+            border-color: var(--chartreuse);
+        }
+        [data-theme="dark"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B0A89D' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+        }
+
         .password-field {
             position: relative;
         }
@@ -13802,7 +13846,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.11';
+        const BUILD_VERSION = '2026-09-22.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
