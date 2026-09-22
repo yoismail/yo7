@@ -52,6 +52,32 @@ function assert(cond, message) {
   if (!cond) throw new Error(message);
 }
 
+// Every check here is meant to deterministically exercise the local-only
+// "preview mode" fallback (no live Supabase write, no real Stripe call),
+// the same path a developer without live credentials sees - not because
+// that's the only path worth testing, but because it's the only one this
+// script can safely and reproducibly exercise everywhere: real CI runners
+// have real internet access (unlike some sandboxes), so without this,
+// supabaseClient would go non-null there and admin add-product would
+// silently take the real-RPC branch instead of the local one this script
+// asserts against - and a regression run must never depend on, or write
+// to, the live Supabase project. Blocking the Supabase JS library itself
+// (not just its API calls) keeps window.supabase/supabaseClient exactly
+// as absent as they are with no network at all, in every environment.
+// Cloudflare's RUM beacon is blocked too since it always CORS-fails
+// against a localhost origin anyway (real, harmless noise, not a bug),
+// and Stripe's script just isn't needed for anything checked here.
+const BLOCKED_SCRIPT_PATTERN = /supabase-js|js\.stripe\.com|cloudflareinsights\.com/;
+async function newPage(browser) {
+  const page = await browser.newContext().then((ctx) => ctx.newPage());
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.route('**/*', (route) => {
+    if (BLOCKED_SCRIPT_PATTERN.test(route.request().url())) return route.abort();
+    return route.continue();
+  });
+  return page;
+}
+
 async function gotoHash(page, hash) {
   await page.evaluate((h) => {
     window.location.hash = h;
@@ -70,7 +96,7 @@ async function dismissWelcome(page) {
 
   // --- Route sweep: every named route + a 404 + a product/category/group page should load with zero console/page errors ---
   await check('route sweep: zero console/page errors', async () => {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await newPage(browser);
     const errors = [];
     let currentRoute = 'boot';
     page.on('pageerror', (err) => errors.push(`[${currentRoute}] pageerror: ${err.message}`));
@@ -114,7 +140,7 @@ async function dismissWelcome(page) {
 
   // --- Cart + checkout arithmetic across quantity changes and weight-tier delivery fee ---
   await check('cart/checkout arithmetic stays consistent across quantity changes', async () => {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await newPage(browser);
     await page.goto(BASE_URL);
     await page.waitForTimeout(700);
     await dismissWelcome(page);
@@ -155,7 +181,7 @@ async function dismissWelcome(page) {
 
   // --- Discount code: must never hard-crash, whether it succeeds or fails ---
   await check('discount code field fails gracefully (no crash) when unreachable', async () => {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await newPage(browser);
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto(BASE_URL);
@@ -174,7 +200,7 @@ async function dismissWelcome(page) {
 
   // --- Admin add-product: sale price + best-seller flag save correctly and render with strikethrough on the PD page ---
   await check('admin add-product: sale price saves and renders with strikethrough on its own PD page', async () => {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await newPage(browser);
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto(BASE_URL);
@@ -225,7 +251,7 @@ async function dismissWelcome(page) {
 
   // --- Search: exact substring match and empty-result handling ---
   await check('search returns matches for a known product and nothing for gibberish', async () => {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await newPage(browser);
     await page.goto(BASE_URL);
     await page.waitForTimeout(700);
     await dismissWelcome(page);
@@ -242,7 +268,7 @@ async function dismissWelcome(page) {
 
   // --- Signup: native validation blocks a too-short password and a malformed email ---
   await check('signup form blocks short password and invalid email before submit', async () => {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await newPage(browser);
     await page.goto(BASE_URL + '/#/signup');
     await page.waitForTimeout(700);
     await dismissWelcome(page);
