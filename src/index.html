@@ -3823,22 +3823,28 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-        /* v2 — the first pass (a white chip + a softly-tinted icon) still
-           read as fourteen near-identical grey pills with a small
-           coloured hint. This version commits to the colour: a solid
-           accent-gradient badge with a white glyph, sitting on a chip
-           whose own background carries a faint wash of that same accent,
-           so the colour rotation is the chip's whole identity rather
-           than a detail inside it. */
+        /* Was a plain flat pill with the department's own glyph shrunk down
+           to a barely-visible 1em inline character and a constant looping
+           glow — a lot of hand-drawn per-department icon work (see GROUPS'
+           own icon svgs) going mostly unseen. The icon now gets its own
+           badge, sized and framed like the icon tiles used everywhere else
+           this pass (footer cards, value cards, admin panels), with the
+           same five-colour accent rotation those already use, so each
+           department reads as its own considered chip instead of a plain
+           text tag. The constant pulse is gone in favour of a calmer
+           hover-lift, the same restrained language those other cards use
+           rather than fourteen chips glowing on their own timers. (A
+           bolder solid-accent-fill version was tried and reverted per
+           feedback — this softer tint was preferred.) */
         .hero-glimpse-pill {
             position: relative;
             display: flex;
             align-items: center;
-            gap: 11px;
-            padding: 7px 20px 7px 7px;
+            gap: 10px;
+            padding: 7px 18px 7px 7px;
             border-radius: 999px;
-            background: linear-gradient(135deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 14%, var(--card-bg)), var(--card-bg) 65%);
-            border: 1px solid color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 24%, transparent);
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 8px 18px rgba(var(--border-rgb), 0.05);
             font-family: var(--display);
             font-weight: 600;
@@ -3849,13 +3855,12 @@
         }
         .hero-glimpse-pill span.emoji {
             display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; flex-shrink: 0; border-radius: 999px;
-            background: linear-gradient(145deg, var(--dept-accent, var(--chartreuse-rich)), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 72%, black));
-            color: #fff;
-            box-shadow: 0 4px 10px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 45%, transparent);
+            width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px;
+            background: linear-gradient(145deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 9%, transparent));
+            color: var(--dept-accent, var(--chartreuse-rich));
             transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
         }
-        .hero-glimpse-pill span.emoji .glyph-icon { width: 18px; height: 18px; }
+        .hero-glimpse-pill span.emoji .glyph-icon { width: 17px; height: 17px; }
         .hero-glimpse-pill:nth-child(5n+1) { --dept-accent: var(--chartreuse-rich); }
         .hero-glimpse-pill:nth-child(5n+2) { --dept-accent: var(--aubergine-mid); }
         .hero-glimpse-pill:nth-child(5n+3) { --dept-accent: #9a7f00; }
@@ -3864,8 +3869,8 @@
         @media (hover: hover) and (pointer: fine) {
             .hero-glimpse-pill:hover {
                 transform: translateY(-3px);
-                border-color: color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 55%, transparent);
-                box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 16px 28px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 26%, transparent);
+                border-color: color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 45%, transparent);
+                box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 16px 28px color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 22%, transparent);
             }
             .hero-glimpse-pill:hover span.emoji {
                 transform: scale(1.12) rotate(-4deg);
@@ -13520,7 +13525,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-20.19';
+        const BUILD_VERSION = '2026-09-22.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14924,14 +14929,25 @@
         // instead means every render reflects whatever's actually in
         // CATEGORIES right now, overrides included, no matter which finished
         // loading first. Null until this resolves (or if it finds no real
-        // sales yet), in which case bestSellerItems() falls back to the
-        // curated isBestSeller flags above rather than showing nothing.
+        // sales yet).
         let realBestSellers = null;
+        // Admin-flagged products (isBestSeller — the "Feature in Best
+        // sellers" checkbox on the add/edit product forms) always show,
+        // pinned ahead of the real sales-ranked ones, not just used as a
+        // cold-start fallback for whenever there's no real sales data yet.
+        // That fallback-only behaviour was the actual bug: once genuine
+        // sales history existed (which it does), realBestSellers was
+        // always non-empty, so this branch never ran again and manually
+        // featuring a brand-new product (zero sales, nothing to rank by
+        // yet) had no visible effect at all.
         function bestSellerItems() {
-            if (realBestSellers && realBestSellers.length > 0) {
-                return realBestSellers.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
-            }
-            return allProducts().filter(p => p.isBestSeller).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+            const flagged = allProducts().filter(p => p.isBestSeller).map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
+            const flaggedKeys = new Set(flagged.map(p => p.catSlug + '::' + p.idx));
+            const real = (realBestSellers || [])
+                .map(ref => getProduct(ref.catSlug, ref.idx))
+                .filter(Boolean)
+                .filter(p => !flaggedKeys.has(p.catSlug + '::' + p.idx));
+            return [...flagged, ...real];
         }
         // "Nothing matches that yet" on its own is a dead end — this gives
         // whoever hit it (an unmatched search, or a genuinely thin
@@ -18817,12 +18833,24 @@
                 if (!cancelOrderTargetId || !supabaseClient) return;
                 cancelOrderConfirmBtn.disabled = true;
                 cancelOrderConfirmBtn.textContent = 'Cancelling…';
-                const { error } = await supabaseClient.from('orders')
+                // .select().maybeSingle(), not just checking `error` — a
+                // write this RLS policy's USING clause doesn't match
+                // affects zero rows without Postgres/PostgREST treating
+                // that as an error, so `error` alone can't tell "actually
+                // cancelled" apart from "silently touched nothing". The
+                // email below trusts whatever status is actually in the
+                // row at send time, so proceeding on an unconfirmed write
+                // was how a cancellation could end up emailing the
+                // customer the order's old, unchanged status instead.
+                const { data: cancelledRow, error } = await supabaseClient.from('orders')
                     .update({ status: 'cancelled', cancellation_reason: reason })
-                    .eq('id', cancelOrderTargetId);
+                    .eq('id', cancelOrderTargetId)
+                    .select('id')
+                    .maybeSingle();
                 cancelOrderConfirmBtn.disabled = false;
                 cancelOrderConfirmBtn.textContent = 'Cancel this order';
                 if (error) { setAuthError('cancelOrderError', 'Could not cancel that order: ' + error.message); return; }
+                if (!cancelledRow) { setAuthError('cancelOrderError', "That order couldn't be updated (it may no longer exist, or you may need to refresh your session). Nothing was changed and no email was sent."); return; }
                 logAdminAction('order_cancelled', 'order', document.getElementById('cancelOrderNumber').textContent, { reason });
                 // A cancellation is a status change like any other, the
                 // customer should hear about it without an admin having to
@@ -18993,12 +19021,21 @@
                 const freshStatus = (freshOrder && freshOrder.status) || loadedStatus;
                 const statusToSave = nextStatus === loadedStatus ? freshStatus : nextStatus;
                 const statusChanged = statusToSave !== freshStatus;
-                const { error } = await supabaseClient.from('orders')
+                // .select().maybeSingle(), not just checking `error` — see
+                // the matching comment on cancelOrderConfirmBtn's own
+                // update above; the same "wrote nothing, but reported no
+                // error" gap here would let the auto-send below (and any
+                // later "Send email to customer" click) describe whatever
+                // status the row actually still has, not statusToSave.
+                const { data: savedRow, error } = await supabaseClient.from('orders')
                     .update({ status: statusToSave, admin_note: comment || null })
-                    .eq('id', currentAdminOrderId);
+                    .eq('id', currentAdminOrderId)
+                    .select('id')
+                    .maybeSingle();
                 aodSaveBtn.disabled = false;
                 aodSaveBtn.textContent = 'Save changes';
                 if (error) { setAuthError('aodUpdateError', 'Could not update that order: ' + error.message); return; }
+                if (!savedRow) { setAuthError('aodUpdateError', "That order couldn't be updated (it may no longer exist, or you may need to refresh your session). Nothing was changed."); return; }
                 const orderLabel = currentAdminOrder ? (currentAdminOrder.order_number || currentAdminOrder.id.slice(0, 8).toUpperCase()) : currentAdminOrderId;
                 logAdminAction('order_status_changed', 'order', orderLabel, {
                     fromStatus: freshStatus, toStatus: statusToSave, statusChanged, comment: comment || null,
@@ -21660,6 +21697,19 @@
         navHamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
         mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.remove('open')));
         window.addEventListener('hashchange', () => mobileMenu.classList.remove('open'));
+        // Both the hamburger menu and the account dropdown float above the
+        // page content with no scroll boundary of their own — scrolling
+        // the page behind them (rather than tapping outside, the only
+        // thing that closed them before) left them stuck open, overlapping
+        // whatever the user actually scrolled to see. A scroll is a clear
+        // enough signal of intent to dismiss both, the same as it already
+        // does for the cookie banner elsewhere on the site. Passive: this
+        // never calls preventDefault, so it shouldn't block the browser's
+        // own scroll-performance optimizations.
+        window.addEventListener('scroll', () => {
+            mobileMenu.classList.remove('open');
+            accountDropdown.classList.remove('open');
+        }, { passive: true });
 
         /* ================= GUIDE / FAQ ================= */
         // A plain string here would go stale the moment an admin changed a
