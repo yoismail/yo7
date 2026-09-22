@@ -1549,8 +1549,12 @@
             font-weight: 700;
             font-size: 14.5px;
             letter-spacing: 0.01em;
-            padding: 14px 26px 14px 20px;
-            border-radius: 14px;
+            padding: 14px 28px 14px 22px;
+            /* Full pill, not a 14px-rounded rectangle — every other
+               interactive shape on the site (search bar, category/filter
+               chips, nav pills) is already a pill; the buttons were the
+               one shape family left out of that language. */
+            border-radius: 999px;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -1572,7 +1576,7 @@
             }
             .btn-primary:hover {
                 box-shadow: 0 14px 30px rgba(225, 225, 0, 0.45);
-                background: #cfcf00;
+                background: linear-gradient(135deg, #f5f500, #cfcf00);
             }
             .btn-outline:hover {
                 border-color: rgba(250, 249, 242, 0.7);
@@ -1581,6 +1585,14 @@
             .btn-outline-dark:hover {
                 border-color: var(--chartreuse-rich);
                 background: var(--section-alt-bg, var(--card-bg));
+                transform: translateY(-3px) scale(1.015);
+            }
+            .btn-outline-dark:hover svg {
+                transform: translateY(-1px);
+            }
+            .btn-secondary:hover {
+                border-color: var(--chartreuse-rich);
+                background: rgba(144, 184, 0, 0.14);
             }
         }
 
@@ -1602,8 +1614,12 @@
             outline-color: var(--cream);
         }
 
+        /* A subtle two-tone sheen instead of a flat fill — the same
+           "considered surface, not a flat colour swatch" reasoning
+           .product-thumb's own dot-grain-over-gradient already uses,
+           applied to the site's single most important button. */
         .btn-primary {
-            background: var(--orange);
+            background: linear-gradient(135deg, #f2f200, #d6d600);
             color: var(--aubergine-deep);
             box-shadow: 0 6px 20px rgba(225, 225, 0, 0.35);
         }
@@ -1624,9 +1640,26 @@
             color: var(--heading);
             border: 1.5px solid rgba(var(--border-rgb), 0.18);
         }
+        .btn-outline-dark svg { transition: transform 0.22s cubic-bezier(.2, .9, .3, 1.3); }
         .btn-outline-dark:active {
             background: var(--section-alt-bg, var(--card-bg));
             border-color: var(--chartreuse-rich);
+        }
+
+        /* Was entirely unstyled — .btn-secondary had no rule of its own
+           anywhere, so its one real usage (the notifications page's
+           "Turn on" push-notification button) fell through to the
+           browser's bare default button chrome, a flat grey pill with
+           none of the rest of the site's own button language. A quiet,
+           chartreuse-tinted fill: present without competing with a real
+           .btn-primary CTA on the same page. */
+        .btn-secondary {
+            background: rgba(144, 184, 0, 0.12);
+            color: var(--chartreuse-rich);
+            border: 1.5px solid rgba(144, 184, 0, 0.3);
+        }
+        .btn-secondary:active {
+            background: rgba(144, 184, 0, 0.2);
         }
 
         .btn-block {
@@ -13525,7 +13558,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.1';
+        const BUILD_VERSION = '2026-09-22.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
