@@ -8879,6 +8879,12 @@
         [data-theme="dark"] .notif-type-tag.type-restock { color: #7BAAD9; }
         .notif-type-tag.type-reward { background: rgba(166, 124, 0, 0.12); color: #A67C00; }
         [data-theme="dark"] .notif-type-tag.type-reward { color: #D9AE47; }
+        /* A genuine red, not #C1552C (already type-offer's colour, and used
+           sitewide for "cancelled" elsewhere) - reusing it here would make
+           a cancellation and a special-offer notification read as the same
+           colour in this exact list. */
+        .notif-type-tag.type-order-cancelled { background: rgba(192, 57, 43, 0.12); color: #C0392B; }
+        [data-theme="dark"] .notif-type-tag.type-order-cancelled { color: #F1948A; }
         .notif-new-pill {
             font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
             color: #fff; background: var(--chartreuse-rich); padding: 3px 8px; border-radius: 999px;
@@ -13934,7 +13940,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.27';
+        const BUILD_VERSION = '2026-09-22.29';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18783,11 +18789,19 @@
             const tag = n.link ? 'a' : 'div';
             const hrefAttr = n.link ? ` href="${escapeHtml(n.link)}"` : '';
             const type = n.category || (n.user_id ? 'order' : 'announcement');
-            const typeLabel = NOTIF_TYPE_LABELS[type] || NOTIF_TYPE_LABELS.announcement;
+            // A cancellation shares the plain 'order' category with every
+            // other routine status update (placed, out for delivery,
+            // delivered, ...) - nothing at the database level marks it out
+            // as different, so the only reliable signal here is the
+            // notification's own text, which always starts with the same
+            // fixed copy order_status_email_copy() generates for it.
+            const isCancelled = type === 'order' && /^This order was cancelled\b/.test(n.title || '');
+            const tagClass = isCancelled ? 'type-order-cancelled' : `type-${type}`;
+            const typeLabel = isCancelled ? 'Order cancelled' : (NOTIF_TYPE_LABELS[type] || NOTIF_TYPE_LABELS.announcement);
             return `
     <${tag} class="notif-item${n.isRead ? '' : ' is-unread'}"${hrefAttr}>
       <div class="notif-meta-row">
-        <span class="notif-type-tag type-${type}">${NOTIF_TYPE_ICONS[type] || NOTIF_TYPE_ICONS.announcement}${typeLabel}</span>
+        <span class="notif-type-tag ${tagClass}">${NOTIF_TYPE_ICONS[type] || NOTIF_TYPE_ICONS.announcement}${typeLabel}</span>
         ${n.isRead ? '' : '<span class="notif-new-pill">New</span>'}
       </div>
       <div class="notif-title">${escapeHtml(n.title)}</div>
@@ -19360,8 +19374,26 @@
                 const onSuccess = cancelOrderOnSuccess;
                 closeCancelOrderModal();
                 if (onSuccess) onSuccess(); else renderAdminOrders();
+                // Disabled for the duration of this automatic send too, not just
+                // aodSaveBtn's own send below, otherwise an admin can still click
+                // "Send email to customer" while this request is in flight and
+                // recreate the exact duplicate this whole change exists to prevent.
+                const sendEmailBtnDuringCancel = document.getElementById('aodSendEmailBtn');
+                if (sendEmailBtnDuringCancel) sendEmailBtnDuringCancel.disabled = true;
                 const { error: emailError } = await supabaseClient.rpc('send_order_status_email', { p_order_id: cancelledOrderId });
-                if (emailError) showToast('Order cancelled, but the customer email could not be sent: ' + emailError.message, 6000, 'error');
+                if (sendEmailBtnDuringCancel) sendEmailBtnDuringCancel.disabled = false;
+                if (emailError) {
+                    showToast('Order cancelled, but the customer email could not be sent: ' + emailError.message, 6000, 'error');
+                } else {
+                    // Missing before: a successful send here gave no visible
+                    // confirmation at all (only a toast, and only on
+                    // failure), so an admin had no way to tell the email
+                    // already went out and would click "Send email to
+                    // customer" right after just to be sure — sending the
+                    // exact same notification and email a second time.
+                    const emailSuccessEl = document.getElementById('aodEmailSuccess');
+                    if (emailSuccessEl) emailSuccessEl.style.display = 'block';
+                }
             });
         }
 
@@ -19570,7 +19602,14 @@
                 // stays for resending or for a comment-only save that didn't
                 // change status (nothing new to tell the customer there).
                 if (statusChanged) {
+                    // Same reason as the matching disable in cancelOrderConfirmBtn's
+                    // own handler: without this, the button sits enabled for the
+                    // length of this request and a click during that window sends
+                    // the same email a second time.
+                    const sendEmailBtnDuringSave = document.getElementById('aodSendEmailBtn');
+                    if (sendEmailBtnDuringSave) sendEmailBtnDuringSave.disabled = true;
                     const { error: emailError } = await supabaseClient.rpc('send_order_status_email', { p_order_id: currentAdminOrderId });
+                    if (sendEmailBtnDuringSave) sendEmailBtnDuringSave.disabled = false;
                     if (emailError) showToast('Order updated, but the customer email could not be sent: ' + emailError.message, 6000, 'error');
                     else document.getElementById('aodEmailSuccess').style.display = 'block';
                 }
