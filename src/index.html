@@ -3906,17 +3906,32 @@
            had nothing separating it from whatever section precedes it
            (Buy it again, when that's showing), so "Shop by department"
            read as part of that section instead of its own. */
-        .hero-glimpse-strip { background: var(--page-bg); padding: 26px 0; border-top: 1px solid rgba(var(--border-rgb), 0.08); border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
-        .hero-glimpse-title {
-            text-align: center;
-            font-family: var(--display);
-            font-weight: 500;
-            font-size: 12px;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--heading-mid);
-            margin-bottom: 14px;
+        /* A banner treatment for the strip itself — the same corner-glow +
+           dot-grain texture .auth-section already uses, in the brand's
+           primary chartreuse rather than that page's single-glow version,
+           with a second, dimmer glow in the opposite corner so it reads
+           as a considered backdrop rather than a plain flat strip behind
+           the chips. Terracotta is already claimed by the Special Offer
+           section right after this one, hence green here for contrast
+           going down the page. */
+        .hero-glimpse-strip {
+            background:
+                radial-gradient(ellipse 60% 75% at 94% -12%, rgba(144, 184, 0, 0.16), transparent 60%),
+                radial-gradient(ellipse 55% 60% at 3% 112%, rgba(38, 98, 16, 0.1), transparent 60%),
+                radial-gradient(rgba(6, 59, 0, 0.045) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+            padding: 44px 0 40px;
+            border-top: 1px solid rgba(var(--border-rgb), 0.08);
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
         }
+        [data-theme="dark"] .hero-glimpse-strip {
+            background:
+                radial-gradient(ellipse 60% 75% at 94% -12%, rgba(166, 204, 46, 0.18), transparent 60%),
+                radial-gradient(ellipse 55% 60% at 3% 112%, rgba(114, 148, 0, 0.13), transparent 60%),
+                radial-gradient(rgba(233, 230, 218, 0.03) 1px, transparent 1.5px) 0 0 / 20px 20px,
+                var(--page-bg);
+        }
+        .hero-glimpse-head { text-align: center; margin-bottom: 26px; }
         .hero-glimpse-row {
             display: flex;
             justify-content: center;
@@ -9808,7 +9823,10 @@
 
         <div class="hero-glimpse-strip">
             <div class="wrap">
-                <div class="hero-glimpse-title">Shop by department</div>
+                <div class="hero-glimpse-head">
+                    <div class="section-eyebrow">Departments</div>
+                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Shop by department</h2>
+                </div>
                 <div class="hero-glimpse-row" id="heroGlimpseRow"></div>
             </div>
         </div>
@@ -13888,7 +13906,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.15';
+        const BUILD_VERSION = '2026-09-22.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
