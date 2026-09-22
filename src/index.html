@@ -571,6 +571,30 @@
             }
         }
 
+        /* Two messages (the launch announcement, then a refer-a-friend
+           prompt) crossfading in the same banner footprint rather than
+           two separate strips, so the homepage doesn't get any taller.
+           Grid stacking (both slides in the same cell) keeps the
+           container sized to the taller of the two throughout the
+           crossfade, instead of the height snapping the instant the
+           active slide switches. */
+        .launch-banner-rotator {
+            display: grid;
+        }
+        .launch-banner-slide {
+            grid-area: 1 / 1;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+        .launch-banner-slide.is-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .launch-banner-slide { transition: none; }
+        }
+
         .trust-bar {
             position: fixed;
             left: 0;
@@ -9744,18 +9768,44 @@
          (this isn't a routed view, just a strip of chrome under the
          trust bar), so it gets its own small is-visible toggle instead. -->
     <div class="launch-banner" id="launchBanner">
-        <div class="wrap launch-banner-inner">
-            <span class="launch-banner-badge" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-            </span>
-            <div class="launch-banner-text">
-                <h2>Our website is live. The launch is coming.</h2>
-                <p>Yo7 Foods is now online as we prepare for our official business launch in January 2027. Explore our range, get familiar with Yo7 Foods and join our launch list to secure 10% off your first order and be among the first to know when we go live.</p>
+        <div class="launch-banner-rotator" id="launchBannerRotator">
+            <div class="launch-banner-slide is-active">
+                <div class="wrap launch-banner-inner">
+                    <span class="launch-banner-badge" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+                    </span>
+                    <div class="launch-banner-text">
+                        <h2>Our website is live. The launch is coming.</h2>
+                        <p>Yo7 Foods is now online as we prepare for our official business launch in January 2027. Explore our range, get familiar with Yo7 Foods and join our launch list to secure 10% off your first order and be among the first to know when we go live.</p>
+                    </div>
+                    <a class="launch-banner-tag" href="javascript:void(0)" onclick="document.getElementById('heroCaptureWrap').scrollIntoView({behavior:'smooth', block:'center'})">
+                        <span class="launch-banner-dot" aria-hidden="true"></span>
+                        Get 10% Off
+                    </a>
+                </div>
             </div>
-            <a class="launch-banner-tag" href="javascript:void(0)" onclick="document.getElementById('heroCaptureWrap').scrollIntoView({behavior:'smooth', block:'center'})">
-                <span class="launch-banner-dot" aria-hidden="true"></span>
-                Get 10% Off
-            </a>
+            <!-- Second slide, crossfades in automatically alongside the
+                 launch message above (see initLaunchBannerRotator), no
+                 hardcoded %/£ here for the same reason the referral
+                 teaser on Order History doesn't use one: the reward is
+                 admin-configurable (loyaltyRewardPct), and the real
+                 number is already shown accurately on the #/refer page
+                 itself once it loads. -->
+            <div class="launch-banner-slide" aria-hidden="true">
+                <div class="wrap launch-banner-inner">
+                    <span class="launch-banner-badge" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                    </span>
+                    <div class="launch-banner-text">
+                        <h2>Know someone who'd love Yo7 Foods?</h2>
+                        <p>Refer a friend and share your code. They get a discount off their first order, and you get one too once they use it.</p>
+                    </div>
+                    <a class="launch-banner-tag" href="#/refer" tabindex="-1">
+                        <span class="launch-banner-dot" aria-hidden="true"></span>
+                        Refer a Friend
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -13945,7 +13995,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.32';
+        const BUILD_VERSION = '2026-09-22.34';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16015,6 +16065,52 @@
             let resumeTimer = null;
             track.addEventListener('mouseenter', () => { clearTimeout(resumeTimer); track.classList.add('paused'); });
             track.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); track.classList.remove('paused'); });
+        })();
+
+        // Crossfades the launch banner between its two slides (see the
+        // markup comment on the second .launch-banner-slide). Paused on
+        // hover and on keyboard focus, same spirit as initTrustBarPause
+        // above, so content doesn't shift under a pointer or a tabbed-to
+        // link, and skipped entirely under prefers-reduced-motion, same
+        // as every other auto-advancing strip on the page (the trust bar
+        // ticker's own animation, and the carousels' initCarouselPeriodicJump).
+        (function initLaunchBannerRotator() {
+            const banner = document.getElementById('launchBanner');
+            const rotator = document.getElementById('launchBannerRotator');
+            if (!banner || !rotator) return;
+            const slides = Array.from(rotator.querySelectorAll('.launch-banner-slide'));
+            if (slides.length < 2) return;
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            let index = slides.findIndex(s => s.classList.contains('is-active'));
+            if (index === -1) index = 0;
+            let timer = null;
+            function goTo(next) {
+                const current = slides[index];
+                current.classList.remove('is-active');
+                current.setAttribute('aria-hidden', 'true');
+                current.querySelectorAll('a').forEach(a => a.setAttribute('tabindex', '-1'));
+                index = next;
+                const nextSlide = slides[index];
+                nextSlide.classList.add('is-active');
+                nextSlide.removeAttribute('aria-hidden');
+                nextSlide.querySelectorAll('a').forEach(a => a.removeAttribute('tabindex'));
+            }
+            function start() { if (!timer) timer = setInterval(() => goTo((index + 1) % slides.length), 6500); }
+            function stop() { clearInterval(timer); timer = null; }
+            // Hover and focus are two independent reasons to stay paused,
+            // tracked separately rather than each handler unconditionally
+            // calling start()/stop() - otherwise, hovering while a link
+            // inside is also focused (or vice versa) would let the other
+            // one's "release" event resume rotation while the first
+            // condition still holds.
+            let hovered = false;
+            let focused = false;
+            function updatePause() { if (hovered || focused) stop(); else start(); }
+            start();
+            banner.addEventListener('mouseenter', () => { hovered = true; updatePause(); });
+            banner.addEventListener('mouseleave', () => { hovered = false; updatePause(); });
+            banner.addEventListener('focusin', () => { focused = true; updatePause(); });
+            banner.addEventListener('focusout', () => { focused = false; updatePause(); });
         })();
 
         function stockLabel(s) {
