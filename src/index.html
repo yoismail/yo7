@@ -11784,19 +11784,6 @@
                         </div>
                         <div id="adminOrdersList"></div>
                     </div>
-                    <div class="modal-overlay" id="cancelOrderModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="cancelOrderModalTitle">
-                        <div class="modal-box">
-                            <h3 id="cancelOrderModalTitle">Cancel order <span id="cancelOrderNumber"></span></h3>
-                            <p class="sub">The customer will see this reason on their order. This can't be undone.</p>
-                            <label for="cancelOrderReason">Reason for cancellation</label>
-                            <textarea id="cancelOrderReason" rows="3" placeholder="e.g. Out of stock, customer requested, payment issue…" required></textarea>
-                            <div class="auth-error" id="cancelOrderError" role="alert" style="display:none;"></div>
-                            <div class="modal-actions">
-                                <button type="button" class="btn btn-outline-dark" id="cancelOrderDismissBtn">Never mind</button>
-                                <button type="button" class="btn btn-primary order-admin-btn-cancel-confirm" id="cancelOrderConfirmBtn">Cancel this order</button>
-                            </div>
-                        </div>
-                    </div>
                     <div class="admin-panel-section panel-coming-soon">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></span>10% off sign-ups</h2>
                         <p class="sub">Everyone who's signed up via the footer's "Get 10% Off Your First Order" card.</p>
@@ -11957,6 +11944,31 @@
                 <div class="order-history-error" id="aodNotFound" style="display:none;">Order not found. <a href="#/admin">Back to admin orders</a>.</div>
             </div>
         </section>
+    </div>
+
+    <!-- Opened from #view-admin-order-detail's "Save changes" flow, but
+         used to sit inside #view-admin's own markup instead - a leftover
+         from whenever this modal was first written, before the order
+         detail page existed as its own separate view. That meant its own
+         style.display='flex' never actually made it visible: #view-admin
+         is the hidden one whenever #view-admin-order-detail is the active
+         view, and a hidden ancestor hides the whole subtree regardless of
+         a child's own display value, which is exactly why clicking "Save
+         changes" with a "Cancelled" status looked like nothing happened.
+         Sitting outside every .hidden-view here means it's never hidden by
+         whichever page happens to be active when it's opened. -->
+    <div class="modal-overlay" id="cancelOrderModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="cancelOrderModalTitle">
+        <div class="modal-box">
+            <h3 id="cancelOrderModalTitle">Cancel order <span id="cancelOrderNumber"></span></h3>
+            <p class="sub">The customer will see this reason on their order. This can't be undone.</p>
+            <label for="cancelOrderReason">Reason for cancellation</label>
+            <textarea id="cancelOrderReason" rows="3" placeholder="e.g. Out of stock, customer requested, payment issue…" required></textarea>
+            <div class="auth-error" id="cancelOrderError" role="alert" style="display:none;"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline-dark" id="cancelOrderDismissBtn">Never mind</button>
+                <button type="button" class="btn btn-primary order-admin-btn-cancel-confirm" id="cancelOrderConfirmBtn">Cancel this order</button>
+            </div>
+        </div>
     </div>
 
     <!-- Hidden until boot() reveals it (see boot-hidden below) -- every
@@ -13910,7 +13922,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.23';
+        const BUILD_VERSION = '2026-09-22.24';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
