@@ -4571,7 +4571,10 @@
             .footer-newsletter-grid .newsletter-form input {
                 padding: 10px 14px;
                 border-radius: 10px;
-                font-size: 14px;
+                /* 16px, not smaller: avoids iOS Safari auto-zooming the
+                   page on focus, and this rule only applies at mobile
+                   widths in the first place. */
+                font-size: 16px;
             }
             .footer-newsletter-grid .newsletter-form button {
                 padding: 10px 18px;
@@ -5660,7 +5663,10 @@
         .admin-orders-search-wrap input {
             width: 100%; box-sizing: border-box; padding: 11px 16px 11px 40px;
             border-radius: 10px; border: 1.5px solid rgba(var(--border-rgb), 0.16);
-            font-family: var(--body); font-size: 14px;
+            /* 16px, not smaller: iOS Safari auto-zooms the page on focus for
+               any text input under 16px, which is exactly what this report
+               was about. */
+            font-family: var(--body); font-size: 16px;
             background: var(--card-bg); color: var(--ink);
             transition: border-color 0.2s ease;
         }
@@ -7197,7 +7203,10 @@
             border-radius: 10px;
             border: 1.5px solid rgba(var(--border-rgb), 0.16);
             font-family: var(--body);
-            font-size: 14px;
+            /* 16px, not smaller: iOS Safari auto-zooms the page when a
+               select this size is focused, same as any other sub-16px
+               text-entry control. */
+            font-size: 16px;
             color: var(--heading);
             background-color: var(--card-bg);
             background-repeat: no-repeat !important;
@@ -9161,7 +9170,9 @@
             border: 1px solid rgba(var(--border-rgb), 0.16);
             border-radius: 9px;
             padding: 7px 10px;
-            font-size: 13px;
+            /* 16px, not smaller: avoids iOS Safari auto-zooming the page
+               on focus. */
+            font-size: 16px;
             background: var(--card-bg);
             color: var(--heading);
             font-family: inherit;
@@ -13922,7 +13933,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.25';
+        const BUILD_VERSION = '2026-09-22.26';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
