@@ -2748,12 +2748,14 @@
         }
         .bundle-remove-btn {
             display: none;
+            align-items: center; justify-content: center;
             position: absolute; top: 12px; right: 12px;
             width: 24px; height: 24px; border-radius: 50%;
             background: rgba(179,74,74,0.12); color: #b34a4a; border: none;
-            font-size: 16px; line-height: 1; cursor: pointer;
+            cursor: pointer;
         }
-        body.edit-mode-on .bundle-remove-btn { display: block; }
+        .bundle-remove-btn svg { width: 13px; height: 13px; }
+        body.edit-mode-on .bundle-remove-btn { display: flex; }
         .bundle-card h3 {
             font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px;
         }
@@ -3073,12 +3075,14 @@
            collide in edit mode. */
         .combo-remove-btn {
             display: none;
+            align-items: center; justify-content: center;
             position: absolute; top: 12px; left: 12px; z-index: 3;
             width: 24px; height: 24px; border-radius: 50%;
             background: rgba(179,74,74,0.12); color: #b34a4a; border: none;
-            font-size: 16px; line-height: 1; cursor: pointer;
+            cursor: pointer;
         }
-        body.edit-mode-on .combo-remove-btn { display: block; }
+        .combo-remove-btn svg { width: 13px; height: 13px; }
+        body.edit-mode-on .combo-remove-btn { display: flex; }
         .combo-edit-btn, .bundle-edit-btn {
             display: none;
             width: 100%; margin-top: 8px; background: none; border: 1.5px solid rgba(var(--border-rgb), 0.18);
@@ -3132,9 +3136,10 @@
             display: none;
             position: absolute; top: 10px; right: 10px;
             width: 20px; height: 20px; border-radius: 50%; border: none;
-            background: rgba(179,74,74,0.14); color: #b34a4a; font-size: 12px; line-height: 1; cursor: pointer;
+            background: rgba(179,74,74,0.14); color: #b34a4a; cursor: pointer;
             align-items: center; justify-content: center;
         }
+        .dish-pill-remove svg { width: 11px; height: 11px; }
         body.edit-mode-on .dish-pill-remove { display: flex; }
 
         .dish-icon-picker { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 12px; }
@@ -3504,8 +3509,9 @@
             width: 28px; height: 28px; border-radius: 50%; border: none;
             background: rgba(0, 0, 0, 0.65); color: #fff;
             align-items: center; justify-content: center;
-            font-size: 17px; line-height: 1; cursor: pointer;
+            cursor: pointer;
         }
+        .advert-remove-btn svg { width: 15px; height: 15px; }
         body.edit-mode-on .advert-remove-btn { display: flex; }
         .advert-add-slide {
             display: none;
@@ -3752,9 +3758,10 @@
             width: 24px; height: 24px; border-radius: 50%; border: none;
             background: rgba(179, 74, 74, 0.9); color: #fff;
             align-items: center; justify-content: center;
-            font-size: 16px; line-height: 1; cursor: pointer;
+            cursor: pointer;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
+        .new-remove-btn svg { width: 13px; height: 13px; }
         body.edit-mode-on .new-remove-btn { display: flex; }
         /* Solid panel below the photo box now, not a scrim overlaid on it. */
         .new-card .body {
@@ -3965,9 +3972,10 @@
             width: 24px; height: 24px; border-radius: 50%; border: none;
             background: rgba(179, 74, 74, 0.9); color: #fff;
             align-items: center; justify-content: center;
-            font-size: 16px; line-height: 1; cursor: pointer;
+            cursor: pointer;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         }
+        .offer-remove-btn svg { width: 13px; height: 13px; }
         body.edit-mode-on .offer-remove-btn { display: flex; }
         /* Same bright yellow pill shape/colour as the Best Sellers rank
            badge (.best-seller-rank) — matched on purpose, not each section
@@ -8999,8 +9007,10 @@
             position: absolute; top: 18px; right: 18px;
             width: 30px; height: 30px; border-radius: 50%; border: none;
             background: rgba(var(--border-rgb), 0.08); color: var(--heading);
-            font-size: 18px; line-height: 1; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
         }
+        .modal-close svg { width: 15px; height: 15px; }
         .modal-close:hover { background: rgba(var(--border-rgb), 0.16); }
         .order-admin-btn-cancel-confirm { background: #C1552C; }
         .order-admin-btn-cancel-confirm:hover { background: #a8471f; }
@@ -10076,7 +10086,7 @@
     <div id="view-checkout" class="hidden-view">
         <div class="modal-overlay" id="checkoutReviewModal" style="display:none;">
             <div class="modal-box modal-box-wide">
-                <button type="button" class="modal-close" id="crmCloseBtn" aria-label="Close">&times;</button>
+                <button type="button" class="modal-close" id="crmCloseBtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                 <h3 id="crmProductName"></h3>
                 <div id="crmSummary"></div>
                 <div id="crmList" class="pd-reviews-list"></div>
@@ -11767,7 +11777,7 @@
 
     <div class="modal-overlay" id="categoryEditModal" style="display:none;">
         <div class="modal-box">
-            <button type="button" class="modal-close" aria-label="Close" onclick="closeCategoryEditModal()">&times;</button>
+            <button type="button" class="modal-close" aria-label="Close" onclick="closeCategoryEditModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <h3>Edit category</h3>
             <div class="sub" id="catEditCatName"></div>
             <div>
@@ -13571,7 +13581,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.4';
+        const BUILD_VERSION = '2026-09-22.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14030,7 +14040,7 @@
                 : `<div class="bundle-total-row"><span>Total${inStockItems.length < items.length ? ' (available items)' : ''}</span><span>${money(discountedTotal)}</span></div>`;
             return `
     <div class="bundle-card" id="bundleCard-${bi}">
-      <button type="button" class="bundle-remove-btn" onclick="removeBundle(${bi})" aria-label="Remove bundle">&times;</button>
+      <button type="button" class="bundle-remove-btn" onclick="removeBundle(${bi})" aria-label="Remove bundle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       ${discountPct > 0 ? `<div class="bundle-discount-badge">${discountPct}% off</div>` : ''}
       <h3>${escapeHtml(bundle.name)}</h3>
       <div class="bundle-tagline">${escapeHtml(bundle.tagline || '')}</div>
@@ -14317,7 +14327,7 @@
             picker.innerHTML = DISH_TEMPLATES.map((d, i) => `
     <span class="dish-pill ${activeDishIndex === i ? 'active' : ''}" onclick="selectDish(${i})">
       <span class="emoji">${d.emoji}</span>${d.name}
-      <button type="button" class="dish-pill-remove" onclick="removeDish(event, ${i})" aria-label="Remove dish">&times;</button>
+      <button type="button" class="dish-pill-remove" onclick="removeDish(event, ${i})" aria-label="Remove dish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </span>`).join('') || '<p style="font-size:13px; color:var(--text-muted);">No dishes set up yet.</p>';
         }
         function selectDish(i) {
@@ -14636,7 +14646,7 @@
             const catIcon = combo.linkCategory ? findCategory(combo.linkCategory)?.emoji : null;
             return `
     <div class="combo-card combo-ticket" id="comboCard-${ci}">
-      <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo">&times;</button>
+      <button type="button" class="combo-remove-btn" onclick="removeCombo(${ci})" aria-label="Remove combo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       ${catIcon ? `<span class="combo-ticket-watermark" aria-hidden="true">${catIcon}</span>` : ''}
       ${discountPct > 0 && items.length ? `<div class="bundle-discount-badge combo-stamp"><span class="combo-stamp-ring"></span><span class="combo-stamp-pct">${discountPct}%</span><span class="combo-stamp-label">off</span></div>` : ''}
       <div class="combo-ticket-head${discountPct > 0 && items.length ? ' combo-has-stamp' : ''}">
@@ -15228,7 +15238,7 @@
             const slides = advertBanners.map(b => `
     <div class="advert-slide">
       <img src="${escapeHtml(b.image_url)}" alt="Advertisement" loading="lazy">
-      <button type="button" class="advert-remove-btn" onclick="removeAdvertBanner('${b.id}')" aria-label="Remove this advert image">&times;</button>
+      <button type="button" class="advert-remove-btn" onclick="removeAdvertBanner('${b.id}')" aria-label="Remove this advert image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>`).join('');
             const addTile = `
     <div class="advert-slide advert-add-slide">
@@ -15295,7 +15305,7 @@
     <a class="offer-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="offer-tag">${pct}% off</span>
-        <button type="button" class="offer-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromOffer('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from special offers">&times;</button>
+        <button type="button" class="offer-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromOffer('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from special offers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
@@ -15332,7 +15342,7 @@
     <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="new-tag">New</span>
-        <button type="button" class="new-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromNewArrivals('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from New Arrivals">&times;</button>
+        <button type="button" class="new-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromNewArrivals('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from New Arrivals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
