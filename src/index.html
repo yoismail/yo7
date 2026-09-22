@@ -13902,7 +13902,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.18';
+        const BUILD_VERSION = '2026-09-22.19';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22078,6 +22078,14 @@
         if (supabaseClient) {
             supabaseClient.auth.onAuthStateChange((event) => {
                 if (event === 'PASSWORD_RECOVERY') window.location.hash = '#/reset-password';
+                // Fires on an explicit logout too (clearUser() there already
+                // handles that case directly, so this is a harmless repeat),
+                // but also on a session that expires or gets revoked while
+                // the tab stays open, e.g. a refresh token rejected after
+                // long inactivity, which otherwise left the nav still
+                // showing "Hi, <name>" and the account/order pages still
+                // rendering stale data until the next full page reload.
+                else if (event === 'SIGNED_OUT' && currentUser) clearUser();
             });
         }
 
