@@ -13910,7 +13910,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.21';
+        const BUILD_VERSION = '2026-09-22.22';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -19550,6 +19550,18 @@
                 setAuthError('aodUpdateError', '');
                 document.getElementById('aodUpdateSuccess').style.display = 'none';
                 document.getElementById('aodEmailSuccess').style.display = 'none';
+                // send_order_status_email reads the order's real saved status,
+                // not whatever the dropdown currently shows — the note above
+                // this button said as much, but saying so was never enough to
+                // stop a customer being emailed the OLD status (e.g. "order
+                // received") while the admin believes they just told them it
+                // was cancelled. Block the send outright instead.
+                const pendingStatus = document.getElementById('aodStatusSelect').value;
+                const savedStatus = currentAdminOrder ? (currentAdminOrder.status || 'placed') : 'placed';
+                if (pendingStatus !== savedStatus) {
+                    setAuthError('aodUpdateError', 'You changed the status but haven\'t saved it yet, click "Save changes" first, otherwise the customer gets an email about the old status.');
+                    return;
+                }
                 aodSendEmailBtn.disabled = true;
                 aodSendEmailBtn.textContent = 'Sending…';
                 const { error } = await supabaseClient.rpc('send_order_status_email', { p_order_id: currentAdminOrderId });
