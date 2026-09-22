@@ -9785,7 +9785,7 @@
                 </div>
             </div>
             <!-- Second slide, crossfades in automatically alongside the
-                 launch message above (see initLaunchBannerRotator) — no
+                 launch message above (see initLaunchBannerRotator), no
                  hardcoded %/£ here for the same reason the referral
                  teaser on Order History doesn't use one: the reward is
                  admin-configurable (loyaltyRewardPct), and the real
@@ -13995,7 +13995,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.33';
+        const BUILD_VERSION = '2026-09-22.34';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16097,11 +16097,20 @@
             }
             function start() { if (!timer) timer = setInterval(() => goTo((index + 1) % slides.length), 6500); }
             function stop() { clearInterval(timer); timer = null; }
+            // Hover and focus are two independent reasons to stay paused,
+            // tracked separately rather than each handler unconditionally
+            // calling start()/stop() - otherwise, hovering while a link
+            // inside is also focused (or vice versa) would let the other
+            // one's "release" event resume rotation while the first
+            // condition still holds.
+            let hovered = false;
+            let focused = false;
+            function updatePause() { if (hovered || focused) stop(); else start(); }
             start();
-            banner.addEventListener('mouseenter', stop);
-            banner.addEventListener('mouseleave', start);
-            banner.addEventListener('focusin', stop);
-            banner.addEventListener('focusout', start);
+            banner.addEventListener('mouseenter', () => { hovered = true; updatePause(); });
+            banner.addEventListener('mouseleave', () => { hovered = false; updatePause(); });
+            banner.addEventListener('focusin', () => { focused = true; updatePause(); });
+            banner.addEventListener('focusout', () => { focused = false; updatePause(); });
         })();
 
         function stockLabel(s) {
