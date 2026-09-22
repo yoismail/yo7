@@ -7024,6 +7024,35 @@
             transition: border-color 0.2s ease;
         }
 
+        .password-field {
+            position: relative;
+        }
+        .password-field input {
+            padding-right: 44px;
+        }
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: none;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        .password-toggle:hover { background: rgba(var(--border-rgb), 0.08); color: var(--heading); }
+        .password-toggle svg { width: 18px; height: 18px; }
+        .password-toggle .eye-off-icon { display: none; }
+        .password-toggle.is-visible .eye-icon { display: none; }
+        .password-toggle.is-visible .eye-off-icon { display: block; }
+
         .field-note {
             font-size: 12px;
             color: var(--text-muted);
@@ -11169,7 +11198,13 @@
                     </div>
                     <div class="field">
                         <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                        <div class="password-field">
+                            <input type="password" id="loginPassword" required placeholder="••••••••">
+                            <button type="button" class="password-toggle" aria-label="Show password" onclick="togglePasswordVisibility(this)">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a13.16 13.16 0 0 1-2.66 3.71M6.61 6.61A13.526 13.526 0 0 0 1 12s4 8 11 8a9.26 9.26 0 0 0 5.39-1.61M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+                            </button>
+                        </div>
                         <a href="#/forgot-password" class="auth-forgot-link">Forgot password?</a>
                     </div>
                     <div class="auth-error" id="loginError" role="alert" style="display:none;"></div>
@@ -11213,7 +11248,15 @@
                 <h1>Choose a new password</h1>
                 <div class="sub">Almost done, set a new password for your account.</div>
                 <form id="resetPasswordForm">
-                    <div class="field"><label for="rpPassword">New password</label><input type="password" id="rpPassword" required minlength="6" placeholder="At least 6 characters"></div>
+                    <div class="field"><label for="rpPassword">New password</label>
+                        <div class="password-field">
+                            <input type="password" id="rpPassword" required minlength="6" placeholder="At least 6 characters">
+                            <button type="button" class="password-toggle" aria-label="Show password" onclick="togglePasswordVisibility(this)">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a13.16 13.16 0 0 1-2.66 3.71M6.61 6.61A13.526 13.526 0 0 0 1 12s4 8 11 8a9.26 9.26 0 0 0 5.39-1.61M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+                            </button>
+                        </div>
+                    </div>
                     <div class="auth-error" id="resetPasswordError" role="alert" style="display:none;"></div>
                     <div class="auth-success" id="resetPasswordSuccess" role="status" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Update password</button>
@@ -11278,8 +11321,16 @@
                             placeholder="Your name"></div>
                     <div class="field"><label for="suEmail">Email</label><input type="email" id="suEmail" required placeholder="you@example.com">
                     </div>
-                    <div class="field"><label for="suPassword">Password</label><input type="password" id="suPassword" required minlength="6"
-                            placeholder="At least 6 characters"></div>
+                    <div class="field"><label for="suPassword">Password</label>
+                        <div class="password-field">
+                            <input type="password" id="suPassword" required minlength="6"
+                                placeholder="At least 6 characters">
+                            <button type="button" class="password-toggle" aria-label="Show password" onclick="togglePasswordVisibility(this)">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a13.16 13.16 0 0 1-2.66 3.71M6.61 6.61A13.526 13.526 0 0 0 1 12s4 8 11 8a9.26 9.26 0 0 0 5.39-1.61M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+                            </button>
+                        </div>
+                    </div>
                     <div class="auth-error" id="signupError" role="alert" style="display:none;"></div>
                     <div class="auth-success" id="signupSuccess" role="status" style="display:none;"></div>
                     <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
@@ -11441,7 +11492,13 @@
                             <div class="field"><label for="adminLoginId">Admin username or email</label><input type="text" id="adminLoginId" required placeholder="yo7foods20" autocomplete="username"></div>
                             <div class="field">
                                 <label for="adminLoginPassword">Password</label>
-                                <input type="password" id="adminLoginPassword" required placeholder="••••••••" autocomplete="current-password">
+                                <div class="password-field">
+                                    <input type="password" id="adminLoginPassword" required placeholder="••••••••" autocomplete="current-password">
+                                    <button type="button" class="password-toggle" aria-label="Show password" onclick="togglePasswordVisibility(this)">
+                                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a13.16 13.16 0 0 1-2.66 3.71M6.61 6.61A13.526 13.526 0 0 0 1 12s4 8 11 8a9.26 9.26 0 0 0 5.39-1.61M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+                                    </button>
+                                </div>
                                 <a href="#" id="adminForgotPasswordLink" class="auth-forgot-link">Forgot password?</a>
                             </div>
                             <div class="auth-error" id="adminLoginError" role="alert" style="display:none;"></div>
@@ -13593,7 +13650,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.7';
+        const BUILD_VERSION = '2026-09-22.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -21386,6 +21443,17 @@
             showToast('🎉 You\'ve got 10% off your first order, it applies automatically at checkout', 5000);
             redirectAfterAuth();
         });
+        // Shared by every .password-field (login, signup, reset password,
+        // admin login) — the button is always the input's next sibling in
+        // markup, so no per-field ID wiring is needed, just toggle the
+        // input this particular button sits next to.
+        function togglePasswordVisibility(btn) {
+            const input = btn.previousElementSibling;
+            const willShow = input.type === 'password';
+            input.type = willShow ? 'text' : 'password';
+            btn.classList.toggle('is-visible', willShow);
+            btn.setAttribute('aria-label', willShow ? 'Hide password' : 'Show password');
+        }
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
