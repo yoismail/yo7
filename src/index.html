@@ -69,6 +69,14 @@
         "sameAs": ["https://instagram.com/yo7foods"]
     }
     </script>
+    <script type="application/ld+json" id="websiteJsonLd">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Yo7 Foods",
+        "url": "https://yo7foods.co.uk/"
+    }
+    </script>
     <!-- unsafe-inline is required for both script-src and style-src: this
          site ships as a single static HTML file with no build step, so
          there's no way to generate per-request nonces or hash every inline
@@ -13902,7 +13910,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.19';
+        const BUILD_VERSION = '2026-09-22.20';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16407,6 +16415,27 @@
         function clearProductJsonLd() {
             const el = document.getElementById('productJsonLd');
             if (el) el.remove();
+        }
+        // Cloudflare's SPA fallback (wrangler.jsonc, not_found_handling)
+        // means an unrecognised real path still gets served with HTTP 200,
+        // there's no way to make it a true 404 without a custom Worker.
+        // Without this, a stray/typo'd link or a deleted product's old URL
+        // would look to a crawler exactly like a normal, indexable page,
+        // since 200 plus real page markup is all it has to go on. This is
+        // the one signal available from inside the page itself.
+        function setNotFoundNoindex(on) {
+            let el = document.getElementById('notFoundNoindex');
+            if (on) {
+                if (!el) {
+                    el = document.createElement('meta');
+                    el.id = 'notFoundNoindex';
+                    el.name = 'robots';
+                    el.content = 'noindex';
+                    document.head.appendChild(el);
+                }
+            } else if (el) {
+                el.remove();
+            }
         }
         // Generic rather than per-route: every visible ".breadcrumb" trail
         // (Home > Category > Product, Home > Contact Us, etc.) is already
@@ -22514,6 +22543,7 @@
             }
             updateActiveNavLink(hash);
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
+            setNotFoundNoindex(false);
 
             if (hash === '#/shop') {
                 showView('view-shop-all');
@@ -22631,6 +22661,7 @@
                 // to the homepage, which looked like the link had "worked"
                 // when it hadn't.
                 showView('view-not-found');
+                setNotFoundNoindex(true);
             }
             updateBreadcrumbJsonLd();
         }
