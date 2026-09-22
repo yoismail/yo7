@@ -13902,7 +13902,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.17';
+        const BUILD_VERSION = '2026-09-22.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -19448,6 +19448,14 @@
                     });
                     document.getElementById('cancelOrderReason').value = comment;
                     return;
+                }
+                const priorStatus = currentAdminOrder ? (currentAdminOrder.status || 'placed') : 'placed';
+                if (nextStatus === 'returned' && priorStatus !== 'returned') {
+                    // Marking an order returned restocks its items exactly like
+                    // cancelling does (see restock_cancelled_order), so it needs
+                    // the same guard against a stray dropdown click, even though
+                    // it doesn't warrant cancelled's full reason-required modal.
+                    if (!confirm('Mark this order as returned? This adds its items back to stock and emails the customer, the same as cancelling would.')) return;
                 }
                 aodSaveBtn.disabled = true;
                 aodSaveBtn.textContent = 'Saving…';
