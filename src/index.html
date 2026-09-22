@@ -6480,6 +6480,45 @@
         .pd-review-comment { font-size: 13.5px; color: var(--text-body); line-height: 1.55; }
         .pd-review-delete { font-size: 12px; color: #C1552C; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 6px; }
 
+        /* A "highlights" row above the full vertical review list: the
+           site's own best-seller/new-arrivals horizontal-carousel language
+           (same overflow-x/scroll-snap mechanics), applied to the top few
+           reviews instead of replacing the full list, which stays vertical
+           since reviews read better at their natural length than clamped
+           into a fixed-height card. Only worth its own row once there are
+           enough real comments to fill it, see the >= 3 check in JS. */
+        .pd-review-highlights {
+            display: flex; align-items: stretch; gap: 14px;
+            padding: 4px 2px 16px; margin-bottom: 4px;
+            overflow-x: auto; scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity;
+        }
+        .pd-review-highlights:empty { display: none; }
+        .pd-review-highlights::-webkit-scrollbar { display: none; }
+        .pd-review-highlight-card {
+            flex: 0 0 240px; max-width: 240px;
+            scroll-snap-align: start;
+            display: flex; flex-direction: column; gap: 10px;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 16px;
+            padding: 16px 18px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
+        }
+        .pd-review-highlight-card .pd-stars svg { width: 13px; height: 13px; }
+        .pd-review-highlight-comment {
+            flex: 1;
+            font-size: 13px; color: var(--text-body); line-height: 1.55;
+            display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .pd-review-highlight-foot {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+            padding-top: 10px; border-top: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .pd-review-highlight-name { font-family: var(--display); font-weight: 700; font-size: 12px; color: var(--heading); }
+        .pd-review-highlight-date { font-size: 10.5px; color: var(--text-faint); flex-shrink: 0; }
+
         .pd-review-form {
             margin-top: 24px; padding: 20px;
             background: var(--section-alt-bg); border: 1px solid rgba(var(--border-rgb), 0.08);
@@ -10100,6 +10139,7 @@
                 <div class="pd-reviews" id="pdReviewsSection">
                     <h2 class="pd-details-heading">Reviews</h2>
                     <div id="pdReviewsSummary"></div>
+                    <div class="pd-review-highlights" id="pdReviewHighlights"></div>
                     <div id="pdReviewsList"></div>
                     <div id="pdReviewFormWrap"></div>
                     <div class="pd-reviews-empty" id="pdReviewsFallback" style="display:none;">
@@ -13650,7 +13690,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.8';
+        const BUILD_VERSION = '2026-09-22.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16442,11 +16482,12 @@
         async function renderProductReviews(catSlug, idx) {
             const key = productKey(catSlug, idx);
             const summaryEl = document.getElementById('pdReviewsSummary');
+            const highlightsEl = document.getElementById('pdReviewHighlights');
             const listEl = document.getElementById('pdReviewsList');
             const formWrapEl = document.getElementById('pdReviewFormWrap');
             const fallbackEl = document.getElementById('pdReviewsFallback');
             const ratingSummaryLink = document.getElementById('pdRatingSummary');
-            [summaryEl, listEl, formWrapEl].forEach(el => el.innerHTML = '');
+            [summaryEl, highlightsEl, listEl, formWrapEl].forEach(el => el.innerHTML = '');
             ratingSummaryLink.style.display = 'none';
             if (!supabaseClient) {
                 fallbackEl.style.display = 'block';
@@ -16482,6 +16523,31 @@
           <div class="pd-reviews-summary-count">Based on ${reviews.length} review${reviews.length === 1 ? '' : 's'}</div>
         </div>
       </div>`;
+                // Highest-rated reviews that actually left a comment, newest
+                // first among ties, so the strip reads as real testimonials
+                // rather than just whichever review happened to be newest.
+                // Only worth showing once there are enough to fill a row —
+                // one or two cards floating alone looked sparser than no
+                // strip at all.
+                const highlights = reviews
+                    .filter(r => r.comment && r.comment.trim())
+                    .sort((a, b) => b.rating - a.rating || new Date(b.created_at) - new Date(a.created_at))
+                    .slice(0, 6);
+                if (highlights.length >= 3) {
+                    highlightsEl.innerHTML = highlights.map(r => {
+                        const hName = r.is_anonymous ? 'Yo7 Foods customer' : ((r.profiles && r.profiles.full_name) || 'Yo7 Foods customer');
+                        const hDateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                        return `
+      <div class="pd-review-highlight-card">
+        <span class="pd-stars">${starsHTML(r.rating)}</span>
+        <div class="pd-review-highlight-comment">${escapeHtml(r.comment)}</div>
+        <div class="pd-review-highlight-foot">
+          <span class="pd-review-highlight-name">${escapeHtml(hName)}</span>
+          <span class="pd-review-highlight-date">${hDateLabel}</span>
+        </div>
+      </div>`;
+                    }).join('');
+                }
                 listEl.innerHTML = reviews.map(r => {
                     const name = r.is_anonymous ? 'Yo7 Foods customer' : ((r.profiles && r.profiles.full_name) || 'Yo7 Foods customer');
                     const dateLabel = new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
