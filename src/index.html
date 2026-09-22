@@ -13922,7 +13922,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.24';
+        const BUILD_VERSION = '2026-09-22.25';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22591,6 +22591,15 @@
             updateActiveNavLink(hash);
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
             setNotFoundNoindex(false);
+            // cancelOrderModal sits outside every view container (see its
+            // own comment) so it renders correctly regardless of which page
+            // opens it, but that also means showView()'s hidden-view
+            // toggling no longer closes it automatically on navigation.
+            // Without this, browser Back/Forward or clicking a nav link
+            // while it's open would leave it floating over the new page,
+            // still targeting the order it was opened for - a stale
+            // confirm click here would act on the wrong order entirely.
+            closeCancelOrderModal();
 
             if (hash === '#/shop') {
                 showView('view-shop-all');
