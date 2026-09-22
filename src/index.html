@@ -5052,19 +5052,41 @@
             font-family: var(--display);
             font-weight: 600;
             font-size: 13.5px;
-            padding: 12px 20px;
+            padding: 11px 20px 11px 14px;
             border-radius: 999px;
             box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
             opacity: 0;
             transform: translateY(10px);
             transition: opacity 0.25s ease, transform 0.25s ease;
             max-width: 420px;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
         }
         .toast.is-visible {
             opacity: 1;
             transform: translateY(0);
         }
+        /* Fixed dark surface regardless of site theme (see .toast's own
+           aubergine-deep background, same "never swaps for dark mode"
+           family as the rest of the aubergine tokens), so these are picked
+           for contrast against that dark pill specifically, not the usual
+           theme-aware accent tokens. */
+        .toast-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toast-icon svg { width: 12px; height: 12px; }
+        .toast-success .toast-icon { background: rgba(144, 184, 0, 0.28); color: #C6E060; }
+        .toast-error .toast-icon { background: rgba(193, 85, 44, 0.3); color: #FF9D78; }
+        .toast-info .toast-icon { background: rgba(250, 249, 242, 0.14); color: var(--cream); }
+        .toast-text { flex: 1; }
 
         .cookie-notice {
             position: fixed;
@@ -11381,6 +11403,24 @@
         </section>
     </div>
 
+    <!-- ================= PAGE NOT FOUND =================
+         Reached by route()'s own final else branch — any hash that isn't
+         one of its known routes lands here instead of silently falling
+         back to the homepage, which used to make a broken/stale link look
+         like it had "worked" when it hadn't. -->
+    <div id="view-not-found" class="hidden-view">
+        <section class="auth-section">
+            <div class="auth-box">
+                <span class="empty-state-icon-badge" style="margin:0 auto 20px;">
+                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                </span>
+                <h1>This page wandered off</h1>
+                <div class="sub">We couldn't find what you were looking for. It may have moved, or the link's out of date.</div>
+                <a class="btn btn-primary btn-block btn-lg" href="#/">Back to the shop</a>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= ORDER HISTORY ================= -->
     <div id="view-orders" class="hidden-view">
         <header class="shop-header">
@@ -12487,7 +12527,7 @@
                 category_overrides: CATEGORY_OVERRIDES,
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
-            if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000);
+            if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000, 'error');
             else logAdminAction('pricing_settings_updated', 'pricing_settings', null, {
                 subscriptionDiscountPct, weightTierCount: deliveryWeightTiers.length, thresholdRuleCount: deliveryThresholdRules.length,
             });
@@ -12544,7 +12584,7 @@
                 COMBOS.push(...combos);
                 renderCombos();
                 logAdminAction('bundles_retired_into_combos', 'pricing_settings', null, { migratedCount: migrated.length });
-                showToast(`Moved ${migrated.length} existing bundle${migrated.length === 1 ? '' : 's'} into combo deals.`);
+                showToast(`Moved ${migrated.length} existing bundle${migrated.length === 1 ? '' : 's'} into combo deals.`, undefined, 'success');
             } finally {
                 retiringBundlesInFlight = false;
             }
@@ -12911,11 +12951,11 @@
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
             if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
-            if (error) { showToast('Couldn\'t save that: ' + error.message, 6000); return; }
+            if (error) { showToast('Couldn\'t save that: ' + error.message, 6000, 'error'); return; }
             renderPlatformBadges();
             updateLocalBusinessSameAs();
             logAdminAction('review_platforms_updated', 'pricing_settings', null, { trustpilotSet: !!trustpilotUrl, googleBusinessSet: !!googleBusinessUrl, googlePlaceIdSet: !!googlePlaceId });
-            showToast('Review platform links saved.');
+            showToast('Review platform links saved.', undefined, 'success');
         }
         // "Refresh now" bypasses the Edge Function's own 20-hour freshness
         // guard, but only for a verified admin (checked server-side via this
@@ -12929,7 +12969,7 @@
             if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
             const { data, error } = await supabaseClient.functions.invoke('refresh-google-reviews', { body: { force: true } });
             if (btn) { btn.disabled = false; btn.textContent = 'Refresh now'; }
-            if (error) { showToast('Couldn\'t reach the refresh function: ' + error.message, 6000); return; }
+            if (error) { showToast('Couldn\'t reach the refresh function: ' + error.message, 6000, 'error'); return; }
             if (data?.error) { showToast(data.error, 7000); return; }
             showToast(data?.skipped ? 'Already up to date.' : `Fetched ${data?.reviewsFetched ?? 0} review(s), rating ${data?.rating ?? '-'}.`, 6000);
             await loadGoogleReviews();
@@ -13121,7 +13161,7 @@
             renderDiscountsAdmin();
             if (supabaseClient) {
                 const { error } = await supabaseClient.from('discount_codes').delete().eq('id', target.id);
-                if (error) { showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000); }
+                if (error) { showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000, 'error'); }
                 else logAdminAction('discount_deleted', 'discount_code', target.code, null);
             }
         }
@@ -13267,25 +13307,25 @@
                 if (editingDiscountId) {
                     const { error } = await supabaseClient.from('discount_codes').update(row).eq('id', editingDiscountId);
                     submitBtn.disabled = false;
-                    if (error) { showToast('Couldn\'t save that change: ' + error.message, 6000); return; }
+                    if (error) { showToast('Couldn\'t save that change: ' + error.message, 6000, 'error'); return; }
                     Object.assign(discounts.find(d => d.id === editingDiscountId) || {}, {
                         name, code, type, value, buyQty, getQty, startDate, endDate,
                         qualifyingScope: scope, qualifyingCategory: row.qualifying_category, qualifyingProductId: row.qualifying_product_id,
                         minOrder: row.min_order, maxPerCustomer: row.max_per_customer,
                     });
                     logAdminAction('discount_updated', 'discount_code', code, { type, value });
-                    showToast(`Saved changes to "${code}".`);
+                    showToast(`Saved changes to "${code}".`, undefined, 'success');
                 } else {
                     const { data, error } = await supabaseClient.from('discount_codes').insert({ ...row, active: true }).select('id').single();
                     submitBtn.disabled = false;
-                    if (error) { showToast('Couldn\'t create that discount: ' + error.message, 6000); return; }
+                    if (error) { showToast('Couldn\'t create that discount: ' + error.message, 6000, 'error'); return; }
                     discounts.unshift({
                         id: data.id, name, code, type, value, buyQty, getQty, startDate, endDate,
                         qualifyingScope: scope, qualifyingCategory: row.qualifying_category, qualifyingProductId: row.qualifying_product_id,
                         minOrder: row.min_order, maxPerCustomer: row.max_per_customer, active: true,
                     });
                     logAdminAction('discount_created', 'discount_code', code, { type, value });
-                    showToast(`Created discount code "${code}".`);
+                    showToast(`Created discount code "${code}".`, undefined, 'success');
                 }
                 resetDiscountForm();
             });
@@ -13414,7 +13454,7 @@
                 renderDeliveryRulesAdmin();
                 updateSummaries();
                 savePricingSettings();
-                showToast(`Added weight tier "${label}".`);
+                showToast(`Added weight tier "${label}".`, undefined, 'success');
             });
             document.getElementById('newRuleEffect').addEventListener('change', (e) => {
                 document.getElementById('newRuleFeeOverride').style.display = e.target.value === 'fixed' ? '' : 'none';
@@ -13434,7 +13474,7 @@
                 renderDeliveryRulesAdmin();
                 updateSummaries();
                 savePricingSettings();
-                showToast(`Added delivery rule "${name}".`);
+                showToast(`Added delivery rule "${name}".`, undefined, 'success');
             });
             renderDeliveryAdmin();
         }
@@ -13690,7 +13730,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.9';
+        const BUILD_VERSION = '2026-09-22.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14010,7 +14050,7 @@
             const path = `category-${categoryEditSlug}-${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) {
-                showToast('Could not upload that photo: ' + uploadError.message, 6000);
+                showToast('Could not upload that photo: ' + uploadError.message, 6000, 'error');
                 preview.innerHTML = cat.image ? `<img src="${escapeHtml(cat.image)}" alt="">` : `<span>${cat.emoji}</span>`;
                 return;
             }
@@ -14047,7 +14087,7 @@
             logAdminAction('category_updated', 'category', cat.name.replace(/&amp;/g, '&'), { tagline });
             closeCategoryEditModal();
             renderCatGrid();
-            showToast(`Updated "${cat.name.replace(/&amp;/g, '&')}".`);
+            showToast(`Updated "${cat.name.replace(/&amp;/g, '&')}".`, undefined, 'success');
         }
         window.saveCategoryEdit = saveCategoryEdit;
 
@@ -14126,7 +14166,7 @@
                     weight: typeof product.weight === 'number' ? product.weight : null,
                     updated_at: new Date().toISOString(),
                 });
-                if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000); return; }
+                if (error) { showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000, 'error'); return; }
                 const changes = diffFields({ weight: weightBefore }, { weight: product.weight ?? null }, [
                     { key: 'weight', label: 'Weight (drives delivery fee)', format: w => w + 'kg' },
                 ]);
@@ -14270,7 +14310,7 @@
                 ]
             );
             logAdminAction('bundle_updated', 'bundle', name, { changes });
-            showToast(`Updated "${name}".`);
+            showToast(`Updated "${name}".`, undefined, 'success');
         }
         window.saveBundleEdit = saveBundleEdit;
 
@@ -14388,7 +14428,7 @@
             renderBundles();
             savePricingSettings();
             logAdminAction('bundle_created', 'bundle', name, { items: itemNames });
-            showToast(`Added bundle "${name}".`);
+            showToast(`Added bundle "${name}".`, undefined, 'success');
         }
         window.saveNewBundle = saveNewBundle;
 
@@ -14653,7 +14693,7 @@
                 [{ key: 'name', label: 'Name' }, { key: 'items', label: 'Items' }]
             );
             logAdminAction('dish_updated', 'dish', name, { changes });
-            showToast(`Updated "${name}".`);
+            showToast(`Updated "${name}".`, undefined, 'success');
         }
         window.saveDishEdit = saveDishEdit;
 
@@ -14732,7 +14772,7 @@
             renderDishPicker();
             savePricingSettings();
             logAdminAction('dish_created', 'dish', name, { items: itemNames });
-            showToast(`Added "${name}".`);
+            showToast(`Added "${name}".`, undefined, 'success');
         }
         window.saveNewDish = saveNewDish;
 
@@ -14815,7 +14855,7 @@
             };
             addToCart(comboItem, 1);
             const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} left out, out of stock)` : '';
-            showToast(`Added "${combo.name}" combo to your basket.${skippedNote}`);
+            showToast(`Added "${combo.name}" combo to your basket.${skippedNote}`, undefined, 'success');
         }
         window.addComboToCart = addComboToCart;
         function renderCombos() {
@@ -14927,7 +14967,7 @@
                 ]
             );
             logAdminAction('combo_updated', 'combo', name, { changes });
-            showToast(`Updated "${name}".`);
+            showToast(`Updated "${name}".`, undefined, 'success');
         }
         window.saveComboEdit = saveComboEdit;
 
@@ -15001,7 +15041,7 @@
             renderCombos();
             savePricingSettings();
             logAdminAction('combo_created', 'combo', name, { items: itemNames || null });
-            showToast(`Added combo "${name}".`);
+            showToast(`Added combo "${name}".`, undefined, 'success');
         }
         window.saveNewCombo = saveNewCombo;
 
@@ -15010,12 +15050,29 @@
            feel unresponsive to a tap (easy to miss the dialog, or have it
            suppressed after repeat triggers), which is exactly the kind of
            "first click does nothing" report this replaces. */
-        function showToast(message, duration = 2600) {
+        // 'success'/'error' are for call sites that know for certain which
+        // one they are (a caught error's .message, or an unambiguous "done"
+        // confirmation). Left at the 'info' default otherwise, a neutral
+        // dot rather than guessing at a checkmark or a warning that might
+        // not fit the message.
+        const TOAST_ICONS = {
+            success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+            error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>',
+            info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>'
+        };
+        function showToast(message, duration = 2600, type = 'info') {
             const container = document.getElementById('toastContainer');
             if (!container) { console.log(message); return; }
             const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
+            toast.className = 'toast toast-' + type;
+            const icon = document.createElement('span');
+            icon.className = 'toast-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.innerHTML = TOAST_ICONS[type] || TOAST_ICONS.info;
+            const text = document.createElement('span');
+            text.className = 'toast-text';
+            text.textContent = message;
+            toast.append(icon, text);
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.add('is-visible'));
             setTimeout(() => {
@@ -15051,7 +15108,7 @@
             };
             addToCart(comboItem, 1);
             const skippedNote = skipped > 0 ? ` (${skipped} item${skipped > 1 ? 's' : ''} left out, out of stock)` : '';
-            showToast(`Added "${bundle.name}" combo to your basket.${skippedNote}`);
+            showToast(`Added "${bundle.name}" combo to your basket.${skippedNote}`, undefined, 'success');
         }
         window.addBundleToCart = addBundleToCart;
 
@@ -15372,25 +15429,25 @@
             const ext = isJpeg ? 'jpg' : ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
             const path = `adverts/${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
-            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000); return; }
+            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
             const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
             const sortOrder = advertBanners.length ? Math.max(...advertBanners.map(b => b.sort_order || 0)) + 1 : 0;
             const { data: inserted, error: insertError } = await supabaseClient.from('advert_banners').insert({ image_url: publicUrl, sort_order: sortOrder }).select('*').single();
-            if (insertError) { showToast('Uploaded, but couldn\'t save it: ' + insertError.message, 6000); return; }
+            if (insertError) { showToast('Uploaded, but couldn\'t save it: ' + insertError.message, 6000, 'error'); return; }
             advertBanners.push(inserted);
             renderAdvertCarousel();
             logAdminAction('advert_added', 'advert', publicUrl, null);
-            showToast('Advert image added.');
+            showToast('Advert image added.', undefined, 'success');
         }
         window.handleAdvertUpload = handleAdvertUpload;
         async function removeAdvertBanner(id) {
             if (!supabaseClient) return;
             const { error } = await supabaseClient.from('advert_banners').delete().eq('id', id);
-            if (error) { showToast('Could not remove that advert: ' + error.message, 6000); return; }
+            if (error) { showToast('Could not remove that advert: ' + error.message, 6000, 'error'); return; }
             advertBanners = advertBanners.filter(b => b.id !== id);
             renderAdvertCarousel();
             logAdminAction('advert_removed', 'advert', id, null);
-            showToast('Advert removed.');
+            showToast('Advert removed.', undefined, 'success');
         }
         window.removeAdvertBanner = removeAdvertBanner;
 
@@ -15644,11 +15701,11 @@
                     sale_price: salePrice,
                     updated_at: new Date().toISOString(),
                 });
-                if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000);
+                if (error) showToast('Saved here, but couldn\'t sync to the live site: ' + error.message, 6000, 'error');
             }
             document.getElementById(slotId).innerHTML = '';
             renderSpecialOffersPage();
-            showToast(`${product.name} added to special offers at ${money(salePrice)}.`);
+            showToast(`${product.name} added to special offers at ${money(salePrice)}.`, undefined, 'success');
         }
         window.saveProductToOffer = saveProductToOffer;
         // The inverse of saveProductToOffer above: clears the salePrice
@@ -15669,11 +15726,11 @@
                     sale_price: null,
                     updated_at: new Date().toISOString(),
                 });
-                if (error) showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000);
+                if (error) showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000, 'error');
             }
             renderOfferCarousel();
             if (document.getElementById('specialOffersGrid')) renderSpecialOffersPage();
-            showToast(`${name} removed from special offers.`);
+            showToast(`${name} removed from special offers.`, undefined, 'success');
         }
         window.removeProductFromOffer = removeProductFromOffer;
         // Mirrors removeProductFromOffer above, but for the isNew flag
@@ -15698,12 +15755,12 @@
                     is_new: false,
                     updated_at: new Date().toISOString(),
                 });
-                if (error) showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000);
+                if (error) showToast('Removed here, but couldn\'t sync to the live site: ' + error.message, 6000, 'error');
             }
             renderNewCarousel();
             if (document.getElementById('newArrivalsGrid')) renderNewArrivalsPage();
             logAdminAction('product_removed_from_new', 'product', name, null);
-            showToast(`${name} removed from New Arrivals.`);
+            showToast(`${name} removed from New Arrivals.`, undefined, 'success');
         }
         window.removeProductFromNewArrivals = removeProductFromNewArrivals;
 
@@ -15785,7 +15842,7 @@
             const p = getProduct(catSlug, idx);
             if (!p || p.stock === 'out') return;
             addToCart(p, 1);
-            showToast(`Added ${p.name} to your basket.`);
+            showToast(`Added ${p.name} to your basket.`, undefined, 'success');
         }
         window.quickAdd = quickAdd;
         // Same id shape (and the same price/weight rules) as buildPdCartItem's
@@ -15805,7 +15862,7 @@
                 id: p.id + '::' + variant.label, weight: (typeof variant.weight === 'number' ? variant.weight : p.weight),
             };
             addToCart(toAdd, 1);
-            showToast(`Added ${p.name} (${variant.label}) to your basket.`);
+            showToast(`Added ${p.name} (${variant.label}) to your basket.`, undefined, 'success');
         }
         window.addVariantToCart = addVariantToCart;
 
@@ -16633,7 +16690,7 @@
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
-                showToast(myReview ? 'Review updated.' : 'Thanks for the review!');
+                showToast(myReview ? 'Review updated.' : 'Thanks for the review!', undefined, 'success');
                 const [catSlug, idxStr] = key.split('::');
                 renderProductReviews(catSlug, Number(idxStr));
             });
@@ -16747,7 +16804,7 @@
                 allergy_note: note || null,
                 updated_at: new Date().toISOString(),
             });
-            if (error) { showToast('Could not save allergen info: ' + error.message); return; }
+            if (error) { showToast('Could not save allergen info: ' + error.message, undefined, 'error'); return; }
             const afterAllergens = checked.join(', ');
             const changes = [];
             if (beforeAllergens !== afterAllergens) changes.push({ label: 'Allergens', from: beforeAllergens || 'none', to: afterAllergens || 'none' });
@@ -16788,7 +16845,7 @@
                 [column]: val || null,
                 updated_at: new Date().toISOString(),
             });
-            if (error) { showToast('Could not save that: ' + error.message); return; }
+            if (error) { showToast('Could not save that: ' + error.message, undefined, 'error'); return; }
             if (before !== val) {
                 logAdminAction('product_updated', 'product', realProduct.name, {
                     changes: [{ label: PD_DETAIL_LABELS[key] || key, from: before || 'none', to: val || 'none' }],
@@ -16880,7 +16937,7 @@
             const toAdd = buildPdCartItem();
             addToCart(toAdd, pdQty);
             const subNote = pdPurchaseType === 'subscribe' ? ` (subscription, every ${document.getElementById('pdSubscribeFrequency').value} weeks)` : '';
-            showToast(`Added ${pdQty} × ${pdCurrent.name}${subNote} to your basket.`);
+            showToast(`Added ${pdQty} × ${pdCurrent.name}${subNote} to your basket.`, undefined, 'success');
         });
         document.getElementById('pdBuyNow').addEventListener('click', () => {
             if (!pdCurrent || pdCurrent.stock === 'out') return;
@@ -17242,7 +17299,7 @@
                 }, { onConflict: 'product_key,user_id' });
                 btn.disabled = false;
                 if (error) { errEl.textContent = 'Could not save your review: ' + error.message; errEl.style.display = 'block'; return; }
-                showToast(myReview ? 'Review updated.' : 'Thanks for the review!');
+                showToast(myReview ? 'Review updated.' : 'Thanks for the review!', undefined, 'success');
                 await renderCrmReviews(catSlug, idx);
                 loadCartRatingsAndSales();
             });
@@ -18232,7 +18289,7 @@
                 copyBtn.onclick = async () => {
                     try {
                         await navigator.clipboard.writeText(data);
-                        showToast('Referral code copied.');
+                        showToast('Referral code copied.', undefined, 'success');
                     } catch (e) {
                         showToast('Could not copy automatically, code shown above.');
                     }
@@ -18384,7 +18441,7 @@
             const summary = skipped > 0
                 ? `Added ${added} item${added === 1 ? '' : 's'} to your basket. ${skipped} item${skipped === 1 ? " isn't" : ' are'} no longer available.`
                 : `Added ${added} item${added === 1 ? '' : 's'} to your basket.`;
-            showToast(summary, 3200);
+            showToast(summary, 3200, 'success');
             window.location.hash = '#/checkout';
         }
         window.reorderOrder = reorderOrder;
@@ -19059,7 +19116,7 @@
                 closeCancelOrderModal();
                 if (onSuccess) onSuccess(); else renderAdminOrders();
                 const { error: emailError } = await supabaseClient.rpc('send_order_status_email', { p_order_id: cancelledOrderId });
-                if (emailError) showToast('Order cancelled, but the customer email could not be sent: ' + emailError.message, 6000);
+                if (emailError) showToast('Order cancelled, but the customer email could not be sent: ' + emailError.message, 6000, 'error');
             });
         }
 
@@ -19252,7 +19309,7 @@
                 // change status (nothing new to tell the customer there).
                 if (statusChanged) {
                     const { error: emailError } = await supabaseClient.rpc('send_order_status_email', { p_order_id: currentAdminOrderId });
-                    if (emailError) showToast('Order updated, but the customer email could not be sent: ' + emailError.message, 6000);
+                    if (emailError) showToast('Order updated, but the customer email could not be sent: ' + emailError.message, 6000, 'error');
                     else document.getElementById('aodEmailSuccess').style.display = 'block';
                 }
             });
@@ -20790,7 +20847,7 @@
         // yet on the server.
         async function triggerEditPanelSave(catSlug, idx) {
             const result = await persistProductOverride(catSlug, idx);
-            if (!result.ok) showToast('Couldn\'t sync that size to the live site: ' + result.error.message, 6000);
+            if (!result.ok) showToast('Couldn\'t sync that size to the live site: ' + result.error.message, 6000, 'error');
         }
         // A cart id strings a product's base key together with its
         // trailing segments on "::" (a weight variant's own label and/or a
@@ -21029,7 +21086,7 @@
             btn.disabled = true;
             btn.textContent = 'Saving…';
             const result = await persistProductOverride(catSlug, idx);
-            if (!result.ok) showToast('Saved here, but couldn\'t sync to the live site: ' + result.error.message, 6000);
+            if (!result.ok) showToast('Saved here, but couldn\'t sync to the live site: ' + result.error.message, 6000, 'error');
             btn.closest('.edit-panel-slot').innerHTML = '';
             route(); // re-render the current view so the change is visible immediately everywhere it appears
         }
@@ -21097,7 +21154,7 @@
             btn.textContent = 'Deleting…';
             const result = await deleteProduct(catSlug, idx);
             if (!result.ok) {
-                showToast('Couldn\'t delete: ' + result.error.message, 6000);
+                showToast('Couldn\'t delete: ' + result.error.message, 6000, 'error');
                 btn.disabled = false;
                 btn.textContent = 'Delete product';
                 return;
@@ -21111,14 +21168,14 @@
             btn.textContent = 'Restoring…';
             const result = await restoreProduct(catSlug, idx);
             if (!result.ok) {
-                showToast('Couldn\'t restore: ' + result.error.message, 6000);
+                showToast('Couldn\'t restore: ' + result.error.message, 6000, 'error');
                 btn.disabled = false;
                 btn.textContent = 'Restore product';
                 return;
             }
             btn.closest('.edit-panel-slot').innerHTML = '';
             route();
-            showToast('Product restored. Check its stock status is right before customers can buy it again.');
+            showToast('Product restored. Check its stock status is right before customers can buy it again.', undefined, 'success');
         }
         window.restoreProductFromPanel = restoreProductFromPanel;
 
@@ -21199,7 +21256,7 @@
             // revisitors re-fetching it.
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) {
-                showToast('Could not upload that photo: ' + uploadError.message, 6000);
+                showToast('Could not upload that photo: ' + uploadError.message, 6000, 'error');
                 if (preview) preview.innerHTML = `<span>${(findCategory(catSlug).products[idx].emoji) || DEFAULT_ITEM_ICON_SVG}</span>`;
                 return;
             }
@@ -21212,7 +21269,7 @@
                 image_url: publicUrl,
                 updated_at: new Date().toISOString(),
             });
-            if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000);
+            if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000, 'error');
             else logAdminAction('product_photo_updated', 'product', product.name, { imageUrl: publicUrl });
             // Update the preview in place rather than calling route(), a
             // full re-render here would regenerate the product grid and
@@ -21239,7 +21296,7 @@
                     image_url: null,
                     updated_at: new Date().toISOString(),
                 });
-                if (error) showToast('Could not remove that photo from the live site: ' + error.message, 6000);
+                if (error) showToast('Could not remove that photo from the live site: ' + error.message, 6000, 'error');
                 else logAdminAction('product_photo_removed', 'product', product.name, null);
             }
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
@@ -21322,7 +21379,7 @@
             const path = `new-${uid}-${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) {
-                showToast('Could not upload that photo: ' + uploadError.message, 6000);
+                showToast('Could not upload that photo: ' + uploadError.message, 6000, 'error');
                 if (preview) preview.innerHTML = `<span>${DEFAULT_ITEM_ICON_SVG}</span>`;
                 return;
             }
@@ -21417,7 +21474,7 @@
             });
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add product'; }
             if (error || !row) {
-                showToast('Couldn\'t create that product: ' + (error ? error.message : 'unknown error'), 6000);
+                showToast('Couldn\'t create that product: ' + (error ? error.message : 'unknown error'), 6000, 'error');
                 return;
             }
             cat.products[row.idx] = newProduct;
@@ -22008,7 +22065,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -22337,7 +22394,7 @@
             } else if (hash === '#/build-bundle') {
                 showView('view-build-bundle');
                 renderDishPicker();
-            } else {
+            } else if (hash === '' || hash === '#/') {
                 showView('view-home');
                 // These five sections used to only be rendered once at page
                 // boot and never again, so a product edit (or the overrides
@@ -22350,6 +22407,15 @@
                 renderNewCarousel();
                 renderBestSellersSpotlight();
                 renderMealSetsHome();
+            } else {
+                // Anything left over is a real, unrecognised path — a typo,
+                // a stale bookmark, a link to something that's been removed
+                // — pathToHash() carries the pathname straight through with
+                // no validation, so this is the only place anything actually
+                // checks whether a route exists. Used to silently fall back
+                // to the homepage, which looked like the link had "worked"
+                // when it hadn't.
+                showView('view-not-found');
             }
             updateBreadcrumbJsonLd();
         }
@@ -22815,11 +22881,11 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalLabel;
                 if (error) {
-                    showToast(error.message || "Couldn't sign you up right now, please try again.", 5000);
+                    showToast(error.message || "Couldn't sign you up right now, please try again.", 5000, 'error');
                     return;
                 }
                 emailInput.value = '';
-                showToast("You're on the list! Check your inbox for a welcome email.", 5000);
+                showToast("You're on the list! Check your inbox for a welcome email.", 5000, 'success');
             });
         }
 
@@ -22919,12 +22985,12 @@
                 const { data: isNewSignup, error } = await supabaseClient.rpc('register_coming_soon_interest', { p_email: email, p_postcode: postcode });
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalLabel;
-                if (error) { showToast(error.message || "Couldn't sign you up right now, please try again.", 5000); return; }
+                if (error) { showToast(error.message || "Couldn't sign you up right now, please try again.", 5000, 'error'); return; }
                 try { localStorage.setItem('yo7ComingSoonSignedUp', '1'); } catch (e) { /* private browsing etc. */ }
                 heroCaptureWrap.classList.add('signed-up');
                 showToast(isNewSignup
                     ? "Done! We've emailed your 10% code."
-                    : "You've already got a code. Check your email for it.", 5500);
+                    : "You've already got a code. Check your email for it.", 5500, 'success');
             });
         }
         // renderHeroGlimpse/renderOfferCarousel/renderNewCarousel/
