@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .claude/
+node_modules/
 
 # Supabase CLI's own local cache/metadata (project ref, tool versions,
 # pooler URL) — regenerated on every `supabase` command, not part of the

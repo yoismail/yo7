@@ -77,6 +77,10 @@ It exits non-zero if anything fails. It doesn't cover flows that need a
 real Supabase/Stripe round trip (payment, real auth, persisted writes) -
 those still need a manual check against the live site.
 
+`.github/workflows/regression-test.yml` also runs it automatically on
+every push or pull request that touches `src/index.html` or the script
+itself, against a local server serving `src/index.html` directly.
+
 ## Supabase backend
 
 `supabase/schema.sql` and `supabase/functions/*/index.ts` are a
