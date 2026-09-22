@@ -1,6 +1,9 @@
-// Regression check for src/index.html. Not a build step, not run by CI,
-// a manual sanity sweep you run yourself after making changes, before
-// shipping them.
+// Regression check for src/index.html. Not a build step, but not manual-
+// only either: .github/workflows/regression-test.yml runs it in CI on
+// every push/PR that touches src/index.html, this script, this workflow,
+// or package.json/package-lock.json - and it's also meant to be run by
+// hand after making changes, before shipping them, same as before CI
+// existed.
 //
 // Requires Playwright (`npm install playwright` if it isn't already on
 // your machine) and a local server pointed at the build you want to test:
@@ -12,8 +15,9 @@
 //
 //   BASE_URL=http://localhost:8000 node scripts/regression-test.js
 //
-// BASE_URL defaults to http://localhost:8000. Exits non-zero if any
-// check fails, so it's fine to wire into a pre-ship habit even without CI.
+// BASE_URL defaults to http://localhost:8000. Exits non-zero if any check
+// fails, which is what CI treats as a failed run, and what makes it worth
+// running by hand before pushing too.
 //
 // Covers the flows that are easy to break silently while editing
 // src/index.html: routing, cart/checkout arithmetic, delivery-fee

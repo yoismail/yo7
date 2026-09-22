@@ -13910,7 +13910,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.22';
+        const BUILD_VERSION = '2026-09-22.23';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -19484,7 +19484,16 @@
                     // cancelling does (see restock_cancelled_order), so it needs
                     // the same guard against a stray dropdown click, even though
                     // it doesn't warrant cancelled's full reason-required modal.
-                    if (!confirm('Mark this order as returned? This adds its items back to stock and emails the customer, the same as cancelling would.')) return;
+                    // But that trigger only restocks on the transition INTO
+                    // cancelled/returned - if this order is already cancelled,
+                    // its stock was already added back then, and this
+                    // cancelled-to-returned change is a no-op for stock, so
+                    // the confirmation shouldn't claim it restocks again.
+                    const willRestock = priorStatus !== 'cancelled';
+                    const confirmMsg = willRestock
+                        ? 'Mark this order as returned? This adds its items back to stock and emails the customer, the same as cancelling would.'
+                        : 'Mark this order as returned? It was already cancelled, so its stock was already added back, this only updates the status and emails the customer.';
+                    if (!confirm(confirmMsg)) return;
                 }
                 aodSaveBtn.disabled = true;
                 aodSaveBtn.textContent = 'Saving…';
@@ -20710,6 +20719,14 @@
         const accountBtn = document.getElementById('accountBtn');
         const accountDropdown = document.getElementById('accountDropdown');
         const accountCaret = document.querySelector('.account-caret');
+        // Single place that closes the dropdown, so aria-expanded can never
+        // drift from the 'open' class the way it did when each close site
+        // (logout, outside-click, edit-mode toggle, scroll-to-dismiss) reset
+        // the class by itself without also touching the attribute.
+        function closeAccountDropdown() {
+            accountDropdown.classList.remove('open');
+            accountBtn.setAttribute('aria-expanded', 'false');
+        }
 
         // freshSignIn defaults to true (a real login/signup/password-reset
         // just happened) so those call sites don't need to say so
@@ -20788,7 +20805,7 @@
             accountBtn.setAttribute('aria-label', 'Sign up or log in');
             accountBtn.classList.remove('is-logged-in');
             accountCaret.style.display = 'none';
-            accountDropdown.classList.remove('open');
+            closeAccountDropdown();
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             const referNavLink = document.getElementById('referNavLink');
@@ -20896,8 +20913,7 @@
         });
         document.addEventListener('click', (e) => {
             if (!document.getElementById('accountWrap').contains(e.target)) {
-                accountDropdown.classList.remove('open');
-                accountBtn.setAttribute('aria-expanded', 'false');
+                closeAccountDropdown();
             }
         });
 
@@ -20951,7 +20967,7 @@
         }
         document.getElementById('editModeToggle').addEventListener('click', async () => {
             await setEditMode(!editModeOn);
-            accountDropdown.classList.remove('open');
+            closeAccountDropdown();
         });
         document.getElementById('editModeBannerClose').addEventListener('click', () => setEditMode(false));
 
@@ -22125,10 +22141,15 @@
                 // handles that case directly, so this is a harmless repeat),
                 // but also on a session that expires or gets revoked while
                 // the tab stays open, e.g. a refresh token rejected after
-                // long inactivity, which otherwise left the nav still
-                // showing "Hi, <name>" and the account/order pages still
-                // rendering stale data until the next full page reload.
-                else if (event === 'SIGNED_OUT' && currentUser) clearUser();
+                // long inactivity. clearUser() alone only resets state and
+                // nav, it doesn't touch whatever's already rendered in the
+                // current view, so a tab left open on order history, an
+                // admin order, or the admin dashboard kept showing that
+                // private data on screen after this fired. Re-running
+                // route() re-renders the current hash against the now-
+                // cleared session, which is exactly what a real page reload
+                // would produce, without actually reloading the page.
+                else if (event === 'SIGNED_OUT' && currentUser) { clearUser(); route({ preserveScroll: true }); }
             });
         }
 
@@ -22226,7 +22247,7 @@
         // own scroll-performance optimizations.
         window.addEventListener('scroll', () => {
             mobileMenu.classList.remove('open');
-            accountDropdown.classList.remove('open');
+            closeAccountDropdown();
         }, { passive: true });
 
         /* ================= GUIDE / FAQ ================= */
