@@ -1,0 +1,65 @@
+name: Regression check
+
+# Runs scripts/regression-test.js (see its own header comment, and
+# README.md's "Regression check" section) against src/index.html on every
+# push or pull request that touches it, so a checkout/discount/admin/
+# search/signup regression gets caught before it ships instead of the
+# next time someone happens to click through it by hand.
+#
+# Deliberately tests src/index.html directly (the hand-edited source of
+# truth), not the generated/minified repo-root index.html - that
+# minified copy is a build artifact of a separate pipeline
+# (regenerate-pages.yml) this workflow doesn't need to wait on.
+
+on:
+  push:
+    paths:
+      - 'src/index.html'
+      - 'scripts/regression-test.js'
+      - '.github/workflows/regression-test.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'src/index.html'
+      - 'scripts/regression-test.js'
+      - '.github/workflows/regression-test.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Serve src/index.html locally
+        run: |
+          python3 -m http.server 8000 --directory src &
+          echo "Waiting for local server..."
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null http://localhost:8000/ && break
+            sleep 1
+          done
+
+      - name: Run regression checks
+        run: node scripts/regression-test.js
+        env:
+          BASE_URL: http://localhost:8000

@@ -1,4 +1,27 @@
 User-agent: *
 Allow: /
+# This is a hash-routed SPA (see README.md), so these are real,
+# separately-requestable paths thanks to Cloudflare's SPA fallback
+# (wrangler.jsonc, not_found_handling), even though nothing on the site
+# ever links to them directly (every internal nav uses a #/... hash on
+# the current page, never a plain href to one of these). They're kept
+# out of the crawl on the off chance an external link or a typed URL
+# ever surfaces one, since none of them are content a search result
+# should point to: they're either session/account-specific (checkout,
+# order confirmation, orders, notifications, referrals, buy-again),
+# auth forms, admin-only, or one-off action links from an email.
+Disallow: /checkout
+Disallow: /order-confirmation
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /orders
+Disallow: /notifications
+Disallow: /refer
+Disallow: /buy-again
+Disallow: /admin
+Disallow: /unsubscribe-reminder/
+Disallow: /unsubscribe-newsletter/
 
 Sitemap: https://yo7foods.co.uk/sitemap.xml

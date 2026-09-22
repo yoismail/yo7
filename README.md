@@ -60,6 +60,27 @@ its own. You only need to run them by hand for local testing/preview
 generators will actually complete); committing their output yourself is
 no longer required.
 
+## Regression check
+
+`scripts/regression-test.js` is a Playwright sweep covering the flows
+that are easiest to break silently while editing `src/index.html`:
+routing, cart/checkout arithmetic, delivery-fee tiers, discount codes,
+admin add-product (including sale-price display), search, and signup
+validation. Run it against a local server after making changes:
+
+```
+python3 -m http.server 8000 --directory src   # or repo root, for the minified build
+BASE_URL=http://localhost:8000 node scripts/regression-test.js
+```
+
+It exits non-zero if anything fails. It doesn't cover flows that need a
+real Supabase/Stripe round trip (payment, real auth, persisted writes) -
+those still need a manual check against the live site.
+
+`.github/workflows/regression-test.yml` also runs it automatically on
+every push or pull request that touches `src/index.html` or the script
+itself, against a local server serving `src/index.html` directly.
+
 ## Supabase backend
 
 `supabase/schema.sql` and `supabase/functions/*/index.ts` are a

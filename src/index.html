@@ -69,6 +69,14 @@
         "sameAs": ["https://instagram.com/yo7foods"]
     }
     </script>
+    <script type="application/ld+json" id="websiteJsonLd">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Yo7 Foods",
+        "url": "https://yo7foods.co.uk/"
+    }
+    </script>
     <!-- unsafe-inline is required for both script-src and style-src: this
          site ships as a single static HTML file with no build step, so
          there's no way to generate per-request nonces or hash every inline
@@ -9614,7 +9622,7 @@
                     <span class="cart-badge zero" id="notifBadge">0</span>
                 </a>
                 <div class="account-wrap" id="accountWrap">
-                    <a class="nav-account" id="accountBtn" href="#/login">
+                    <a class="nav-account" id="accountBtn" href="#/login" aria-haspopup="true" aria-expanded="false">
                         <span class="account-icon-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <circle cx="12" cy="8" r="4" />
@@ -9973,7 +9981,7 @@
                         <p>Type it out below and we'll prepare everything for you on WhatsApp, quick, simple, and exactly as you wrote it.</p>
                     </div>
                     <div class="whatsapp-list-form">
-                        <textarea id="whatsappListInput" rows="3" placeholder="e.g. 2 bags of rice, palm oil, a bag of garri, some crayfish..."></textarea>
+                        <textarea id="whatsappListInput" rows="3" placeholder="e.g. 2 bags of rice, palm oil, a bag of garri, some crayfish..." aria-label="Type your shopping list to send via WhatsApp"></textarea>
                         <button type="button" class="btn btn-outline-dark whatsapp-order-btn" id="whatsappListSendBtn">Send list on WhatsApp</button>
                     </div>
                 </div>
@@ -10349,7 +10357,7 @@
 
     <!-- ================= CHECKOUT ================= -->
     <div id="view-checkout" class="hidden-view">
-        <div class="modal-overlay" id="checkoutReviewModal" style="display:none;">
+        <div class="modal-overlay" id="checkoutReviewModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="crmProductName">
             <div class="modal-box modal-box-wide">
                 <button type="button" class="modal-close" id="crmCloseBtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                 <h3 id="crmProductName"></h3>
@@ -11776,9 +11784,9 @@
                         </div>
                         <div id="adminOrdersList"></div>
                     </div>
-                    <div class="modal-overlay" id="cancelOrderModal" style="display:none;">
+                    <div class="modal-overlay" id="cancelOrderModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="cancelOrderModalTitle">
                         <div class="modal-box">
-                            <h3>Cancel order <span id="cancelOrderNumber"></span></h3>
+                            <h3 id="cancelOrderModalTitle">Cancel order <span id="cancelOrderNumber"></span></h3>
                             <p class="sub">The customer will see this reason on their order. This can't be undone.</p>
                             <label for="cancelOrderReason">Reason for cancellation</label>
                             <textarea id="cancelOrderReason" rows="3" placeholder="e.g. Out of stock, customer requested, payment issue…" required></textarea>
@@ -11978,7 +11986,7 @@
                     </div>
                 </div>
                 <form class="newsletter-form" id="newsletterForm">
-                    <input type="email" id="newsletterEmail" placeholder="you@example.com" required>
+                    <input type="email" id="newsletterEmail" placeholder="you@example.com" required aria-label="Email address for newsletter signup">
                     <button type="submit">Subscribe</button>
                 </form>
             </div>
@@ -12001,8 +12009,8 @@
                     </div>
                 </div>
                 <form class="newsletter-form" id="heroCaptureForm">
-                    <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email">
-                    <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code">
+                    <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email" aria-label="Email address for 10% off code">
+                    <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code" aria-label="Postcode for 10% off code">
                     <button type="submit">Secure 10% Off</button>
                 </form>
                 <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
@@ -12100,10 +12108,10 @@
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-    <div class="modal-overlay" id="categoryEditModal" style="display:none;">
+    <div class="modal-overlay" id="categoryEditModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="categoryEditModalTitle">
         <div class="modal-box">
             <button type="button" class="modal-close" aria-label="Close" onclick="closeCategoryEditModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-            <h3>Edit category</h3>
+            <h3 id="categoryEditModalTitle">Edit category</h3>
             <div class="sub" id="catEditCatName"></div>
             <div>
                 <label for="catEditPhotoInput">Category photo</label>
@@ -13902,7 +13910,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.17';
+        const BUILD_VERSION = '2026-09-22.23';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16407,6 +16415,27 @@
         function clearProductJsonLd() {
             const el = document.getElementById('productJsonLd');
             if (el) el.remove();
+        }
+        // Cloudflare's SPA fallback (wrangler.jsonc, not_found_handling)
+        // means an unrecognised real path still gets served with HTTP 200,
+        // there's no way to make it a true 404 without a custom Worker.
+        // Without this, a stray/typo'd link or a deleted product's old URL
+        // would look to a crawler exactly like a normal, indexable page,
+        // since 200 plus real page markup is all it has to go on. This is
+        // the one signal available from inside the page itself.
+        function setNotFoundNoindex(on) {
+            let el = document.getElementById('notFoundNoindex');
+            if (on) {
+                if (!el) {
+                    el = document.createElement('meta');
+                    el.id = 'notFoundNoindex';
+                    el.name = 'robots';
+                    el.content = 'noindex';
+                    document.head.appendChild(el);
+                }
+            } else if (el) {
+                el.remove();
+            }
         }
         // Generic rather than per-route: every visible ".breadcrumb" trail
         // (Home > Category > Product, Home > Contact Us, etc.) is already
@@ -19449,6 +19478,23 @@
                     document.getElementById('cancelOrderReason').value = comment;
                     return;
                 }
+                const priorStatus = currentAdminOrder ? (currentAdminOrder.status || 'placed') : 'placed';
+                if (nextStatus === 'returned' && priorStatus !== 'returned') {
+                    // Marking an order returned restocks its items exactly like
+                    // cancelling does (see restock_cancelled_order), so it needs
+                    // the same guard against a stray dropdown click, even though
+                    // it doesn't warrant cancelled's full reason-required modal.
+                    // But that trigger only restocks on the transition INTO
+                    // cancelled/returned - if this order is already cancelled,
+                    // its stock was already added back then, and this
+                    // cancelled-to-returned change is a no-op for stock, so
+                    // the confirmation shouldn't claim it restocks again.
+                    const willRestock = priorStatus !== 'cancelled';
+                    const confirmMsg = willRestock
+                        ? 'Mark this order as returned? This adds its items back to stock and emails the customer, the same as cancelling would.'
+                        : 'Mark this order as returned? It was already cancelled, so its stock was already added back, this only updates the status and emails the customer.';
+                    if (!confirm(confirmMsg)) return;
+                }
                 aodSaveBtn.disabled = true;
                 aodSaveBtn.textContent = 'Saving…';
                 // currentAdminOrder can be stale — loaded whenever this page
@@ -19513,6 +19559,18 @@
                 setAuthError('aodUpdateError', '');
                 document.getElementById('aodUpdateSuccess').style.display = 'none';
                 document.getElementById('aodEmailSuccess').style.display = 'none';
+                // send_order_status_email reads the order's real saved status,
+                // not whatever the dropdown currently shows — the note above
+                // this button said as much, but saying so was never enough to
+                // stop a customer being emailed the OLD status (e.g. "order
+                // received") while the admin believes they just told them it
+                // was cancelled. Block the send outright instead.
+                const pendingStatus = document.getElementById('aodStatusSelect').value;
+                const savedStatus = currentAdminOrder ? (currentAdminOrder.status || 'placed') : 'placed';
+                if (pendingStatus !== savedStatus) {
+                    setAuthError('aodUpdateError', 'You changed the status but haven\'t saved it yet, click "Save changes" first, otherwise the customer gets an email about the old status.');
+                    return;
+                }
                 aodSendEmailBtn.disabled = true;
                 aodSendEmailBtn.textContent = 'Sending…';
                 const { error } = await supabaseClient.rpc('send_order_status_email', { p_order_id: currentAdminOrderId });
@@ -20661,6 +20719,14 @@
         const accountBtn = document.getElementById('accountBtn');
         const accountDropdown = document.getElementById('accountDropdown');
         const accountCaret = document.querySelector('.account-caret');
+        // Single place that closes the dropdown, so aria-expanded can never
+        // drift from the 'open' class the way it did when each close site
+        // (logout, outside-click, edit-mode toggle, scroll-to-dismiss) reset
+        // the class by itself without also touching the attribute.
+        function closeAccountDropdown() {
+            accountDropdown.classList.remove('open');
+            accountBtn.setAttribute('aria-expanded', 'false');
+        }
 
         // freshSignIn defaults to true (a real login/signup/password-reset
         // just happened) so those call sites don't need to say so
@@ -20739,7 +20805,7 @@
             accountBtn.setAttribute('aria-label', 'Sign up or log in');
             accountBtn.classList.remove('is-logged-in');
             accountCaret.style.display = 'none';
-            accountDropdown.classList.remove('open');
+            closeAccountDropdown();
             const orderHistoryLink = document.getElementById('orderHistoryLink');
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             const referNavLink = document.getElementById('referNavLink');
@@ -20833,7 +20899,8 @@
         accountBtn.addEventListener('click', (e) => {
             if (currentUser) {
                 e.preventDefault();
-                accountDropdown.classList.toggle('open');
+                const nowOpen = accountDropdown.classList.toggle('open');
+                accountBtn.setAttribute('aria-expanded', String(nowOpen));
             }
             // if logged out, default link behaviour navigates to #/login
         });
@@ -20846,7 +20913,7 @@
         });
         document.addEventListener('click', (e) => {
             if (!document.getElementById('accountWrap').contains(e.target)) {
-                accountDropdown.classList.remove('open');
+                closeAccountDropdown();
             }
         });
 
@@ -20900,7 +20967,7 @@
         }
         document.getElementById('editModeToggle').addEventListener('click', async () => {
             await setEditMode(!editModeOn);
-            accountDropdown.classList.remove('open');
+            closeAccountDropdown();
         });
         document.getElementById('editModeBannerClose').addEventListener('click', () => setEditMode(false));
 
@@ -22070,6 +22137,19 @@
         if (supabaseClient) {
             supabaseClient.auth.onAuthStateChange((event) => {
                 if (event === 'PASSWORD_RECOVERY') window.location.hash = '#/reset-password';
+                // Fires on an explicit logout too (clearUser() there already
+                // handles that case directly, so this is a harmless repeat),
+                // but also on a session that expires or gets revoked while
+                // the tab stays open, e.g. a refresh token rejected after
+                // long inactivity. clearUser() alone only resets state and
+                // nav, it doesn't touch whatever's already rendered in the
+                // current view, so a tab left open on order history, an
+                // admin order, or the admin dashboard kept showing that
+                // private data on screen after this fired. Re-running
+                // route() re-renders the current hash against the now-
+                // cleared session, which is exactly what a real page reload
+                // would produce, without actually reloading the page.
+                else if (event === 'SIGNED_OUT' && currentUser) { clearUser(); route({ preserveScroll: true }); }
             });
         }
 
@@ -22167,7 +22247,7 @@
         // own scroll-performance optimizations.
         window.addEventListener('scroll', () => {
             mobileMenu.classList.remove('open');
-            accountDropdown.classList.remove('open');
+            closeAccountDropdown();
         }, { passive: true });
 
         /* ================= GUIDE / FAQ ================= */
@@ -22498,6 +22578,7 @@
             }
             updateActiveNavLink(hash);
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
+            setNotFoundNoindex(false);
 
             if (hash === '#/shop') {
                 showView('view-shop-all');
@@ -22615,6 +22696,7 @@
                 // to the homepage, which looked like the link had "worked"
                 // when it hadn't.
                 showView('view-not-found');
+                setNotFoundNoindex(true);
             }
             updateBreadcrumbJsonLd();
         }
