@@ -341,6 +341,26 @@
             .route-view-enter { animation: none; }
         }
 
+        /* Scroll-triggered entrance for whole sections on the longer pages
+           (home, About, Delivery Info) — .route-view-enter above only
+           plays once, on route change, so everything below the first
+           screenful used to just be sitting there fully visible the
+           instant the page painted, no matter how far down it was.
+           Revealed once via IntersectionObserver (see revealOnScroll()),
+           never re-hidden on scrolling back up. */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(26px);
+            transition: opacity 0.7s cubic-bezier(.16, .84, .44, 1), transform 0.7s cubic-bezier(.16, .84, .44, 1);
+        }
+        .scroll-reveal.is-revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .scroll-reveal { opacity: 1; transform: none; transition: none; }
+        }
+
         /* ================= PERSISTENT NAV ================= */
         #mainNav {
             position: fixed;
@@ -8965,6 +8985,53 @@
         .analytics-month-btn:disabled { opacity: 0.4; cursor: default; }
         #analyticsMonthLabel { font-family: var(--display); font-weight: 700; font-size: 15px; min-width: 140px; text-align: center; }
         .analytics-loading, .analytics-empty { font-size: 13px; color: var(--text-muted); padding: 10px 0; }
+
+        /* Shaped placeholders instead of a plain "Loading…" line, for the
+           two admin panels (analytics, activity log) that both spend a
+           real moment waiting on a query before they have anything to
+           show. Same shimmer sweep on every block, timed together since
+           they're built from the same base class. */
+        @keyframes skeletonShimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        .skeleton-block {
+            border-radius: 6px;
+            background: linear-gradient(90deg, rgba(var(--border-rgb), 0.08) 25%, rgba(var(--border-rgb), 0.18) 37%, rgba(var(--border-rgb), 0.08) 63%);
+            background-size: 400px 100%;
+            animation: skeletonShimmer 1.4s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .skeleton-block { animation: none; }
+        }
+        .skeleton-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .skeleton-stat-card {
+            background: rgba(var(--border-rgb), 0.04);
+            border-radius: 12px;
+            padding: 14px 16px;
+            border-left: 4px solid rgba(var(--border-rgb), 0.1);
+        }
+        .skeleton-stat-card .skeleton-block + .skeleton-block { margin-top: 10px; }
+        .skeleton-label-bar { width: 55%; height: 10px; }
+        .skeleton-value-bar { width: 75%; height: 19px; }
+        .skeleton-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.06);
+        }
+        .skeleton-row:last-child { border-bottom: none; }
+        .skeleton-row-icon { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; }
+        .skeleton-row-lines { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+        .skeleton-row-line { height: 10px; }
+        .skeleton-row-line.short { width: 35%; }
+        .skeleton-row-line.long { width: 78%; }
         .analytics-range-tabs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .analytics-range-tab {
             padding: 7px 14px;
@@ -9606,7 +9673,7 @@
              recent order is fetched. Reuses reorderOrder() as-is, the same
              function the Order History page's own "Reorder" buttons call,
              rather than duplicating its cart/bundle/combo re-add logic. -->
-        <section class="reorder-section" id="reorderSection" style="display:none;">
+        <section class="reorder-section scroll-reveal" id="reorderSection" style="display:none;">
             <div class="wrap reorder-card">
                 <svg class="reorder-card-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 <div class="reorder-icon">
@@ -9629,7 +9696,7 @@
              past basket. Reuses .best-seller-card/.best-seller-carousel
              (see the CSS comment by .buy-again-tag) rather than a new
              card treatment. -->
-        <section class="buy-again-section" id="buyAgainSection" style="display:none;">
+        <section class="buy-again-section scroll-reveal" id="buyAgainSection" style="display:none;">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9660,7 +9727,7 @@
             </div>
         </div>
 
-        <section class="offer-section">
+        <section class="offer-section scroll-reveal">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9685,7 +9752,7 @@
             </div>
         </section>
 
-        <section class="new-section">
+        <section class="new-section scroll-reveal">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9710,7 +9777,7 @@
             </div>
         </section>
 
-        <section class="best-sellers-section">
+        <section class="best-sellers-section scroll-reveal">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9735,7 +9802,7 @@
             </div>
         </section>
 
-        <section class="shop-section" id="shopByGroup">
+        <section class="shop-section scroll-reveal" id="shopByGroup">
             <div class="wrap">
                 <div class="section-head reveal">
                     <div class="section-eyebrow">Shop by category</div>
@@ -9746,7 +9813,7 @@
             </div>
         </section>
 
-        <section class="bundles-section">
+        <section class="bundles-section scroll-reveal">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9772,7 +9839,7 @@
             </div>
         </section>
 
-        <section class="build-bundle-promo">
+        <section class="build-bundle-promo scroll-reveal">
             <svg class="build-bundle-promo-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
             <div class="wrap">
                 <div class="build-bundle-promo-inner reveal">
@@ -9789,7 +9856,7 @@
             </div>
         </section>
 
-        <section class="whatsapp-list-section">
+        <section class="whatsapp-list-section scroll-reveal">
             <svg class="whatsapp-list-watermark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
             <div class="wrap">
                 <div class="whatsapp-list-inner reveal">
@@ -9809,7 +9876,7 @@
             </div>
         </section>
 
-        <section class="story">
+        <section class="story scroll-reveal">
             <svg class="story-watermark" viewBox="65 25 875 900" aria-hidden="true">
                 <use href="#seal-mark" />
             </svg>
@@ -9825,7 +9892,7 @@
             </div>
         </section>
 
-        <section class="delivery">
+        <section class="delivery scroll-reveal">
             <div class="wrap delivery-grid">
                 <div class="delivery-badge reveal">
                     <svg viewBox="65 25 875 900"
@@ -9845,7 +9912,7 @@
             </div>
         </section>
 
-        <section class="order">
+        <section class="order scroll-reveal">
             <div class="wrap">
                 <div class="section-divider reveal"></div>
                 <div class="section-head reveal">
@@ -9875,7 +9942,7 @@
             </div>
         </section>
 
-        <section class="why-choose-section">
+        <section class="why-choose-section scroll-reveal">
             <div class="wrap">
                 <div class="section-head reveal" style="text-align:center;">
                     <div class="section-eyebrow">Why choose <span style="text-transform:none;">Yo7 Foods</span></div>
@@ -9915,7 +9982,7 @@
             </div>
         </section>
 
-        <section class="reviews-section">
+        <section class="reviews-section scroll-reveal">
             <div class="wrap">
                 <div class="section-head reveal" style="text-align:center;">
                     <div class="section-eyebrow">Reviews</div>
@@ -10578,7 +10645,7 @@
         </header>
         <section class="about-section">
             <div class="wrap">
-                <div class="about-story-grid about-block">
+                <div class="about-story-grid about-block scroll-reveal">
                     <svg class="about-seal" viewBox="65 25 875 900"
                         style="--chartreuse: #90B800; --aubergine-deep: #042500; --cream: #FAF9F2; --orange: #E1E100;">
                         <use href="#seal-mark" />
@@ -10591,7 +10658,7 @@
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-prose about-block">
+                <div class="about-prose about-block scroll-reveal">
                     <div class="section-eyebrow">Our story</div>
                     <h2>Why Yo7</h2>
                     <p>Yo7 Foods started in Ipswich as a way to make it easier to find proper African and Caribbean groceries: rice, garri, palm oil, spices, meat and fish, plus the drinks and snacks that don't usually make it onto UK supermarket shelves.</p>
@@ -10600,7 +10667,7 @@
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-mission about-block">
+                <div class="about-mission about-block scroll-reveal">
                     <div class="section-eyebrow">Our mission</div>
                     <h2>Clearly priced, properly sourced, delivered on time.</h2>
                     <div class="about-mission-tags">
@@ -10613,7 +10680,7 @@
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-block">
+                <div class="about-block scroll-reveal">
                     <div class="about-mission" style="margin-bottom:32px;">
                         <div class="section-eyebrow">What we sell</div>
                         <h2>A proper range, not a token shelf of African food</h2>
@@ -10648,7 +10715,7 @@
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-block about-block-alt">
+                <div class="about-block about-block-alt scroll-reveal">
                     <div class="about-mission" style="margin-bottom:32px;">
                         <div class="section-eyebrow">Our values</div>
                         <h2>What we hold ourselves to, in every order</h2>
@@ -10683,7 +10750,7 @@
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-prose about-block" style="max-width:56ch;">
+                <div class="about-prose about-block scroll-reveal" style="max-width:56ch;">
                     <div class="section-eyebrow">Our promise</div>
                     <h2>We promise to deliver</h2>
                     <ul class="about-promise-list">
@@ -10696,13 +10763,13 @@
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-mission about-block">
+                <div class="about-mission about-block scroll-reveal">
                     <div class="section-eyebrow">Our vision</div>
                     <h2>To be the easiest way to buy African and Caribbean groceries anywhere in the UK, with Ipswich at the heart of it.</h2>
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-thanks">
+                <div class="about-thanks scroll-reveal">
                     <svg class="about-thanks-watermark" viewBox="65 25 875 900" aria-hidden="true">
                         <use href="#seal-mark" />
                     </svg>
@@ -10712,7 +10779,7 @@
                     <p>If anything's wrong with your order, get in touch and we'll sort it.</p>
                 </div>
 
-                <div class="about-cta">
+                <div class="about-cta scroll-reveal">
                     <a class="btn btn-primary" href="#/shop">Start shopping</a>
                     <a class="btn btn-outline-dark" href="#/contact">Get in touch</a>
                 </div>
@@ -10912,7 +10979,7 @@
                 <p>We deliver across the UK, with local collection also available in Ipswich. Here's what it costs and what to expect.</p>
             </div>
         </header>
-        <section class="dinfo-section">
+        <section class="dinfo-section scroll-reveal">
             <div class="wrap">
                 <div class="postcode-checker">
                     <div class="pc-left">
@@ -10938,7 +11005,7 @@
             </div>
         </section>
 
-        <section class="dinfo-section" style="padding-top:0;">
+        <section class="dinfo-section scroll-reveal" style="padding-top:0;">
             <div class="wrap dinfo-grid">
                 <div class="dinfo-cards">
                     <div class="dinfo-card">
@@ -11667,12 +11734,17 @@
                             <button type="button" class="btn btn-outline-dark" id="analyticsCustomApply">Apply</button>
                             <div class="analytics-custom-error" id="analyticsCustomError" style="display:none;"></div>
                         </div>
-                        <div id="analyticsContent"><div class="analytics-loading">Loading analytics…</div></div>
+                        <div id="analyticsContent"><div class="skeleton-stat-grid">
+                            <div class="skeleton-stat-card"><div class="skeleton-block skeleton-label-bar"></div><div class="skeleton-block skeleton-value-bar"></div></div>
+                            <div class="skeleton-stat-card"><div class="skeleton-block skeleton-label-bar"></div><div class="skeleton-block skeleton-value-bar"></div></div>
+                            <div class="skeleton-stat-card"><div class="skeleton-block skeleton-label-bar"></div><div class="skeleton-block skeleton-value-bar"></div></div>
+                            <div class="skeleton-stat-card"><div class="skeleton-block skeleton-label-bar"></div><div class="skeleton-block skeleton-value-bar"></div></div>
+                        </div></div>
                     </div>
                     <div class="admin-panel-section panel-activity">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 12 8 12 10 18 14 6 16 12 21 12"/></svg></span>Activity log</h2>
                         <p class="sub">A record of what's been changed in edit mode, and who changed it.</p>
-                        <div id="activityLogList"><div class="analytics-loading">Loading activity…</div></div>
+                        <div id="activityLogList"><div class="skeleton-row"><div class="skeleton-block skeleton-row-icon"></div><div class="skeleton-row-lines"><div class="skeleton-block skeleton-row-line long"></div><div class="skeleton-block skeleton-row-line short"></div></div></div><div class="skeleton-row"><div class="skeleton-block skeleton-row-icon"></div><div class="skeleton-row-lines"><div class="skeleton-block skeleton-row-line long"></div><div class="skeleton-block skeleton-row-line short"></div></div></div><div class="skeleton-row"><div class="skeleton-block skeleton-row-icon"></div><div class="skeleton-row-lines"><div class="skeleton-block skeleton-row-line long"></div><div class="skeleton-block skeleton-row-line short"></div></div></div></div>
                     </div>
                     <div class="admin-panel-section panel-editmode">
                         <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg></span>Edit pages</h2>
@@ -13730,10 +13802,30 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.10';
+        const BUILD_VERSION = '2026-09-22.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
+        // Shaped loading placeholders for the admin analytics/activity
+        // panels, shared so both build the same shimmer markup instead of
+        // each hand-rolling its own.
+        function skeletonStatGridHTML(count = 4) {
+            return `<div class="skeleton-stat-grid">${Array.from({ length: count }, () => `
+      <div class="skeleton-stat-card">
+        <div class="skeleton-block skeleton-label-bar"></div>
+        <div class="skeleton-block skeleton-value-bar"></div>
+      </div>`).join('')}</div>`;
+        }
+        function skeletonRowsHTML(count = 4) {
+            return Array.from({ length: count }, () => `
+    <div class="skeleton-row">
+      <div class="skeleton-block skeleton-row-icon"></div>
+      <div class="skeleton-row-lines">
+        <div class="skeleton-block skeleton-row-line long"></div>
+        <div class="skeleton-block skeleton-row-line short"></div>
+      </div>
+    </div>`).join('');
+        }
         // A combo's included-items list holds {name, unit} objects so admin
         // order processing can see pack size/weight per item, not just a
         // name. Orders placed before this existed stored plain name
@@ -19406,7 +19498,7 @@
         async function renderActivityLog() {
             const el = document.getElementById('activityLogList');
             if (!el || !supabaseClient) return;
-            el.innerHTML = '<div class="analytics-loading">Loading activity…</div>';
+            el.innerHTML = skeletonRowsHTML(3);
             const { data, error } = await supabaseClient
                 .from('admin_audit_log')
                 .select('*')
@@ -19521,7 +19613,7 @@
             }
             if (nextBtn) nextBtn.disabled = offset === 0;
             if (!supabaseClient) { content.innerHTML = '<div class="analytics-empty">Analytics need accounts connected first, this is preview mode right now.</div>'; return; }
-            content.innerHTML = '<div class="analytics-loading">Loading analytics…</div>';
+            content.innerHTML = skeletonStatGridHTML(4);
 
             const { data: monthOrders, error } = await supabaseClient
                 .from('orders').select('*')
@@ -22172,7 +22264,14 @@
            /shop/, which has no matching file) resolves the exact same
            way Cloudflare's fallback already handles those. */
         function pathToHash(pathname) {
-            const trimmed = pathname.replace(/\/+$/, '');
+            // A direct request to /index.html (an old bookmark, a typed
+            // URL, some crawler that never learned better) is the same
+            // page as the root path, not an unknown route — normalised
+            // here so it doesn't fall through to the not-found page now
+            // that unrecognised paths actually go somewhere real instead
+            // of silently landing on home anyway.
+            const withoutIndex = pathname.replace(/\/index\.html?$/i, '/');
+            const trimmed = withoutIndex.replace(/\/+$/, '');
             return trimmed === '' ? '' : '#' + trimmed;
         }
         function hashToCleanPath(hash) {
@@ -23050,6 +23149,24 @@
         // actually showing, it's safe to reveal.
         const siteFooterWrap = document.getElementById('siteFooterWrap');
         if (siteFooterWrap) siteFooterWrap.classList.remove('boot-hidden');
+        // .scroll-reveal sections (home, About, Delivery Info) — revealed
+        // once, the first time any part of one enters the viewport, then
+        // left alone. Falls back to just showing everything immediately in
+        // the rare browser without IntersectionObserver, rather than
+        // leaving sections permanently invisible.
+        if ('IntersectionObserver' in window) {
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-revealed');
+                        revealObserver.unobserve(entry.target);
+                    }
+                });
+            }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+            document.querySelectorAll('.scroll-reveal').forEach(el => revealObserver.observe(el));
+        } else {
+            document.querySelectorAll('.scroll-reveal').forEach(el => el.classList.add('is-revealed'));
+        }
         syncNavSpacer();
         startHeroCarousel();
         setTimeout(syncNavSpacer, 300); // re-check once web font has likely loaded
