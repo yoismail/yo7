@@ -1592,21 +1592,9 @@
                 margin-left: 0;
             }
 
-            .icon-btn,
-            .nav-hamburger {
+            .icon-btn {
                 width: 34px;
                 height: 34px;
-            }
-            /* No room for the "MENU" label at the narrowest real phones -
-               back to icon-only here, the same square it always was
-               before the label existed. padding: 0 so the icon centres
-               in the fixed square above instead of the wider row/column
-               padding meant for the labelled version. */
-            .nav-hamburger {
-                padding: 0;
-            }
-            .nav-hamburger-label {
-                display: none;
             }
 
             /* The notifications bell (added after this breakpoint was
@@ -1679,6 +1667,27 @@
 
             .nav-right {
                 gap: 4px;
+            }
+        }
+
+        /* Below this, the row genuinely has no room left for the "MENU"
+           label alongside a signed-in user's notification bell - measured
+           directly (forcing the labelled layout and checking for wrap):
+           it holds with room to spare from 339px up, wraps the hamburger
+           onto its own line at 338px and below. 340px leaves a small
+           margin above that measured edge rather than cutting it exactly.
+           Only real devices this width or narrower are the oldest
+           iPhones (5/SE 1st gen, 320px) - everything from a 360px
+           Android up keeps the label. Reverts to the same icon-only
+           square it was before the label existed. */
+        @media (max-width:340px) {
+            .nav-hamburger {
+                width: 34px;
+                height: 34px;
+                padding: 0;
+            }
+            .nav-hamburger-label {
+                display: none;
             }
         }
 
@@ -14057,7 +14066,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-23.5';
+        const BUILD_VERSION = '2026-09-23.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
