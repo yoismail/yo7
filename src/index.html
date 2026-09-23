@@ -1467,6 +1467,36 @@
             border-bottom: none;
         }
 
+        /* z-index: 90 - below #mainNav's 100 (so the nav bar and the menu
+           dropdown growing inside it stay on top), comfortably below the
+           trust bar's 99 too, above everything else on the page. Those two
+           thin fixed strips at the very top stay visibly undimmed, which
+           is fine, the menu list itself covers most of that area anyway
+           once open; what this dims is the actual page content beneath.
+           opacity/pointer-events, not display: none, so the fade actually
+           animates - toggling display can't transition, it would just pop
+           in instantly. Harmless at rest either way: pointer-events: none
+           means a fully transparent fixed div sitting in the layout has no
+           visual or interaction effect, on any width, whenever the
+           hamburger menu itself isn't open (its own button is desktop-
+           hidden, so that's effectively mobile-only already). */
+        .mobile-menu-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            background: rgba(6, 59, 0, 0.32);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .mobile-menu-backdrop.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .mobile-menu-backdrop { transition: none; }
+        }
+
         .mobile-search {
             max-width: none;
             margin-bottom: 6px;
@@ -9746,6 +9776,14 @@
             <a href="#/guide">New Here?</a>
         </div>
     </nav>
+    <!-- Dims the page behind the mobile menu while it's open, and gives a
+         clear tap-to-close target - #mainNav is position:fixed, so the
+         menu dropdown growing inside it just overlays whatever's beneath
+         rather than pushing it down, and with nothing behind it darkened
+         that read as the menu floating over unrelated content rather than
+         a deliberate "you're in a menu now" state. Sits outside #mainNav
+         so its own fixed positioning isn't affected by the nav's stacking. -->
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
 
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
@@ -9917,7 +9955,7 @@
             </div>
         </div>
 
-        <section class="offer-section scroll-reveal">
+        <section class="offer-section">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9942,7 +9980,7 @@
             </div>
         </section>
 
-        <section class="new-section scroll-reveal">
+        <section class="new-section">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9967,7 +10005,7 @@
             </div>
         </section>
 
-        <section class="best-sellers-section scroll-reveal">
+        <section class="best-sellers-section">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -9992,7 +10030,7 @@
             </div>
         </section>
 
-        <section class="shop-section scroll-reveal" id="shopByGroup">
+        <section class="shop-section" id="shopByGroup">
             <div class="wrap">
                 <div class="section-head reveal">
                     <div class="section-eyebrow">Shop by category</div>
@@ -10003,7 +10041,7 @@
             </div>
         </section>
 
-        <section class="bundles-section scroll-reveal">
+        <section class="bundles-section">
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -10082,7 +10120,7 @@
             </div>
         </section>
 
-        <section class="delivery scroll-reveal">
+        <section class="delivery">
             <div class="wrap delivery-grid">
                 <div class="delivery-badge reveal">
                     <svg viewBox="65 25 875 900"
@@ -10102,7 +10140,7 @@
             </div>
         </section>
 
-        <section class="order scroll-reveal">
+        <section class="order">
             <div class="wrap">
                 <div class="section-divider reveal"></div>
                 <div class="section-head reveal">
@@ -10132,7 +10170,7 @@
             </div>
         </section>
 
-        <section class="why-choose-section scroll-reveal">
+        <section class="why-choose-section">
             <div class="wrap">
                 <div class="section-head reveal" style="text-align:center;">
                     <div class="section-eyebrow">Why choose <span style="text-transform:none;">Yo7 Foods</span></div>
@@ -10172,7 +10210,7 @@
             </div>
         </section>
 
-        <section class="reviews-section scroll-reveal">
+        <section class="reviews-section">
             <div class="wrap">
                 <div class="section-head reveal" style="text-align:center;">
                     <div class="section-eyebrow">Reviews</div>
@@ -14000,7 +14038,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-23.1';
+        const BUILD_VERSION = '2026-09-23.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22413,9 +22451,18 @@
         /* ================= MOBILE HAMBURGER MENU ================= */
         const navHamburger = document.getElementById('navHamburger');
         const mobileMenu = document.getElementById('mobileMenu');
-        navHamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
-        mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.remove('open')));
-        window.addEventListener('hashchange', () => mobileMenu.classList.remove('open'));
+        const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('open');
+            mobileMenuBackdrop.classList.remove('open');
+        }
+        navHamburger.addEventListener('click', () => {
+            mobileMenu.classList.toggle('open');
+            mobileMenuBackdrop.classList.toggle('open', mobileMenu.classList.contains('open'));
+        });
+        mobileMenuBackdrop.addEventListener('click', closeMobileMenu);
+        mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
+        window.addEventListener('hashchange', closeMobileMenu);
         // Both the hamburger menu and the account dropdown float above the
         // page content with no scroll boundary of their own — scrolling
         // the page behind them (rather than tapping outside, the only
@@ -22426,7 +22473,7 @@
         // never calls preventDefault, so it shouldn't block the browser's
         // own scroll-performance optimizations.
         window.addEventListener('scroll', () => {
-            mobileMenu.classList.remove('open');
+            closeMobileMenu();
             closeAccountDropdown();
         }, { passive: true });
 
