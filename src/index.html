@@ -1433,24 +1433,54 @@
             }
         }
 
+        /* Full-height panel below the fixed header, not a small dropdown -
+           position: fixed, top pinned to --fixed-header-height (the same
+           value syncNavSpacer() already computes for the trust bar and
+           body padding, so this lines up with wherever the fixed chrome
+           actually ends at any breakpoint), bottom: 0. A solid white fill
+           covering the whole remaining viewport is its own "you're in a
+           menu now" state, no separate dimming backdrop needed behind it
+           the way the small dropdown used to require - there's no longer
+           any page content left visible for one to dim. z-index: 96, above
+           the floating cart/WhatsApp buttons' 90 (same reasoning as any
+           full-screen overlay: it has to be the topmost thing a tap can
+           reach), below the trust bar's 99 and nav's 100 so those stay
+           visible and usable (closing the menu) above the panel.
+           opacity/pointer-events, not display: none, so the fade actually
+           animates - toggling display can't transition, it would just pop
+           in instantly. overflow-y: auto as a safety net for a very short
+           viewport or a longer link list later, not needed for today's
+           handful of links. */
         .mobile-menu {
             display: none;
+            position: fixed;
+            top: var(--fixed-header-height, 0px);
+            left: 0;
+            right: 0;
+            bottom: 0;
             flex-direction: column;
             gap: 2px;
             padding: 4px 20px 18px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+            background: #FFFFFF;
+            overflow-y: auto;
+            z-index: 96;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
         }
 
         .mobile-menu.open {
-            max-height: 400px;
+            opacity: 1;
+            pointer-events: auto;
         }
 
         @media (max-width:900px) {
             .mobile-menu {
                 display: flex;
             }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .mobile-menu { transition: none; }
         }
 
         .mobile-menu a {
@@ -1465,40 +1495,6 @@
 
         .mobile-menu a:last-child {
             border-bottom: none;
-        }
-
-        /* z-index: 95 - below #mainNav's 100 (so the nav bar and the menu
-           dropdown growing inside it stay on top) and the trust bar's 99,
-           but above the floating cart/WhatsApp buttons (.float-cart,
-           .float-order), which are also z-index: 90 and, being later in
-           the DOM, would otherwise paint above this and stay bright and
-           clickable once scrolled into view, bypassing the tap-to-close
-           layer entirely. Those two thin fixed strips at the very top
-           stay visibly undimmed, which is fine, the menu list itself
-           covers most of that area anyway once open; what this dims is
-           the actual page content beneath. opacity/pointer-events, not
-           display: none, so the fade actually animates - toggling display
-           can't transition, it would just pop in instantly. Harmless at
-           rest either way: pointer-events: none means a fully transparent
-           fixed div sitting in the layout has no visual or interaction
-           effect, on any width, whenever the hamburger menu itself isn't
-           open (its own button is desktop-hidden, so that's effectively
-           mobile-only already). */
-        .mobile-menu-backdrop {
-            position: fixed;
-            inset: 0;
-            z-index: 95;
-            background: rgba(6, 59, 0, 0.32);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease;
-        }
-        .mobile-menu-backdrop.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .mobile-menu-backdrop { transition: none; }
         }
 
         .mobile-search {
@@ -9780,14 +9776,6 @@
             <a href="#/guide">New Here?</a>
         </div>
     </nav>
-    <!-- Dims the page behind the mobile menu while it's open, and gives a
-         clear tap-to-close target - #mainNav is position:fixed, so the
-         menu dropdown growing inside it just overlays whatever's beneath
-         rather than pushing it down, and with nothing behind it darkened
-         that read as the menu floating over unrelated content rather than
-         a deliberate "you're in a menu now" state. Sits outside #mainNav
-         so its own fixed positioning isn't affected by the nav's stacking. -->
-    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
 
     <div class="trust-bar" id="trustBar">
         <div class="trust-bar-track" id="trustBarTrack">
@@ -14042,7 +14030,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-23.3';
+        const BUILD_VERSION = '2026-09-23.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22455,27 +22443,23 @@
         /* ================= MOBILE HAMBURGER MENU ================= */
         const navHamburger = document.getElementById('navHamburger');
         const mobileMenu = document.getElementById('mobileMenu');
-        const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
         function closeMobileMenu() {
             mobileMenu.classList.remove('open');
-            mobileMenuBackdrop.classList.remove('open');
         }
         navHamburger.addEventListener('click', () => {
             mobileMenu.classList.toggle('open');
-            mobileMenuBackdrop.classList.toggle('open', mobileMenu.classList.contains('open'));
         });
-        mobileMenuBackdrop.addEventListener('click', closeMobileMenu);
         mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
         window.addEventListener('hashchange', closeMobileMenu);
         // .mobile-menu and .nav-hamburger both switch on the same
         // max-width: 900px breakpoint. Without this, opening the menu
         // below it and then resizing (or rotating a tablet) past it left
-        // .mobile-menu-backdrop still .open, covering the desktop page
-        // behind an invisible click-to-close layer with no visible menu
-        // or hamburger button left to close it from. matchMedia's change
-        // event, not a raw resize listener, so this only fires on
-        // actually crossing the breakpoint rather than on every pixel of
-        // a drag-resize.
+        // the full-height panel still .open, covering the desktop page
+        // with no visible hamburger left to close it from (.mobile-menu
+        // itself goes display: none above 900px, but nothing was watching
+        // for that crossing). matchMedia's change event, not a raw resize
+        // listener, so this only fires on actually crossing the breakpoint
+        // rather than on every pixel of a drag-resize.
         window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => {
             if (e.matches) closeMobileMenu();
         });
@@ -23184,6 +23168,12 @@
                 totalHeight += trustBar.offsetHeight;
             }
             document.body.style.paddingTop = totalHeight + 'px';
+            // Same total height, exposed as a custom property so the
+            // full-height mobile menu panel (position: fixed, see its own
+            // CSS comment) can anchor its top to wherever the fixed
+            // header actually ends, instead of a hardcoded value that
+            // would drift the moment either fixed bar's height changes.
+            document.documentElement.style.setProperty('--fixed-header-height', totalHeight + 'px');
         }
         window.addEventListener('resize', syncNavSpacer);
         window.addEventListener('orientationchange', syncNavSpacer);
