@@ -1467,23 +1467,27 @@
             border-bottom: none;
         }
 
-        /* z-index: 90 - below #mainNav's 100 (so the nav bar and the menu
-           dropdown growing inside it stay on top), comfortably below the
-           trust bar's 99 too, above everything else on the page. Those two
-           thin fixed strips at the very top stay visibly undimmed, which
-           is fine, the menu list itself covers most of that area anyway
-           once open; what this dims is the actual page content beneath.
-           opacity/pointer-events, not display: none, so the fade actually
-           animates - toggling display can't transition, it would just pop
-           in instantly. Harmless at rest either way: pointer-events: none
-           means a fully transparent fixed div sitting in the layout has no
-           visual or interaction effect, on any width, whenever the
-           hamburger menu itself isn't open (its own button is desktop-
-           hidden, so that's effectively mobile-only already). */
+        /* z-index: 95 - below #mainNav's 100 (so the nav bar and the menu
+           dropdown growing inside it stay on top) and the trust bar's 99,
+           but above the floating cart/WhatsApp buttons (.float-cart,
+           .float-order), which are also z-index: 90 and, being later in
+           the DOM, would otherwise paint above this and stay bright and
+           clickable once scrolled into view, bypassing the tap-to-close
+           layer entirely. Those two thin fixed strips at the very top
+           stay visibly undimmed, which is fine, the menu list itself
+           covers most of that area anyway once open; what this dims is
+           the actual page content beneath. opacity/pointer-events, not
+           display: none, so the fade actually animates - toggling display
+           can't transition, it would just pop in instantly. Harmless at
+           rest either way: pointer-events: none means a fully transparent
+           fixed div sitting in the layout has no visual or interaction
+           effect, on any width, whenever the hamburger menu itself isn't
+           open (its own button is desktop-hidden, so that's effectively
+           mobile-only already). */
         .mobile-menu-backdrop {
             position: fixed;
             inset: 0;
-            z-index: 90;
+            z-index: 95;
             background: rgba(6, 59, 0, 0.32);
             opacity: 0;
             pointer-events: none;
@@ -14038,7 +14042,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-23.2';
+        const BUILD_VERSION = '2026-09-23.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22463,6 +22467,18 @@
         mobileMenuBackdrop.addEventListener('click', closeMobileMenu);
         mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
         window.addEventListener('hashchange', closeMobileMenu);
+        // .mobile-menu and .nav-hamburger both switch on the same
+        // max-width: 900px breakpoint. Without this, opening the menu
+        // below it and then resizing (or rotating a tablet) past it left
+        // .mobile-menu-backdrop still .open, covering the desktop page
+        // behind an invisible click-to-close layer with no visible menu
+        // or hamburger button left to close it from. matchMedia's change
+        // event, not a raw resize listener, so this only fires on
+        // actually crossing the breakpoint rather than on every pixel of
+        // a drag-resize.
+        window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => {
+            if (e.matches) closeMobileMenu();
+        });
         // Both the hamburger menu and the account dropdown float above the
         // page content with no scroll boundary of their own — scrolling
         // the page behind them (rather than tapping outside, the only
