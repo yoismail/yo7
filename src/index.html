@@ -1435,9 +1435,9 @@
 
         .nav-hamburger-label {
             font-family: var(--display);
-            font-weight: 700;
-            font-size: 9px;
-            letter-spacing: 0.1em;
+            font-weight: 600;
+            font-size: 7px;
+            letter-spacing: 0;
             line-height: 1;
             text-transform: uppercase;
         }
@@ -1674,12 +1674,13 @@
            label alongside a signed-in user's notification bell - measured
            directly (forcing the labelled layout and checking for wrap):
            it holds with room to spare from 339px up, wraps the hamburger
-           onto its own line at 338px and below. 340px leaves a small
-           margin above that measured edge rather than cutting it exactly.
-           Only real devices this width or narrower are the oldest
-           iPhones (5/SE 1st gen, 320px) - everything from a 360px
-           Android up keeps the label. Reverts to the same icon-only
-           square it was before the label existed. */
+           onto its own line at 338px and below (that edge was measured
+           against the label's original, wider sizing - it's shrunk since,
+           so this 340px cutoff now has more headroom than the number
+           implies, not less). Only real devices this width or narrower
+           are the oldest iPhones (5/SE 1st gen, 320px) - everything from
+           a 360px Android up keeps the label. Reverts to the same
+           icon-only square it was before the label existed. */
         @media (max-width:340px) {
             .nav-hamburger {
                 width: 34px;
@@ -14066,7 +14067,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-23.6';
+        const BUILD_VERSION = '2026-09-23.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
