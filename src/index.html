@@ -577,7 +577,12 @@
            Grid stacking (both slides in the same cell) keeps the
            container sized to the taller of the two throughout the
            crossfade, instead of the height snapping the instant the
-           active slide switches. */
+           active slide switches. 0.3s, not 0.6s - and the two slides
+           never actually cross-fade at the same time despite the name
+           (see initLaunchBannerRotator's goTo): the outgoing one fades
+           out fully before the incoming one starts fading in, so two
+           different messages are never legible on top of each other
+           mid-transition. */
         .launch-banner-rotator {
             display: grid;
         }
@@ -585,7 +590,7 @@
             grid-area: 1 / 1;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.6s ease;
+            transition: opacity 0.3s ease;
         }
         .launch-banner-slide.is-active {
             opacity: 1;
@@ -13995,7 +14000,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-22.34';
+        const BUILD_VERSION = '2026-09-23.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16084,16 +16089,27 @@
             let index = slides.findIndex(s => s.classList.contains('is-active'));
             if (index === -1) index = 0;
             let timer = null;
+            // Matches .launch-banner-slide's own transition-duration (see
+            // its CSS comment) - the outgoing slide's fade-out has to
+            // actually finish before the incoming one starts fading in,
+            // otherwise both are partway visible at once and their text
+            // overlaps into an unreadable smear for the length of the
+            // transition, which is what a straight simultaneous crossfade
+            // between two different messages (not two similar photos)
+            // looked like here.
+            const SLIDE_FADE_MS = 300;
             function goTo(next) {
                 const current = slides[index];
                 current.classList.remove('is-active');
                 current.setAttribute('aria-hidden', 'true');
                 current.querySelectorAll('a').forEach(a => a.setAttribute('tabindex', '-1'));
-                index = next;
-                const nextSlide = slides[index];
-                nextSlide.classList.add('is-active');
-                nextSlide.removeAttribute('aria-hidden');
-                nextSlide.querySelectorAll('a').forEach(a => a.removeAttribute('tabindex'));
+                setTimeout(() => {
+                    index = next;
+                    const nextSlide = slides[index];
+                    nextSlide.classList.add('is-active');
+                    nextSlide.removeAttribute('aria-hidden');
+                    nextSlide.querySelectorAll('a').forEach(a => a.removeAttribute('tabindex'));
+                }, SLIDE_FADE_MS);
             }
             function start() { if (!timer) timer = setInterval(() => goTo((index + 1) % slides.length), 6500); }
             function stop() { clearInterval(timer); timer = null; }
