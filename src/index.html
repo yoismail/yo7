@@ -5777,22 +5777,63 @@
             background: var(--aubergine); border-color: var(--aubergine); color: var(--cream);
             box-shadow: 0 4px 14px rgba(var(--border-rgb), 0.22);
         }
-        /* On a narrow phone, 20-odd wrapping pills push products several
-           screens down before anything is visible. A single swipeable row
-           keeps the whole filter reachable in a thumb-width strip instead,
-           matching the horizontal category strip used elsewhere on mobile. */
+        /* Reported directly: on a narrow phone, swiping through 20-odd
+           wrapping pills one at a time to find a category was tedious -
+           a single "Filter" button that drops the whole list at once, so
+           every category is reachable in one tap instead of a blind
+           swipe-and-hunt. Desktop keeps the plain wrapped row (see
+           .cat-pill-row above); this trigger+dropdown pair is hidden
+           there and only takes over at this same 640px breakpoint. */
+        .shop-all-filter { display: none; position: relative; margin-bottom: 10px; }
         @media (max-width: 640px) {
-            .cat-pill-row {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                scroll-snap-type: x proximity;
-                padding: 2px 2px 8px;
-                margin: 0 -2px 4px;
-                scrollbar-width: none;
-            }
-            .cat-pill-row::-webkit-scrollbar { display: none; }
-            .cat-pill { flex-shrink: 0; scroll-snap-align: start; }
+            .cat-pill-row { display: none; }
+            .shop-all-filter { display: block; }
+        }
+        .shop-all-filter-btn {
+            display: flex; align-items: center; gap: 9px; width: 100%;
+            font-family: var(--display); font-weight: 700; font-size: 13.5px;
+            padding: 12px 16px; border-radius: 13px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            background: var(--card-bg); color: var(--ink); cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .shop-all-filter-btn svg:first-child { width: 15px; height: 15px; flex-shrink: 0; color: var(--chartreuse-rich); }
+        .shop-all-filter-btn span { flex: 1; text-align: left; }
+        .shop-all-filter-caret { width: 13px; height: 13px; flex-shrink: 0; transition: transform 0.2s ease; }
+        .shop-all-filter.open .shop-all-filter-caret { transform: rotate(180deg); }
+        .shop-all-filter.open .shop-all-filter-btn {
+            border-color: var(--chartreuse); box-shadow: 0 0 0 3px rgba(144, 184, 0, 0.16);
+        }
+        /* visibility, not just opacity/pointer-events, when closed - a
+           screen reader or keyboard user tabbing through the page would
+           otherwise still land on all 25 buttons inside here despite
+           them being invisible and untappable. The 0.15s visibility
+           delay (only on the closing transition) keeps the closing
+           opacity fade itself visible instead of the panel vanishing the
+           instant .open is removed. */
+        .shop-all-filter-dropdown {
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+            background: var(--card-bg); border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            z-index: 20; max-height: 340px; overflow-y: auto;
+            opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
+            padding: 6px;
+        }
+        .shop-all-filter.open .shop-all-filter-dropdown {
+            opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .shop-all-filter-item {
+            display: block; width: 100%; text-align: left;
+            font-family: var(--display); font-weight: 600; font-size: 13.5px;
+            padding: 10px 14px; border-radius: 10px; border: none; background: none;
+            color: var(--ink); cursor: pointer;
+        }
+        .shop-all-filter-item:hover { background: rgba(144, 184, 0, 0.1); }
+        .shop-all-filter-item.active { background: rgba(144, 184, 0, 0.18); color: var(--aubergine); font-weight: 700; }
+        @media (prefers-reduced-motion: reduce) {
+            .shop-all-filter-caret, .shop-all-filter-dropdown { transition: none; }
         }
         .shop-all-result-count {
             margin: 6px 0 18px; font-family: var(--display); font-size: 12.5px;
@@ -10320,6 +10361,14 @@
                     <input type="text" id="shopAllSearchInput" placeholder="Search: all products..." autocomplete="off" aria-label="Search all items">
                 </div>
                 <div class="cat-pill-row" id="shopAllPillRow"></div>
+                <div class="shop-all-filter" id="shopAllFilter">
+                    <button type="button" class="shop-all-filter-btn" id="shopAllFilterBtn" aria-haspopup="true" aria-expanded="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                        <span id="shopAllFilterLabel">Filter</span>
+                        <svg class="shop-all-filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div class="shop-all-filter-dropdown" id="shopAllFilterDropdown"></div>
+                </div>
                 <div class="shop-all-result-count" id="shopAllResultCount"></div>
                 <div class="shop-all-grid" id="shopAllGrid"></div>
                 <div class="grid-load-more" id="shopAllLoadMore" style="display:none;">
@@ -14046,7 +14095,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.3';
+        const BUILD_VERSION = '2026-09-24.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16541,6 +16590,29 @@
                     filterShopAll();
                 });
             });
+            // Mobile-only "Filter" trigger + dropdown standing in for the
+            // pill row above at the same 640px breakpoint (see
+            // .shop-all-filter's own CSS comment). Rebuilt alongside the
+            // pills every time so both stay in sync with shopAllActiveCat
+            // regardless of which one a shopper actually used to change it.
+            const activePill = pills.find(c => c.slug === shopAllActiveCat) || pills[0];
+            document.getElementById('shopAllFilterLabel').textContent = `Filter: ${activePill.name.replace(/&amp;/g, '&')}`;
+            document.getElementById('shopAllFilterDropdown').innerHTML = pills.map(c => `
+    <button type="button" class="shop-all-filter-item ${shopAllActiveCat === c.slug ? 'active' : ''}" data-slug="${c.slug}">${c.name.replace(/&amp;/g, '&')}</button>`).join('');
+            document.querySelectorAll('#shopAllFilterDropdown .shop-all-filter-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    shopAllActiveCat = btn.dataset.slug;
+                    closeShopAllFilter();
+                    renderShopAllPills();
+                    filterShopAll();
+                });
+            });
+        }
+        function closeShopAllFilter() {
+            const wrap = document.getElementById('shopAllFilter');
+            if (!wrap) return;
+            wrap.classList.remove('open');
+            document.getElementById('shopAllFilterBtn').setAttribute('aria-expanded', 'false');
         }
         function filterShopAll() {
             const q = document.getElementById('shopAllSearchInput').value.trim().toLowerCase();
@@ -22491,7 +22563,37 @@
         window.addEventListener('scroll', () => {
             closeMobileMenu();
             closeAccountDropdown();
+            closeShopAllFilter();
         }, { passive: true });
+
+        /* ================= SHOP EVERYTHING: MOBILE FILTER DROPDOWN =================
+           Same open/close conventions as the account dropdown right above -
+           toggled on tap, dismissed on an outside click, a hash change, or
+           a scroll (closeShopAllFilter itself is defined alongside the
+           dropdown's render function, since both need shopAllActiveCat). */
+        document.getElementById('shopAllFilterBtn').addEventListener('click', () => {
+            const wrap = document.getElementById('shopAllFilter');
+            const nowOpen = wrap.classList.toggle('open');
+            document.getElementById('shopAllFilterBtn').setAttribute('aria-expanded', String(nowOpen));
+        });
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('shopAllFilter').contains(e.target)) {
+                closeShopAllFilter();
+            }
+        });
+        window.addEventListener('hashchange', closeShopAllFilter);
+        // .shop-all-filter and .cat-pill-row swap on the same 640px
+        // breakpoint as each other (see .shop-all-filter's own CSS
+        // comment). Without this, opening the dropdown below it and then
+        // resizing (or rotating a tablet) past it left .open and
+        // aria-expanded="true" stuck on a now-hidden trigger - resizing
+        // back down under 640px would show it already open with stale
+        // state. Same matchMedia-change pattern as the hamburger menu's
+        // own 900px cleanup above, not a raw resize listener, so this
+        // only fires on actually crossing the breakpoint.
+        window.matchMedia('(min-width: 641px)').addEventListener('change', (e) => {
+            if (e.matches) closeShopAllFilter();
+        });
 
         /* ================= GUIDE / FAQ ================= */
         // A plain string here would go stale the moment an admin changed a
