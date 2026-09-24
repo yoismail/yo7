@@ -5374,6 +5374,18 @@
             border-bottom-color: rgba(var(--border-rgb), 0.14);
         }
         .shop-header .wrap { position: relative; z-index: 2; }
+        /* Reported directly: the mobile Filter dropdown on the category
+           and search pages (#view-shop, the one .shop-header instance
+           with no .shop-header-watermark to protect) was getting cut off
+           partway down instead of showing its full scrollable height.
+           .shop-header's own overflow:hidden exists to clip that
+           watermark's deliberate bottom:-14px bleed on the pages that
+           have one - background gradients are already self-clipped to
+           their own box regardless of overflow, so nothing else here
+           needed it. Scoped to just this one header instead of loosening
+           the shared .shop-header rule, so every other page's watermark
+           stays clipped exactly as before. */
+        #view-shop > .shop-header { overflow: visible; }
 
         /* These two variants had no glow of their own — flat white — so
            unlike the base .shop-header above, they get the same corner-
@@ -5822,6 +5834,7 @@
             background: var(--card-bg); border-radius: 16px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             z-index: 20; max-height: 340px; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
             transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
             padding: 6px;
@@ -5837,7 +5850,17 @@
             color: var(--ink); cursor: pointer;
         }
         .shop-all-filter-item:hover { background: rgba(144, 184, 0, 0.1); }
-        .shop-all-filter-item.active { background: rgba(144, 184, 0, 0.18); color: var(--aubergine); font-weight: 700; }
+        /* var(--heading), not the fixed var(--aubergine) - reported
+           directly, the active row's text was reading as invisible in
+           dark mode. --aubergine is a literal brand green that never
+           flips with theme (by design elsewhere, e.g. the nav bar), but
+           this dropdown's own background does flip via var(--card-bg),
+           so dark-green-on-near-black had almost no contrast left.
+           var(--heading) already resolves to the same var(--aubergine)
+           in light mode and to a light cream in dark mode, matching
+           every other piece of dark-mode-aware heading text on the
+           site. */
+        .shop-all-filter-item.active { background: rgba(144, 184, 0, 0.18); color: var(--heading); font-weight: 700; }
         @media (prefers-reduced-motion: reduce) {
             .shop-all-filter-caret, .shop-all-filter-dropdown { transition: none; }
         }
@@ -14109,7 +14132,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.7';
+        const BUILD_VERSION = '2026-09-24.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
