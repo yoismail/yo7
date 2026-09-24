@@ -5804,17 +5804,25 @@
         .shop-all-filter.open .shop-all-filter-btn {
             border-color: var(--chartreuse); box-shadow: 0 0 0 3px rgba(144, 184, 0, 0.16);
         }
+        /* visibility, not just opacity/pointer-events, when closed - a
+           screen reader or keyboard user tabbing through the page would
+           otherwise still land on all 25 buttons inside here despite
+           them being invisible and untappable. The 0.15s visibility
+           delay (only on the closing transition) keeps the closing
+           opacity fade itself visible instead of the panel vanishing the
+           instant .open is removed. */
         .shop-all-filter-dropdown {
             position: absolute; top: calc(100% + 8px); left: 0; right: 0;
             background: var(--card-bg); border-radius: 16px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             z-index: 20; max-height: 340px; overflow-y: auto;
-            opacity: 0; transform: translateY(-6px); pointer-events: none;
-            transition: opacity 0.15s ease, transform 0.15s ease;
+            opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
             padding: 6px;
         }
         .shop-all-filter.open .shop-all-filter-dropdown {
-            opacity: 1; transform: translateY(0); pointer-events: auto;
+            opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto;
+            transition: opacity 0.15s ease, transform 0.15s ease;
         }
         .shop-all-filter-item {
             display: block; width: 100%; text-align: left;
@@ -14087,7 +14095,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.4';
+        const BUILD_VERSION = '2026-09-24.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22574,6 +22582,18 @@
             }
         });
         window.addEventListener('hashchange', closeShopAllFilter);
+        // .shop-all-filter and .cat-pill-row swap on the same 640px
+        // breakpoint as each other (see .shop-all-filter's own CSS
+        // comment). Without this, opening the dropdown below it and then
+        // resizing (or rotating a tablet) past it left .open and
+        // aria-expanded="true" stuck on a now-hidden trigger - resizing
+        // back down under 640px would show it already open with stale
+        // state. Same matchMedia-change pattern as the hamburger menu's
+        // own 900px cleanup above, not a raw resize listener, so this
+        // only fires on actually crossing the breakpoint.
+        window.matchMedia('(min-width: 641px)').addEventListener('change', (e) => {
+            if (e.matches) closeShopAllFilter();
+        });
 
         /* ================= GUIDE / FAQ ================= */
         // A plain string here would go stale the moment an admin changed a
