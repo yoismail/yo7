@@ -5802,7 +5802,14 @@
            from the plain .cat-nav-wrap class other product carousels
            (Buy it again, Best sellers) also use, so those stay untouched
            and still swipeable on mobile as intended. */
-        .shop-all-filter { display: none; position: relative; margin-bottom: 10px; }
+        /* margin-top, not just margin-bottom - reported directly, this
+           sat flush against .shop-header p (no bottom margin of its own)
+           on the category/search pages with nothing to breathe against.
+           Collapses harmlessly with .shop-all-search-wrap's own existing
+           20px margin-bottom above it on the shop-all page (whichever
+           margin is larger wins for two adjacent block margins, so this
+           doesn't double up a gap that already worked there). */
+        .shop-all-filter { display: none; position: relative; margin-top: 18px; margin-bottom: 10px; }
         @media (max-width: 640px) {
             .cat-pill-row, .cat-nav-wrap-cats { display: none; }
             .shop-all-filter { display: block; }
@@ -5835,6 +5842,17 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             z-index: 20; max-height: 340px; overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            /* Reported directly: swiping up to scroll through the list
+               closed the dropdown outright. Once a touch-scroll reaches
+               this element's own top/bottom, the browser's default
+               scroll-chaining behavior hands the rest of that same
+               gesture to the page underneath - which is exactly the
+               scroll this dropdown is wired to close itself on (see
+               closeShopAllFilter's window 'scroll' listener). Standard
+               fix: overscroll-behavior stops that hand-off at this
+               element's own boundary instead of loosening the page-
+               scroll-closes-it behavior everywhere else needs. */
+            overscroll-behavior: contain;
             opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
             transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
             padding: 6px;
@@ -14132,7 +14150,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.8';
+        const BUILD_VERSION = '2026-09-24.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
