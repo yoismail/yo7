@@ -1657,6 +1657,23 @@
                 height: 18px;
             }
 
+            /* The visible 29px circle stays put (it's already the smallest
+               it can be without wrapping the row, see the comment above),
+               but the actual tap target grows via an invisible ::after
+               overlay instead - taller than wide, since there's real
+               headroom above/below in the nav bar's own padding, while the
+               4px gap between these two icons only leaves room to nudge
+               sideways by 1px each without their hit zones overlapping. */
+            .nav-cart-btn::after,
+            .nav-notif-btn::after {
+                content: '';
+                position: absolute;
+                top: -6px;
+                bottom: -6px;
+                left: -1px;
+                right: -1px;
+            }
+
             .theme-switch {
                 width: 46px;
                 height: 25px;
@@ -6316,9 +6333,16 @@
            photo — it's still inside the <a>, so its onclick still needs
            its own preventDefault/stopPropagation to stop that turning into
            a navigation. */
+        /* 40px, not the visually-tighter 34px this used to be - it's the
+           single most-tapped control on the whole site (every add-to-cart
+           action goes through it), so it gets the full 40px touch target
+           rather than trading tap accuracy for a smaller circle. The price
+           beside it already has min-width:0 (see .product-price above) and
+           absorbs the extra 6px by shrinking/wrapping instead of pushing
+           this out past the card edge. */
         .card-add-btn {
-            width: 34px;
-            height: 34px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -6329,7 +6353,7 @@
             color: var(--aubergine-deep);
             transition: background 0.2s ease, transform 0.2s ease;
         }
-        .card-add-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .card-add-btn svg { width: 17px; height: 17px; flex-shrink: 0; }
         .card-add-btn:hover { background: var(--chartreuse-soft); transform: scale(1.08); }
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
@@ -14150,7 +14174,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.9';
+        const BUILD_VERSION = '2026-09-24.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
