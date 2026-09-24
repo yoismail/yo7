@@ -14109,7 +14109,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.6';
+        const BUILD_VERSION = '2026-09-24.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15525,13 +15525,17 @@
             // than the plain swipe-strip it replaced there. Real
             // <a href> links, not JS-driven state like shop-all's
             // in-place filter, since picking one here navigates to a
-            // whole new category page rather than refiltering in place -
-            // the natural hashchange that follows is what closes the
-            // dropdown (see closeCatFilter's own wiring).
+            // whole new category page rather than refiltering in place.
             const activeCat = CATEGORIES.find(c => c.slug === activeSlug);
             document.getElementById('catFilterLabel').textContent = activeCat ? `Filter: ${activeCat.name.replace(/&amp;/g, '&')}` : 'Filter';
             document.getElementById('catFilterDropdown').innerHTML = CATEGORIES.map(c => `
     <a class="shop-all-filter-item ${c.slug === activeSlug ? 'active' : ''}" href="#/category/${c.slug}">${c.name.replace(/&amp;/g, '&')}</a>`).join('');
+            // Closing on hashchange (see closeCatFilter's own wiring)
+            // misses the one case where the link's href equals the
+            // current hash already - tapping the already-active category
+            // fires no hashchange at all, so that click needs its own
+            // direct listener here, same as .mobile-menu's own links use.
+            document.querySelectorAll('#catFilterDropdown .shop-all-filter-item').forEach(a => a.addEventListener('click', closeCatFilter));
         }
         function closeCatFilter() {
             const wrap = document.getElementById('catFilter');
