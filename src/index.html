@@ -1631,26 +1631,37 @@
 
             /* Screen's too tight here for the desktop pill treatment (icon
                + horizontal padding) alongside the rest of the bar, so the
-               cart reverts to a compact circle — sized to match
+               cart reverts to a compact square tile, sized to match
                .theme-switch's own height (25px) rather than the other
                34px icon-only controls, so it doesn't read as the one
-               oversized control next to the toggle right beside it. */
+               oversized control next to the toggle right beside it. The
+               13px radius every other tile in the row uses (hamburger,
+               account) reads as a moderately rounded square on their
+               larger 34-43px boxes, but the same absolute radius on this
+               much smaller 29px box is proportionally far rounder, close
+               enough to a full circle that it broke from the row's shared
+               shape language. Dialled back to 9px here, matching the same
+               ratio of radius to box size as the rest of the row, so this
+               reads as the same rounded-square family, not the one
+               different-shaped icon in the cluster. */
             .nav-cart-btn {
                 width: 29px;
                 height: 29px;
                 padding: 0;
+                border-radius: 9px;
             }
             .nav-cart-btn svg {
                 width: 18px;
                 height: 18px;
             }
 
-            /* Same reasoning and sizing as .nav-cart-btn right above —
-               keeps the bell from being the one oversized control in a
-               row where everything else has already shrunk. */
+            /* Same reasoning and sizing as .nav-cart-btn right above,
+               including the radius correction - keeps the bell matched to
+               the cart's shape as well as the row's shared language. */
             .nav-notif-btn {
                 width: 29px;
                 height: 29px;
+                border-radius: 9px;
             }
             .nav-notif-btn svg {
                 width: 18px;
@@ -14174,7 +14185,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.10';
+        const BUILD_VERSION = '2026-09-24.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
