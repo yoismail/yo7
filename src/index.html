@@ -1668,12 +1668,12 @@
                 height: 18px;
             }
 
-            /* The visible 29px circle stays put (it's already the smallest
-               it can be without wrapping the row, see the comment above),
-               but the actual tap target grows via an invisible ::after
-               overlay instead - taller than wide, since there's real
-               headroom above/below in the nav bar's own padding, while the
-               4px gap between these two icons only leaves room to nudge
+            /* The visible 29px rounded square stays put (it's already the
+               smallest it can be without wrapping the row, see the comment
+               above), but the actual tap target grows via an invisible
+               ::after overlay instead - taller than wide, since there's
+               real headroom above/below in the nav bar's own padding, while
+               the 4px gap between these two icons only leaves room to nudge
                sideways by 1px each without their hit zones overlapping. */
             .nav-cart-btn::after,
             .nav-notif-btn::after {
@@ -14185,7 +14185,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.11';
+        const BUILD_VERSION = '2026-09-24.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
