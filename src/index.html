@@ -5374,6 +5374,18 @@
             border-bottom-color: rgba(var(--border-rgb), 0.14);
         }
         .shop-header .wrap { position: relative; z-index: 2; }
+        /* Reported directly: the mobile Filter dropdown on the category
+           and search pages (#view-shop, the one .shop-header instance
+           with no .shop-header-watermark to protect) was getting cut off
+           partway down instead of showing its full scrollable height.
+           .shop-header's own overflow:hidden exists to clip that
+           watermark's deliberate bottom:-14px bleed on the pages that
+           have one - background gradients are already self-clipped to
+           their own box regardless of overflow, so nothing else here
+           needed it. Scoped to just this one header instead of loosening
+           the shared .shop-header rule, so every other page's watermark
+           stays clipped exactly as before. */
+        #view-shop > .shop-header { overflow: visible; }
 
         /* These two variants had no glow of their own — flat white — so
            unlike the base .shop-header above, they get the same corner-
@@ -5783,10 +5795,16 @@
            every category is reachable in one tap instead of a blind
            swipe-and-hunt. Desktop keeps the plain wrapped row (see
            .cat-pill-row above); this trigger+dropdown pair is hidden
-           there and only takes over at this same 640px breakpoint. */
+           there and only takes over at this same 640px breakpoint.
+           Reused as-is (same class names) for the individual category
+           page's own filter below - .cat-nav-wrap-cats is that page's
+           auto-scrolling chip carousel specifically, scoped separately
+           from the plain .cat-nav-wrap class other product carousels
+           (Buy it again, Best sellers) also use, so those stay untouched
+           and still swipeable on mobile as intended. */
         .shop-all-filter { display: none; position: relative; margin-bottom: 10px; }
         @media (max-width: 640px) {
-            .cat-pill-row { display: none; }
+            .cat-pill-row, .cat-nav-wrap-cats { display: none; }
             .shop-all-filter { display: block; }
         }
         .shop-all-filter-btn {
@@ -5816,6 +5834,7 @@
             background: var(--card-bg); border-radius: 16px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             z-index: 20; max-height: 340px; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
             transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
             padding: 6px;
@@ -5825,13 +5844,23 @@
             transition: opacity 0.15s ease, transform 0.15s ease;
         }
         .shop-all-filter-item {
-            display: block; width: 100%; text-align: left;
+            display: block; width: 100%; text-align: left; text-decoration: none;
             font-family: var(--display); font-weight: 600; font-size: 13.5px;
             padding: 10px 14px; border-radius: 10px; border: none; background: none;
             color: var(--ink); cursor: pointer;
         }
         .shop-all-filter-item:hover { background: rgba(144, 184, 0, 0.1); }
-        .shop-all-filter-item.active { background: rgba(144, 184, 0, 0.18); color: var(--aubergine); font-weight: 700; }
+        /* var(--heading), not the fixed var(--aubergine) - reported
+           directly, the active row's text was reading as invisible in
+           dark mode. --aubergine is a literal brand green that never
+           flips with theme (by design elsewhere, e.g. the nav bar), but
+           this dropdown's own background does flip via var(--card-bg),
+           so dark-green-on-near-black had almost no contrast left.
+           var(--heading) already resolves to the same var(--aubergine)
+           in light mode and to a light cream in dark mode, matching
+           every other piece of dark-mode-aware heading text on the
+           site. */
+        .shop-all-filter-item.active { background: rgba(144, 184, 0, 0.18); color: var(--heading); font-weight: 700; }
         @media (prefers-reduced-motion: reduce) {
             .shop-all-filter-caret, .shop-all-filter-dropdown { transition: none; }
         }
@@ -10311,7 +10340,7 @@
                 <h1><span class="cat-emoji-big" id="shopHeaderEmoji"></span><span id="shopHeaderTitle">Category</span>
                 </h1>
                 <p id="shopHeaderDesc"></p>
-                <div class="cat-nav-wrap">
+                <div class="cat-nav-wrap cat-nav-wrap-cats">
                     <button class="cat-nav-arrow cat-nav-arrow-prev" id="catNavPrev" type="button" aria-label="Scroll categories left">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
                     </button>
@@ -10319,6 +10348,14 @@
                     <button class="cat-nav-arrow cat-nav-arrow-next" id="catNavNext" type="button" aria-label="Scroll categories right">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
+                </div>
+                <div class="shop-all-filter" id="catFilter">
+                    <button type="button" class="shop-all-filter-btn" id="catFilterBtn" aria-haspopup="true" aria-expanded="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                        <span id="catFilterLabel">Filter</span>
+                        <svg class="shop-all-filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div class="shop-all-filter-dropdown" id="catFilterDropdown"></div>
                 </div>
                 <div class="result-count" id="resultCount"></div>
             </div>
@@ -14095,7 +14132,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.5';
+        const BUILD_VERSION = '2026-09-24.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -15502,6 +15539,32 @@
     <a class="cat-chip ${c.slug === activeSlug ? 'active' : ''}" href="#/category/${c.slug}">${c.name}</a>`).join('');
             // duplicated once for a seamless auto-scrolling loop
             document.getElementById('catNavStrip').innerHTML = chipsHTML + chipsHTML;
+
+            // Mobile-only "Filter" trigger + dropdown standing in for the
+            // auto-scrolling carousel above at the same 640px breakpoint
+            // shop-all's own filter uses (see .shop-all-filter's CSS
+            // comment) - reported directly, hunting a category by
+            // watching an ambient carousel scroll past was no better
+            // than the plain swipe-strip it replaced there. Real
+            // <a href> links, not JS-driven state like shop-all's
+            // in-place filter, since picking one here navigates to a
+            // whole new category page rather than refiltering in place.
+            const activeCat = CATEGORIES.find(c => c.slug === activeSlug);
+            document.getElementById('catFilterLabel').textContent = activeCat ? `Filter: ${activeCat.name.replace(/&amp;/g, '&')}` : 'Filter';
+            document.getElementById('catFilterDropdown').innerHTML = CATEGORIES.map(c => `
+    <a class="shop-all-filter-item ${c.slug === activeSlug ? 'active' : ''}" href="#/category/${c.slug}">${c.name.replace(/&amp;/g, '&')}</a>`).join('');
+            // Closing on hashchange (see closeCatFilter's own wiring)
+            // misses the one case where the link's href equals the
+            // current hash already - tapping the already-active category
+            // fires no hashchange at all, so that click needs its own
+            // direct listener here, same as .mobile-menu's own links use.
+            document.querySelectorAll('#catFilterDropdown .shop-all-filter-item').forEach(a => a.addEventListener('click', closeCatFilter));
+        }
+        function closeCatFilter() {
+            const wrap = document.getElementById('catFilter');
+            if (!wrap) return;
+            wrap.classList.remove('open');
+            document.getElementById('catFilterBtn').setAttribute('aria-expanded', 'false');
         }
 
         const NEW_PRODUCT_SLUGS = ['rice', 'meat', 'poultry', 'drinks', 'snacks-confectionary', 'sea-foods', 'fruits-vegetables', 'condiments', 'beans', 'oils'];
@@ -22564,6 +22627,7 @@
             closeMobileMenu();
             closeAccountDropdown();
             closeShopAllFilter();
+            closeCatFilter();
         }, { passive: true });
 
         /* ================= SHOP EVERYTHING: MOBILE FILTER DROPDOWN =================
@@ -22593,6 +22657,26 @@
         // only fires on actually crossing the breakpoint.
         window.matchMedia('(min-width: 641px)').addEventListener('change', (e) => {
             if (e.matches) closeShopAllFilter();
+        });
+
+        /* ================= CATEGORY PAGE: MOBILE FILTER DROPDOWN =================
+           Same conventions as the shop-all filter dropdown right above,
+           minus the click handler on each item - these are real <a href>
+           links (see renderCatStrip), so a tap already navigates and the
+           hashchange listener below closes the dropdown on its own. */
+        document.getElementById('catFilterBtn').addEventListener('click', () => {
+            const wrap = document.getElementById('catFilter');
+            const nowOpen = wrap.classList.toggle('open');
+            document.getElementById('catFilterBtn').setAttribute('aria-expanded', String(nowOpen));
+        });
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('catFilter').contains(e.target)) {
+                closeCatFilter();
+            }
+        });
+        window.addEventListener('hashchange', closeCatFilter);
+        window.matchMedia('(min-width: 641px)').addEventListener('change', (e) => {
+            if (e.matches) closeCatFilter();
         });
 
         /* ================= GUIDE / FAQ ================= */
