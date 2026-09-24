@@ -1912,12 +1912,11 @@
             /* Warm parchment base rather than flat white — a soft glow in
                var(--chartreuse-rich) (an existing brand tone, not a new
                colour) grounded in the opposite corner from the watermark
-               (bottom-left vs. the mark's top-right), plus a faint dot
-               grain in var(--aubergine) across the whole section for a
-               tactile, papery texture instead of a flat digital surface. */
+               (bottom-left vs. the mark's top-right). Used to also carry a
+               faint dot-grain texture across the section; removed for now,
+               it read as more noticeable than intended. */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--cream);
             color: #2C1C10;
             overflow: hidden;
@@ -2409,7 +2408,6 @@
         [data-theme="dark"] .hero {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             color: var(--ink);
         }
@@ -2455,15 +2453,15 @@
             position: relative;
             padding: 100px 0;
             /* Same treatment language as the hero above it — a corner
-               glow in var(--chartreuse-rich) and a faint var(--aubergine)
-               dot grain over the section's own fixed sand background (no
-               dark-mode variant, same as the footer/newsletter card use
-               the same fixed-light-surface convention). Bottom-left
-               corner again on purpose: a repeating motif reads as one
-               deliberate system rather than a one-off flourish. */
+               glow in var(--chartreuse-rich) over the section's own fixed
+               sand background (no dark-mode variant, same as the
+               footer/newsletter card use the same fixed-light-surface
+               convention). Bottom-left corner again on purpose: a
+               repeating motif reads as one deliberate system rather than
+               a one-off flourish. (Used to also carry a dot-grain texture
+               like the hero; removed for now alongside it.) */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 #FAF2E3;
             overflow: hidden;
             text-align: center;
@@ -2550,27 +2548,23 @@
                layered onto something already there. */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 64px 0 90px;
         }
         [data-theme="dark"] .about-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
         .legal-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 56px 0 90px;
         }
         [data-theme="dark"] .legal-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
         .legal-content { max-width: 68ch; margin: 0 auto; }
@@ -2855,7 +2849,6 @@
                own bespoke one (see its ::before) and a second glow layered
                under it would be redundant rather than complementary. */
             background:
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 #FAF2E3;
             color: #2C1C10;
             padding: 88px 0 96px;
@@ -4042,7 +4035,6 @@
             background:
                 radial-gradient(ellipse 60% 75% at 94% -12%, rgba(144, 184, 0, 0.16), transparent 60%),
                 radial-gradient(ellipse 55% 60% at 3% 112%, rgba(38, 98, 16, 0.1), transparent 60%),
-                radial-gradient(rgba(6, 59, 0, 0.045) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 44px 0 40px;
             border-top: 1px solid rgba(var(--border-rgb), 0.08);
@@ -4052,7 +4044,6 @@
             background:
                 radial-gradient(ellipse 60% 75% at 94% -12%, rgba(166, 204, 46, 0.18), transparent 60%),
                 radial-gradient(ellipse 55% 60% at 3% 112%, rgba(114, 148, 0, 0.13), transparent 60%),
-                radial-gradient(rgba(233, 230, 218, 0.03) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
         .hero-glimpse-head { text-align: center; margin-bottom: 26px; }
@@ -4232,13 +4223,11 @@
                sections) this needs its own dark-mode glow colour too. */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--section-alt-bg);
         }
         [data-theme="dark"] .delivery {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--section-alt-bg);
         }
 
@@ -4314,14 +4303,12 @@
                colour like .delivery did. */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 0 0 96px;
         }
         [data-theme="dark"] .order {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -4331,7 +4318,6 @@
                with its own dark-mode override, same pairing as .delivery. */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--section-alt-bg);
             padding: 72px 0 80px;
             border-top: 1px solid rgba(var(--border-rgb), 0.06);
@@ -4340,7 +4326,6 @@
         [data-theme="dark"] .why-choose-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--section-alt-bg);
         }
         /* Flex, not the base grid — with 5 cards, auto-fit grid columns
@@ -4371,14 +4356,12 @@
                sections rather than losing the boundary. */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--section-alt-bg);
             padding: 72px 0 80px;
         }
         [data-theme="dark"] .reviews-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--section-alt-bg);
         }
         .reviews-section .section-head p {
@@ -5372,7 +5355,6 @@
                corner glow — same texture family as the hero/story/etc,
                without touching the glow that was already here. */
             background:
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 radial-gradient(circle at 88% -20%, rgba(144, 184, 0, 0.14), transparent 55%),
                 #FFFFFF;
             color: #2C1C10;
@@ -5389,7 +5371,6 @@
            deliberately still does. */
         [data-theme="dark"] .shop-header {
             background:
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 radial-gradient(circle at 88% -20%, rgba(166, 204, 46, 0.16), transparent 55%),
                 var(--page-bg);
             color: var(--text-body);
@@ -5404,14 +5385,12 @@
         .shop-header-story {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 #FFFFFF;
         }
         [data-theme="dark"] .shop-header-contact,
         [data-theme="dark"] .shop-header-story {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -5871,14 +5850,12 @@
         .products-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 48px 0 100px;
         }
         [data-theme="dark"] .products-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -6321,14 +6298,12 @@
         .pd-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 44px 0 100px;
         }
         [data-theme="dark"] .pd-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -6884,7 +6859,6 @@
         .checkout-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 44px 0 110px;
             min-height: 60vh;
@@ -6892,7 +6866,6 @@
         [data-theme="dark"] .checkout-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -7970,14 +7943,12 @@
             overflow: hidden;
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 60px 0 110px;
         }
         [data-theme="dark"] .confirm-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
         .confirm-section .wrap { position: relative; z-index: 2; }
@@ -8281,14 +8252,12 @@
         .contact-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 52px 0 100px;
         }
         [data-theme="dark"] .contact-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -8506,13 +8475,11 @@
            on a real device). */
         .dinfo-section {
             background:
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 52px 0 96px;
         }
         [data-theme="dark"] .dinfo-section {
             background:
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -8761,14 +8728,12 @@
         .guide-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             padding: 52px 0 100px;
         }
         [data-theme="dark"] .guide-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
         .guide-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 60px; }
@@ -8826,7 +8791,6 @@
         .auth-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
             min-height: 78vh;
             display: flex;
@@ -8836,7 +8800,6 @@
         [data-theme="dark"] .auth-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
 
@@ -8944,13 +8907,11 @@
             padding: 48px 0 100px;
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                radial-gradient(rgba(6, 59, 0, 0.05) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
         [data-theme="dark"] .orders-section {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                radial-gradient(rgba(233, 230, 218, 0.035) 1px, transparent 1.5px) 0 0 / 20px 20px,
                 var(--page-bg);
         }
         .order-history-list { display: flex; flex-direction: column; gap: 22px; }
@@ -14088,7 +14049,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.1';
+        const BUILD_VERSION = '2026-09-24.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
