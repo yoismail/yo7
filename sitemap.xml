@@ -433,12 +433,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/scotch-bonnet-pepper-ata-rodo/</loc>
-    <lastmod>2026-09-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://yo7foods.co.uk/product/mango/</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
@@ -535,25 +529,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/cocoyam/</loc>
-    <lastmod>2026-09-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://yo7foods.co.uk/product/sweet-potato/</loc>
-    <lastmod>2026-09-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://yo7foods.co.uk/product/african-star-apple-agbalumo/</loc>
-    <lastmod>2026-09-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://yo7foods.co.uk/product/bitter-kola/</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -1177,7 +1153,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/sweet-potato-root-vegetables/</loc>
+    <loc>https://yo7foods.co.uk/product/sweet-potato/</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
