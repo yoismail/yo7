@@ -1126,15 +1126,15 @@
            the one deliberate accent moment instead of the whole button
            competing with the search border and active nav-link for the
            same bright green. */
-        /* Widened from the base .icon-btn's fixed 38x38 square tile into a
-           rounded rectangle, same radius as the rest of the cluster, so it
-           reads as the same shape family as .nav-account rather than
-           standing apart as the one differently-shaped control. */
+        /* Reported directly: this used to widen into a rounded rectangle
+           (auto width, side padding) instead of the base .icon-btn's fixed
+           38x38 square every other icon in this row (favourites,
+           notifications) already uses - cart read as visibly wider and
+           shorter than its neighbours. .cart-badge is absolute-positioned
+           (see its own rule), so it was never actually load-bearing for
+           the extra width; back to the same 38x38 square, just keeping its
+           own fill colour. */
         .nav-cart-btn {
-            width: auto;
-            height: 34px;
-            padding: 0 17px 0 15px;
-            border-radius: 13px;
             background: var(--orange);
             border-color: var(--orange);
             color: var(--aubergine-deep);
@@ -1164,14 +1164,16 @@
            in both themes (see the DARK MODE comment further up), so the
            switch's own dark-mode colouring is tuned to read against that
            permanently-light bar, not against a dark page background. */
-        /* Sized to match the 34px .nav-cart-btn tier it sits beside in
-           .nav-right - it was a standalone 28px-tall pill before, visibly
-           shorter than every icon button next to it and the one thing
-           breaking an otherwise even row. */
+        /* Sized to match the 38px .icon-btn tile every other control in
+           .nav-right now uses - previously matched to .nav-cart-btn's own
+           34px, but that was itself an inconsistent outlier (see
+           .nav-cart-btn's own comment) fixed to the same 38px square, so
+           this follows it up to the same height rather than becoming the
+           one short control again. */
         .theme-switch {
             position: relative;
-            width: 58px;
-            height: 34px;
+            width: 64px;
+            height: 38px;
             border-radius: 999px;
             padding: 3px;
             display: flex;
@@ -1189,8 +1191,8 @@
         }
         .theme-switch-thumb {
             position: relative;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: var(--cream);
             box-shadow: 0 2px 5px rgba(44, 28, 16, 0.28);
@@ -1202,8 +1204,8 @@
         }
         .theme-switch-icon {
             position: absolute;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             transition: opacity 0.25s ease, transform 0.35s cubic-bezier(.4, 0, .2, 1);
         }
         .theme-switch-icon-sun {
@@ -1224,7 +1226,7 @@
             border-color: var(--chartreuse-rich);
         }
         [data-theme="dark"] .theme-switch-thumb {
-            transform: translateX(24px);
+            transform: translateX(26px);
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
         }
         [data-theme="dark"] .theme-switch-icon-sun {
@@ -14345,7 +14347,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.13';
+        const BUILD_VERSION = '2026-09-25.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
