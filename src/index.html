@@ -13081,7 +13081,17 @@
                 const met = rule.operator === 'gte' ? actual >= rule.value : actual <= rule.value;
                 if (!met) continue;
                 if (rule.effect === 'free') { fee = 0; freeReason = { type: 'rule', name: rule.name }; }
-                else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') { fee = Math.min(fee, rule.feeOverride); }
+                else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') {
+                    fee = Math.min(fee, rule.feeOverride);
+                    // An admin can set a "fixed" rule's override to £0, which
+                    // zeroes the fee exactly like a "free" rule does - without
+                    // this, that case fell through with no freeReason, so the
+                    // customer saw "Free" with no explanation and this rule's
+                    // own name never got the credit. Only claims it when
+                    // nothing already has (a rule this loop already set free
+                    // stays attributed to that rule, not a later fixed-£0 one).
+                    if (fee === 0 && !freeReason) freeReason = { type: 'rule', name: rule.name };
+                }
             }
             if (appliedDiscount && appliedDiscount.type === 'freeDelivery' && cartQualifiesForDiscount(appliedDiscount)) {
                 fee = 0;
@@ -14200,7 +14210,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.2';
+        const BUILD_VERSION = '2026-09-25.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
