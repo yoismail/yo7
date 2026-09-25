@@ -14345,7 +14345,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.12';
+        const BUILD_VERSION = '2026-09-25.13';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14446,42 +14446,62 @@
         // product's own base price/weight even when it has several
         // admin-added weight variants (see addWeightVariant) to choose
         // from instead. One extra <option> per variant, value encoded as
-        // "idx" (base) or "idx:variantIdx" (a specific size) - parsed by
+        // "idx" (base) or "idx:label" (a specific size) - parsed by
         // parseProductOptionValue below wherever this is used, currently
         // just the bundle/combo add-item forms (new and edit, four call
         // sites in total).
+        //
+        // Reported by review: an earlier version of this keyed a variant
+        // by its array position (idx:variantIdx) instead of its label.
+        // removeWeightVariant splices the array, so deleting an earlier
+        // size shifts every later one's index down - a saved bundle/combo
+        // item would silently start resolving to a different size than
+        // the one actually picked. The label is already this codebase's
+        // real stable identity for a variant (see isValidVariantLabel's
+        // own comment: a cart line item strings the variant's label, not
+        // its index, into the cart id for exactly this reason), so this
+        // uses the same one instead of inventing a second identifier.
         function productVariantOptionsHTML(cat) {
             return cat.products.map((p, i) => ({ p, i })).filter(x => !x.p.deleted).map(({ p, i }) => {
                 const base = `<option value="${i}">${escapeHtml(p.name)}</option>`;
                 const variants = Array.isArray(p.weightVariants) ? p.weightVariants : [];
-                const variantOptions = variants.map((v, vi) => `<option value="${i}:${vi}">${escapeHtml(p.name)} (${escapeHtml(v.label)})</option>`).join('');
+                const variantOptions = variants.map(v => `<option value="${i}:${escapeHtml(v.label)}">${escapeHtml(p.name)} (${escapeHtml(v.label)})</option>`).join('');
                 return base + variantOptions;
             }).join('');
         }
         // The inverse of productVariantOptionsHTML's value encoding - a
-        // bare "3" is the base product (idx 3, no variant chosen), "3:1"
-        // is idx 3's second weight variant.
+        // bare "3" is the base product (idx 3, no variant chosen), "3:5kg
+        // bag" is idx 3's "5kg bag" weight variant. Only the FIRST colon
+        // splits idx from the label - a label may legitimately contain its
+        // own colon (isValidVariantLabel only rejects "::" and a bare
+        // "subN"), and idx itself is always numeric so it can never
+        // contain one.
         function parseProductOptionValue(raw) {
-            const [idxStr, variantIdxStr] = String(raw).split(':');
-            const idx = parseInt(idxStr, 10);
-            const variantIdx = variantIdxStr !== undefined ? parseInt(variantIdxStr, 10) : undefined;
-            return { idx, variantIdx };
+            const str = String(raw);
+            const sep = str.indexOf(':');
+            if (sep === -1) return { idx: parseInt(str, 10) };
+            return { idx: parseInt(str.slice(0, sep), 10), variantLabel: str.slice(sep + 1) };
         }
         // Resolves a bundle/combo item reference to the actual product a
-        // shopper would receive - the base listing, or (when ref.variantIdx
-        // is set) that specific weight variant's own price/weight/size,
-        // stripped of weightVariants so priceHTML/effectivePrice show that
-        // variant's real price instead of falling back to "From £X". Same
+        // shopper would receive - the base listing, or (when
+        // ref.variantLabel matches a still-existing weight variant) that
+        // specific size's own price/weight/unit, stripped of
+        // weightVariants so priceHTML/effectivePrice show that variant's
+        // real price instead of falling back to "From £X". Same
         // flattening offerItems() already does for a variant's own offer
-        // card, reused here for the same reason.
+        // card, reused here for the same reason. If the admin has since
+        // removed that exact size, this falls back to the base product
+        // rather than resolving to a leftover different one - an honest
+        // "this size not offered anymore" instead of a silently wrong
+        // price.
         function resolveComboItem(ref) {
             const p = getProduct(ref.catSlug, ref.idx);
             if (!p) return null;
-            const variant = (ref.variantIdx !== undefined && ref.variantIdx !== null && Array.isArray(p.weightVariants))
-                ? p.weightVariants[ref.variantIdx] : null;
+            const variant = (ref.variantLabel && Array.isArray(p.weightVariants))
+                ? p.weightVariants.find(v => v.label === ref.variantLabel) : null;
             if (!variant) return { ...p, weightVariants: undefined };
             return {
-                ...p, weightVariants: undefined, variantIdx: ref.variantIdx,
+                ...p, weightVariants: undefined, variantLabel: variant.label,
                 unit: variant.label, unitOverride: undefined,
                 price: variant.price, salePrice: variant.salePrice,
                 weight: (typeof variant.weight === 'number') ? variant.weight : p.weight,
@@ -14493,7 +14513,7 @@
         // tell which of two variants of the same product got picked
         // before saving.
         function comboItemLabel(item) {
-            return item.name + (item.variantIdx !== undefined ? ` (${item.unit})` : '');
+            return item.name + (item.variantLabel !== undefined ? ` (${item.unit})` : '');
         }
         function comboItemLabelHTML(item) {
             return escapeHtml(comboItemLabel(item));
@@ -15131,9 +15151,9 @@
         window.renderBundleEditItemsList = renderBundleEditItemsList;
         function addItemToBundleEdit() {
             const catSlug = document.getElementById('bbe-item-cat').value;
-            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('bbe-item-product').value);
+            const { idx, variantLabel } = parseProductOptionValue(document.getElementById('bbe-item-product').value);
             if (!getProduct(catSlug, idx)) return;
-            bundleEditNewItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
+            bundleEditNewItems.push(variantLabel !== undefined ? { catSlug, idx, variantLabel } : { catSlug, idx });
             renderBundleEditItemsList();
         }
         window.addItemToBundleEdit = addItemToBundleEdit;
@@ -15254,10 +15274,10 @@
         }
         function addItemToNewBundle() {
             const catSlug = document.getElementById('abf-cat').value;
-            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('abf-product').value);
+            const { idx, variantLabel } = parseProductOptionValue(document.getElementById('abf-product').value);
             const p = getProduct(catSlug, idx);
             if (!p) return;
-            newBundleItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
+            newBundleItems.push(variantLabel !== undefined ? { catSlug, idx, variantLabel } : { catSlug, idx });
             addItemToNewBundle_refresh();
         }
         window.addItemToNewBundle = addItemToNewBundle;
@@ -15784,9 +15804,9 @@
         window.renderComboEditItemsList = renderComboEditItemsList;
         function addItemToComboEdit() {
             const catSlug = document.getElementById('cce-item-cat').value;
-            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('cce-item-product').value);
+            const { idx, variantLabel } = parseProductOptionValue(document.getElementById('cce-item-product').value);
             if (!getProduct(catSlug, idx)) return;
-            comboEditNewItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
+            comboEditNewItems.push(variantLabel !== undefined ? { catSlug, idx, variantLabel } : { catSlug, idx });
             renderComboEditItemsList();
         }
         window.addItemToComboEdit = addItemToComboEdit;
@@ -15873,9 +15893,9 @@
         window.renderNewComboItemsList = renderNewComboItemsList;
         function addItemToNewCombo() {
             const catSlug = document.getElementById('acf-item-cat').value;
-            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('acf-item-product').value);
+            const { idx, variantLabel } = parseProductOptionValue(document.getElementById('acf-item-product').value);
             if (!getProduct(catSlug, idx)) return;
-            newComboItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
+            newComboItems.push(variantLabel !== undefined ? { catSlug, idx, variantLabel } : { catSlug, idx });
             renderNewComboItemsList();
         }
         window.addItemToNewCombo = addItemToNewCombo;
