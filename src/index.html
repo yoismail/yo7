@@ -669,6 +669,32 @@
         .card-edit-btn svg { width: 14px; height: 14px; }
         body.edit-mode-on .card-edit-btn { display: flex; }
 
+        /* Bottom-right of the thumb, not top-right - .stock-badge already
+           owns top-left and .card-edit-btn (admin-only) top-right, this is
+           the one corner every card has free regardless of stock state or
+           whether edit mode is on. Neutral cream circle at rest, same
+           weight as a secondary action, not competing with .card-add-btn's
+           vivid chartreuse fill for attention; a filled red heart is the
+           one deliberately off-brand-palette colour on the whole card,
+           reserved for exactly this "you've saved this" signal so it
+           reads unambiguously at a glance. */
+        .card-fav-btn {
+            position: absolute; bottom: 10px; right: 10px; z-index: 4;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(250, 249, 242, 0.92); color: var(--aubergine);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+            cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+        }
+        .card-fav-btn:hover { transform: scale(1.08); }
+        .card-fav-btn:active { transform: scale(0.94); }
+        .card-fav-btn svg { width: 15px; height: 15px; }
+        .card-fav-btn.is-favorited { background: #E0435C; color: #fff; }
+        .card-fav-btn.is-favorited svg { fill: currentColor; }
+        @media (prefers-reduced-motion: reduce) {
+            .card-fav-btn { transition: none; }
+        }
+
         .cat-edit-btn {
             display: none;
             position: absolute; top: 8px; right: 8px; z-index: 5;
@@ -1070,6 +1096,31 @@
             box-shadow: 0 8px 18px rgba(6, 59, 0, 0.13);
         }
 
+        /* Hidden by default, shown from 901px up - the same point
+           .nav-links/.nav-right switch into their desktop layout and the
+           hamburger (with its own "My Favorites" entry) disappears.
+           Previously this only started at 1051px, leaving 901-1040px
+           with the heart icon fully usable on every product but no way
+           at all to reach the favorites page itself (caught in review) -
+           a real dead zone is worse than the cost below, so this closes
+           it rather than route around it.
+           #mainNav .wrap is one flex row where only .search-wrap actually
+           shrinks (flex:1; min-width:0) - .nav-mark, .nav-links and
+           .nav-right are all shrink-resistant, so any extra content
+           anywhere in the row comes straight out of the search box's
+           width. This icon costs a flat ~50px of search width at every
+           desktop size (measured directly); in the 901-1040px band that
+           tips search from "already marginal" (32-140px, a pre-existing
+           edge case on production, not something this change created) to
+           "fully invisible" (0-90px) - a real, accepted trade-off for a
+           working nav path over a wider-but-still-marginal search box.
+           Mobile (≤900px) is unaffected either way, it never shows this
+           icon at all. */
+        .nav-fav-btn { display: none; }
+        @media (min-width: 901px) {
+            .nav-fav-btn { display: flex; }
+        }
+
         /* Cart still reads as the primary action in this cluster, but as a
            tinted outline rather than a solid fill, the count badge below is
            the one deliberate accent moment instead of the whole button
@@ -1419,13 +1470,24 @@
            instead of clipping it. Reverts to icon-only at the 480px
            breakpoint below (see its own comment), the same width it
            always was there. */
+        /* Icon-only square, no "MENU" caption underneath - reported
+           directly as visual clutter alongside the account button's own
+           "Log in" text right next to it. aria-label="Menu" on the
+           button itself (see the HTML) already carries the accessible
+           name, the caption was always aria-hidden and purely visual, so
+           removing it loses nothing for assistive tech. Sized to match
+           .icon-btn's own already-shrunk 900px-tier square exactly
+           (34px), then the 480px-tier's 29px alongside it, rather than
+           its own one-off dimensions - once it's a plain icon tile like
+           the others, it should read as the same family, not a
+           differently-sized one. */
         .nav-hamburger {
             display: none;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
-            padding: 5px 10px;
+            width: 34px;
+            height: 34px;
+            padding: 0;
             border-radius: 13px;
             border: 1px solid rgba(6, 59, 0, 0.12);
             background: linear-gradient(155deg, rgba(6, 59, 0, 0.05), rgba(225, 225, 0, 0.07));
@@ -1444,18 +1506,36 @@
             height: 19px;
         }
 
-        .nav-hamburger-label {
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 7px;
-            letter-spacing: 0;
-            line-height: 1;
-            text-transform: uppercase;
-        }
-
         @media (max-width:900px) {
             .nav-hamburger {
                 display: flex;
+            }
+
+            /* Reported directly alongside the hamburger's "MENU" caption -
+               the same clutter, same fix: drop the text and the caret,
+               keep a plain icon square people already recognise as
+               "account" without a label (every other icon in this row,
+               cart included, already works that way with no text of its
+               own, and a profile icon opening a menu on tap needs no
+               extra affordance beyond the icon itself, the same as it
+               doesn't on virtually any app). Sized to match
+               .nav-hamburger/.icon-btn's own 34px square exactly so the
+               whole row reads as one consistent icon family instead of
+               one oddly-shaped pill among plain squares. Signed-in vs
+               signed-out still reads clearly from .account-status-dot's
+               own pulsing green mark, untouched here. */
+            .nav-account {
+                width: 34px;
+                height: 34px;
+                padding: 0;
+                gap: 0;
+                justify-content: center;
+                border-radius: 13px;
+            }
+
+            .nav-account span#accountLabel,
+            .nav-account .account-caret {
+                display: none !important;
             }
         }
 
@@ -1544,73 +1624,22 @@
                 letter-spacing: 0.2em;
             }
 
-            /* Both signed-in and signed-out lose the name/label text at
-               this width — "Sign up / Log in" and a customer's name are
-               both too long a string to keep on the bar alongside
-               everything else in .nav-right, and the notifications bell
-               (added later) left no slack for a name pill to keep fitting
-               reliably at the narrowest real phones (iPhone 12 mini,
-               375px) without it. The greeting itself moved to the
-               homepage's "Welcome back" section instead (see
-               reorderTitle) — a bigger, more visible place for it than an
-               11.5px ellipsis-truncated nav label ever was. Desktop
-               (>900px, well clear of this breakpoint) still shows the
-               full pill with name and is untouched. */
-            .nav-account span#accountLabel {
-                display: none !important;
+            /* Text and caret are already gone from .nav-account at the
+               900px tier above - this just carries it down to the same
+               29px square .nav-cart-btn/.nav-notif-btn already use at
+               this width, so it keeps shrinking in step with the rest of
+               the row instead of staying at the wider tier's 34px once
+               everything else has tightened up further. */
+            .nav-account {
+                width: 29px;
+                height: 29px;
+                border-radius: 9px;
             }
 
-            /* Signed-out: a bare person icon reads as "profile" or
-               "account settings" to plenty of people, not obviously as
-               the one way in to sign up or log in at all — a first-time
-               visitor has no other cue it does anything. A short "Log
-               in" label (via ::after, not the hidden #accountLabel span
-               above, which still carries the long "Sign up / Log in"
-               text used everywhere the full label fits) is cheap enough
-               in width to keep even at 375px, unlike the full phrase. */
-            .nav-account:not(.is-logged-in) {
-                width: auto;
-                height: 34px;
-                padding: 0 10px 0 8px;
-                gap: 4px;
-                justify-content: center;
-                border-radius: 11px;
-            }
-            /* Same weight/case/letter-spacing treatment as the hamburger's
-               "MENU" caption right next to it in this row (see
-               .nav-hamburger-label) - was 11px/700/sentence-case before,
-               reading as a visibly different label style sitting directly
-               beside a 7px/600/uppercase one. Kept a touch larger than
-               MENU's 7px since this sits inline next to full-height icon
-               text rather than stacked under a compact icon, but shares
-               everything else so the two read as the same family. */
-            .nav-account:not(.is-logged-in)::after {
-                content: 'Log in';
-                font-size: 9px;
-                font-weight: 600;
-                letter-spacing: 0;
-                text-transform: uppercase;
-                white-space: nowrap;
-            }
-
-            /* Signed-in: stays a (much smaller) pill rather than a bare
-               square specifically to keep room for the caret — tapping
-               this one opens a real dropdown (order history, log out,
-               etc), and the chevron is what tells a customer that's a
-               menu rather than a link straight to a page, the same as it
-               already does on desktop. JS (setUser/clearUser) already
-               toggles the caret's own display for signed-in vs signed-out
-               — nothing to override here. */
-            .nav-account.is-logged-in {
-                padding: 6px 8px;
-                gap: 2px;
-                border-radius: 999px;
-            }
-
-            .nav-account.is-logged-in .account-caret {
-                width: 10px !important;
-                height: 10px !important;
-                margin-left: 0;
+            .nav-hamburger {
+                width: 29px;
+                height: 29px;
+                border-radius: 9px;
             }
 
             .icon-btn {
@@ -1716,28 +1745,6 @@
 
             .nav-right {
                 gap: 4px;
-            }
-        }
-
-        /* Below this, the row genuinely has no room left for the "MENU"
-           label alongside a signed-in user's notification bell - measured
-           directly (forcing the labelled layout and checking for wrap):
-           it holds with room to spare from 339px up, wraps the hamburger
-           onto its own line at 338px and below (that edge was measured
-           against the label's original, wider sizing - it's shrunk since,
-           so this 340px cutoff now has more headroom than the number
-           implies, not less). Only real devices this width or narrower
-           are the oldest iPhones (5/SE 1st gen, 320px) - everything from
-           a 360px Android up keeps the label. Reverts to the same
-           icon-only square it was before the label existed. */
-        @media (max-width:340px) {
-            .nav-hamburger {
-                width: 34px;
-                height: 34px;
-                padding: 0;
-            }
-            .nav-hamburger-label {
-                display: none;
             }
         }
 
@@ -9825,6 +9832,9 @@
                         </svg>
                     </span>
                 </button>
+                <a class="icon-btn nav-fav-btn" href="#/favorites" aria-label="Favorites">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </a>
                 <a class="icon-btn nav-cart-btn" href="#/checkout" aria-label="Basket">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -9842,7 +9852,7 @@
                     <span class="cart-badge zero" id="notifBadge">0</span>
                 </a>
                 <div class="account-wrap" id="accountWrap">
-                    <a class="nav-account" id="accountBtn" href="#/login" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-account" id="accountBtn" href="#/login" aria-haspopup="true" aria-expanded="false" aria-label="Sign up or log in">
                         <span class="account-icon-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
                                 <circle cx="12" cy="8" r="4" />
@@ -9901,12 +9911,12 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M3 6h18M3 12h18M3 18h18" />
                 </svg>
-                <span class="nav-hamburger-label" aria-hidden="true">Menu</span>
             </button>
         </div>
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
+            <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
             <a href="#/about">About Us</a>
@@ -10487,6 +10497,9 @@
                     <div class="pd-image" id="pdImage">
                         <span class="stock-badge" id="pdStockBadge"></span>
                         <span class="sale-badge" id="pdSaleBadge" style="display:none;">Sale</span>
+                        <button class="card-fav-btn" type="button" id="pdFavBtn" aria-pressed="false" aria-label="Add to favorites">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                        </button>
                         <span class="pd-placeholder" id="pdPlaceholder"></span>
                     </div>
                     <div>
@@ -11556,6 +11569,35 @@
         </section>
     </div>
 
+    <!-- ================= FAVORITES =================
+         Same "nothing for an admin to add here" reasoning as Buy It Again
+         above, this list is entirely the visitor's own saved products
+         (see favoriteItems()), works for guests too (see the FAVORITES
+         section of the main script for the localStorage-first, synced-
+         when-signed-in data layer). -->
+    <div id="view-favorites" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Favorites</div>
+                <h1>Your favorites</h1>
+                <p>Everything you've saved with the heart icon, so you can come back and add it to your basket without searching for it again.</p>
+                <div class="result-count" id="favoritesPageCount"></div>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="shop-all-grid" id="favoritesPageGrid"></div>
+                <div class="empty-state" id="favoritesEmptyState" style="display:none;">
+                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+                    <h3>No favorites yet</h3>
+                    <p>Tap the heart on any product to save it here, so it's easy to find and add to your basket later.</p>
+                    <a class="btn btn-primary" href="#/shop">Browse the shop</a>
+                    <div class="empty-state-suggestions" id="favoritesEmptyStateSuggestions"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <div id="view-bundles" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
@@ -12528,21 +12570,46 @@
                 ]
             },
             {
-                slug: 'tropical-foods', name: 'Tropical Foods', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-8.5 3.7-13.5 8.5-15.5-1 7.5-3.8 13.2-8.5 15.5Z"/><path d="M12 21c0-6.7-2.8-11.5-8.5-13.5 1.8 6.7 3.9 11.2 8.5 13.5Z"/></svg>', tagline: 'The staples that taste like home, however far from it you are.',
+                slug: 'tropical-foods', name: 'Tropical Foods', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-8.5 3.7-13.5 8.5-15.5-1 7.5-3.8 13.2-8.5 15.5Z"/><path d="M12 21c0-6.7-2.8-11.5-8.5-13.5 1.8 6.7 3.9 11.2 8.5 13.5Z"/></svg>', tagline: 'Plantain, avocado, mango, coconut, pineapple, the staples that taste like home.',
                 products: [
                     { name: 'Ripe Plantain', keywords: 'dodo', unit: 'per hand', weight: 1.2, price: 3.99 , stock: 'low' },
-                    { name: 'Scotch Bonnet Pepper', keywords: 'ata rodo hot pepper', unit: '250g', weight: 0.25, price: 2.49 , stock: 'in' },
-                    { name: 'African Star Apple (Agbalumo)', keywords: 'udara', unit: 'per punnet', weight: 0.5, price: 4.99 , stock: 'in' },
-                    { name: 'Bitter Kola', keywords: 'orogbo', unit: 'per pack', weight: 0.3, price: 3.49 , stock: 'in' },
+                    { name: 'Avocado', unit: 'per pack of 2', weight: 0.4, price: 2.49 , stock: 'in' },
+                    { name: 'Mango', unit: 'per piece', weight: 0.35, price: 1.49 , stock: 'in' },
+                    { name: 'Coconut (Whole)', unit: 'per piece', weight: 0.6, price: 1.99 , stock: 'in' },
+                    { name: 'Pineapple', unit: 'per piece', weight: 1.2, price: 2.49 , stock: 'in' },
                 ]
             },
             {
-                slug: 'fruits-vegetables', name: 'Fruits &amp; Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c8-.5 13-5.5 13.5-13.5C9.5 7 4.5 12 4 20Z"/><path d="M8.5 15.5c2-2 4-4 7-7.3"/></svg>', tagline: 'Ugu, spinach, scent leaf, garden eggs, picked fresh not forced.',
+                slug: 'fruits-vegetables', name: 'Leafy Greens', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c8-.5 13-5.5 13.5-13.5C9.5 7 4.5 12 4 20Z"/><path d="M8.5 15.5c2-2 4-4 7-7.3"/></svg>', tagline: 'Waterleaf, ugu, spinach, scent leaf, the greens every soup pot starts with.',
                 products: [
+                    { name: 'Waterleaf', keywords: 'gbure', unit: 'bunch', weight: 0.3, price: 1.99 , stock: 'in' },
                     { name: 'Ugu Leaves (Fluted Pumpkin)', unit: 'bunch', weight: 0.3, price: 2.99 , stock: 'in' },
-                    { name: 'Garden Eggs', keywords: 'african eggplant igba', unit: 'per punnet', weight: 0.5, price: 3.49 , stock: 'low' },
+                    { name: 'Fresh Spinach', unit: 'bunch', weight: 0.25, price: 1.99 , stock: 'in' },
+                    { name: 'Shoko Leaves', keywords: 'lagos spinach amaranth', unit: 'bunch', weight: 0.3, price: 1.99 , stock: 'in' },
+                    { name: 'Tete Leaves (Green)', keywords: 'green amaranth', unit: 'bunch', weight: 0.3, price: 1.99 , stock: 'in' },
+                    { name: 'Bitter Leaf', keywords: 'onugbu ndole', unit: 'bunch', weight: 0.2, price: 2.49 , stock: 'in' },
                     { name: 'Scent Leaf (Nchanwu)', keywords: 'efirin basil', unit: 'bunch', weight: 0.1, price: 1.99 , stock: 'in' },
+                ]
+            },
+            {
+                slug: 'peppers-chillies', name: 'Peppers &amp; Chillies', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5c-2.3 0-3.7 2-3.2 4.2C6.4 12.8 9.3 15.2 11 17c1.3 1.3 2.1 2.4 3.5 3a2.4 2.4 0 1 1-2.5-2.5c-.6-1.4-1.7-2.2-3-3.5-1.8-1.7-4.2-4.6-5.8-8.2"/><path d="M9 5c1.3-1.2 3-1.7 4.5-1.3.6 1.5.2 3.2-1.3 4.5"/></svg>', tagline: 'Bell, scotch bonnet, habanero, tomatoes, the heat and colour every stew starts with.',
+                products: [
+                    { name: 'Bell Pepper (Mixed)', keywords: 'tatashe sweet pepper', unit: 'per pack', weight: 0.4, price: 2.49 , stock: 'in' },
+                    { name: 'Scotch Bonnet Pepper', keywords: 'ata rodo hot pepper', unit: '250g', weight: 0.25, price: 2.49 , stock: 'in' },
+                    { name: 'Yellow Habanero Pepper', keywords: 'hot pepper', unit: '200g', weight: 0.2, price: 2.99 , stock: 'in' },
+                    { name: 'Green Habanero Pepper', keywords: 'hot pepper', unit: '200g', weight: 0.2, price: 2.99 , stock: 'in' },
+                    { name: 'Fresh Tomatoes', unit: '1kg', weight: 1, price: 2.49 , stock: 'in' },
+                ]
+            },
+            {
+                slug: 'other-vegetables', name: 'Other Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M12 8c-1-2-.5-4 1-5M12 8c1-2 2.5-3 4-3"/></svg>', tagline: 'Garden eggs, okra, cocoyam, and the everyday extras that round out the vegetable aisle.',
+                products: [
+                    { name: 'Garden Eggs', keywords: 'african eggplant igba', unit: 'per punnet', weight: 0.5, price: 3.49 , stock: 'low' },
                     { name: 'Okra', keywords: 'okro', unit: '400g', weight: 0.4, price: 2.49 , stock: 'in' },
+                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in' },
+                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in' },
+                    { name: 'African Star Apple (Agbalumo)', keywords: 'udara', unit: 'per punnet', weight: 0.5, price: 4.99 , stock: 'in' },
+                    { name: 'Bitter Kola', keywords: 'orogbo', unit: 'per pack', weight: 0.3, price: 3.49 , stock: 'in' },
                 ]
             },
             {
@@ -12683,12 +12750,12 @@
                 ]
             },
             {
-                slug: 'root-vegetables', name: 'Root Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20c-2.5-1-4-3.3-3.5-6.5C5.2 9 8.5 6 12.5 5c3 4 4 8.5 2 12-1.5 2.7-4 3.8-6.5 3Z"/><path d="M12.5 5c.5-1 1.5-1.8 2.7-2.2"/></svg>', tagline: 'Yam, cassava, cocoyam, dug up and ready for the pot.',
+                slug: 'root-vegetables', name: 'Root Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20c-2.5-1-4-3.3-3.5-6.5C5.2 9 8.5 6 12.5 5c3 4 4 8.5 2 12-1.5 2.7-4 3.8-6.5 3Z"/><path d="M12.5 5c.5-1 1.5-1.8 2.7-2.2"/></svg>', tagline: 'Yam, cassava, potatoes, carrots, dug up and ready for the pot.',
                 products: [
                     { name: 'White Yam (Tuber)', keywords: 'pounded yam yam tuber', unit: 'per tuber', weight: 2, price: 7.99 , stock: 'low' },
                     { name: 'Cassava (Fresh)', keywords: 'yuca', unit: '1kg', weight: 1, price: 2.99 , stock: 'out' },
-                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in' },
-                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in' },
+                    { name: 'Potatoes (White)', keywords: 'irish potatoes', unit: '2.5kg bag', weight: 2.5, price: 3.99 , stock: 'in' },
+                    { name: 'Carrots', unit: '1kg', weight: 1, price: 1.49 , stock: 'in' },
                 ]
             },
             {
@@ -12817,7 +12884,7 @@
             miscellaneous: 'MSC', 'hair-products': 'HAI', 'snacks-confectionary': 'SNK', rice: 'RIC',
             meat: 'MEA', 'body-oral-products': 'BOP', poultry: 'POU', 'root-vegetables': 'ROV',
             beans: 'BNS', drinks: 'DRK', dairy: 'DAI', 'breakfast-cereals': 'BRK', bakery: 'BAK',
-            'baking-essentials': 'BKE', 'herbal-teas': 'HTD',
+            'baking-essentials': 'BKE', 'herbal-teas': 'HTD', 'peppers-chillies': 'PEC', 'other-vegetables': 'OTV',
         };
         // Re-run any time the catalogue's shape changes after this initial
         // load (loadCustomProducts() appending admin-added products), not
@@ -12852,16 +12919,16 @@
         // deliberately stay as four separate single-category groups
         // instead of one combined "Rice & Grains" bucket, matching how
         // every other group here is its own specific aisle rather than a
-        // catch-all. Every one of the 24 CATEGORIES slugs still belongs
+        // catch-all. Every one of the 26 CATEGORIES slugs still belongs
         // to exactly one group — see the categories arrays below, which
-        // together cover all 24 exactly once.
+        // together cover all 26 exactly once.
         const GROUPS = [
             { slug: 'rice', name: 'Rice', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>', tagline: 'Ofada, long grain, basmati, whatever your jollof calls for.', categories: ['rice'] },
             { slug: 'beans', name: 'Beans', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15c-2-3-1.5-8 2-11 3.5 3 8 3 11-1-1 5-1 10-4.5 13.5S9 18 6 15Z"/><ellipse cx="9.3" cy="12.5" rx="1.1" ry="1.7" transform="rotate(35 9.3 12.5)"/><ellipse cx="12.7" cy="9.3" rx="1.1" ry="1.7" transform="rotate(35 12.7 9.3)"/></svg>', tagline: 'Honey beans, black-eyed, the base of a proper moi moi.', categories: ['beans'] },
             { slug: 'garri-flours', name: 'Garri &amp; Flours', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l.8 4H8.2L9 3.5Z"/><path d="M8.2 7.5 6.5 19a1.5 1.5 0 0 0 1.5 1.7h8a1.5 1.5 0 0 0 1.5-1.7L15.8 7.5"/></svg>', tagline: 'Garri, semo, elubo, and the flours and bakes behind every good swallow.', categories: ['flour', 'baking-essentials', 'bakery'] },
             { slug: 'meat-poultry', name: 'Meat &amp; Poultry', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.8 3.2c2.8-.5 5 1.7 4.5 4.5-.6 3.4-3.8 5.4-5.6 7.2-1.6 1.6-2.6 3-4.3 3.8a3 3 0 1 1-3.1-3.1c.8-1.7 2.2-2.7 3.8-4.3 1.8-1.8 3.8-5 4.7-8.1Z"/><circle cx="7.3" cy="16.7" r="1.1"/></svg>', tagline: 'Goat, beef, chicken, and turkey, cut and packed for your pot.', categories: ['meat', 'poultry'] },
             { slug: 'fish-seafood', name: 'Fish &amp; Seafood', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12s3.2-4.5 9.5-4.5 8.5 4.5 8.5 4.5-2.2 4.5-8.5 4.5S2.5 12 2.5 12Z"/><path d="M16.5 9v6M20.5 12l2-2.5M20.5 12l2 2.5"/><circle cx="7.5" cy="11" r=".6"/></svg>', tagline: 'Dried fish, prawns, crayfish, the depth every pot of soup needs.', categories: ['sea-foods'] },
-            { slug: 'vegetables', name: 'Vegetables', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c8-.5 13-5.5 13.5-13.5C9.5 7 4.5 12 4 20Z"/><path d="M8.5 15.5c2-2 4-4 7-7.3"/></svg>', tagline: 'Ugu, plantain, yam, and the fresh, root, and tropical produce every pot needs.', categories: ['fruits-vegetables', 'root-vegetables', 'tropical-foods'] },
+            { slug: 'vegetables', name: 'Vegetables', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c8-.5 13-5.5 13.5-13.5C9.5 7 4.5 12 4 20Z"/><path d="M8.5 15.5c2-2 4-4 7-7.3"/></svg>', tagline: 'Ugu, plantain, yam, and the fresh, root, and tropical produce every pot needs.', categories: ['root-vegetables', 'peppers-chillies', 'tropical-foods', 'fruits-vegetables', 'other-vegetables'] },
             { slug: 'seasoning', name: 'Seasoning', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h5V6h-5z"/><path d="M8.3 6h7.4l1 13.2a1.5 1.5 0 0 1-1.5 1.6H8.8a1.5 1.5 0 0 1-1.5-1.6L8.3 6Z"/><circle cx="10.7" cy="9.5" r=".55"/><circle cx="13.3" cy="9.5" r=".55"/><circle cx="12" cy="11.6" r=".55"/></svg>', tagline: 'Maggi, curry, thyme, the cubes and blends that build real flavour.', categories: ['seasoning'] },
             { slug: 'oils', name: 'Oils', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h4V6l1.5 2v12a1.5 1.5 0 0 1-1.5 1.5H10A1.5 1.5 0 0 1 8.5 20V8L10 6V2.5Z"/><path d="M8.5 12.5h7"/></svg>', tagline: 'Red oil, groundnut oil, the good stuff your stew can\'t do without.', categories: ['oils'] },
             { slug: 'drinks', name: 'Drinks', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="16" rx="4"/><path d="M7 8h10M7 16h10"/></svg>', tagline: 'Milo, zobo, malt, and the milk and tea that round off a meal.', categories: ['beverages', 'drinks', 'herbal-teas', 'dairy'] },
@@ -13999,6 +14066,8 @@
             'root-vegetables': 'Store in a cool, dark, well-ventilated place.',
             beans: 'Store in an airtight container in a cool, dry place.',
             drinks: 'Store in a cool place; refrigerate before serving if preferred chilled.',
+            'peppers-chillies': 'Store in the refrigerator; use within a week for the best flavour and heat.',
+            'other-vegetables': 'Store in a cool place or refrigerator; use fresh produce within a few days for best quality.',
         };
         const CATEGORY_COOKING = {
             flour: 'Sift before use for the lightest texture in baking.',
@@ -14014,6 +14083,8 @@
             poultry: 'Cook thoroughly until juices run clear and no pink remains.',
             'root-vegetables': 'Peel and rinse before cooking.',
             beans: 'Rinse and check for debris before cooking; soaking dried beans reduces cooking time.',
+            'peppers-chillies': 'Wash and deseed before use to reduce heat, or leave the seeds in for extra kick.',
+            'other-vegetables': 'Wash thoroughly before use.',
         };
 
         /* ================= BUNDLES =================
@@ -14058,6 +14129,7 @@
 
         /* ================= STATE ================= */
         let cart = loadCartFromStorage(); // {id, name, unit, price, emoji, qty, catSlug}, restored from localStorage so a refresh doesn't lose it
+        let favorites = loadFavoritesFromStorage(); // array of catSlug::idx keys, restored from localStorage the same way
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         let currentUser = null;
         let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
@@ -14210,7 +14282,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.3';
+        const BUILD_VERSION = '2026-09-25.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14481,6 +14553,164 @@
                 cart.push(entry);
             }
             updateCartBadge();
+        }
+
+        /* ================= FAVORITES =================
+           Local-first, same pattern as the basket above: works instantly
+           for a guest (localStorage only), with real cross-device sync
+           layered on for a signed-in account. Each entry is just a
+           product_key string (catSlug::idx, the same id scheme cart
+           items, stock_alerts and product_overrides all already use),
+           not a whole object - there's no quantity or price to track,
+           just "is this saved or not". */
+        function saveFavoritesToStorage() {
+            try { localStorage.setItem('yo7-favorites', JSON.stringify(favorites)); }
+            catch (e) { /* localStorage unavailable, favorites just won't survive a refresh this session */ }
+        }
+        function loadFavoritesFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('yo7-favorites') || '[]');
+                return Array.isArray(saved) ? saved : [];
+            } catch (e) { return []; }
+        }
+        // Same reasoning as tagCartOwner/getCartOwnerTag/clearCartOwnerTag -
+        // without this, a device that's synced this same account's
+        // favorites before gets its stale local mirror re-merged into the
+        // account's real list on every later login, which is harmless for
+        // a set (merging is idempotent, nothing doubles) but still means
+        // pointlessly re-writing every row on every login instead of just
+        // loading what's already there.
+        function tagFavoritesOwner(userId) {
+            try { localStorage.setItem('yo7-favorites-owner', userId); } catch (e) {}
+        }
+        function getFavoritesOwnerTag() {
+            try { return localStorage.getItem('yo7-favorites-owner'); } catch (e) { return null; }
+        }
+        function clearFavoritesOwnerTag() {
+            try { localStorage.removeItem('yo7-favorites-owner'); } catch (e) {}
+        }
+        function isFavorited(catSlug, idx) {
+            return favorites.includes(`${catSlug}::${idx}`);
+        }
+        // Reported by review: rapid re-toggling of the same product fired
+        // one independent request per click, so a late upsert landing
+        // after an earlier delete could leave the server favorited while
+        // local state (and every other device) says it isn't. Debounced
+        // per product key instead, mirroring scheduleCartSync's own
+        // pattern - only the state that's still current once the timer
+        // actually fires gets sent, so a burst of clicks on the same
+        // product collapses into a single write reflecting wherever the
+        // heart was actually left, never an intermediate state.
+        const favoriteSyncTimers = new Map(); // product_key -> pending timeout id
+        function scheduleFavoriteSync(key) {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const userId = currentSupabaseUser.id;
+            clearTimeout(favoriteSyncTimers.get(key));
+            favoriteSyncTimers.set(key, setTimeout(() => {
+                favoriteSyncTimers.delete(key);
+                // The account this was queued for may have logged out or
+                // switched by the time this fires - re-check, don't sync
+                // one account's favorite under a different one.
+                if (!supabaseClient || !currentSupabaseUser || currentSupabaseUser.id !== userId) return;
+                const stillFavorited = favorites.includes(key);
+                const promise = stillFavorited
+                    ? supabaseClient.from('favorites').upsert({ user_id: userId, product_key: key }, { onConflict: 'user_id,product_key', ignoreDuplicates: true })
+                    : supabaseClient.from('favorites').delete().eq('user_id', userId).eq('product_key', key);
+                promise.then(({ error }) => { if (error) console.error('Favorite sync failed:', error.message); });
+            }, 500));
+        }
+        // Reflects a toggle everywhere it's currently shown - a grid card's
+        // own button, the PD page's, and (if it's open) the favorites page
+        // itself, rather than each caller having to know what else needs
+        // updating. The heart flips instantly either way; the Supabase
+        // sync for a signed-in account is debounced (see
+        // scheduleFavoriteSync above) since it's just mirroring state
+        // that's already correct locally, not something the UI needs to
+        // wait on.
+        function toggleFavorite(catSlug, idx) {
+            const key = `${catSlug}::${idx}`;
+            const nowFavorited = !favorites.includes(key);
+            favorites = nowFavorited ? [...favorites, key] : favorites.filter(k => k !== key);
+            saveFavoritesToStorage();
+            document.querySelectorAll(`[data-fav-key="${key}"]`).forEach(btn => {
+                btn.classList.toggle('is-favorited', nowFavorited);
+                btn.setAttribute('aria-label', nowFavorited ? 'Remove from favorites' : 'Add to favorites');
+                btn.setAttribute('aria-pressed', String(nowFavorited));
+            });
+            if (document.getElementById('view-favorites') && !document.getElementById('view-favorites').classList.contains('hidden-view')) {
+                renderFavoritesPage();
+            }
+            scheduleFavoriteSync(key);
+            return nowFavorited;
+        }
+        function toggleFavoriteFromCard(catSlug, idx, btnEl) {
+            const nowFavorited = toggleFavorite(catSlug, idx);
+            showToast(nowFavorited ? 'Saved to your favorites.' : 'Removed from favorites.');
+        }
+        window.toggleFavoriteFromCard = toggleFavoriteFromCard;
+        async function fetchAccountFavoriteKeys(userId) {
+            const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', userId);
+            if (error) { console.error('Favorites load failed:', error.message); return null; }
+            return data.map(r => r.product_key);
+        }
+        // Reported by review: both functions below read the mutable
+        // currentSupabaseUser/favorites globals *after* their await, so a
+        // logout or account switch while the query was in flight could
+        // merge/apply one account's favorites under whichever account
+        // happens to be current by the time it resolves. userId is
+        // captured before the await and re-checked against
+        // currentSupabaseUser after it - if they no longer match, this
+        // result belongs to an account that isn't current anymore and is
+        // discarded rather than applied.
+        //
+        // Called once right after a genuine sign-in (not a session restore),
+        // same distinction mergeGuestCartIntoAccount makes for the basket -
+        // whatever was favorited as a guest before logging in is kept, not
+        // silently dropped in favour of the account's own list.
+        async function mergeGuestFavoritesIntoAccount() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const userId = currentSupabaseUser.id;
+            const guestFavorites = favorites;
+            const serverKeys = await fetchAccountFavoriteKeys(userId);
+            if (serverKeys === null) return;
+            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) return;
+            const merged = [...new Set([...serverKeys, ...guestFavorites])];
+            const missingServerSide = merged.filter(k => !serverKeys.includes(k));
+            favorites = merged;
+            tagFavoritesOwner(userId);
+            saveFavoritesToStorage();
+            if (missingServerSide.length > 0) {
+                supabaseClient.from('favorites')
+                    .upsert(missingServerSide.map(k => ({ user_id: userId, product_key: k })), { onConflict: 'user_id,product_key', ignoreDuplicates: true })
+                    .then(({ error }) => { if (error) console.error('Favorites merge sync failed:', error.message); });
+            }
+            renderFavoritesButtonStates();
+        }
+        // Called on every ordinary page load/refresh while already signed
+        // in - the account's saved list is authoritative here, same as
+        // loadAccountCart, no merge with whatever's sitting in localStorage
+        // from a previous guest session on this device.
+        async function loadAccountFavorites() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const userId = currentSupabaseUser.id;
+            const serverKeys = await fetchAccountFavoriteKeys(userId);
+            if (serverKeys === null) return;
+            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) return;
+            favorites = serverKeys;
+            tagFavoritesOwner(userId);
+            saveFavoritesToStorage();
+            renderFavoritesButtonStates();
+        }
+        function renderFavoritesButtonStates() {
+            document.querySelectorAll('[data-fav-key]').forEach(btn => {
+                const favorited = favorites.includes(btn.dataset.favKey);
+                btn.classList.toggle('is-favorited', favorited);
+                btn.setAttribute('aria-label', favorited ? 'Remove from favorites' : 'Add to favorites');
+                btn.setAttribute('aria-pressed', String(favorited));
+            });
+            if (document.getElementById('view-favorites') && !document.getElementById('view-favorites').classList.contains('hidden-view')) {
+                renderFavoritesPage();
+            }
         }
 
         /* ================= RENDER: HOME CATEGORY GRID ================= */
@@ -14962,10 +15192,10 @@
         let DISH_TEMPLATES = [
             { name: 'Jollof Rice', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>', items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'seasoning', idx: 0 }] },
             { name: 'Suya Night', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11h4.3M17.2 11H21.5"/><rect x="6.3" y="8" width="5" height="6" rx="1.6"/><rect x="12.7" y="8" width="5" height="6" rx="1.6"/><path d="M9 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3ZM15 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3Z"/></svg>', items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }, { catSlug: 'oils', idx: 1 }] },
-            { name: 'Pepper Soup', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><circle cx="9.5" cy="5.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12.7" cy="4.4" r=".9" fill="currentColor" stroke="none"/><circle cx="15.3" cy="5.9" r=".9" fill="currentColor" stroke="none"/></svg>', items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'tropical-foods', idx: 1 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'sea-foods', idx: 1 }] },
+            { name: 'Pepper Soup', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><circle cx="9.5" cy="5.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12.7" cy="4.4" r=".9" fill="currentColor" stroke="none"/><circle cx="15.3" cy="5.9" r=".9" fill="currentColor" stroke="none"/></svg>', items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'peppers-chillies', idx: 1 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'sea-foods', idx: 1 }] },
             { name: 'Fried Rice', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5c0 4.5 3.8 7.8 9 7.8s9-3.3 9-7.8"/><path d="M2 10.5h20"/><path d="M18.2 6 21.5 3.3"/><ellipse cx="17" cy="7" rx="1.5" ry="1" transform="rotate(-30 17 7)"/><ellipse cx="8" cy="13.2" rx=".8" ry="1.1" transform="rotate(-20 8 13.2)"/><ellipse cx="11" cy="14.3" rx=".8" ry="1.1" transform="rotate(10 11 14.3)"/><ellipse cx="14" cy="13.6" rx=".8" ry="1.1" transform="rotate(-10 14 13.6)"/></svg>', items: [{ catSlug: 'rice', idx: 2 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'poultry', idx: 1 }] },
             { name: 'Ewa Agoyin', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9.3" cy="12.6" rx="1.3" ry=".9" transform="rotate(20 9.3 12.6)"/><ellipse cx="12.5" cy="13.4" rx="1.3" ry=".9" transform="rotate(-15 12.5 13.4)"/><ellipse cx="15.1" cy="12.1" rx="1.3" ry=".9" transform="rotate(25 15.1 12.1)"/></svg>', items: [{ catSlug: 'beans', idx: 3 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'sea-foods', idx: 1 }] },
-            { name: 'Efo Riro', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.8h14v3a7 6.2 0 0 1-14 0v-3Z"/><path d="M4.3 11.6c-.9-.1-1.4.6-1.2 1.5M19.7 11.6c.9-.1 1.4.6 1.2 1.5"/><path d="M9 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9ZM15 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9Z"/></svg>', items: [{ catSlug: 'fruits-vegetables', idx: 0 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'sea-foods', idx: 1 }, { catSlug: 'sea-foods', idx: 2 }, { catSlug: 'condiments', idx: 1 }] },
+            { name: 'Efo Riro', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.8h14v3a7 6.2 0 0 1-14 0v-3Z"/><path d="M4.3 11.6c-.9-.1-1.4.6-1.2 1.5M19.7 11.6c.9-.1 1.4.6 1.2 1.5"/><path d="M9 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9ZM15 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9Z"/></svg>', items: [{ catSlug: 'fruits-vegetables', idx: 1 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'sea-foods', idx: 1 }, { catSlug: 'sea-foods', idx: 2 }, { catSlug: 'condiments', idx: 1 }] },
         ];
         let activeDishIndex = null;
         let dishSelectedItems = new Set(); // indices into the active dish's items array
@@ -16395,12 +16625,17 @@
             const outOfStock = stock === 'out';
             const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
+            const favKey = `${p.catSlug}::${pidx}`;
+            const isFav = isFavorited(p.catSlug, pidx);
             return `
     <div class="product-card${p.deleted ? ' is-deleted' : ''}" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
           ${p.deleted ? `<span class="stock-badge deleted">Deleted</span>` : (stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : '')}
           ${productPhotoHTML(p, p.name)}
+          <button class="card-fav-btn${isFav ? ' is-favorited' : ''}" type="button" data-fav-key="${favKey}" aria-pressed="${isFav}" aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}" onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromCard('${p.catSlug}', ${pidx}, this);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          </button>
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
@@ -16570,8 +16805,8 @@
             'tropical-foods': 'cat-photo-tropical-foods',
             'noodles': 'cat-photo-noodles',
         };
-        // Not photographed yet, kept on the icon-badge style intentionally: miscellaneous
-        // (no matching product photo provided so far).
+        // Not photographed yet, kept on the icon-badge style intentionally: miscellaneous,
+        // peppers-chillies, other-vegetables (no matching product photo provided so far).
         function renderGroupPage(groupSlug) {
             const group = findGroup(groupSlug);
             document.getElementById('groupCrumbLabel').textContent = group ? group.name.replace(/&amp;/g, '&') : 'Not found';
@@ -16972,6 +17207,16 @@
 
             const onSaleNow = typeof p.salePrice === 'number' && p.salePrice < p.price;
             document.getElementById('pdSaleBadge').style.display = onSaleNow ? 'block' : 'none';
+
+            const pdFavBtn = document.getElementById('pdFavBtn');
+            if (pdFavBtn) {
+                const pdFav = isFavorited(catSlug, Number(idx));
+                pdFavBtn.dataset.favKey = `${catSlug}::${idx}`;
+                pdFavBtn.classList.toggle('is-favorited', pdFav);
+                pdFavBtn.setAttribute('aria-pressed', String(pdFav));
+                pdFavBtn.setAttribute('aria-label', pdFav ? 'Remove from favorites' : 'Add to favorites');
+                pdFavBtn.onclick = () => toggleFavoriteFromCard(catSlug, Number(idx), pdFavBtn);
+            }
 
             const pdImageEl = document.getElementById('pdImage');
             const existingImg = pdImageEl.querySelector('.product-photo-img');
@@ -19544,6 +19789,28 @@
             document.getElementById('buyAgainPageCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'buyAgainPageGrid');
         }
+        // Unlike buyAgainItems() this needs no query at all - favorites is
+        // already fully loaded in memory (see the FAVORITES section
+        // earlier in this script), so this is just mapping keys already
+        // held locally through the same getProduct() lookup every other
+        // listing page uses. Deleted products drop out (they're gone from
+        // the catalogue, nothing to show), but an out-of-stock one stays -
+        // productCardHTML already gives it the "Notify me" button, which
+        // is exactly the right next step for something someone's saved
+        // but currently can't buy.
+        function favoriteItems() {
+            return favorites
+                .map(key => {
+                    const [catSlug, idxStr] = key.split('::');
+                    return getProduct(catSlug, Number(idxStr));
+                })
+                .filter(p => p && !p.deleted);
+        }
+        function renderFavoritesPage() {
+            const items = favoriteItems();
+            document.getElementById('favoritesPageCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
+            renderGrid(items, 'favoritesPageGrid', 'favoritesEmptyState');
+        }
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
         // this query to return other people's rows at all). Rendered as a
@@ -21241,6 +21508,8 @@
             syncLoyaltyState().then(renderCartList);
             const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
             if (freshSignIn && !staleOwnCartMirror) mergeGuestCartIntoAccount(); else loadAccountCart();
+            const staleOwnFavoritesMirror = freshSignIn && currentSupabaseUser && getFavoritesOwnerTag() === currentSupabaseUser.id;
+            if (freshSignIn && !staleOwnFavoritesMirror) mergeGuestFavoritesIntoAccount(); else loadAccountFavorites();
             refreshAdminStatus();
             subscribeMyOrders();
             loadReorderSuggestion();
@@ -21272,6 +21541,15 @@
             saveCartToStorage();
             clearCartOwnerTag();
             updateCartBadge();
+            // Same shared-device privacy reasoning as the basket wipe right
+            // above - a saved-items list is at least as revealing as a
+            // basket, and leaving it in localStorage would show the next
+            // person to use this browser (or the next account that logs
+            // in here) whatever the previous account had favorited.
+            favorites = [];
+            saveFavoritesToStorage();
+            clearFavoritesOwnerTag();
+            renderFavoritesButtonStates();
             if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             const dropdownName = document.getElementById('accountDropdownName');
@@ -22535,7 +22813,7 @@
                 hash.startsWith('#/product/') || hash.startsWith('#/search/') ||
                 hash === '#/new-arrivals' || hash === '#/best-sellers' ||
                 hash === '#/special-offers' || hash === '#/bundles' || hash === '#/combos' ||
-                hash === '#/buy-again';
+                hash === '#/buy-again' || hash === '#/favorites';
         }
         async function refreshCatalogOnForeground() {
             if (catalogRefreshInFlight || !supabaseClient) return;
@@ -22880,7 +23158,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -23204,6 +23482,9 @@
             } else if (hash === '#/buy-again') {
                 showView('view-buy-again');
                 renderBuyAgainPage();
+            } else if (hash === '#/favorites') {
+                showView('view-favorites');
+                renderFavoritesPage();
             } else if (hash === '#/special-offers') {
                 showView('view-special-offers');
                 renderSpecialOffersPage();
