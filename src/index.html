@@ -669,6 +669,32 @@
         .card-edit-btn svg { width: 14px; height: 14px; }
         body.edit-mode-on .card-edit-btn { display: flex; }
 
+        /* Bottom-right of the thumb, not top-right - .stock-badge already
+           owns top-left and .card-edit-btn (admin-only) top-right, this is
+           the one corner every card has free regardless of stock state or
+           whether edit mode is on. Neutral cream circle at rest, same
+           weight as a secondary action, not competing with .card-add-btn's
+           vivid chartreuse fill for attention; a filled red heart is the
+           one deliberately off-brand-palette colour on the whole card,
+           reserved for exactly this "you've saved this" signal so it
+           reads unambiguously at a glance. */
+        .card-fav-btn {
+            position: absolute; bottom: 10px; right: 10px; z-index: 4;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(250, 249, 242, 0.92); color: var(--aubergine);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+            cursor: pointer; transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+        }
+        .card-fav-btn:hover { transform: scale(1.08); }
+        .card-fav-btn:active { transform: scale(0.94); }
+        .card-fav-btn svg { width: 15px; height: 15px; }
+        .card-fav-btn.is-favorited { background: #E0435C; color: #fff; }
+        .card-fav-btn.is-favorited svg { fill: currentColor; }
+        @media (prefers-reduced-motion: reduce) {
+            .card-fav-btn { transition: none; }
+        }
+
         .cat-edit-btn {
             display: none;
             position: absolute; top: 8px; right: 8px; z-index: 5;
@@ -1068,6 +1094,29 @@
             border-color: rgba(6, 59, 0, 0.28);
             transform: translateY(-2px);
             box-shadow: 0 8px 18px rgba(6, 59, 0, 0.13);
+        }
+
+        /* Hidden by default, shown only from 1051px up - a sixth icon here
+           has nowhere free to go at the widths below that. Mobile
+           (≤900px) already has this covered by the hamburger menu's own
+           "My Favorites" entry, so this icon isn't needed there at all,
+           and measured directly it was the one making .nav-right wrap
+           the hamburger onto its own line at 360px (already the
+           narrowest real phone this bar is tuned against, see the
+           comment on the 400px breakpoint below). #mainNav .wrap is one
+           flex row where only .search-wrap actually shrinks
+           (flex:1; min-width:0) - .nav-mark, .nav-links and .nav-right
+           are all shrink-resistant, so any extra content anywhere in the
+           row comes straight out of the search box's width. This icon
+           cost a flat ~50px of search width at every desktop size
+           (measured directly), acceptable once search already has real
+           room (1051px+) but not in the 901-1050px band, where it tips
+           search from "already marginal" (32-140px, a pre-existing edge
+           case, not something this change is responsible for) into
+           "fully invisible" (0-32px). */
+        .nav-fav-btn { display: none; }
+        @media (min-width: 1051px) {
+            .nav-fav-btn { display: flex; }
         }
 
         /* Cart still reads as the primary action in this cluster, but as a
@@ -9825,6 +9874,9 @@
                         </svg>
                     </span>
                 </button>
+                <a class="icon-btn nav-fav-btn" href="#/favorites" aria-label="Favorites">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                </a>
                 <a class="icon-btn nav-cart-btn" href="#/checkout" aria-label="Basket">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -9907,6 +9959,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
+            <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
             <a href="#/about">About Us</a>
@@ -10487,6 +10540,9 @@
                     <div class="pd-image" id="pdImage">
                         <span class="stock-badge" id="pdStockBadge"></span>
                         <span class="sale-badge" id="pdSaleBadge" style="display:none;">Sale</span>
+                        <button class="card-fav-btn" type="button" id="pdFavBtn" aria-pressed="false" aria-label="Add to favorites">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                        </button>
                         <span class="pd-placeholder" id="pdPlaceholder"></span>
                     </div>
                     <div>
@@ -11552,6 +11608,35 @@
         <section class="products-section">
             <div class="wrap">
                 <div class="shop-all-grid" id="buyAgainPageGrid"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= FAVORITES =================
+         Same "nothing for an admin to add here" reasoning as Buy It Again
+         above, this list is entirely the visitor's own saved products
+         (see favoriteItems()), works for guests too (see the FAVORITES
+         section of the main script for the localStorage-first, synced-
+         when-signed-in data layer). -->
+    <div id="view-favorites" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Favorites</div>
+                <h1>Your favorites</h1>
+                <p>Everything you've saved with the heart icon, so you can come back and add it to your basket without searching for it again.</p>
+                <div class="result-count" id="favoritesPageCount"></div>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="shop-all-grid" id="favoritesPageGrid"></div>
+                <div class="empty-state" id="favoritesEmptyState" style="display:none;">
+                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+                    <h3>No favorites yet</h3>
+                    <p>Tap the heart on any product to save it here, so it's easy to find and add to your basket later.</p>
+                    <a class="btn btn-primary" href="#/shop">Browse the shop</a>
+                    <div class="empty-state-suggestions" id="favoritesEmptyStateSuggestions"></div>
+                </div>
             </div>
         </section>
     </div>
@@ -14058,6 +14143,7 @@
 
         /* ================= STATE ================= */
         let cart = loadCartFromStorage(); // {id, name, unit, price, emoji, qty, catSlug}, restored from localStorage so a refresh doesn't lose it
+        let favorites = loadFavoritesFromStorage(); // array of catSlug::idx keys, restored from localStorage the same way
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         let currentUser = null;
         let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
@@ -14210,7 +14296,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.3';
+        const BUILD_VERSION = '2026-09-25.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14481,6 +14567,128 @@
                 cart.push(entry);
             }
             updateCartBadge();
+        }
+
+        /* ================= FAVORITES =================
+           Local-first, same pattern as the basket above: works instantly
+           for a guest (localStorage only), with real cross-device sync
+           layered on for a signed-in account. Each entry is just a
+           product_key string (catSlug::idx, the same id scheme cart
+           items, stock_alerts and product_overrides all already use),
+           not a whole object - there's no quantity or price to track,
+           just "is this saved or not". */
+        function saveFavoritesToStorage() {
+            try { localStorage.setItem('yo7-favorites', JSON.stringify(favorites)); }
+            catch (e) { /* localStorage unavailable, favorites just won't survive a refresh this session */ }
+        }
+        function loadFavoritesFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('yo7-favorites') || '[]');
+                return Array.isArray(saved) ? saved : [];
+            } catch (e) { return []; }
+        }
+        // Same reasoning as tagCartOwner/getCartOwnerTag/clearCartOwnerTag -
+        // without this, a device that's synced this same account's
+        // favorites before gets its stale local mirror re-merged into the
+        // account's real list on every later login, which is harmless for
+        // a set (merging is idempotent, nothing doubles) but still means
+        // pointlessly re-writing every row on every login instead of just
+        // loading what's already there.
+        function tagFavoritesOwner(userId) {
+            try { localStorage.setItem('yo7-favorites-owner', userId); } catch (e) {}
+        }
+        function getFavoritesOwnerTag() {
+            try { return localStorage.getItem('yo7-favorites-owner'); } catch (e) { return null; }
+        }
+        function clearFavoritesOwnerTag() {
+            try { localStorage.removeItem('yo7-favorites-owner'); } catch (e) {}
+        }
+        function isFavorited(catSlug, idx) {
+            return favorites.includes(`${catSlug}::${idx}`);
+        }
+        // Reflects a toggle everywhere it's currently shown - a grid card's
+        // own button, the PD page's, and (if it's open) the favorites page
+        // itself, rather than each caller having to know what else needs
+        // updating. The heart flips instantly either way; the Supabase
+        // write for a signed-in account is fire-and-forget (matching
+        // scheduleCartSync's own error-logged-not-blocking style) since
+        // it's just mirroring state that's already correct locally, not
+        // something the UI needs to wait on.
+        function toggleFavorite(catSlug, idx) {
+            const key = `${catSlug}::${idx}`;
+            const nowFavorited = !favorites.includes(key);
+            favorites = nowFavorited ? [...favorites, key] : favorites.filter(k => k !== key);
+            saveFavoritesToStorage();
+            document.querySelectorAll(`[data-fav-key="${key}"]`).forEach(btn => {
+                btn.classList.toggle('is-favorited', nowFavorited);
+                btn.setAttribute('aria-label', nowFavorited ? 'Remove from favorites' : 'Add to favorites');
+                btn.setAttribute('aria-pressed', String(nowFavorited));
+            });
+            if (document.getElementById('view-favorites') && !document.getElementById('view-favorites').classList.contains('hidden-view')) {
+                renderFavoritesPage();
+            }
+            if (supabaseClient && currentSupabaseUser) {
+                const userId = currentSupabaseUser.id;
+                const promise = nowFavorited
+                    ? supabaseClient.from('favorites').upsert({ user_id: userId, product_key: key }, { onConflict: 'user_id,product_key', ignoreDuplicates: true })
+                    : supabaseClient.from('favorites').delete().eq('user_id', userId).eq('product_key', key);
+                promise.then(({ error }) => { if (error) console.error('Favorite sync failed:', error.message); });
+            }
+            return nowFavorited;
+        }
+        function toggleFavoriteFromCard(catSlug, idx, btnEl) {
+            const nowFavorited = toggleFavorite(catSlug, idx);
+            showToast(nowFavorited ? 'Saved to your favorites.' : 'Removed from favorites.');
+        }
+        window.toggleFavoriteFromCard = toggleFavoriteFromCard;
+        async function fetchAccountFavoriteKeys() {
+            const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', currentSupabaseUser.id);
+            if (error) { console.error('Favorites load failed:', error.message); return null; }
+            return data.map(r => r.product_key);
+        }
+        // Called once right after a genuine sign-in (not a session restore),
+        // same distinction mergeGuestCartIntoAccount makes for the basket -
+        // whatever was favorited as a guest before logging in is kept, not
+        // silently dropped in favour of the account's own list.
+        async function mergeGuestFavoritesIntoAccount() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const serverKeys = await fetchAccountFavoriteKeys();
+            if (serverKeys === null) return;
+            const merged = [...new Set([...serverKeys, ...favorites])];
+            const missingServerSide = merged.filter(k => !serverKeys.includes(k));
+            favorites = merged;
+            tagFavoritesOwner(currentSupabaseUser.id);
+            saveFavoritesToStorage();
+            if (missingServerSide.length > 0) {
+                supabaseClient.from('favorites')
+                    .upsert(missingServerSide.map(k => ({ user_id: currentSupabaseUser.id, product_key: k })), { onConflict: 'user_id,product_key', ignoreDuplicates: true })
+                    .then(({ error }) => { if (error) console.error('Favorites merge sync failed:', error.message); });
+            }
+            renderFavoritesButtonStates();
+        }
+        // Called on every ordinary page load/refresh while already signed
+        // in - the account's saved list is authoritative here, same as
+        // loadAccountCart, no merge with whatever's sitting in localStorage
+        // from a previous guest session on this device.
+        async function loadAccountFavorites() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const serverKeys = await fetchAccountFavoriteKeys();
+            if (serverKeys === null) return;
+            favorites = serverKeys;
+            tagFavoritesOwner(currentSupabaseUser.id);
+            saveFavoritesToStorage();
+            renderFavoritesButtonStates();
+        }
+        function renderFavoritesButtonStates() {
+            document.querySelectorAll('[data-fav-key]').forEach(btn => {
+                const favorited = favorites.includes(btn.dataset.favKey);
+                btn.classList.toggle('is-favorited', favorited);
+                btn.setAttribute('aria-label', favorited ? 'Remove from favorites' : 'Add to favorites');
+                btn.setAttribute('aria-pressed', String(favorited));
+            });
+            if (document.getElementById('view-favorites') && !document.getElementById('view-favorites').classList.contains('hidden-view')) {
+                renderFavoritesPage();
+            }
         }
 
         /* ================= RENDER: HOME CATEGORY GRID ================= */
@@ -16395,12 +16603,17 @@
             const outOfStock = stock === 'out';
             const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
+            const favKey = `${p.catSlug}::${pidx}`;
+            const isFav = isFavorited(p.catSlug, pidx);
             return `
     <div class="product-card${p.deleted ? ' is-deleted' : ''}" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
           ${p.deleted ? `<span class="stock-badge deleted">Deleted</span>` : (stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : '')}
           ${productPhotoHTML(p, p.name)}
+          <button class="card-fav-btn${isFav ? ' is-favorited' : ''}" type="button" data-fav-key="${favKey}" aria-pressed="${isFav}" aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}" onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromCard('${p.catSlug}', ${pidx}, this);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          </button>
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
@@ -16972,6 +17185,16 @@
 
             const onSaleNow = typeof p.salePrice === 'number' && p.salePrice < p.price;
             document.getElementById('pdSaleBadge').style.display = onSaleNow ? 'block' : 'none';
+
+            const pdFavBtn = document.getElementById('pdFavBtn');
+            if (pdFavBtn) {
+                const pdFav = isFavorited(catSlug, Number(idx));
+                pdFavBtn.dataset.favKey = `${catSlug}::${idx}`;
+                pdFavBtn.classList.toggle('is-favorited', pdFav);
+                pdFavBtn.setAttribute('aria-pressed', String(pdFav));
+                pdFavBtn.setAttribute('aria-label', pdFav ? 'Remove from favorites' : 'Add to favorites');
+                pdFavBtn.onclick = () => toggleFavoriteFromCard(catSlug, Number(idx), pdFavBtn);
+            }
 
             const pdImageEl = document.getElementById('pdImage');
             const existingImg = pdImageEl.querySelector('.product-photo-img');
@@ -19544,6 +19767,28 @@
             document.getElementById('buyAgainPageCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'buyAgainPageGrid');
         }
+        // Unlike buyAgainItems() this needs no query at all - favorites is
+        // already fully loaded in memory (see the FAVORITES section
+        // earlier in this script), so this is just mapping keys already
+        // held locally through the same getProduct() lookup every other
+        // listing page uses. Deleted products drop out (they're gone from
+        // the catalogue, nothing to show), but an out-of-stock one stays -
+        // productCardHTML already gives it the "Notify me" button, which
+        // is exactly the right next step for something someone's saved
+        // but currently can't buy.
+        function favoriteItems() {
+            return favorites
+                .map(key => {
+                    const [catSlug, idxStr] = key.split('::');
+                    return getProduct(catSlug, Number(idxStr));
+                })
+                .filter(p => p && !p.deleted);
+        }
+        function renderFavoritesPage() {
+            const items = favoriteItems();
+            document.getElementById('favoritesPageCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
+            renderGrid(items, 'favoritesPageGrid', 'favoritesEmptyState');
+        }
         // Admin-only dashboard: every order, not just the admin's own (the
         // "Admins can view all orders" RLS policy is what actually allows
         // this query to return other people's rows at all). Rendered as a
@@ -21241,6 +21486,8 @@
             syncLoyaltyState().then(renderCartList);
             const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
             if (freshSignIn && !staleOwnCartMirror) mergeGuestCartIntoAccount(); else loadAccountCart();
+            const staleOwnFavoritesMirror = freshSignIn && currentSupabaseUser && getFavoritesOwnerTag() === currentSupabaseUser.id;
+            if (freshSignIn && !staleOwnFavoritesMirror) mergeGuestFavoritesIntoAccount(); else loadAccountFavorites();
             refreshAdminStatus();
             subscribeMyOrders();
             loadReorderSuggestion();
@@ -21272,6 +21519,15 @@
             saveCartToStorage();
             clearCartOwnerTag();
             updateCartBadge();
+            // Same shared-device privacy reasoning as the basket wipe right
+            // above - a saved-items list is at least as revealing as a
+            // basket, and leaving it in localStorage would show the next
+            // person to use this browser (or the next account that logs
+            // in here) whatever the previous account had favorited.
+            favorites = [];
+            saveFavoritesToStorage();
+            clearFavoritesOwnerTag();
+            renderFavoritesButtonStates();
             if (typeof setEditMode === 'function') setEditMode(false);
             document.getElementById('accountLabel').textContent = 'Sign up / Log in';
             const dropdownName = document.getElementById('accountDropdownName');
@@ -22535,7 +22791,7 @@
                 hash.startsWith('#/product/') || hash.startsWith('#/search/') ||
                 hash === '#/new-arrivals' || hash === '#/best-sellers' ||
                 hash === '#/special-offers' || hash === '#/bundles' || hash === '#/combos' ||
-                hash === '#/buy-again';
+                hash === '#/buy-again' || hash === '#/favorites';
         }
         async function refreshCatalogOnForeground() {
             if (catalogRefreshInFlight || !supabaseClient) return;
@@ -22880,7 +23136,7 @@
         }
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -23204,6 +23460,9 @@
             } else if (hash === '#/buy-again') {
                 showView('view-buy-again');
                 renderBuyAgainPage();
+            } else if (hash === '#/favorites') {
+                showView('view-favorites');
+                renderFavoritesPage();
             } else if (hash === '#/special-offers') {
                 showView('view-special-offers');
                 renderSpecialOffersPage();

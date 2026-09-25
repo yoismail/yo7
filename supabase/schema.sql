@@ -1584,6 +1584,20 @@ CREATE TABLE IF NOT EXISTS "public"."discount_redemptions" (
 ALTER TABLE "public"."discount_redemptions" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."favorites" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "product_key" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."favorites" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."favorites"."product_key" IS 'catSlug::idx, same format stock_alerts.product_key and product_overrides.product_key already use.';
+
+
 CREATE TABLE IF NOT EXISTS "public"."google_reviews_cache" (
     "id" boolean DEFAULT true NOT NULL,
     "rating" numeric,
@@ -1973,6 +1987,16 @@ ALTER TABLE ONLY "public"."discount_redemptions"
 
 
 
+ALTER TABLE ONLY "public"."favorites"
+    ADD CONSTRAINT "favorites_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."favorites"
+    ADD CONSTRAINT "favorites_user_id_product_key_key" UNIQUE ("user_id", "product_key");
+
+
+
 ALTER TABLE ONLY "public"."google_reviews_cache"
     ADD CONSTRAINT "google_reviews_cache_pkey" PRIMARY KEY ("id");
 
@@ -2124,6 +2148,14 @@ CREATE INDEX "discount_redemptions_by_user" ON "public"."discount_redemptions" U
 
 
 
+CREATE INDEX "favorites_product_key_idx" ON "public"."favorites" USING "btree" ("product_key");
+
+
+
+CREATE INDEX "favorites_user_id_idx" ON "public"."favorites" USING "btree" ("user_id");
+
+
+
 CREATE UNIQUE INDEX "loyalty_rewards_source_order_id_idx" ON "public"."loyalty_rewards" USING "btree" ("source_order_id") WHERE ("source_order_id" IS NOT NULL);
 
 
@@ -2266,6 +2298,11 @@ ALTER TABLE ONLY "public"."discount_redemptions"
 
 ALTER TABLE ONLY "public"."discount_redemptions"
     ADD CONSTRAINT "discount_redemptions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+
+
+
+ALTER TABLE ONLY "public"."favorites"
+    ADD CONSTRAINT "favorites_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -2471,6 +2508,10 @@ CREATE POLICY "Users can edit their own review" ON "public"."product_reviews" FO
 
 
 
+CREATE POLICY "Users can manage their own favorites" ON "public"."favorites" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can manage their own push subscriptions" ON "public"."push_subscriptions" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
 
 
@@ -2550,6 +2591,9 @@ ALTER TABLE "public"."discount_codes" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."discount_redemptions" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."favorites" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."google_reviews_cache" ENABLE ROW LEVEL SECURITY;
@@ -3060,6 +3104,12 @@ GRANT ALL ON TABLE "public"."discount_codes" TO "service_role";
 GRANT ALL ON TABLE "public"."discount_redemptions" TO "anon";
 GRANT ALL ON TABLE "public"."discount_redemptions" TO "authenticated";
 GRANT ALL ON TABLE "public"."discount_redemptions" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."favorites" TO "anon";
+GRANT ALL ON TABLE "public"."favorites" TO "authenticated";
+GRANT ALL ON TABLE "public"."favorites" TO "service_role";
 
 
 
