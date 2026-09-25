@@ -10678,7 +10678,7 @@
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal">£0.00</span></div>
                             <div class="summary-row summary-row-weight"><span>Total weight</span><span id="sumWeight">0kg</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel">Delivery</span><span id="sumDelivery">£3.50</span></div>
-                            <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
+                            <div class="delivery-fee-note" id="sumDeliveryNote">Delivery is priced by total order weight, not a flat rate.</div>
                             <div class="summary-row discount-row" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Discount</span><span id="sumDiscount">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty">-£0.00</span></div>
                             <div class="receipt-perf" aria-hidden="true"></div>
@@ -10781,7 +10781,7 @@
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal2">£0.00</span></div>
                             <div class="summary-row summary-row-weight"><span>Total weight</span><span id="sumWeight2">0kg</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel2">Delivery</span><span id="sumDelivery2">£3.50</span></div>
-                            <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
+                            <div class="delivery-fee-note" id="sumDeliveryNote2">Delivery is priced by total order weight, not a flat rate.</div>
                             <div class="delivery-fee-note" id="deliveryEtaNote2"></div>
                             <div class="summary-row discount-row" id="sumDiscountRow2" style="display:none;"><span id="sumDiscountLabel2">Discount</span><span id="sumDiscount2">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow2" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty2">-£0.00</span></div>
@@ -10820,7 +10820,7 @@
                             <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal3">£0.00</span></div>
                             <div class="summary-row summary-row-weight"><span>Total weight</span><span id="sumWeight3">0kg</span></div>
                             <div class="summary-row"><span id="sumDeliveryLabel3">Delivery</span><span id="sumDelivery3">£3.50</span></div>
-                            <div class="delivery-fee-note">Delivery is priced by total order weight, not a flat rate.</div>
+                            <div class="delivery-fee-note" id="sumDeliveryNote3">Delivery is priced by total order weight, not a flat rate.</div>
                             <div class="delivery-fee-note" id="deliveryEtaNote3"></div>
                             <div class="summary-row discount-row" id="sumDiscountRow3" style="display:none;"><span id="sumDiscountLabel3">Discount</span><span id="sumDiscount3">-£0.00</span></div>
                             <div class="summary-row discount-row" id="sumLoyaltyRow3" style="display:none;"><span>Loyalty reward</span><span id="sumLoyalty3">-£0.00</span></div>
@@ -10894,6 +10894,7 @@
                     <div class="invoice-totals">
                         <div class="summary-row"><span>Subtotal</span><span id="invSubtotal"></span></div>
                         <div class="summary-row"><span id="invDeliveryLabel">Delivery</span><span id="invDelivery"></span></div>
+                        <div class="delivery-fee-note" id="invDeliveryFreeNote" style="display:none;"></div>
                         <div class="summary-row discount-row" id="invDiscountRow" style="display:none;"><span id="invDiscountLabel">Discount</span><span id="invDiscount"></span></div>
                         <div class="summary-row discount-row" id="invLoyaltyDiscountRow" style="display:none;"><span>Loyalty reward</span><span id="invLoyaltyDiscount"></span></div>
                         <div class="summary-row total"><span>Total paid</span><span id="invTotal"></span></div>
@@ -13066,6 +13067,10 @@
             let fee = resolveWeightTierFee(weight);
             const subtotal = cartSubtotal();
             const items = cartItemCount();
+            // Tracks whichever rule (or discount code) actually zeroed the fee,
+            // so the checkout summary can tell the customer why delivery is
+            // free instead of just showing "Free" with no explanation.
+            let freeReason = null;
 
             for (const rule of deliveryThresholdRules) {
                 const actual = rule.conditionType === 'price' ? subtotal
@@ -13075,11 +13080,20 @@
                 if (actual === null) continue;
                 const met = rule.operator === 'gte' ? actual >= rule.value : actual <= rule.value;
                 if (!met) continue;
-                if (rule.effect === 'free') { fee = 0; }
+                if (rule.effect === 'free') { fee = 0; freeReason = { type: 'rule', name: rule.name }; }
                 else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') { fee = Math.min(fee, rule.feeOverride); }
             }
-            if (appliedDiscount && appliedDiscount.type === 'freeDelivery' && cartQualifiesForDiscount(appliedDiscount)) { fee = 0; }
-            return { fee, region: null };
+            if (appliedDiscount && appliedDiscount.type === 'freeDelivery' && cartQualifiesForDiscount(appliedDiscount)) {
+                fee = 0;
+                freeReason = { type: 'discount', code: appliedDiscount.code };
+            }
+            return { fee, region: null, freeReason };
+        }
+        function deliveryFreeReasonText(reason) {
+            if (!reason) return '';
+            if (reason.type === 'discount') return `Free delivery included with your code (${reason.code}).`;
+            if (reason.name) return `${reason.name}, applied to this order.`;
+            return 'Free delivery applied to this order.';
         }
 
         /* ================= DELIVERY WINDOW (local vs standard) =================
@@ -14185,7 +14199,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-24.12';
+        const BUILD_VERSION = '2026-09-25.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18003,7 +18017,7 @@
             const sub = cartSubtotal();
             const postcodeField = document.getElementById('dPostcode');
             const postcode = postcodeField ? postcodeField.value : '';
-            const { fee: resolvedFee } = resolveDeliveryFee(postcode);
+            const { fee: resolvedFee, freeReason } = resolveDeliveryFee(postcode);
             const delivery = (cart.length && fulfilmentMethod === 'delivery') ? resolvedFee : 0;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
             // A referral code and the loyalty reward never both apply to
@@ -18021,6 +18035,24 @@
             ['sumWeight', 'sumWeight2', 'sumWeight3'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = `${totalWeight.toFixed(totalWeight % 1 === 0 ? 0 : 1)}kg`; });
             ['sumDelivery', 'sumDelivery2', 'sumDelivery3'].forEach(id => document.getElementById(id).textContent = deliveryIsFree ? 'Free' : money(delivery));
             ['sumDeliveryLabel', 'sumDeliveryLabel2', 'sumDeliveryLabel3'].forEach(id => document.getElementById(id).textContent = label);
+            // Showing "Free" with no explanation left customers guessing why -
+            // when a threshold rule or discount code is what zeroed the fee,
+            // name it here instead of just the generic weight-pricing note.
+            // Pickup already says so via its own "no fee" chip, so it gets
+            // neither note.
+            ['sumDeliveryNote', 'sumDeliveryNote2', 'sumDeliveryNote3'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (fulfilmentMethod === 'pickup') {
+                    el.style.display = 'none';
+                } else if (resolvedFee === 0 && freeReason) {
+                    el.style.display = 'block';
+                    el.textContent = deliveryFreeReasonText(freeReason);
+                } else {
+                    el.style.display = 'block';
+                    el.textContent = 'Delivery is priced by total order weight, not a flat rate.';
+                }
+            });
             ['sumTotal', 'sumTotal2', 'sumTotal3'].forEach(id => document.getElementById(id).textContent = money(total));
             document.getElementById('payButtonTotal').textContent = money(total);
             const cartDeliveryWindowEl = document.getElementById('cartDeliveryWindow');
@@ -18350,7 +18382,7 @@
             // reached Stripe, which meant it could be edited before the
             // request went out; this estimate now only ever drives the UI.
             const sub = cartSubtotal();
-            const { fee: resolvedFee } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
+            const { fee: resolvedFee, freeReason } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
             const delivery = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
             // See the matching comment where this same guard first appears,
@@ -18371,6 +18403,12 @@
                 deliveryInfo,
                 fulfilmentMethod,
                 deliveryWeight: cartTotalWeight(),
+                // Captured now, not recomputed at confirmation time - the
+                // rule or discount that earned free delivery is fixed to
+                // this order, and shouldn't change retroactively if
+                // thresholds are edited or the code expires before the
+                // customer views their invoice.
+                deliveryFreeReason: delivery === 0 ? freeReason : null,
                 userId: currentSupabaseUser ? currentSupabaseUser.id : null,
             };
             savePendingOrderContext(pendingOrderContext);
@@ -18614,6 +18652,7 @@
                 delivery_info: ctx.deliveryInfo,
                 fulfilment: ctx.fulfilmentMethod,
                 deliveryWeight: ctx.deliveryWeight,
+                deliveryFreeReason: ctx.deliveryFreeReason,
                 loyaltyRewardEarned: false, // filled in below once the order is saved and has a real id to check against
                 paymentMethodSummary: 'Paid online', // replaced below once confirm-order responds with the real one
                 stripePaymentIntentId: paymentIntent.id,
@@ -20632,6 +20671,15 @@
     </tr>`).join('');
             document.getElementById('invSubtotal').textContent = money(lastOrder.subtotal);
             document.getElementById('invDelivery').textContent = lastOrder.delivery === 0 ? 'Free' : money(lastOrder.delivery);
+            const invFreeNoteEl = document.getElementById('invDeliveryFreeNote');
+            if (invFreeNoteEl) {
+                if (!isPickup && lastOrder.delivery === 0 && lastOrder.deliveryFreeReason) {
+                    invFreeNoteEl.style.display = 'block';
+                    invFreeNoteEl.textContent = deliveryFreeReasonText(lastOrder.deliveryFreeReason);
+                } else {
+                    invFreeNoteEl.style.display = 'none';
+                }
+            }
             document.getElementById('invTotal').textContent = money(lastOrder.total);
             const invDiscountRow = document.getElementById('invDiscountRow');
             if (lastOrder.discount > 0) {
