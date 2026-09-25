@@ -695,12 +695,13 @@
             .card-fav-btn { transition: none; }
         }
 
-        /* Mirrors .card-fav-btn exactly, just the opposite corner - bottom-left
-           is free on every card the same way bottom-right is, regardless of
-           stock state or edit mode. No "active" state of its own (unlike the
-           heart, sharing isn't a saved/unsaved toggle). */
+        /* Mirrors .card-fav-btn exactly, positioned immediately to its left
+           so both sit stacked together in the one bottom-right corner
+           instead of pulling a viewer's eye to opposite corners of the
+           photo. No "active" state of its own (unlike the heart, sharing
+           isn't a saved/unsaved toggle). */
         .card-share-btn {
-            position: absolute; bottom: 10px; left: 10px; z-index: 4;
+            position: absolute; bottom: 10px; right: 48px; z-index: 4;
             width: 30px; height: 30px; border-radius: 50%; border: none;
             background: rgba(250, 249, 242, 0.92); color: var(--aubergine);
             display: flex; align-items: center; justify-content: center;
@@ -10588,7 +10589,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                         </button>
                         <button class="card-share-btn" type="button" id="pdShareBtn" aria-label="Share this product">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>
                         </button>
                         <span class="pd-placeholder" id="pdPlaceholder"></span>
                     </div>
@@ -14547,7 +14548,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.16';
+        const BUILD_VERSION = '2026-09-25.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17071,7 +17072,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           </button>
           <button class="card-share-btn" type="button" aria-label="Share this product" onclick="event.preventDefault(); event.stopPropagation(); openShareSheet('${p.catSlug}', ${pidx});">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>
           </button>
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
