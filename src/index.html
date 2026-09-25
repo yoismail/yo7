@@ -1610,15 +1610,24 @@
         /* Signed-out only (toggled the same way orderHistoryLink/
            referNavLink already are, from setUser()/clearUser()) - a
            logged-in visitor has no use for a "create an account" prompt
-           of their own. Sits below a divider so it reads as a distinct
-           call to action, not one more link in the list above it. */
+           of their own. A divider above (not full pill buttons - those
+           added real height to an already-long list, which is what
+           forced a scroll inside the menu on shorter real-device
+           viewports in the first place) is enough to still read as a
+           distinct pair of actions, not just two more list items. Plain
+           <a> tags here inherit .mobile-menu a's own row styling below
+           (same descendant selector matches them), so no separate
+           typography rule is needed. */
         .mobile-menu-auth {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 14px;
-            padding-top: 18px;
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid rgba(44, 28, 16, 0.1);
+        }
+        .mobile-menu-auth a {
+            display: block;
+        }
+        .mobile-menu-auth a:first-child {
+            color: var(--chartreuse-rich);
         }
 
         .mobile-search {
@@ -9948,8 +9957,8 @@
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
             <div class="mobile-menu-auth" id="mobileMenuAuth">
-                <a class="btn btn-primary btn-block" href="#/signup">Create an account</a>
-                <a class="btn btn-outline-dark btn-block" href="#/login">Log in</a>
+                <a href="#/signup">Create an account</a>
+                <a href="#/login">Log in</a>
             </div>
         </div>
     </nav>
@@ -14336,7 +14345,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.10';
+        const BUILD_VERSION = '2026-09-25.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14431,6 +14440,63 @@
         // the shop; the option value stays the product's real index either way.
         function productOptionsHTML(cat) {
             return cat.products.map((p, i) => ({ p, i })).filter(x => !x.p.deleted).map(({ p, i }) => `<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+        }
+        // Reported directly: a bundle/combo's product picker only ever
+        // offered the base listing, silently locking that item to the
+        // product's own base price/weight even when it has several
+        // admin-added weight variants (see addWeightVariant) to choose
+        // from instead. One extra <option> per variant, value encoded as
+        // "idx" (base) or "idx:variantIdx" (a specific size) - parsed by
+        // parseProductOptionValue below wherever this is used, currently
+        // just the bundle/combo add-item forms (new and edit, four call
+        // sites in total).
+        function productVariantOptionsHTML(cat) {
+            return cat.products.map((p, i) => ({ p, i })).filter(x => !x.p.deleted).map(({ p, i }) => {
+                const base = `<option value="${i}">${escapeHtml(p.name)}</option>`;
+                const variants = Array.isArray(p.weightVariants) ? p.weightVariants : [];
+                const variantOptions = variants.map((v, vi) => `<option value="${i}:${vi}">${escapeHtml(p.name)} (${escapeHtml(v.label)})</option>`).join('');
+                return base + variantOptions;
+            }).join('');
+        }
+        // The inverse of productVariantOptionsHTML's value encoding - a
+        // bare "3" is the base product (idx 3, no variant chosen), "3:1"
+        // is idx 3's second weight variant.
+        function parseProductOptionValue(raw) {
+            const [idxStr, variantIdxStr] = String(raw).split(':');
+            const idx = parseInt(idxStr, 10);
+            const variantIdx = variantIdxStr !== undefined ? parseInt(variantIdxStr, 10) : undefined;
+            return { idx, variantIdx };
+        }
+        // Resolves a bundle/combo item reference to the actual product a
+        // shopper would receive - the base listing, or (when ref.variantIdx
+        // is set) that specific weight variant's own price/weight/size,
+        // stripped of weightVariants so priceHTML/effectivePrice show that
+        // variant's real price instead of falling back to "From £X". Same
+        // flattening offerItems() already does for a variant's own offer
+        // card, reused here for the same reason.
+        function resolveComboItem(ref) {
+            const p = getProduct(ref.catSlug, ref.idx);
+            if (!p) return null;
+            const variant = (ref.variantIdx !== undefined && ref.variantIdx !== null && Array.isArray(p.weightVariants))
+                ? p.weightVariants[ref.variantIdx] : null;
+            if (!variant) return { ...p, weightVariants: undefined };
+            return {
+                ...p, weightVariants: undefined, variantIdx: ref.variantIdx,
+                unit: variant.label, unitOverride: undefined,
+                price: variant.price, salePrice: variant.salePrice,
+                weight: (typeof variant.weight === 'number') ? variant.weight : p.weight,
+            };
+        }
+        // Shared by every "items added so far" preview list in the
+        // bundle/combo add/edit forms - the size has to be visible there
+        // too, not just on the saved card, otherwise there's no way to
+        // tell which of two variants of the same product got picked
+        // before saving.
+        function comboItemLabel(item) {
+            return item.name + (item.variantIdx !== undefined ? ` (${item.unit})` : '');
+        }
+        function comboItemLabelHTML(item) {
+            return escapeHtml(comboItemLabel(item));
         }
         function getProduct(catSlug, idx) {
             const cat = findCategory(catSlug);
@@ -14910,7 +14976,7 @@
             return `
       <div class="bundle-item-row${outOfStock ? ' out-of-stock' : ''}">
         <div class="bundle-item-thumb">${bundleItemThumbHTML(p)}</div>
-        <span>${escapeHtml(p.name)}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
+        <span>${comboItemLabelHTML(p)}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
         ${weightDisplay}
         <span>${outOfStock ? '' : money(effectivePrice(p))}</span>
       </div>`;
@@ -14966,7 +15032,7 @@
         window.saveBundleItemWeight = saveBundleItemWeight;
 
         function bundleCardHTML(bundle, bi) {
-            const items = bundle.items.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const items = bundle.items.map(ref => resolveComboItem(ref)).filter(Boolean);
             const inStockItems = items.filter(p => p.stock !== 'out');
             const rawTotal = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
             const discountPct = bundle.discountPercent || 0;
@@ -15054,20 +15120,20 @@
         function populateBundleEditProductSelect() {
             const catSlug = document.getElementById('bbe-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('bbe-item-product').innerHTML = productOptionsHTML(cat);
+            document.getElementById('bbe-item-product').innerHTML = productVariantOptionsHTML(cat);
         }
         function renderBundleEditItemsList() {
             document.getElementById('bbe-items-list').innerHTML = bundleEditNewItems.map((ref, i) => {
-                const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="bundleEditNewItems.splice(${i},1); renderBundleEditItemsList();">Remove</button></div>`;
+                const item = resolveComboItem(ref);
+                return `<div class="delivery-rule-row"><span>${comboItemLabelHTML(item)}</span><button type="button" class="rule-remove-btn" onclick="bundleEditNewItems.splice(${i},1); renderBundleEditItemsList();">Remove</button></div>`;
             }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
         }
         window.renderBundleEditItemsList = renderBundleEditItemsList;
         function addItemToBundleEdit() {
             const catSlug = document.getElementById('bbe-item-cat').value;
-            const idx = parseInt(document.getElementById('bbe-item-product').value, 10);
+            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('bbe-item-product').value);
             if (!getProduct(catSlug, idx)) return;
-            bundleEditNewItems.push({ catSlug, idx });
+            bundleEditNewItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
             renderBundleEditItemsList();
         }
         window.addItemToBundleEdit = addItemToBundleEdit;
@@ -15076,14 +15142,14 @@
             if (!name || bundleEditNewItems.length < 2) { showToast('Give the bundle a name and at least 2 items.'); return; }
             const before = BUNDLES[bi];
             const discountPct = parseFloat(document.getElementById('bbe-discount').value);
-            const itemNamesBefore = (before.items || []).map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
+            const itemNamesBefore = (before.items || []).map(r => { const p = resolveComboItem(r); return p ? comboItemLabel(p) : '?'; }).sort().join(', ');
             BUNDLES[bi] = {
                 name,
                 tagline: document.getElementById('bbe-tagline').value.trim(),
                 discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)),
                 items: [...bundleEditNewItems],
             };
-            const itemNamesAfter = BUNDLES[bi].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
+            const itemNamesAfter = BUNDLES[bi].items.map(r => { const p = resolveComboItem(r); return p ? comboItemLabel(p) : '?'; }).sort().join(', ');
             bundleEditNewItems = null;
             renderBundles();
             savePricingSettings();
@@ -15184,24 +15250,21 @@
             const catSlug = document.getElementById('abf-cat').value;
             const cat = findCategory(catSlug);
             const select = document.getElementById('abf-product');
-            select.innerHTML = productOptionsHTML(cat);
+            select.innerHTML = productVariantOptionsHTML(cat);
         }
         function addItemToNewBundle() {
             const catSlug = document.getElementById('abf-cat').value;
-            const idx = parseInt(document.getElementById('abf-product').value, 10);
+            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('abf-product').value);
             const p = getProduct(catSlug, idx);
             if (!p) return;
-            newBundleItems.push({ catSlug, idx });
-            document.getElementById('abf-items-list').innerHTML = newBundleItems.map((ref, i) => {
-                const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
-            }).join('');
+            newBundleItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
+            addItemToNewBundle_refresh();
         }
         window.addItemToNewBundle = addItemToNewBundle;
         function addItemToNewBundle_refresh() {
             document.getElementById('abf-items-list').innerHTML = newBundleItems.map((ref, i) => {
-                const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
+                const item = resolveComboItem(ref);
+                return `<div class="delivery-rule-row"><span>${comboItemLabelHTML(item)}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
             }).join('');
         }
         window.addItemToNewBundle_refresh = addItemToNewBundle_refresh;
@@ -15209,7 +15272,7 @@
             const name = document.getElementById('abf-name').value.trim();
             const tagline = document.getElementById('abf-tagline').value.trim();
             if (!name || newBundleItems.length < 2) { showToast('Give the bundle a name and at least 2 items.'); return; }
-            const itemNames = newBundleItems.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).join(', ');
+            const itemNames = newBundleItems.map(r => { const p = resolveComboItem(r); return p ? comboItemLabel(p) : '?'; }).join(', ');
             BUNDLES.push({ name, tagline: tagline || '', items: [...newBundleItems] });
             document.getElementById('addBundleSlot').innerHTML = '';
             newBundleItems = [];
@@ -15565,7 +15628,7 @@
         window.saveNewDish = saveNewDish;
 
         function comboCardHTML(combo, ci) {
-            const items = (combo.items || []).map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const items = (combo.items || []).map(ref => resolveComboItem(ref)).filter(Boolean);
             const inStockItems = items.filter(p => p.stock !== 'out');
             const rawTotal = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
             const discountPct = combo.discountPercent || 0;
@@ -15622,7 +15685,7 @@
         function addComboToCart(ci) {
             const combo = COMBOS[ci];
             if (!combo) return;
-            const items = (combo.items || []).map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const items = (combo.items || []).map(ref => resolveComboItem(ref)).filter(Boolean);
             const added = items.filter(p => p.stock !== 'out');
             const skipped = items.length - added.length;
             if (added.length === 0) { showToast(`Everything in "${combo.name}" is currently out of stock.`); return; }
@@ -15710,20 +15773,20 @@
         function populateComboEditProductSelect() {
             const catSlug = document.getElementById('cce-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('cce-item-product').innerHTML = productOptionsHTML(cat);
+            document.getElementById('cce-item-product').innerHTML = productVariantOptionsHTML(cat);
         }
         function renderComboEditItemsList() {
             document.getElementById('cce-items-list').innerHTML = comboEditNewItems.map((ref, i) => {
-                const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="comboEditNewItems.splice(${i},1); renderComboEditItemsList();">Remove</button></div>`;
+                const item = resolveComboItem(ref);
+                return `<div class="delivery-rule-row"><span>${comboItemLabelHTML(item)}</span><button type="button" class="rule-remove-btn" onclick="comboEditNewItems.splice(${i},1); renderComboEditItemsList();">Remove</button></div>`;
             }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
         }
         window.renderComboEditItemsList = renderComboEditItemsList;
         function addItemToComboEdit() {
             const catSlug = document.getElementById('cce-item-cat').value;
-            const idx = parseInt(document.getElementById('cce-item-product').value, 10);
+            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('cce-item-product').value);
             if (!getProduct(catSlug, idx)) return;
-            comboEditNewItems.push({ catSlug, idx });
+            comboEditNewItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
             renderComboEditItemsList();
         }
         window.addItemToComboEdit = addItemToComboEdit;
@@ -15732,7 +15795,7 @@
             if (!name) { showToast('A combo needs a name.'); return; }
             const before = COMBOS[ci];
             const discountPct = parseFloat(document.getElementById('cce-discount').value);
-            const itemNamesBefore = (before.items || []).map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
+            const itemNamesBefore = (before.items || []).map(r => { const p = resolveComboItem(r); return p ? comboItemLabel(p) : '?'; }).sort().join(', ');
             COMBOS[ci] = {
                 name,
                 discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)),
@@ -15740,7 +15803,7 @@
                 linkCategory: document.getElementById('cce-link').value || null,
                 items: [...comboEditNewItems],
             };
-            const itemNamesAfter = COMBOS[ci].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
+            const itemNamesAfter = COMBOS[ci].items.map(r => { const p = resolveComboItem(r); return p ? comboItemLabel(p) : '?'; }).sort().join(', ');
             comboEditNewItems = null;
             renderCombos();
             savePricingSettings();
@@ -15799,20 +15862,20 @@
         function populateAcfProductSelect() {
             const catSlug = document.getElementById('acf-item-cat').value;
             const cat = findCategory(catSlug);
-            document.getElementById('acf-item-product').innerHTML = productOptionsHTML(cat);
+            document.getElementById('acf-item-product').innerHTML = productVariantOptionsHTML(cat);
         }
         function renderNewComboItemsList() {
             document.getElementById('acf-items-list').innerHTML = newComboItems.map((ref, i) => {
-                const item = getProduct(ref.catSlug, ref.idx);
-                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newComboItems.splice(${i},1); renderNewComboItemsList();">Remove</button></div>`;
+                const item = resolveComboItem(ref);
+                return `<div class="delivery-rule-row"><span>${comboItemLabelHTML(item)}</span><button type="button" class="rule-remove-btn" onclick="newComboItems.splice(${i},1); renderNewComboItemsList();">Remove</button></div>`;
             }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
         }
         window.renderNewComboItemsList = renderNewComboItemsList;
         function addItemToNewCombo() {
             const catSlug = document.getElementById('acf-item-cat').value;
-            const idx = parseInt(document.getElementById('acf-item-product').value, 10);
+            const { idx, variantIdx } = parseProductOptionValue(document.getElementById('acf-item-product').value);
             if (!getProduct(catSlug, idx)) return;
-            newComboItems.push({ catSlug, idx });
+            newComboItems.push(variantIdx !== undefined ? { catSlug, idx, variantIdx } : { catSlug, idx });
             renderNewComboItemsList();
         }
         window.addItemToNewCombo = addItemToNewCombo;
@@ -15822,7 +15885,7 @@
             const description = document.getElementById('acf-desc').value.trim();
             const linkCategory = document.getElementById('acf-link').value || null;
             if (!name) { showToast('Give the combo a name.'); return; }
-            const itemNames = newComboItems.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).join(', ');
+            const itemNames = newComboItems.map(r => { const p = resolveComboItem(r); return p ? comboItemLabel(p) : '?'; }).join(', ');
             COMBOS.push({ name, discountPercent: isNaN(discountPct) ? 0 : Math.max(0, Math.min(90, discountPct)), description, linkCategory, items: [...newComboItems] });
             document.getElementById('addComboSlot').innerHTML = '';
             newComboItems = [];
@@ -15872,7 +15935,7 @@
         function addBundleToCart(bundleIdx) {
             const bundle = BUNDLES[bundleIdx];
             if (!bundle) return;
-            const items = bundle.items.map(ref => getProduct(ref.catSlug, ref.idx)).filter(Boolean);
+            const items = bundle.items.map(ref => resolveComboItem(ref)).filter(Boolean);
             const added = items.filter(p => p.stock !== 'out');
             const skipped = items.length - added.length;
             if (added.length === 0) { showToast(`Everything in "${bundle.name}" is currently out of stock.`); return; }
@@ -21628,7 +21691,7 @@
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = 'none';
             const mobileMenuAuth = document.getElementById('mobileMenuAuth');
-            if (mobileMenuAuth) mobileMenuAuth.style.display = 'flex';
+            if (mobileMenuAuth) mobileMenuAuth.style.display = 'block';
             const reorderSection = document.getElementById('reorderSection');
             if (reorderSection) reorderSection.style.display = 'none';
             const buyAgainSection = document.getElementById('buyAgainSection');
