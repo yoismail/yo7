@@ -695,6 +695,54 @@
             .card-fav-btn { transition: none; }
         }
 
+        /* Mirrors .card-fav-btn exactly, just the opposite corner - bottom-left
+           is free on every card the same way bottom-right is, regardless of
+           stock state or edit mode. No "active" state of its own (unlike the
+           heart, sharing isn't a saved/unsaved toggle). */
+        .card-share-btn {
+            position: absolute; bottom: 10px; left: 10px; z-index: 4;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(250, 249, 242, 0.92); color: var(--aubergine);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+            cursor: pointer; transition: transform 0.15s ease;
+        }
+        .card-share-btn:hover { transform: scale(1.08); }
+        .card-share-btn:active { transform: scale(0.94); }
+        .card-share-btn svg { width: 14px; height: 14px; }
+        @media (prefers-reduced-motion: reduce) {
+            .card-share-btn { transition: none; }
+        }
+
+        .share-sheet-box { max-width: 380px; }
+        .share-sheet-preview {
+            display: flex; align-items: center; gap: 12px;
+            margin: 14px 0 18px; padding: 10px;
+            background: rgba(var(--border-rgb), 0.05); border-radius: 12px;
+        }
+        .share-sheet-thumb {
+            width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;
+            background: rgba(var(--border-rgb), 0.08);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .share-sheet-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        .share-sheet-name { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--heading); }
+        .share-sheet-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .share-sheet-btn {
+            flex: 1 1 calc(50% - 5px);
+            display: flex; align-items: center; gap: 8px;
+            padding: 11px 14px; border-radius: 10px;
+            border: 1px solid rgba(var(--border-rgb), 0.18);
+            background: transparent; color: var(--heading);
+            font-family: var(--body); font-size: 13.5px; font-weight: 600;
+            cursor: pointer; transition: background 0.15s ease;
+        }
+        .share-sheet-btn:hover { background: rgba(var(--border-rgb), 0.06); }
+        .share-sheet-icon { display: flex; width: 18px; height: 18px; flex-shrink: 0; }
+        .share-sheet-icon svg { width: 100%; height: 100%; }
+        .share-sheet-btn.whatsapp { color: #25D366; border-color: rgba(37, 211, 102, 0.35); }
+        .share-sheet-btn.whatsapp:hover { background: rgba(37, 211, 102, 0.08); }
+
         .cat-edit-btn {
             display: none;
             position: absolute; top: 8px; right: 8px; z-index: 5;
@@ -10539,6 +10587,9 @@
                         <button class="card-fav-btn" type="button" id="pdFavBtn" aria-pressed="false" aria-label="Add to favorites">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                         </button>
+                        <button class="card-share-btn" type="button" id="pdShareBtn" aria-label="Share this product">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        </button>
                         <span class="pd-placeholder" id="pdPlaceholder"></span>
                     </div>
                     <div>
@@ -12491,6 +12542,38 @@
         </div>
     </div>
 
+    <!-- Top-level (not scoped to any one view) since the share button appears
+         on every product card across the whole site - shop, category, search,
+         favorites, bundles, the PD page, everywhere productCardHTML() renders. -->
+    <div class="modal-overlay" id="shareSheetModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="shareSheetTitle" onclick="if (event.target === this) closeShareSheet();">
+        <div class="modal-box share-sheet-box">
+            <button type="button" class="modal-close" aria-label="Close" onclick="closeShareSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            <h3 id="shareSheetTitle">Share this product</h3>
+            <div class="share-sheet-preview">
+                <div class="share-sheet-thumb" id="shareSheetThumb"></div>
+                <div class="share-sheet-name" id="shareSheetName"></div>
+            </div>
+            <div class="share-sheet-row">
+                <button type="button" class="share-sheet-btn whatsapp" onclick="shareProductVia('whatsapp')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg></span>
+                    WhatsApp
+                </button>
+                <button type="button" class="share-sheet-btn email" onclick="shareProductVia('email')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
+                    Email
+                </button>
+                <button type="button" class="share-sheet-btn copy" onclick="shareProductVia('copy')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
+                    Copy link
+                </button>
+                <button type="button" class="share-sheet-btn more" id="shareSheetMoreBtn" style="display:none;" onclick="shareProductVia('more')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>
+                    More
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Not a granular accept/reject consent tool, there's nothing optional
          to consent to (see #/cookie-policy): just an honest, dismissible
          notice about the strictly-necessary cookies Stripe sets at
@@ -14347,7 +14430,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.14';
+        const BUILD_VERSION = '2026-09-25.15';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14790,6 +14873,61 @@
             showToast(nowFavorited ? 'Saved to your favorites.' : 'Removed from favorites.');
         }
         window.toggleFavoriteFromCard = toggleFavoriteFromCard;
+
+        // The clean-URL path the SPA already rewrites the address bar to
+        // for this exact route (see hashToCleanPath/syncAddressBarToHash) -
+        // a real, bookmarkable/shareable link straight into the product,
+        // not just the current tab's location, since a card on a listing
+        // page shares a DIFFERENT product than whichever one is currently
+        // open.
+        function productShareUrl(catSlug, idx) {
+            return `${window.location.origin}/product/${catSlug}/${idx}/`;
+        }
+        let shareSheetProduct = null;
+        function openShareSheet(catSlug, idx) {
+            const p = getProduct(catSlug, Number(idx));
+            if (!p) return;
+            shareSheetProduct = { p, url: productShareUrl(catSlug, idx) };
+            document.getElementById('shareSheetName').textContent = p.name;
+            const thumb = document.getElementById('shareSheetThumb');
+            thumb.innerHTML = p.image
+                ? `<img src="${escapeHtml(p.image)}" alt="">`
+                : `<span class="thumb-placeholder-emoji">${p.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
+            // navigator.share opens the device's own native share sheet
+            // (every app actually installed - WhatsApp, Messages, Mail,
+            // etc.), a strictly richer version of the fixed three-option
+            // fallback below, so it's offered as an extra "More" option
+            // rather than replacing them outright.
+            const moreBtn = document.getElementById('shareSheetMoreBtn');
+            if (moreBtn) moreBtn.style.display = navigator.share ? '' : 'none';
+            document.getElementById('shareSheetModal').style.display = 'flex';
+        }
+        window.openShareSheet = openShareSheet;
+        function closeShareSheet() {
+            document.getElementById('shareSheetModal').style.display = 'none';
+            shareSheetProduct = null;
+        }
+        window.closeShareSheet = closeShareSheet;
+        function shareProductVia(channel) {
+            if (!shareSheetProduct) return;
+            const { p, url } = shareSheetProduct;
+            const text = `Check out ${p.name} at Yo7 Foods`;
+            if (channel === 'whatsapp') {
+                window.open(`https://wa.me/?text=${encodeURIComponent(text + ': ' + url)}`, '_blank', 'noopener');
+            } else if (channel === 'email') {
+                window.location.href = `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`;
+            } else if (channel === 'copy') {
+                navigator.clipboard.writeText(url)
+                    .then(() => showToast('Link copied.', undefined, 'success'))
+                    .catch(() => showToast('Could not copy automatically, link shown in your address bar.'));
+            } else if (channel === 'more' && navigator.share) {
+                navigator.share({ title: p.name, text, url }).catch(e => {
+                    if (e && e.name === 'AbortError') return; // person closed the share sheet, not an error
+                });
+            }
+            closeShareSheet();
+        }
+        window.shareProductVia = shareProductVia;
         async function fetchAccountFavoriteKeys(userId) {
             const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', userId);
             if (error) { console.error('Favorites load failed:', error.message); return null; }
@@ -16779,6 +16917,9 @@
           <button class="card-fav-btn${isFav ? ' is-favorited' : ''}" type="button" data-fav-key="${favKey}" aria-pressed="${isFav}" aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}" onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromCard('${p.catSlug}', ${pidx}, this);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           </button>
+          <button class="card-share-btn" type="button" aria-label="Share this product" onclick="event.preventDefault(); event.stopPropagation(); openShareSheet('${p.catSlug}', ${pidx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </button>
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
@@ -17364,6 +17505,8 @@
                 pdFavBtn.setAttribute('aria-label', pdFav ? 'Remove from favorites' : 'Add to favorites');
                 pdFavBtn.onclick = () => toggleFavoriteFromCard(catSlug, Number(idx), pdFavBtn);
             }
+            const pdShareBtn = document.getElementById('pdShareBtn');
+            if (pdShareBtn) pdShareBtn.onclick = () => openShareSheet(catSlug, Number(idx));
 
             const pdImageEl = document.getElementById('pdImage');
             const existingImg = pdImageEl.querySelector('.product-photo-img');
