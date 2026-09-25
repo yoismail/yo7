@@ -12631,9 +12631,21 @@
             },
             {
                 slug: 'other-vegetables', name: 'Other Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M12 8c-1-2-.5-4 1-5M12 8c1-2 2.5-3 4-3"/></svg>', tagline: 'Garden eggs, okra, and the everyday extras that round out the vegetable aisle.',
+                // Cocoyam/Sweet Potato used to live at indices 2/3 here and
+                // have moved to Root Vegetables instead (see catSlug::idx
+                // comment on that category below). Removing their slots
+                // outright would reindex African Star Apple/Bitter Kola
+                // from 2/3 to 4/5 and silently reassign whatever a real
+                // shopper already has saved against those old indices -
+                // tombstoned in place instead (same deleted:true admin edit
+                // mode already treats a removed product with elsewhere),
+                // which keeps every other index in this category exactly
+                // where it already was.
                 products: [
                     { name: 'Garden Eggs', keywords: 'african eggplant igba', unit: 'per punnet', weight: 0.5, price: 3.49 , stock: 'low' },
                     { name: 'Okra', keywords: 'okro', unit: '400g', weight: 0.4, price: 2.49 , stock: 'in' },
+                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in', deleted: true },
+                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in', deleted: true },
                     { name: 'African Star Apple (Agbalumo)', keywords: 'udara', unit: 'per punnet', weight: 0.5, price: 4.99 , stock: 'in' },
                     { name: 'Bitter Kola', keywords: 'orogbo', unit: 'per pack', weight: 0.3, price: 3.49 , stock: 'in' },
                 ]
@@ -12777,14 +12789,24 @@
             },
             {
                 slug: 'root-vegetables', name: 'Root Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20c-2.5-1-4-3.3-3.5-6.5C5.2 9 8.5 6 12.5 5c3 4 4 8.5 2 12-1.5 2.7-4 3.8-6.5 3Z"/><path d="M12.5 5c.5-1 1.5-1.8 2.7-2.2"/></svg>', tagline: 'Yam, cassava, potatoes, onions, garlic, ginger, the roots and bulbs every pot starts with.',
+                // Reported by review: catSlug::idx is this app's persistent
+                // product identity (carts, favorites, stock alerts,
+                // product_overrides, server pricing all key off it), so
+                // inserting a new/moved product into the middle of an
+                // existing category silently reassigns whatever a real
+                // shopper already has saved against the old index at that
+                // slot. The four seed products already live here (indices
+                // 0-3, unchanged since before this PR) stay exactly where
+                // they were; every new or moved-in product below is
+                // appended after them instead of interleaved.
                 products: [
                     { name: 'White Yam (Tuber)', keywords: 'pounded yam yam tuber', unit: 'per tuber', weight: 2, price: 7.99 , stock: 'low' },
-                    { name: 'Water Yam', keywords: 'ewura', unit: 'per tuber', weight: 1.8, price: 6.99 , stock: 'in' },
-                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in' },
-                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in' },
                     { name: 'Cassava (Fresh)', keywords: 'yuca', unit: '1kg', weight: 1, price: 2.99 , stock: 'out' },
                     { name: 'Potatoes (White)', keywords: 'irish potatoes', unit: '2.5kg bag', weight: 2.5, price: 3.99 , stock: 'in' },
                     { name: 'Carrots', unit: '1kg', weight: 1, price: 1.49 , stock: 'in' },
+                    { name: 'Water Yam', keywords: 'ewura', unit: 'per tuber', weight: 1.8, price: 6.99 , stock: 'in' },
+                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in' },
+                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in' },
                     { name: 'Onions', unit: '2kg net', weight: 2, price: 2.99 , stock: 'in' },
                     { name: 'Garlic', unit: '250g', weight: 0.25, price: 1.99 , stock: 'in' },
                     { name: 'Ginger', unit: '500g', weight: 0.5, price: 2.49 , stock: 'in' },
@@ -14314,7 +14336,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.9';
+        const BUILD_VERSION = '2026-09-25.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14755,6 +14777,10 @@
                     : photoClass
                         ? `<span class="cat-flat-photo ${photoClass}"></span>`
                         : `<span class="cat-flat-photo cat-flat-photo-emoji"><span>${c.emoji}</span></span>`;
+                // Excludes tombstoned (deleted:true) slots kept only to hold
+                // an old catSlug::idx position stable - a shopper doesn't
+                // see them, so they shouldn't count toward "N items" either.
+                const itemCount = c.products.filter(p => !p.deleted).length;
                 return `
     <a class="cat-flat-card cat-tile-reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.05).toFixed(2)}s">
       <div class="thumb">
@@ -14766,7 +14792,7 @@
       <div class="cat-flat-scrim">
         <h3>${c.name.replace(/&amp;/g, '&')}</h3>
         <div class="cat-flat-meta">
-          <span class="cat-flat-count">${c.products.length} item${c.products.length === 1 ? '' : 's'}</span>
+          <span class="cat-flat-count">${itemCount} item${itemCount === 1 ? '' : 's'}</span>
           <svg class="cat-flat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </div>
       </div>
@@ -16849,6 +16875,10 @@
             document.getElementById('groupResultCount').textContent = `${cats.length} categor${cats.length === 1 ? 'y' : 'ies'}`;
             document.getElementById('groupCatGrid').innerHTML = cats.map((c, i) => {
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
+                // Excludes tombstoned (deleted:true) slots kept only to hold
+                // an old catSlug::idx position stable - a shopper doesn't
+                // see them, so they shouldn't count toward "N items" either.
+                const itemCount = c.products.filter(p => !p.deleted).length;
                 if (c.image) {
                     return `
     <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
@@ -16856,7 +16886,7 @@
       <div class="group-card-body">
         <h3>${c.name}</h3>
         <p>${c.tagline}</p>
-        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
+        <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
                 }
@@ -16867,7 +16897,7 @@
       <div class="group-card-body">
         <h3>${c.name}</h3>
         <p>${c.tagline}</p>
-        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
+        <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
                 }
@@ -16877,7 +16907,7 @@
       <div class="group-card-body">
         <h3>${c.name}</h3>
         <p>${c.tagline}</p>
-        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
+        <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
             }).join('');
@@ -23863,9 +23893,19 @@
             // on a plain refresh even though it's sitting in the database
             // correctly the whole time. Same fix for whichever category or
             // group page a visitor happens to be sitting on already.
+            //
+            // Reported by review: route() already rewrote the address bar
+            // to a clean path by the time this resolves (syncAddressBarToHash
+            // clears window.location.hash as a side effect, every time), so
+            // reading location.hash directly here always saw an empty
+            // string and this never actually re-rendered the current page.
+            // pathToHash() derives the real route back out of
+            // window.location.pathname instead, the same way boot/back-
+            // forward navigation already has to (see syncHashFromPath).
             renderCatGrid();
-            if (location.hash.startsWith('#/group/')) renderGroupPage(location.hash.replace('#/group/', ''));
-            else if (location.hash.startsWith('#/category/')) renderCategoryPage(location.hash.replace('#/category/', ''));
+            const currentHash = pathToHash(window.location.pathname);
+            if (currentHash.startsWith('#/group/')) renderGroupPage(currentHash.replace('#/group/', ''));
+            else if (currentHash.startsWith('#/category/')) renderCategoryPage(currentHash.replace('#/category/', ''));
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
