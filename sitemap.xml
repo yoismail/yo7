@@ -487,13 +487,13 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/bell-pepper-mixed/</loc>
+    <loc>https://yo7foods.co.uk/product/red-bell-pepper/</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/scotch-bonnet-pepper/</loc>
+    <loc>https://yo7foods.co.uk/product/scotch-bonnet-pepper-ata-rodo/</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -511,7 +511,19 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://yo7foods.co.uk/product/fresh-tomatoes/</loc>
+    <loc>https://yo7foods.co.uk/product/fresh-tomatoes-vine/</loc>
+    <lastmod>2026-09-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yo7foods.co.uk/product/long-pepper-tatashe/</loc>
+    <lastmod>2026-09-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://yo7foods.co.uk/product/green-bell-pepper/</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
