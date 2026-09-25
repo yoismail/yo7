@@ -695,6 +695,54 @@
             .card-fav-btn { transition: none; }
         }
 
+        /* Mirrors .card-fav-btn exactly, just the opposite corner - bottom-left
+           is free on every card the same way bottom-right is, regardless of
+           stock state or edit mode. No "active" state of its own (unlike the
+           heart, sharing isn't a saved/unsaved toggle). */
+        .card-share-btn {
+            position: absolute; bottom: 10px; left: 10px; z-index: 4;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(250, 249, 242, 0.92); color: var(--aubergine);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+            cursor: pointer; transition: transform 0.15s ease;
+        }
+        .card-share-btn:hover { transform: scale(1.08); }
+        .card-share-btn:active { transform: scale(0.94); }
+        .card-share-btn svg { width: 14px; height: 14px; }
+        @media (prefers-reduced-motion: reduce) {
+            .card-share-btn { transition: none; }
+        }
+
+        .share-sheet-box { max-width: 380px; }
+        .share-sheet-preview {
+            display: flex; align-items: center; gap: 12px;
+            margin: 14px 0 18px; padding: 10px;
+            background: rgba(var(--border-rgb), 0.05); border-radius: 12px;
+        }
+        .share-sheet-thumb {
+            width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;
+            background: rgba(var(--border-rgb), 0.08);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .share-sheet-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        .share-sheet-name { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--heading); }
+        .share-sheet-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .share-sheet-btn {
+            flex: 1 1 calc(50% - 5px);
+            display: flex; align-items: center; gap: 8px;
+            padding: 11px 14px; border-radius: 10px;
+            border: 1px solid rgba(var(--border-rgb), 0.18);
+            background: transparent; color: var(--heading);
+            font-family: var(--body); font-size: 13.5px; font-weight: 600;
+            cursor: pointer; transition: background 0.15s ease;
+        }
+        .share-sheet-btn:hover { background: rgba(var(--border-rgb), 0.06); }
+        .share-sheet-icon { display: flex; width: 18px; height: 18px; flex-shrink: 0; }
+        .share-sheet-icon svg { width: 100%; height: 100%; }
+        .share-sheet-btn.whatsapp { color: #25D366; border-color: rgba(37, 211, 102, 0.35); }
+        .share-sheet-btn.whatsapp:hover { background: rgba(37, 211, 102, 0.08); }
+
         .cat-edit-btn {
             display: none;
             position: absolute; top: 8px; right: 8px; z-index: 5;
@@ -10539,6 +10587,9 @@
                         <button class="card-fav-btn" type="button" id="pdFavBtn" aria-pressed="false" aria-label="Add to favorites">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                         </button>
+                        <button class="card-share-btn" type="button" id="pdShareBtn" aria-label="Share this product">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        </button>
                         <span class="pd-placeholder" id="pdPlaceholder"></span>
                     </div>
                     <div>
@@ -12491,6 +12542,38 @@
         </div>
     </div>
 
+    <!-- Top-level (not scoped to any one view) since the share button appears
+         on every product card across the whole site - shop, category, search,
+         favorites, bundles, the PD page, everywhere productCardHTML() renders. -->
+    <div class="modal-overlay" id="shareSheetModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="shareSheetTitle" onclick="if (event.target === this) closeShareSheet();">
+        <div class="modal-box share-sheet-box">
+            <button type="button" class="modal-close" aria-label="Close" onclick="closeShareSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            <h3 id="shareSheetTitle">Share this product</h3>
+            <div class="share-sheet-preview">
+                <div class="share-sheet-thumb" id="shareSheetThumb"></div>
+                <div class="share-sheet-name" id="shareSheetName"></div>
+            </div>
+            <div class="share-sheet-row">
+                <button type="button" class="share-sheet-btn whatsapp" onclick="shareProductVia('whatsapp')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg></span>
+                    WhatsApp
+                </button>
+                <button type="button" class="share-sheet-btn email" onclick="shareProductVia('email')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span>
+                    Email
+                </button>
+                <button type="button" class="share-sheet-btn copy" onclick="shareProductVia('copy')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
+                    Copy link
+                </button>
+                <button type="button" class="share-sheet-btn more" id="shareSheetMoreBtn" style="display:none;" onclick="shareProductVia('more')">
+                    <span class="share-sheet-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>
+                    More
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Not a granular accept/reject consent tool, there's nothing optional
          to consent to (see #/cookie-policy): just an honest, dismissible
          notice about the strictly-necessary cookies Stripe sets at
@@ -12976,6 +13059,123 @@
         // itself only ever exists as this in-page JS, never in the db.
         const SEED_PRODUCT_COUNT = {};
         CATEGORIES.forEach(cat => { SEED_PRODUCT_COUNT[cat.slug] = cat.products.length; });
+        // Maps a product to the real, crawlable slug its static SEO page
+        // (product/<slug>/index.html, see generate-product-pages.py) was
+        // last generated under, so a shared product link can point
+        // straight at that page's own canonical/social metadata instead
+        // of the generic internal catSlug/idx path, which real crawlers
+        // and link-preview bots never see as the same document. Written by
+        // generate-product-pages.py itself on every run, between the
+        // markers below, so it can't drift out of sync with which slug a
+        // product's page actually lives at. A product missing here (not
+        // yet generated, or admin/custom-added, which never gets a static
+        // page) falls back to the hash-route path in productShareUrl().
+        // PRODUCT_SLUGS_MARKER_START
+        const PRODUCT_SLUGS = {
+            "bakery::0": "abuja-bread", "bakery::1": "uncle-john-bread", "bakery::2": "golden-loaf-bread",
+            "bakery::3": "golden-twist-bread", "bakery::4": "lulu-twist-bread", "bakery::5": "st-pierre-brioche-loaf",
+            "baking-essentials::0": "fay-foods-buns-mix", "baking-essentials::1": "fay-foods-puff-puff-mix", "baking-essentials::2": "fay-foods-puff-puff-mix-baking-essentials",
+            "baking-essentials::3": "golden-penny-cube-sugar", "baking-essentials::4": "pegasus-plain-sugar", "baking-essentials::5": "simas-margarine",
+            "baking-essentials::6": "paxo-golden-breadcrumbs", "baking-essentials::7": "tate-and-lyle-pure-cane-sugar", "baking-essentials::8": "tate-and-lyle-granulated-sugar",
+            "baking-essentials::9": "pegasus-baking-powder", "baking-essentials::10": "allyson-yeast",
+            "beans::0": "honey-beans-oloyin", "beans::1": "black-eyed-beans", "beans::2": "brown-beans",
+            "beans::3": "ewa-agoyin-beans",
+            "beverages::0": "milo-tin", "beverages::1": "bournvita", "beverages::2": "lipton-yellow-label",
+            "beverages::3": "peak-milk-powder", "beverages::4": "nestle-milo", "beverages::5": "nestle-milo-beverages",
+            "beverages::6": "nestle-milo-refill", "beverages::7": "nestle-milo-refill-beverages", "beverages::8": "nestle-milo-refill-beverages-3",
+            "beverages::9": "ovaltine", "beverages::10": "ovaltine-beverages", "beverages::11": "cadbury-bournvita",
+            "beverages::12": "ovaltine-beverages-3", "beverages::13": "redmall-hot-choco-powder", "beverages::14": "lipton-yellow-label-beverages",
+            "beverages::15": "lipton-yellow-label-beverages-3", "beverages::16": "the-original-nurishment-choco-flavour", "beverages::17": "nescafe-2-in1",
+            "body-oral-products::0": "raw-shea-butter", "body-oral-products::1": "african-black-soap", "body-oral-products::2": "dudu-osun-soap",
+            "body-oral-products::3": "chewing-stick-atim",
+            "breakfast-cereals::0": "cerelac-wheat-and-honey", "breakfast-cereals::1": "cerelac-fruits-and-wheat", "breakfast-cereals::2": "cerelac-fruits-and-wheat-breakfast-cereals",
+            "breakfast-cereals::3": "cerelac-wheat", "breakfast-cereals::4": "cerelac-baby-rice", "breakfast-cereals::5": "bird-s-custard-powder",
+            "breakfast-cereals::6": "bird-s-custard-powder-breakfast-cereals", "breakfast-cereals::7": "checkers-custard-powder-milk", "breakfast-cereals::8": "checkers-custard-powder-vanilla",
+            "breakfast-cereals::9": "checkers-custard-powder-milk-breakfast-cereals", "breakfast-cereals::10": "checkers-custard-powder-vanilla-breakfast-cereals", "breakfast-cereals::11": "quaker-white-oats",
+            "breakfast-cereals::12": "checkers-custard-powder-vanilla-breakfast-cereals-3", "breakfast-cereals::13": "tasty-pot-ogi-brown", "breakfast-cereals::14": "tasty-pot-ogi-yellow",
+            "breakfast-cereals::15": "tasty-pot-ogi-white", "breakfast-cereals::16": "grandios-pap-brown", "breakfast-cereals::17": "ghana-taste-banku-mix",
+            "breakfast-cereals::18": "golden-morn", "breakfast-cereals::19": "ghana-taste-tuo-zaafi", "breakfast-cereals::20": "ghana-taste-kokonte",
+            "breakfast-cereals::21": "nestle-nestum", "breakfast-cereals::22": "ghana-taste-tom-brown", "breakfast-cereals::23": "golden-morn-breakfast-cereals",
+            "breakfast-cereals::24": "kellogg-s-crunchy-nut",
+            "condiments::0": "tomato-paste-gino", "condiments::1": "ata-rodo-pepper-mix", "condiments::2": "shito-pepper-sauce",
+            "condiments::3": "groundnut-paste", "condiments::4": "af-peanut-butter",
+            "dairy::0": "peak-milk-powder-refill", "dairy::1": "peak-milk-powder-refill-dairy", "dairy::2": "nestle-nido-milk-powder",
+            "dairy::3": "nestle-nido-milk-powder-dairy", "dairy::4": "nestle-nido-milk-powder-dairy-3", "dairy::5": "nestle-nido-milk-powder-dairy-4",
+            "dairy::6": "peak-milk-powder-dairy", "dairy::7": "peak-milk-powder-dairy-3", "dairy::8": "peak-milk-powder-dairy-4",
+            "dairy::9": "ts-milk-powder", "dairy::10": "ts-milk-powder-dairy", "dairy::11": "peak-evaporated-milk",
+            "dairy::12": "nestle-carnation-milk", "dairy::13": "nestle-carnation-milk-dairy", "dairy::14": "nestle-coffee-mate",
+            "dairy::15": "maggi-coconut-milk", "dairy::16": "ktc-coconut-milk", "dairy::17": "ts-milk-powder-dairy-3",
+            "dairy::18": "nestle-condensed-milk",
+            "drinks::0": "zobo-drink-bottled", "drinks::1": "chapman-bottled", "drinks::2": "malt-drink-amstel",
+            "drinks::3": "supermalt",
+            "flour::0": "ayoola-semovita", "flour::1": "yellow-garri-ijebu", "flour::2": "white-garri-ibadan",
+            "flour::3": "elubo-yam-flour",
+            "fruits-vegetables::0": "waterleaf", "fruits-vegetables::1": "ugu-leaves-fluted-pumpkin", "fruits-vegetables::2": "fresh-spinach",
+            "fruits-vegetables::3": "shoko-leaves", "fruits-vegetables::4": "tete-leaves-green", "fruits-vegetables::5": "bitter-leaf",
+            "fruits-vegetables::6": "scent-leaf-nchanwu",
+            "hair-products::0": "cantu-shea-butter-cream", "hair-products::1": "black-castor-oil", "hair-products::2": "braiding-hair-kanekalon",
+            "hair-products::3": "edge-control-gel",
+            "herbal-teas::0": "dalgety-pure-green-tea", "herbal-teas::1": "dalgety-honey-and-ginger", "herbal-teas::2": "dalgety-green-tea-and-ginger",
+            "herbal-teas::3": "dalgety-turmeric-and-ginger", "herbal-teas::4": "dalgety-strong-pure-neem", "herbal-teas::5": "dalgety-effective-slimline",
+            "herbal-teas::6": "slinmy-brand", "herbal-teas::7": "dalgety-soursop-and-ginger", "herbal-teas::8": "dalgety-ginger-granules",
+            "herbal-teas::9": "robert-s-ginger-tea", "herbal-teas::10": "rowse-light-and-mild-honey",
+            "meat::0": "goat-meat-cut", "meat::1": "cow-leg-shaki-style", "meat::2": "beef-chunks",
+            "meat::3": "oxtail",
+            "miscellaneous::0": "aluminium-foil-wrap", "miscellaneous::1": "ziplock-freezer-bags", "miscellaneous::2": "cellophane-nylon-bags",
+            "miscellaneous::3": "disposable-food-containers",
+            "noodles::0": "indomie-chicken-carton", "noodles::1": "indomie-chicken", "noodles::2": "chikki-spaghetti",
+            "noodles::3": "rice-vermicelli", "noodles::4": "indomie-onion-carton",
+            "oils::0": "palm-oil-zomi", "oils::1": "groundnut-oil", "oils::2": "vegetable-oil",
+            "oils::3": "coconut-oil", "oils::4": "ktc-pure-coconut-oil", "oils::5": "ktc-pure-coconut-oil-oils",
+            "other-vegetables::0": "garden-eggs", "other-vegetables::1": "okra", "other-vegetables::4": "african-star-apple-agbalumo",
+            "peppers-chillies::0": "red-bell-pepper", "peppers-chillies::1": "scotch-bonnet-pepper-ata-rodo", "peppers-chillies::2": "yellow-habanero-pepper",
+            "peppers-chillies::3": "green-habanero-pepper", "peppers-chillies::4": "fresh-tomatoes-vine", "peppers-chillies::5": "long-pepper-tatashe",
+            "peppers-chillies::6": "green-bell-pepper",
+            "poultry::0": "whole-hard-chicken", "poultry::1": "chicken-thighs", "poultry::2": "turkey-wings",
+            "poultry::3": "chicken-gizzard", "poultry::4": "hard-chicken-leg-thigh", "poultry::5": "mid-wings-turkey",
+            "poultry::6": "mid-wings-turkey-poultry",
+            "rice::0": "ofada-rice", "rice::1": "long-grain-parboiled-rice", "rice::2": "basmati-rice",
+            "rice::3": "golden-sella-rice", "rice::4": "island-sun-easy-cook", "rice::5": "island-sun-easy-cook-rice",
+            "rice::6": "peacock-easy-cook-rice", "rice::7": "peacock-easy-cook-rice-rice", "rice::8": "disha-gs-basmati-rice",
+            "rice::9": "disha-gs-basmati-rice-rice", "rice::10": "disha-easy-cook-long-grain-rice", "rice::11": "aaa-green-dragon-rice",
+            "rice::12": "aaa-green-dragon-rice-rice", "rice::13": "asli-golden-basmati", "rice::14": "asli-golden-basmati-rice",
+            "rice::15": "tolly-boy-easy-cook-rice", "rice::16": "tolly-boy-easy-cook-rice-rice", "rice::17": "tilda-golden-sella-basmati",
+            "rice::18": "tilda-golden-sella-basmati-rice", "rice::19": "setara-supreme-golden-basmati-rice", "rice::20": "setara-supreme-pure-basmati-rice",
+            "rice::21": "setara-golden-basmati-sella-rice", "rice::22": "setara-golden-basmati-sella-rice-rice", "rice::23": "ts-gs-pure-basmati-rice",
+            "rice::24": "ts-gs-pure-basmati-rice-rice", "rice::25": "aaa-jasmine-rice", "rice::26": "aaa-jasmine-rice-rice",
+            "rice::27": "peacock-gs-basmati-rice", "rice::28": "peacock-gs-basmati-rice-rice", "rice::29": "aani-gs-basmati-rice",
+            "rice::30": "aani-gs-basmati-rice-rice", "rice::31": "tilda-pure-basmati-rice", "rice::32": "tilda-pure-basmati-rice-rice",
+            "rice::33": "ts-usa-easy-cook-rice", "rice::34": "tolly-boy-easy-cook-rice-rice-3", "rice::35": "aaa-green-dragon-rice-rice-3",
+            "rice::36": "peacock-easy-cook-rice-rice-3", "rice::37": "setara-golden-sella-basmati-rice", "rice::38": "ts-usa-easy-cook-rice-rice",
+            "rice::39": "papa-s-choice-gs-basmati-rice", "rice::40": "lal-qilla-basmati-rice", "rice::41": "lal-qilla-supreme-sella-rice",
+            "rice::42": "disha-easy-cook-long-grain-rice-rice", "rice::43": "setara-jasmine-rice", "rice::44": "tolly-boy-easy-cook-rice-rice-4",
+            "rice::45": "seamoon-jollof-rice", "rice::46": "aaa-jasmine-rice-rice-3", "rice::47": "horseshoe-ground-rice",
+            "rice::48": "peacock-fragrant-rice",
+            "root-vegetables::0": "white-yam-tuber", "root-vegetables::1": "cassava-fresh", "root-vegetables::2": "potatoes-white",
+            "root-vegetables::3": "sweet-potato", "root-vegetables::4": "puna-yam", "root-vegetables::5": "sweet-potato-root-vegetables",
+            "root-vegetables::6": "cocoyam", "root-vegetables::7": "onions", "root-vegetables::8": "garlic",
+            "root-vegetables::9": "ginger",
+            "sea-foods::0": "dried-catfish", "sea-foods::1": "crayfish-ground", "sea-foods::2": "stockfish-okporoko",
+            "sea-foods::3": "dried-prawns", "sea-foods::4": "aq-mackerel-in-tom-sauce", "sea-foods::5": "geisha-mack-in-tom-sauce-with-chili",
+            "sea-foods::6": "geisha-mack-in-tom-sauce",
+            "seasoning::0": "maggi-star-cubes", "seasoning::1": "knorr-chicken-cubes", "seasoning::2": "curry-powder",
+            "seasoning::3": "suya-spice-blend", "seasoning::4": "ts-hot-curry-powder", "seasoning::5": "dr-hot-curry-powder",
+            "seasoning::6": "ts-mild-curry-powder", "seasoning::7": "ts-adobo-seasoning", "seasoning::8": "af-jollof-seasoning",
+            "seasoning::9": "ts-smoked-paprika", "seasoning::10": "ts-all-purpose-seasoning", "seasoning::11": "af-obe-ata-seasoning",
+            "seasoning::12": "dr-all-purpose-seasoning", "seasoning::13": "ts-cinnamon-stick", "seasoning::14": "dr-mild-curry-powder",
+            "seasoning::15": "ts-dried-thyme", "seasoning::16": "dr-mixed-herbs", "seasoning::17": "af-efo-seasoning",
+            "seasoning::18": "ts-ground-cinnamon", "seasoning::19": "dr-curry-goat-seasoning", "seasoning::20": "rajah-ground-ginger",
+            "snacks-confectionary::0": "chin-chin-homemade-style", "snacks-confectionary::1": "plantain-chips", "snacks-confectionary::2": "chin-chin-puff-puff-mix",
+            "snacks-confectionary::3": "groundnut-roasted", "snacks-confectionary::4": "oxford-cabin-biscuit", "snacks-confectionary::5": "ts-plantain-chips-sweet",
+            "snacks-confectionary::6": "abiglobal-chinchin", "snacks-confectionary::7": "abiglobal-chinchin-snacks-confectionary", "snacks-confectionary::8": "abiglobal-chinchin-snacks-confectionary-3",
+            "snacks-confectionary::9": "haffinique-peanuts", "snacks-confectionary::10": "haffinique-peanuts-snacks-confectionary", "snacks-confectionary::11": "elex-peanuts",
+            "snacks-confectionary::12": "elex-peanuts-snacks-confectionary", "snacks-confectionary::13": "tabitha-s-chinchin", "snacks-confectionary::14": "ts-coconut-peanuts",
+            "snacks-confectionary::15": "ts-coconut-peanuts-snacks-confectionary", "snacks-confectionary::16": "haffinique-peanuts-snacks-confectionary-3", "snacks-confectionary::17": "af-chinchin",
+            "snacks-confectionary::18": "af-chinchin-snacks-confectionary", "snacks-confectionary::19": "af-chinchin-snacks-confectionary-3", "snacks-confectionary::20": "af-coconut-chinchin",
+            "snacks-confectionary::21": "af-coconut-chinchin-snacks-confectionary", "snacks-confectionary::22": "munro-glucose-d",
+            "tropical-foods::0": "yellow-plantain", "tropical-foods::2": "mango", "tropical-foods::3": "coconut-whole",
+        };
+        // PRODUCT_SLUGS_MARKER_END
         // Renamed/regrouped from the original 5 broad buckets to these —
         // the terms a customer already searches an African grocery site
         // for (Rice, Beans, Noodles, Garri & Flours, Meat & Poultry, ...)
@@ -14347,7 +14547,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.14';
+        const BUILD_VERSION = '2026-09-25.16';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14790,6 +14990,97 @@
             showToast(nowFavorited ? 'Saved to your favorites.' : 'Removed from favorites.');
         }
         window.toggleFavoriteFromCard = toggleFavoriteFromCard;
+
+        // Prefers the product's own static SEO page (product/<slug>/,
+        // carrying that product's real canonical/social meta tags - see
+        // PRODUCT_SLUGS above) over the internal catSlug/idx hash-route
+        // path, since a crawler or link-preview bot (WhatsApp, iMessage,
+        // etc.) only ever reads whichever document the URL resolves to
+        // directly, not what the SPA's JS would later render there. Falls
+        // back to the hash-route's clean path (still a fully working link,
+        // just without that page-specific metadata) for any product that
+        // hasn't been through generate-product-pages.py yet, or was
+        // added/edited by an admin after the fact (those never get a
+        // static page).
+        function productShareUrl(catSlug, idx) {
+            const slug = PRODUCT_SLUGS[`${catSlug}::${idx}`];
+            return slug
+                ? `${window.location.origin}/product/${slug}/`
+                : `${window.location.origin}/product/${catSlug}/${idx}/`;
+        }
+        // navigator.clipboard is undefined outright in some contexts (an
+        // insecure/non-HTTPS origin, older Safari) rather than just
+        // rejecting - accessing .writeText on it throws synchronously, so
+        // that has to be guarded before the call, not just handled with a
+        // .catch() on the (never-reached) promise it would have returned.
+        // Falls back to the older execCommand('copy') API, which still
+        // works in those same contexts; only once both have genuinely
+        // failed does the toast fall back to just showing the link itself,
+        // since neither copy path actually happened by then.
+        function copyTextToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showToast('Link copied.', undefined, 'success'))
+                    .catch(() => legacyCopyTextToClipboard(text));
+                return;
+            }
+            legacyCopyTextToClipboard(text);
+        }
+        function legacyCopyTextToClipboard(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            let copied = false;
+            try { copied = document.execCommand('copy'); } catch (e) { copied = false; }
+            document.body.removeChild(ta);
+            showToast(copied ? 'Link copied.' : `Could not copy automatically: ${text}`, undefined, copied ? 'success' : 'info');
+        }
+        let shareSheetProduct = null;
+        function openShareSheet(catSlug, idx) {
+            const p = getProduct(catSlug, Number(idx));
+            if (!p) return;
+            shareSheetProduct = { p, url: productShareUrl(catSlug, idx) };
+            document.getElementById('shareSheetName').textContent = p.name;
+            const thumb = document.getElementById('shareSheetThumb');
+            thumb.innerHTML = p.image
+                ? `<img src="${escapeHtml(p.image)}" alt="">`
+                : `<span class="thumb-placeholder-emoji">${p.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
+            // navigator.share opens the device's own native share sheet
+            // (every app actually installed - WhatsApp, Messages, Mail,
+            // etc.), a strictly richer version of the fixed three-option
+            // fallback below, so it's offered as an extra "More" option
+            // rather than replacing them outright.
+            const moreBtn = document.getElementById('shareSheetMoreBtn');
+            if (moreBtn) moreBtn.style.display = navigator.share ? '' : 'none';
+            document.getElementById('shareSheetModal').style.display = 'flex';
+        }
+        window.openShareSheet = openShareSheet;
+        function closeShareSheet() {
+            document.getElementById('shareSheetModal').style.display = 'none';
+            shareSheetProduct = null;
+        }
+        window.closeShareSheet = closeShareSheet;
+        function shareProductVia(channel) {
+            if (!shareSheetProduct) return;
+            const { p, url } = shareSheetProduct;
+            const text = `Check out ${p.name} at Yo7 Foods`;
+            if (channel === 'whatsapp') {
+                window.open(`https://wa.me/?text=${encodeURIComponent(text + ': ' + url)}`, '_blank', 'noopener');
+            } else if (channel === 'email') {
+                window.location.href = `mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}`;
+            } else if (channel === 'copy') {
+                copyTextToClipboard(url);
+            } else if (channel === 'more' && navigator.share) {
+                navigator.share({ title: p.name, text, url }).catch(e => {
+                    if (e && e.name === 'AbortError') return; // person closed the share sheet, not an error
+                });
+            }
+            closeShareSheet();
+        }
+        window.shareProductVia = shareProductVia;
         async function fetchAccountFavoriteKeys(userId) {
             const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', userId);
             if (error) { console.error('Favorites load failed:', error.message); return null; }
@@ -16779,6 +17070,9 @@
           <button class="card-fav-btn${isFav ? ' is-favorited' : ''}" type="button" data-fav-key="${favKey}" aria-pressed="${isFav}" aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}" onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromCard('${p.catSlug}', ${pidx}, this);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           </button>
+          <button class="card-share-btn" type="button" aria-label="Share this product" onclick="event.preventDefault(); event.stopPropagation(); openShareSheet('${p.catSlug}', ${pidx});">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </button>
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
@@ -17364,6 +17658,8 @@
                 pdFavBtn.setAttribute('aria-label', pdFav ? 'Remove from favorites' : 'Add to favorites');
                 pdFavBtn.onclick = () => toggleFavoriteFromCard(catSlug, Number(idx), pdFavBtn);
             }
+            const pdShareBtn = document.getElementById('pdShareBtn');
+            if (pdShareBtn) pdShareBtn.onclick = () => openShareSheet(catSlug, Number(idx));
 
             const pdImageEl = document.getElementById('pdImage');
             const existingImg = pdImageEl.querySelector('.product-photo-img');

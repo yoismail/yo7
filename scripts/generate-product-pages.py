@@ -105,6 +105,55 @@ def extract_statement(html, start_marker, end_marker, label):
     return html[start:end + len(end_marker)]
 
 
+PRODUCT_SLUGS_START = '// PRODUCT_SLUGS_MARKER_START'
+PRODUCT_SLUGS_END = '// PRODUCT_SLUGS_MARKER_END'
+
+
+def format_product_slugs_block(product_slug_map):
+    """Renders PRODUCT_SLUGS as a JS object literal, 3 entries per line
+    grouped by category - matches the hand-formatted block this replaces,
+    so a re-run only diffs genuine slug changes, not reformatting noise."""
+    def sort_key(k):
+        cat, idx = k.split('::')
+        return (cat, int(idx))
+    lines = []
+    buf = []
+    cur_cat = None
+
+    def flush():
+        if buf:
+            lines.append('            ' + ' '.join(buf))
+            buf.clear()
+
+    for key in sorted(product_slug_map, key=sort_key):
+        cat = key.split('::')[0]
+        if cat != cur_cat:
+            flush()
+            cur_cat = cat
+        buf.append(f'{json.dumps(key)}: {json.dumps(product_slug_map[key])},')
+        if len(buf) >= 3:
+            flush()
+    flush()
+    return '        const PRODUCT_SLUGS = {\n' + '\n'.join(lines) + '\n        };'
+
+
+def update_product_slugs_in_source(product_slug_map):
+    """Keeps src/index.html's PRODUCT_SLUGS map (see its own comment there,
+    right above the markers this looks for) in sync with whichever slug
+    each product's static page actually landed at this run - regenerated
+    fresh every time rather than hand-maintained, so productShareUrl()
+    client-side can never point a shared link at a stale/wrong slug."""
+    with open(SOURCE, 'r', encoding='utf-8') as f:
+        content = f.read()
+    old_block = extract_statement(content, PRODUCT_SLUGS_START, PRODUCT_SLUGS_END, 'PRODUCT_SLUGS')
+    new_block = f'{PRODUCT_SLUGS_START}\n{format_product_slugs_block(product_slug_map)}\n        {PRODUCT_SLUGS_END}'
+    if new_block == old_block:
+        return
+    with open(SOURCE, 'w', encoding='utf-8') as f:
+        f.write(content.replace(old_block, new_block, 1))
+    print('Updated PRODUCT_SLUGS in src/index.html.')
+
+
 def extract_const_string(html, name):
     """Pulls a single-line `const NAME = '...';` string literal out of the
     source verbatim — unlike CATEGORIES, SUPABASE_URL/SUPABASE_ANON_KEY are
@@ -515,6 +564,7 @@ def main():
     today = date.today().isoformat()
     used_slugs = set()
     product_locs = []
+    product_slug_map = {}
     written = 0
     skipped_deleted = 0
 
@@ -538,6 +588,7 @@ def main():
             name_plain = p['name']
             name_html = html_escape(name_plain)
             slug = unique_slug(name_plain, cat_slug, used_slugs)
+            product_slug_map[f'{cat_slug}::{idx}'] = slug
             path_slug = f'product/{slug}'
             page_url = f'{BASE_URL}/{path_slug}/'
             real_path = f'/{path_slug}/'
@@ -580,6 +631,7 @@ def main():
     print(f'\n{written} product pages written' + (f', {skipped_deleted} deleted product(s) skipped.' if skipped_deleted else '.'))
     prune_orphan_product_dirs(used_slugs)
     rebuild_sitemap(product_locs, today)
+    update_product_slugs_in_source(product_slug_map)
 
 
 if __name__ == '__main__':
