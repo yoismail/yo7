@@ -14548,7 +14548,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.17';
+        const BUILD_VERSION = '2026-09-25.18';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17060,20 +17060,12 @@
             const outOfStock = stock === 'out';
             const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
-            const favKey = `${p.catSlug}::${pidx}`;
-            const isFav = isFavorited(p.catSlug, pidx);
             return `
     <div class="product-card${p.deleted ? ' is-deleted' : ''}" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
           ${p.deleted ? `<span class="stock-badge deleted">Deleted</span>` : (stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : '')}
           ${productPhotoHTML(p, p.name)}
-          <button class="card-fav-btn${isFav ? ' is-favorited' : ''}" type="button" data-fav-key="${favKey}" aria-pressed="${isFav}" aria-label="${isFav ? 'Remove from favorites' : 'Add to favorites'}" onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromCard('${p.catSlug}', ${pidx}, this);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-          </button>
-          <button class="card-share-btn" type="button" aria-label="Share this product" onclick="event.preventDefault(); event.stopPropagation(); openShareSheet('${p.catSlug}', ${pidx});">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>
-          </button>
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
