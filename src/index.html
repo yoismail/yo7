@@ -1164,10 +1164,14 @@
            in both themes (see the DARK MODE comment further up), so the
            switch's own dark-mode colouring is tuned to read against that
            permanently-light bar, not against a dark page background. */
+        /* Sized to match the 34px .nav-cart-btn tier it sits beside in
+           .nav-right - it was a standalone 28px-tall pill before, visibly
+           shorter than every icon button next to it and the one thing
+           breaking an otherwise even row. */
         .theme-switch {
             position: relative;
-            width: 52px;
-            height: 28px;
+            width: 58px;
+            height: 34px;
             border-radius: 999px;
             padding: 3px;
             display: flex;
@@ -1185,8 +1189,8 @@
         }
         .theme-switch-thumb {
             position: relative;
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: var(--cream);
             box-shadow: 0 2px 5px rgba(44, 28, 16, 0.28);
@@ -1198,8 +1202,8 @@
         }
         .theme-switch-icon {
             position: absolute;
-            width: 13px;
-            height: 13px;
+            width: 18px;
+            height: 18px;
             transition: opacity 0.25s ease, transform 0.35s cubic-bezier(.4, 0, .2, 1);
         }
         .theme-switch-icon-sun {
@@ -1220,7 +1224,7 @@
             border-color: var(--chartreuse-rich);
         }
         [data-theme="dark"] .theme-switch-thumb {
-            transform: translateX(26px);
+            transform: translateX(24px);
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
         }
         [data-theme="dark"] .theme-switch-icon-sun {
@@ -1599,8 +1603,22 @@
             border-bottom: 1px solid rgba(44, 28, 16, 0.08);
         }
 
-        .mobile-menu a:last-child {
+        .mobile-menu a:last-of-type {
             border-bottom: none;
+        }
+
+        /* Signed-out only (toggled the same way orderHistoryLink/
+           referNavLink already are, from setUser()/clearUser()) - a
+           logged-in visitor has no use for a "create an account" prompt
+           of their own. Sits below a divider so it reads as a distinct
+           call to action, not one more link in the list above it. */
+        .mobile-menu-auth {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(44, 28, 16, 0.1);
         }
 
         .mobile-search {
@@ -6310,6 +6328,12 @@
             font-size: 20px;
             margin-bottom: 8px;
         }
+        /* No margin below the subtitle otherwise, so the "Browse the
+           shop" button sits right up against the text above it with no
+           breathing room. */
+        .empty-state p {
+            margin-bottom: 24px;
+        }
         /* A dead end otherwise — "nothing matches, try another word" on
            its own just leaves someone stuck. Populated by
            createPaginatedGrid()'s paint() with a handful of best sellers
@@ -9923,6 +9947,10 @@
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
+            <div class="mobile-menu-auth" id="mobileMenuAuth">
+                <a class="btn btn-primary btn-block" href="#/signup">Create an account</a>
+                <a class="btn btn-outline-dark btn-block" href="#/login">Log in</a>
+            </div>
         </div>
     </nav>
 
@@ -9959,12 +9987,12 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
                     </span>
                     <div class="launch-banner-text">
-                        <h2>Our website is live. The launch is coming.</h2>
-                        <p>Yo7 Foods is now online as we prepare for our official business launch in January 2027. Explore our range, get familiar with Yo7 Foods and join our launch list to secure 10% off your first order and be among the first to know when we go live.</p>
+                        <h2>Yo7 Foods Website is Live &bull; Launch Coming January 2027</h2>
+                        <p>Yo7 Foods is officially online! 🎉 We're busy preparing for our full launch in January 2027. Explore our departments, get settled in, and get to know Yo7 Foods today. Join our launch list now and you'll get 10% off your first order, plus be the very first to know the moment we go fully live!</p>
                     </div>
                     <a class="launch-banner-tag" href="javascript:void(0)" onclick="document.getElementById('heroCaptureWrap').scrollIntoView({behavior:'smooth', block:'center'})">
                         <span class="launch-banner-dot" aria-hidden="true"></span>
-                        Get 10% Off
+                        Join for 10% Off &rarr;
                     </a>
                 </div>
             </div>
@@ -12602,12 +12630,22 @@
                 ]
             },
             {
-                slug: 'other-vegetables', name: 'Other Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M12 8c-1-2-.5-4 1-5M12 8c1-2 2.5-3 4-3"/></svg>', tagline: 'Garden eggs, okra, cocoyam, and the everyday extras that round out the vegetable aisle.',
+                slug: 'other-vegetables', name: 'Other Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M12 8c-1-2-.5-4 1-5M12 8c1-2 2.5-3 4-3"/></svg>', tagline: 'Garden eggs, okra, and the everyday extras that round out the vegetable aisle.',
+                // Cocoyam/Sweet Potato used to live at indices 2/3 here and
+                // have moved to Root Vegetables instead (see catSlug::idx
+                // comment on that category below). Removing their slots
+                // outright would reindex African Star Apple/Bitter Kola
+                // from 2/3 to 4/5 and silently reassign whatever a real
+                // shopper already has saved against those old indices -
+                // tombstoned in place instead (same deleted:true admin edit
+                // mode already treats a removed product with elsewhere),
+                // which keeps every other index in this category exactly
+                // where it already was.
                 products: [
                     { name: 'Garden Eggs', keywords: 'african eggplant igba', unit: 'per punnet', weight: 0.5, price: 3.49 , stock: 'low' },
                     { name: 'Okra', keywords: 'okro', unit: '400g', weight: 0.4, price: 2.49 , stock: 'in' },
-                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in' },
-                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in' },
+                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in', deleted: true },
+                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in', deleted: true },
                     { name: 'African Star Apple (Agbalumo)', keywords: 'udara', unit: 'per punnet', weight: 0.5, price: 4.99 , stock: 'in' },
                     { name: 'Bitter Kola', keywords: 'orogbo', unit: 'per pack', weight: 0.3, price: 3.49 , stock: 'in' },
                 ]
@@ -12750,12 +12788,28 @@
                 ]
             },
             {
-                slug: 'root-vegetables', name: 'Root Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20c-2.5-1-4-3.3-3.5-6.5C5.2 9 8.5 6 12.5 5c3 4 4 8.5 2 12-1.5 2.7-4 3.8-6.5 3Z"/><path d="M12.5 5c.5-1 1.5-1.8 2.7-2.2"/></svg>', tagline: 'Yam, cassava, potatoes, carrots, dug up and ready for the pot.',
+                slug: 'root-vegetables', name: 'Root Vegetables', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20c-2.5-1-4-3.3-3.5-6.5C5.2 9 8.5 6 12.5 5c3 4 4 8.5 2 12-1.5 2.7-4 3.8-6.5 3Z"/><path d="M12.5 5c.5-1 1.5-1.8 2.7-2.2"/></svg>', tagline: 'Yam, cassava, potatoes, onions, garlic, ginger, the roots and bulbs every pot starts with.',
+                // Reported by review: catSlug::idx is this app's persistent
+                // product identity (carts, favorites, stock alerts,
+                // product_overrides, server pricing all key off it), so
+                // inserting a new/moved product into the middle of an
+                // existing category silently reassigns whatever a real
+                // shopper already has saved against the old index at that
+                // slot. The four seed products already live here (indices
+                // 0-3, unchanged since before this PR) stay exactly where
+                // they were; every new or moved-in product below is
+                // appended after them instead of interleaved.
                 products: [
                     { name: 'White Yam (Tuber)', keywords: 'pounded yam yam tuber', unit: 'per tuber', weight: 2, price: 7.99 , stock: 'low' },
                     { name: 'Cassava (Fresh)', keywords: 'yuca', unit: '1kg', weight: 1, price: 2.99 , stock: 'out' },
                     { name: 'Potatoes (White)', keywords: 'irish potatoes', unit: '2.5kg bag', weight: 2.5, price: 3.99 , stock: 'in' },
                     { name: 'Carrots', unit: '1kg', weight: 1, price: 1.49 , stock: 'in' },
+                    { name: 'Water Yam', keywords: 'ewura', unit: 'per tuber', weight: 1.8, price: 6.99 , stock: 'in' },
+                    { name: 'Sweet Potato', unit: '1kg', weight: 1, price: 2.49 , stock: 'in' },
+                    { name: 'Cocoyam', keywords: 'taro eddoe', unit: '1kg', weight: 1, price: 3.49 , stock: 'in' },
+                    { name: 'Onions', unit: '2kg net', weight: 2, price: 2.99 , stock: 'in' },
+                    { name: 'Garlic', unit: '250g', weight: 0.25, price: 1.99 , stock: 'in' },
+                    { name: 'Ginger', unit: '500g', weight: 0.5, price: 2.49 , stock: 'in' },
                 ]
             },
             {
@@ -14282,7 +14336,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.7';
+        const BUILD_VERSION = '2026-09-25.10';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14723,6 +14777,10 @@
                     : photoClass
                         ? `<span class="cat-flat-photo ${photoClass}"></span>`
                         : `<span class="cat-flat-photo cat-flat-photo-emoji"><span>${c.emoji}</span></span>`;
+                // Excludes tombstoned (deleted:true) slots kept only to hold
+                // an old catSlug::idx position stable - a shopper doesn't
+                // see them, so they shouldn't count toward "N items" either.
+                const itemCount = c.products.filter(p => !p.deleted).length;
                 return `
     <a class="cat-flat-card cat-tile-reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.05).toFixed(2)}s">
       <div class="thumb">
@@ -14734,7 +14792,7 @@
       <div class="cat-flat-scrim">
         <h3>${c.name.replace(/&amp;/g, '&')}</h3>
         <div class="cat-flat-meta">
-          <span class="cat-flat-count">${c.products.length} item${c.products.length === 1 ? '' : 's'}</span>
+          <span class="cat-flat-count">${itemCount} item${itemCount === 1 ? '' : 's'}</span>
           <svg class="cat-flat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </div>
       </div>
@@ -16817,6 +16875,10 @@
             document.getElementById('groupResultCount').textContent = `${cats.length} categor${cats.length === 1 ? 'y' : 'ies'}`;
             document.getElementById('groupCatGrid').innerHTML = cats.map((c, i) => {
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
+                // Excludes tombstoned (deleted:true) slots kept only to hold
+                // an old catSlug::idx position stable - a shopper doesn't
+                // see them, so they shouldn't count toward "N items" either.
+                const itemCount = c.products.filter(p => !p.deleted).length;
                 if (c.image) {
                     return `
     <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
@@ -16824,7 +16886,7 @@
       <div class="group-card-body">
         <h3>${c.name}</h3>
         <p>${c.tagline}</p>
-        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
+        <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
                 }
@@ -16835,7 +16897,7 @@
       <div class="group-card-body">
         <h3>${c.name}</h3>
         <p>${c.tagline}</p>
-        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
+        <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
                 }
@@ -16845,7 +16907,7 @@
       <div class="group-card-body">
         <h3>${c.name}</h3>
         <p>${c.tagline}</p>
-        <span class="group-aisles-badge">${c.products.length} ITEMS</span>
+        <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
             }).join('');
@@ -21504,6 +21566,8 @@
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = currentSupabaseUser ? 'flex' : 'none';
+            const mobileMenuAuth = document.getElementById('mobileMenuAuth');
+            if (mobileMenuAuth) mobileMenuAuth.style.display = 'none';
             renderCartList();
             syncLoyaltyState().then(renderCartList);
             const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
@@ -21563,6 +21627,8 @@
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = 'none';
+            const mobileMenuAuth = document.getElementById('mobileMenuAuth');
+            if (mobileMenuAuth) mobileMenuAuth.style.display = 'flex';
             const reorderSection = document.getElementById('reorderSection');
             if (reorderSection) reorderSection.style.display = 'none';
             const buyAgainSection = document.getElementById('buyAgainSection');
@@ -23820,6 +23886,26 @@
             // refresh even though it saved correctly.
             renderDishPicker();
             renderDishBuilder();
+            // CATEGORY_OVERRIDES (an admin-set category photo/tagline) only
+            // exists once this resolves too, but renderCatGrid() already ran
+            // once at boot using the pre-load defaults, without a second
+            // call here, a saved category photo looks like it "didn't save"
+            // on a plain refresh even though it's sitting in the database
+            // correctly the whole time. Same fix for whichever category or
+            // group page a visitor happens to be sitting on already.
+            //
+            // Reported by review: route() already rewrote the address bar
+            // to a clean path by the time this resolves (syncAddressBarToHash
+            // clears window.location.hash as a side effect, every time), so
+            // reading location.hash directly here always saw an empty
+            // string and this never actually re-rendered the current page.
+            // pathToHash() derives the real route back out of
+            // window.location.pathname instead, the same way boot/back-
+            // forward navigation already has to (see syncHashFromPath).
+            renderCatGrid();
+            const currentHash = pathToHash(window.location.pathname);
+            if (currentHash.startsWith('#/group/')) renderGroupPage(currentHash.replace('#/group/', ''));
+            else if (currentHash.startsWith('#/category/')) renderCategoryPage(currentHash.replace('#/category/', ''));
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
