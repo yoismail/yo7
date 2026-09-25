@@ -13091,6 +13091,7 @@
         }
         function deliveryFreeReasonText(reason) {
             if (!reason) return '';
+            if (reason.type === 'pickup') return "Free because you're collecting this order in-store, there's no delivery to charge for.";
             if (reason.type === 'discount') return `Free delivery included with your code (${reason.code}).`;
             if (reason.name) return `${reason.name}, applied to this order.`;
             return 'Free delivery applied to this order.';
@@ -14199,7 +14200,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.1';
+        const BUILD_VERSION = '2026-09-25.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18036,20 +18037,19 @@
             ['sumDelivery', 'sumDelivery2', 'sumDelivery3'].forEach(id => document.getElementById(id).textContent = deliveryIsFree ? 'Free' : money(delivery));
             ['sumDeliveryLabel', 'sumDeliveryLabel2', 'sumDeliveryLabel3'].forEach(id => document.getElementById(id).textContent = label);
             // Showing "Free" with no explanation left customers guessing why -
-            // when a threshold rule or discount code is what zeroed the fee,
-            // name it here instead of just the generic weight-pricing note.
-            // Pickup already says so via its own "no fee" chip, so it gets
-            // neither note.
+            // when a threshold rule, discount code, or pickup is what zeroed
+            // the fee, name it here instead of just the generic weight-pricing
+            // note. Pickup's own "no fee" chip said it was free, but never
+            // said why, same gap as the threshold/discount cases.
             ['sumDeliveryNote', 'sumDeliveryNote2', 'sumDeliveryNote3'].forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
+                el.style.display = 'block';
                 if (fulfilmentMethod === 'pickup') {
-                    el.style.display = 'none';
+                    el.textContent = deliveryFreeReasonText({ type: 'pickup' });
                 } else if (resolvedFee === 0 && freeReason) {
-                    el.style.display = 'block';
                     el.textContent = deliveryFreeReasonText(freeReason);
                 } else {
-                    el.style.display = 'block';
                     el.textContent = 'Delivery is priced by total order weight, not a flat rate.';
                 }
             });
@@ -20673,7 +20673,10 @@
             document.getElementById('invDelivery').textContent = lastOrder.delivery === 0 ? 'Free' : money(lastOrder.delivery);
             const invFreeNoteEl = document.getElementById('invDeliveryFreeNote');
             if (invFreeNoteEl) {
-                if (!isPickup && lastOrder.delivery === 0 && lastOrder.deliveryFreeReason) {
+                if (isPickup) {
+                    invFreeNoteEl.style.display = 'block';
+                    invFreeNoteEl.textContent = deliveryFreeReasonText({ type: 'pickup' });
+                } else if (lastOrder.delivery === 0 && lastOrder.deliveryFreeReason) {
                     invFreeNoteEl.style.display = 'block';
                     invFreeNoteEl.textContent = deliveryFreeReasonText(lastOrder.deliveryFreeReason);
                 } else {
