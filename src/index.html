@@ -1096,26 +1096,28 @@
             box-shadow: 0 8px 18px rgba(6, 59, 0, 0.13);
         }
 
-        /* Hidden by default, shown only from 1051px up - a sixth icon here
-           has nowhere free to go at the widths below that. Mobile
-           (≤900px) already has this covered by the hamburger menu's own
-           "My Favorites" entry, so this icon isn't needed there at all,
-           and measured directly it was the one making .nav-right wrap
-           the hamburger onto its own line at 360px (already the
-           narrowest real phone this bar is tuned against, see the
-           comment on the 400px breakpoint below). #mainNav .wrap is one
-           flex row where only .search-wrap actually shrinks
-           (flex:1; min-width:0) - .nav-mark, .nav-links and .nav-right
-           are all shrink-resistant, so any extra content anywhere in the
-           row comes straight out of the search box's width. This icon
-           cost a flat ~50px of search width at every desktop size
-           (measured directly), acceptable once search already has real
-           room (1051px+) but not in the 901-1050px band, where it tips
-           search from "already marginal" (32-140px, a pre-existing edge
-           case, not something this change is responsible for) into
-           "fully invisible" (0-32px). */
+        /* Hidden by default, shown from 901px up - the same point
+           .nav-links/.nav-right switch into their desktop layout and the
+           hamburger (with its own "My Favorites" entry) disappears.
+           Previously this only started at 1051px, leaving 901-1040px
+           with the heart icon fully usable on every product but no way
+           at all to reach the favorites page itself (caught in review) -
+           a real dead zone is worse than the cost below, so this closes
+           it rather than route around it.
+           #mainNav .wrap is one flex row where only .search-wrap actually
+           shrinks (flex:1; min-width:0) - .nav-mark, .nav-links and
+           .nav-right are all shrink-resistant, so any extra content
+           anywhere in the row comes straight out of the search box's
+           width. This icon costs a flat ~50px of search width at every
+           desktop size (measured directly); in the 901-1040px band that
+           tips search from "already marginal" (32-140px, a pre-existing
+           edge case on production, not something this change created) to
+           "fully invisible" (0-90px) - a real, accepted trade-off for a
+           working nav path over a wider-but-still-marginal search box.
+           Mobile (≤900px) is unaffected either way, it never shows this
+           icon at all. */
         .nav-fav-btn { display: none; }
-        @media (min-width: 1051px) {
+        @media (min-width: 901px) {
             .nav-fav-btn { display: flex; }
         }
 
@@ -14251,7 +14253,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.5';
+        const BUILD_VERSION = '2026-09-25.6';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -14561,14 +14563,41 @@
         function isFavorited(catSlug, idx) {
             return favorites.includes(`${catSlug}::${idx}`);
         }
+        // Reported by review: rapid re-toggling of the same product fired
+        // one independent request per click, so a late upsert landing
+        // after an earlier delete could leave the server favorited while
+        // local state (and every other device) says it isn't. Debounced
+        // per product key instead, mirroring scheduleCartSync's own
+        // pattern - only the state that's still current once the timer
+        // actually fires gets sent, so a burst of clicks on the same
+        // product collapses into a single write reflecting wherever the
+        // heart was actually left, never an intermediate state.
+        const favoriteSyncTimers = new Map(); // product_key -> pending timeout id
+        function scheduleFavoriteSync(key) {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            const userId = currentSupabaseUser.id;
+            clearTimeout(favoriteSyncTimers.get(key));
+            favoriteSyncTimers.set(key, setTimeout(() => {
+                favoriteSyncTimers.delete(key);
+                // The account this was queued for may have logged out or
+                // switched by the time this fires - re-check, don't sync
+                // one account's favorite under a different one.
+                if (!supabaseClient || !currentSupabaseUser || currentSupabaseUser.id !== userId) return;
+                const stillFavorited = favorites.includes(key);
+                const promise = stillFavorited
+                    ? supabaseClient.from('favorites').upsert({ user_id: userId, product_key: key }, { onConflict: 'user_id,product_key', ignoreDuplicates: true })
+                    : supabaseClient.from('favorites').delete().eq('user_id', userId).eq('product_key', key);
+                promise.then(({ error }) => { if (error) console.error('Favorite sync failed:', error.message); });
+            }, 500));
+        }
         // Reflects a toggle everywhere it's currently shown - a grid card's
         // own button, the PD page's, and (if it's open) the favorites page
         // itself, rather than each caller having to know what else needs
         // updating. The heart flips instantly either way; the Supabase
-        // write for a signed-in account is fire-and-forget (matching
-        // scheduleCartSync's own error-logged-not-blocking style) since
-        // it's just mirroring state that's already correct locally, not
-        // something the UI needs to wait on.
+        // sync for a signed-in account is debounced (see
+        // scheduleFavoriteSync above) since it's just mirroring state
+        // that's already correct locally, not something the UI needs to
+        // wait on.
         function toggleFavorite(catSlug, idx) {
             const key = `${catSlug}::${idx}`;
             const nowFavorited = !favorites.includes(key);
@@ -14582,13 +14611,7 @@
             if (document.getElementById('view-favorites') && !document.getElementById('view-favorites').classList.contains('hidden-view')) {
                 renderFavoritesPage();
             }
-            if (supabaseClient && currentSupabaseUser) {
-                const userId = currentSupabaseUser.id;
-                const promise = nowFavorited
-                    ? supabaseClient.from('favorites').upsert({ user_id: userId, product_key: key }, { onConflict: 'user_id,product_key', ignoreDuplicates: true })
-                    : supabaseClient.from('favorites').delete().eq('user_id', userId).eq('product_key', key);
-                promise.then(({ error }) => { if (error) console.error('Favorite sync failed:', error.message); });
-            }
+            scheduleFavoriteSync(key);
             return nowFavorited;
         }
         function toggleFavoriteFromCard(catSlug, idx, btnEl) {
@@ -14596,27 +14619,40 @@
             showToast(nowFavorited ? 'Saved to your favorites.' : 'Removed from favorites.');
         }
         window.toggleFavoriteFromCard = toggleFavoriteFromCard;
-        async function fetchAccountFavoriteKeys() {
-            const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', currentSupabaseUser.id);
+        async function fetchAccountFavoriteKeys(userId) {
+            const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', userId);
             if (error) { console.error('Favorites load failed:', error.message); return null; }
             return data.map(r => r.product_key);
         }
+        // Reported by review: both functions below read the mutable
+        // currentSupabaseUser/favorites globals *after* their await, so a
+        // logout or account switch while the query was in flight could
+        // merge/apply one account's favorites under whichever account
+        // happens to be current by the time it resolves. userId is
+        // captured before the await and re-checked against
+        // currentSupabaseUser after it - if they no longer match, this
+        // result belongs to an account that isn't current anymore and is
+        // discarded rather than applied.
+        //
         // Called once right after a genuine sign-in (not a session restore),
         // same distinction mergeGuestCartIntoAccount makes for the basket -
         // whatever was favorited as a guest before logging in is kept, not
         // silently dropped in favour of the account's own list.
         async function mergeGuestFavoritesIntoAccount() {
             if (!supabaseClient || !currentSupabaseUser) return;
-            const serverKeys = await fetchAccountFavoriteKeys();
+            const userId = currentSupabaseUser.id;
+            const guestFavorites = favorites;
+            const serverKeys = await fetchAccountFavoriteKeys(userId);
             if (serverKeys === null) return;
-            const merged = [...new Set([...serverKeys, ...favorites])];
+            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) return;
+            const merged = [...new Set([...serverKeys, ...guestFavorites])];
             const missingServerSide = merged.filter(k => !serverKeys.includes(k));
             favorites = merged;
-            tagFavoritesOwner(currentSupabaseUser.id);
+            tagFavoritesOwner(userId);
             saveFavoritesToStorage();
             if (missingServerSide.length > 0) {
                 supabaseClient.from('favorites')
-                    .upsert(missingServerSide.map(k => ({ user_id: currentSupabaseUser.id, product_key: k })), { onConflict: 'user_id,product_key', ignoreDuplicates: true })
+                    .upsert(missingServerSide.map(k => ({ user_id: userId, product_key: k })), { onConflict: 'user_id,product_key', ignoreDuplicates: true })
                     .then(({ error }) => { if (error) console.error('Favorites merge sync failed:', error.message); });
             }
             renderFavoritesButtonStates();
@@ -14627,10 +14663,12 @@
         // from a previous guest session on this device.
         async function loadAccountFavorites() {
             if (!supabaseClient || !currentSupabaseUser) return;
-            const serverKeys = await fetchAccountFavoriteKeys();
+            const userId = currentSupabaseUser.id;
+            const serverKeys = await fetchAccountFavoriteKeys(userId);
             if (serverKeys === null) return;
+            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) return;
             favorites = serverKeys;
-            tagFavoritesOwner(currentSupabaseUser.id);
+            tagFavoritesOwner(userId);
             saveFavoritesToStorage();
             renderFavoritesButtonStates();
         }
