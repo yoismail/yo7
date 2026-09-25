@@ -1468,13 +1468,24 @@
            instead of clipping it. Reverts to icon-only at the 480px
            breakpoint below (see its own comment), the same width it
            always was there. */
+        /* Icon-only square, no "MENU" caption underneath - reported
+           directly as visual clutter alongside the account button's own
+           "Log in" text right next to it. aria-label="Menu" on the
+           button itself (see the HTML) already carries the accessible
+           name, the caption was always aria-hidden and purely visual, so
+           removing it loses nothing for assistive tech. Sized to match
+           .icon-btn's own already-shrunk 900px-tier square exactly
+           (34px), then the 480px-tier's 29px alongside it, rather than
+           its own one-off dimensions - once it's a plain icon tile like
+           the others, it should read as the same family, not a
+           differently-sized one. */
         .nav-hamburger {
             display: none;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
-            padding: 5px 10px;
+            width: 34px;
+            height: 34px;
+            padding: 0;
             border-radius: 13px;
             border: 1px solid rgba(6, 59, 0, 0.12);
             background: linear-gradient(155deg, rgba(6, 59, 0, 0.05), rgba(225, 225, 0, 0.07));
@@ -1493,18 +1504,36 @@
             height: 19px;
         }
 
-        .nav-hamburger-label {
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 7px;
-            letter-spacing: 0;
-            line-height: 1;
-            text-transform: uppercase;
-        }
-
         @media (max-width:900px) {
             .nav-hamburger {
                 display: flex;
+            }
+
+            /* Reported directly alongside the hamburger's "MENU" caption -
+               the same clutter, same fix: drop the text and the caret,
+               keep a plain icon square people already recognise as
+               "account" without a label (every other icon in this row,
+               cart included, already works that way with no text of its
+               own, and a profile icon opening a menu on tap needs no
+               extra affordance beyond the icon itself, the same as it
+               doesn't on virtually any app). Sized to match
+               .nav-hamburger/.icon-btn's own 34px square exactly so the
+               whole row reads as one consistent icon family instead of
+               one oddly-shaped pill among plain squares. Signed-in vs
+               signed-out still reads clearly from .account-status-dot's
+               own pulsing green mark, untouched here. */
+            .nav-account {
+                width: 34px;
+                height: 34px;
+                padding: 0;
+                gap: 0;
+                justify-content: center;
+                border-radius: 13px;
+            }
+
+            .nav-account span#accountLabel,
+            .nav-account .account-caret {
+                display: none !important;
             }
         }
 
@@ -1593,73 +1622,22 @@
                 letter-spacing: 0.2em;
             }
 
-            /* Both signed-in and signed-out lose the name/label text at
-               this width — "Sign up / Log in" and a customer's name are
-               both too long a string to keep on the bar alongside
-               everything else in .nav-right, and the notifications bell
-               (added later) left no slack for a name pill to keep fitting
-               reliably at the narrowest real phones (iPhone 12 mini,
-               375px) without it. The greeting itself moved to the
-               homepage's "Welcome back" section instead (see
-               reorderTitle) — a bigger, more visible place for it than an
-               11.5px ellipsis-truncated nav label ever was. Desktop
-               (>900px, well clear of this breakpoint) still shows the
-               full pill with name and is untouched. */
-            .nav-account span#accountLabel {
-                display: none !important;
+            /* Text and caret are already gone from .nav-account at the
+               900px tier above - this just carries it down to the same
+               29px square .nav-cart-btn/.nav-notif-btn already use at
+               this width, so it keeps shrinking in step with the rest of
+               the row instead of staying at the wider tier's 34px once
+               everything else has tightened up further. */
+            .nav-account {
+                width: 29px;
+                height: 29px;
+                border-radius: 9px;
             }
 
-            /* Signed-out: a bare person icon reads as "profile" or
-               "account settings" to plenty of people, not obviously as
-               the one way in to sign up or log in at all — a first-time
-               visitor has no other cue it does anything. A short "Log
-               in" label (via ::after, not the hidden #accountLabel span
-               above, which still carries the long "Sign up / Log in"
-               text used everywhere the full label fits) is cheap enough
-               in width to keep even at 375px, unlike the full phrase. */
-            .nav-account:not(.is-logged-in) {
-                width: auto;
-                height: 34px;
-                padding: 0 10px 0 8px;
-                gap: 4px;
-                justify-content: center;
-                border-radius: 11px;
-            }
-            /* Same weight/case/letter-spacing treatment as the hamburger's
-               "MENU" caption right next to it in this row (see
-               .nav-hamburger-label) - was 11px/700/sentence-case before,
-               reading as a visibly different label style sitting directly
-               beside a 7px/600/uppercase one. Kept a touch larger than
-               MENU's 7px since this sits inline next to full-height icon
-               text rather than stacked under a compact icon, but shares
-               everything else so the two read as the same family. */
-            .nav-account:not(.is-logged-in)::after {
-                content: 'Log in';
-                font-size: 9px;
-                font-weight: 600;
-                letter-spacing: 0;
-                text-transform: uppercase;
-                white-space: nowrap;
-            }
-
-            /* Signed-in: stays a (much smaller) pill rather than a bare
-               square specifically to keep room for the caret — tapping
-               this one opens a real dropdown (order history, log out,
-               etc), and the chevron is what tells a customer that's a
-               menu rather than a link straight to a page, the same as it
-               already does on desktop. JS (setUser/clearUser) already
-               toggles the caret's own display for signed-in vs signed-out
-               — nothing to override here. */
-            .nav-account.is-logged-in {
-                padding: 6px 8px;
-                gap: 2px;
-                border-radius: 999px;
-            }
-
-            .nav-account.is-logged-in .account-caret {
-                width: 10px !important;
-                height: 10px !important;
-                margin-left: 0;
+            .nav-hamburger {
+                width: 29px;
+                height: 29px;
+                border-radius: 9px;
             }
 
             .icon-btn {
@@ -1765,28 +1743,6 @@
 
             .nav-right {
                 gap: 4px;
-            }
-        }
-
-        /* Below this, the row genuinely has no room left for the "MENU"
-           label alongside a signed-in user's notification bell - measured
-           directly (forcing the labelled layout and checking for wrap):
-           it holds with room to spare from 339px up, wraps the hamburger
-           onto its own line at 338px and below (that edge was measured
-           against the label's original, wider sizing - it's shrunk since,
-           so this 340px cutoff now has more headroom than the number
-           implies, not less). Only real devices this width or narrower
-           are the oldest iPhones (5/SE 1st gen, 320px) - everything from
-           a 360px Android up keeps the label. Reverts to the same
-           icon-only square it was before the label existed. */
-        @media (max-width:340px) {
-            .nav-hamburger {
-                width: 34px;
-                height: 34px;
-                padding: 0;
-            }
-            .nav-hamburger-label {
-                display: none;
             }
         }
 
@@ -9894,7 +9850,7 @@
                     <span class="cart-badge zero" id="notifBadge">0</span>
                 </a>
                 <div class="account-wrap" id="accountWrap">
-                    <a class="nav-account" id="accountBtn" href="#/login" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-account" id="accountBtn" href="#/login" aria-haspopup="true" aria-expanded="false" aria-label="Sign up or log in">
                         <span class="account-icon-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
                                 <circle cx="12" cy="8" r="4" />
@@ -9953,7 +9909,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M3 6h18M3 12h18M3 18h18" />
                 </svg>
-                <span class="nav-hamburger-label" aria-hidden="true">Menu</span>
             </button>
         </div>
         <div class="mobile-menu" id="mobileMenu">
@@ -14296,7 +14251,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.4';
+        const BUILD_VERSION = '2026-09-25.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
