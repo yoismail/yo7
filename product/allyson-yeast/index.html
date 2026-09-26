@@ -988,7 +988,7 @@
                             </div>
                             <div class="trust-pill">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                <span class="free-delivery-text">Free delivery over £50</span>
+                                <span class="free-delivery-text">Free delivery: £70+ Ipswich, £120+ elsewhere</span>
                             </div>
                             <div class="trust-pill">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
@@ -1125,7 +1125,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    <span class="free-delivery-text">Free delivery over £50</span>
+                                    <span class="free-delivery-text">Free delivery: £70+ Ipswich, £120+ elsewhere</span>
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -1257,7 +1257,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    <span class="free-delivery-text">Free delivery over £50</span>
+                                    <span class="free-delivery-text">Free delivery: £70+ Ipswich, £120+ elsewhere</span>
                                 </div>
                             </div>
                         </div>
@@ -3550,7 +3550,9 @@
            Delivery is priced by total order weight. Three tiers, all
            editable via the delivery rules admin panel: up to 10kg, up to
            20kg, and above that. Separately, deliveryThresholdRules can
-           still override to free (e.g. "free over £50"), that's a
+           still override to free (the default two rules do exactly that,
+           region-scoped: free over £70 within Ipswich, free over £120
+           everywhere else - see isIpswichPostcode/resolveDeliveryFee), a
            promotional layer on top of the weight fee, not a replacement
            for it. Both arrays are loaded from and saved to the
            pricing_settings table (see supabase-migration-21) — the
@@ -3566,8 +3568,17 @@
             { id: 'tier-20kg', label: 'Up to 20kg', maxWeight: 20, fee: 11.99 },
             { id: 'tier-above', label: 'Above 20kg', maxWeight: Infinity, fee: 15.99 },
         ];
+        // Fixed ids for the two region-scoped free-delivery rules (rather
+        // than a generated one like every other rule gets) so the admin
+        // panel's dedicated Ipswich/outside-Ipswich inputs, the migration
+        // below, and this default array can all find/update the SAME rule
+        // reliably regardless of array order, instead of matching on name
+        // text that a rename would break.
+        const IPSWICH_FREE_RULE_ID = 'rule-free-ipswich';
+        const OUTSIDE_IPSWICH_FREE_RULE_ID = 'rule-free-outside-ipswich';
         let deliveryThresholdRules = [
-            { id: 'rule-free70', name: 'Free delivery over £70', conditionType: 'price', operator: 'gte', value: 70, effect: 'free' },
+            { id: IPSWICH_FREE_RULE_ID, name: 'Free delivery over £70 (Ipswich addresses)', conditionType: 'price', operator: 'gte', value: 70, effect: 'free', region: 'ipswich' },
+            { id: OUTSIDE_IPSWICH_FREE_RULE_ID, name: 'Free delivery over £120 (delivery outside Ipswich)', conditionType: 'price', operator: 'gte', value: 120, effect: 'free', region: 'outside_ipswich' },
         ];
         // Loaded from pricing_settings (see supabase-migration-21) on every
         // page load, for every visitor, not just an admin — these four
@@ -3699,6 +3710,57 @@
             }
         }
 
+        // One-time migration for the Ipswich/outside-Ipswich free-delivery
+        // split - same fire-and-forget pattern as retireBundlesIntoCombos
+        // right above, just idempotent by checking for the two fixed rule
+        // ids directly instead of a separate "already migrated" flag column.
+        // Replaces the specific legacy default rule (id "rule-free70", the
+        // single region-less "free over £X" rule this split replaces) with
+        // the two new regional defaults. Deliberately matched by that exact
+        // id rather than "any region-less free price rule" - an admin may
+        // have added their own separate region-less promotion (e.g. "free
+        // over £200") through the generic rule builder, and that has to
+        // survive this migration untouched, not get silently swept up
+        // alongside the one rule this is actually replacing.
+        //
+        // Awaits the same boot-time pricingSettingsReady promise
+        // loadPricingSettings() itself resolves before doing anything, so
+        // this never races that initial load - without this, the load
+        // could still be in flight (fetched from before this migration's
+        // own write) and overwrite deliveryThresholdRules right back to
+        // the pre-migration rules once it resolves, leaving the client's
+        // checkout math disagreeing with both the edge function and
+        // whatever an admin's next save would write back to Supabase.
+        let migratingDeliveryThresholdsInFlight = false;
+        async function migrateDeliveryThresholdRulesToRegional() {
+            if (!supabaseClient || !currentIsAdmin || migratingDeliveryThresholdsInFlight) return;
+            migratingDeliveryThresholdsInFlight = true;
+            try {
+                await pricingSettingsReady;
+                const { data, error } = await supabaseClient.from('pricing_settings').select('delivery_threshold_rules').eq('id', true).maybeSingle();
+                if (error || !data) return;
+                const existing = Array.isArray(data.delivery_threshold_rules) ? data.delivery_threshold_rules : [];
+                const alreadyRegional = existing.some(r => r.id === IPSWICH_FREE_RULE_ID) && existing.some(r => r.id === OUTSIDE_IPSWICH_FREE_RULE_ID);
+                if (alreadyRegional) return;
+                const rules = [
+                    ...existing.filter(r => r.id !== 'rule-free70'),
+                    { id: IPSWICH_FREE_RULE_ID, name: 'Free delivery over £70 (Ipswich addresses)', conditionType: 'price', operator: 'gte', value: 70, effect: 'free', region: 'ipswich' },
+                    { id: OUTSIDE_IPSWICH_FREE_RULE_ID, name: 'Free delivery over £120 (delivery outside Ipswich)', conditionType: 'price', operator: 'gte', value: 120, effect: 'free', region: 'outside_ipswich' },
+                ];
+                const { error: saveError } = await supabaseClient.from('pricing_settings').update({
+                    delivery_threshold_rules: rules,
+                    updated_at: new Date().toISOString(),
+                }).eq('id', true);
+                if (saveError) return;
+                deliveryThresholdRules = rules;
+                renderDeliveryAdmin();
+                updateSummaries();
+                logAdminAction('delivery_thresholds_regionalized', 'pricing_settings', null, { ruleCount: rules.length });
+            } finally {
+                migratingDeliveryThresholdsInFlight = false;
+            }
+        }
+
         function resolveWeightTierFee(weight) {
             const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
             const tier = sorted.find(t => weight <= t.maxWeight);
@@ -3720,12 +3782,19 @@
             let fee = resolveWeightTierFee(weight);
             const subtotal = cartSubtotal();
             const items = cartItemCount();
+            const inIpswich = isIpswichPostcode(postcode);
             // Tracks whichever rule (or discount code) actually zeroed the fee,
             // so the checkout summary can tell the customer why delivery is
             // free instead of just showing "Free" with no explanation.
             let freeReason = null;
 
             for (const rule of deliveryThresholdRules) {
+                // A region-scoped rule (the Ipswich/outside-Ipswich free
+                // thresholds) only ever competes against a matching address;
+                // a rule with no region (any other promotional rule an admin
+                // adds) still applies everywhere, same as before this split.
+                if (rule.region === 'ipswich' && !inIpswich) continue;
+                if (rule.region === 'outside_ipswich' && inIpswich) continue;
                 const actual = rule.conditionType === 'price' ? subtotal
                     : rule.conditionType === 'weight' ? weight
                     : rule.conditionType === 'items' ? items
@@ -3750,7 +3819,37 @@
                 fee = 0;
                 freeReason = { type: 'discount', code: appliedDiscount.code };
             }
-            return { fee, region: null, freeReason };
+            return { fee, region: inIpswich ? 'ipswich' : 'outside_ipswich', freeReason };
+        }
+        // The single applicable free-delivery rule for a given postcode
+        // (Ipswich's own threshold if the address is in Ipswich, otherwise
+        // the outside-Ipswich one) - used wherever a piece of copy needs to
+        // quote ONE figure back at a customer who's already given a real
+        // postcode (the checkout hint, the Delivery Info postcode checker),
+        // as opposed to freeDeliveryNoteText() below which explains BOTH
+        // thresholds to someone who hasn't entered one yet.
+        function applicableFreeDeliveryRule(postcode) {
+            const region = isIpswichPostcode(postcode) ? 'ipswich' : 'outside_ipswich';
+            return deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && r.region === region)
+                || deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && !r.region)
+                || null;
+        }
+        function fmtAmt(v) { return Number.isInteger(v) ? String(v) : v.toFixed(2); }
+        // Explains both region thresholds at once, for copy shown before any
+        // postcode is known (trust-bar badges, Delivery Info page, the FAQ).
+        // Falls back gracefully if an admin ever removes one side of the
+        // split (or on old, pre-migration data that still has a single
+        // region-less free rule) rather than assuming both always exist.
+        function freeDeliveryNoteText() {
+            const ipswichRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && r.region === 'ipswich');
+            const outsideRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && r.region === 'outside_ipswich');
+            if (ipswichRule && outsideRule) {
+                return ` It's free within Ipswich once your order reaches ${money(ipswichRule.value)}, or ${money(outsideRule.value)} for delivery anywhere else in the UK.`;
+            }
+            if (ipswichRule) return ` It's free within Ipswich once your order reaches ${money(ipswichRule.value)}.`;
+            if (outsideRule) return ` It's free once your order reaches ${money(outsideRule.value)} for delivery outside Ipswich.`;
+            const anyRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && !r.region);
+            return anyRule ? ` It's free once your order reaches ${money(anyRule.value)}.` : '';
         }
         function deliveryFreeReasonText(reason) {
             if (!reason) return '';
@@ -3774,6 +3873,41 @@
         const STANDARD_DELIVERY_WINDOW = '1-3 working days';
         function isSuffolkPostcode(postcode) {
             return /^\s*IP\d/i.test(postcode || '');
+        }
+        // A narrower check than isSuffolkPostcode above - that one covers the
+        // whole "IP" Suffolk postal area (used only for the local-vs-standard
+        // delivery ETA), this one is specifically Ipswich's own postal
+        // districts (IP1-IP6, IP8), used for the Ipswich/outside-Ipswich
+        // free-delivery split. IP7 (Hadleigh), IP9 (Felixstowe/Trimley area),
+        // IP10+ and IP28+ (Bury St Edmunds, Mildenhall, etc.) are all
+        // genuinely Suffolk but not Ipswich, so they fall through to the
+        // "outside Ipswich" threshold instead, same as anywhere else in the
+        // UK.
+        //
+        // A UK postcode's inward code (the part after the space) is always
+        // exactly 3 characters - a digit then 2 letters - so slicing those
+        // off the whitespace-stripped string reliably isolates the outward/
+        // district code regardless of whether the postcode still has its
+        // usual internal space ("IP4 2NY") or not ("IP42NY", exactly what
+        // the Delivery Info page's checker passes in after stripping every
+        // space). A \b-based regex breaks on the space-less form: the
+        // district's last digit and the inward code's own leading digit
+        // sit right next to each other with no word-boundary between two
+        // digits, so "IP4" in "IP42NY" would silently fail to match.
+        //
+        // The full-format check below guards against a short/malformed
+        // string like "IP1" on its own (no inward code at all): without
+        // it, that's under 5 characters so the length guard above used to
+        // leave it unsliced, and "IP1" itself happens to match the
+        // district regex - incorrectly classing an incomplete postcode as
+        // Ipswich. A postcode that doesn't fit the real shape now falls
+        // through to "not Ipswich" (the higher, safer £120 threshold)
+        // rather than trusting a fragment enough to hand out the lower one.
+        function isIpswichPostcode(postcode) {
+            const compact = (postcode || '').replace(/\s+/g, '').toUpperCase();
+            if (!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(compact)) return false;
+            const outward = compact.slice(0, -3);
+            return /^IP[1-6]$/.test(outward) || outward === 'IP8';
         }
         function deliveryEtaLabel(postcode) {
             return isSuffolkPostcode(postcode) ? 'Local delivery (Suffolk)' : 'Standard delivery';
@@ -4467,22 +4601,30 @@
 
         /* ================= DELIVERY RULES ADMIN PANEL (edit mode) ================= */
         function renderDeliveryFeeInfo() {
-            const freeRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price');
+            const ipswichRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && r.region === 'ipswich');
+            const outsideRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && r.region === 'outside_ipswich');
             // Trust-bar/checkout copy ("Free delivery over £X") used to be
             // hardcoded text, so it silently went stale the moment this
             // threshold was ever changed from here — every .free-delivery-text
-            // span now mirrors whatever the real rule says instead, admin
+            // span now mirrors whatever the real rules say instead, admin
             // panel or the shipped-default fallback alike.
-            if (freeRule) {
-                const amount = Number.isInteger(freeRule.value) ? freeRule.value : freeRule.value.toFixed(2);
-                document.querySelectorAll('.free-delivery-text').forEach(el => { el.textContent = `Free delivery over £${amount}`; });
+            let pillText = null;
+            if (ipswichRule && outsideRule) {
+                pillText = `Free delivery: £${fmtAmt(ipswichRule.value)}+ Ipswich, £${fmtAmt(outsideRule.value)}+ elsewhere`;
+            } else if (ipswichRule) {
+                pillText = `Free delivery over £${fmtAmt(ipswichRule.value)} (Ipswich)`;
+            } else if (outsideRule) {
+                pillText = `Free delivery over £${fmtAmt(outsideRule.value)}`;
+            } else {
+                const anyRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && !r.region);
+                pillText = anyRule ? `Free delivery over £${fmtAmt(anyRule.value)}` : null;
             }
+            if (pillText) document.querySelectorAll('.free-delivery-text').forEach(el => { el.textContent = pillText; });
             const el = document.getElementById('dinfoFeeText');
             if (!el) return;
             const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
             const parts = sorted.map(t => `${t.label.toLowerCase()}: ${money(t.fee)}`);
-            const freeNote = freeRule ? ` Free once your order reaches ${money(freeRule.value)}.` : '';
-            el.textContent = `Priced by order weight, ${parts.join(', ')}.${freeNote} Pickup is always free. Your exact fee is shown at checkout before you pay.`;
+            el.textContent = `Priced by order weight, ${parts.join(', ')}.${freeDeliveryNoteText()} Pickup is always free. Your exact fee is shown at checkout before you pay.`;
             // The "New Here?" FAQ answer quotes these same figures — without
             // this call it only ever showed whatever was hardcoded at ship
             // time, so an admin changing a tier fee here updated the
@@ -4506,15 +4648,34 @@
       </div>`;
                 }).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No weight tiers defined, delivery fee defaults to £0.</p>';
             }
+            const ipswichInput = document.getElementById('ipswichFreeThresholdInput');
+            if (ipswichInput && document.activeElement !== ipswichInput) {
+                const rule = deliveryThresholdRules.find(r => r.id === IPSWICH_FREE_RULE_ID);
+                ipswichInput.value = rule ? rule.value.toFixed(2) : '';
+            }
+            const outsideInput = document.getElementById('outsideIpswichFreeThresholdInput');
+            if (outsideInput && document.activeElement !== outsideInput) {
+                const rule = deliveryThresholdRules.find(r => r.id === OUTSIDE_IPSWICH_FREE_RULE_ID);
+                outsideInput.value = rule ? rule.value.toFixed(2) : '';
+            }
             const rulesList = document.getElementById('deliveryRulesList');
             if (rulesList) {
                 const conditionLabel = { price: 'order price', weight: 'total weight', items: 'item count' };
                 const opLabel = { gte: 'at least', lte: 'at most' };
-                rulesList.innerHTML = deliveryThresholdRules.map((r, i) => `
+                // The Ipswich/outside-Ipswich free thresholds have their own
+                // dedicated inputs right above (see renderDeliveryRulesAdmin)
+                // - excluded here so they're not edited in two places at
+                // once. Any other rule (region-less or otherwise) still
+                // shows and removes through this generic list as before.
+                const otherRules = deliveryThresholdRules.filter(r => r.id !== IPSWICH_FREE_RULE_ID && r.id !== OUTSIDE_IPSWICH_FREE_RULE_ID);
+                rulesList.innerHTML = otherRules.map((r) => {
+                    const realIdx = deliveryThresholdRules.indexOf(r);
+                    return `
       <div class="delivery-rule-row">
         <span>${r.name}: ${conditionLabel[r.conditionType]} ${opLabel[r.operator]} ${r.value} &rarr; ${r.effect === 'free' ? 'free delivery' : 'fee set to £' + (r.feeOverride || 0).toFixed(2)}</span>
-        <button type="button" class="rule-remove-btn" onclick="removeDeliveryRule(${i})">Remove</button>
-      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No threshold rules yet.</p>';
+        <button type="button" class="rule-remove-btn" onclick="removeDeliveryRule(${realIdx})">Remove</button>
+      </div>`;
+                }).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No other threshold rules.</p>';
             }
             renderDeliveryFeeInfo();
         }
@@ -4529,6 +4690,29 @@
         window.removeWeightTier = removeWeightTier;
         function removeDeliveryRule(i) { deliveryThresholdRules.splice(i, 1); renderDeliveryAdmin(); updateSummaries(); savePricingSettings(); }
         window.removeDeliveryRule = removeDeliveryRule;
+        // Finds the rule by its fixed id and updates its value, or creates
+        // it fresh if it's missing (removed via the generic rule list
+        // below, or never existed on old, pre-migration data) - either way
+        // the dedicated input above always has something real to show and
+        // edit, rather than needing its own separate "add" step.
+        function upsertFreeDeliveryThreshold(ruleId, region, nameFn, rawValue) {
+            const value = parseFloat(rawValue);
+            if (isNaN(value) || value < 0) { renderDeliveryAdmin(); return; }
+            const rule = deliveryThresholdRules.find(r => r.id === ruleId);
+            if (rule) { rule.value = value; rule.name = nameFn(value); }
+            else deliveryThresholdRules.push({ id: ruleId, name: nameFn(value), conditionType: 'price', operator: 'gte', value, effect: 'free', region });
+            renderDeliveryAdmin();
+            updateSummaries();
+            savePricingSettings();
+        }
+        function setIpswichFreeThreshold(rawValue) {
+            upsertFreeDeliveryThreshold(IPSWICH_FREE_RULE_ID, 'ipswich', v => `Free delivery over £${fmtAmt(v)} (Ipswich addresses)`, rawValue);
+        }
+        window.setIpswichFreeThreshold = setIpswichFreeThreshold;
+        function setOutsideIpswichFreeThreshold(rawValue) {
+            upsertFreeDeliveryThreshold(OUTSIDE_IPSWICH_FREE_RULE_ID, 'outside_ipswich', v => `Free delivery over £${fmtAmt(v)} (delivery outside Ipswich)`, rawValue);
+        }
+        window.setOutsideIpswichFreeThreshold = setOutsideIpswichFreeThreshold;
         // Same as renderReviewPlatformAdmin: this whole panel, including its
         // two forms, only exists in the DOM for a confirmed admin with edit
         // mode on. dinfoFeeText (the customer-facing fee summary) lives
@@ -4554,7 +4738,23 @@
       </form>
     </div>
     <div class="delivery-admin-block">
-      <h4>Threshold rules</h4>
+      <h4>Free delivery thresholds</h4>
+      <p style="font-size:11.5px; color:var(--text-muted); margin:-4px 0 10px;">Based on the delivery postcode entered at checkout. Pickup is always free, separately from these.</p>
+      <div class="delivery-rule-row">
+        <span>Free delivery within Ipswich, from</span>
+        <span style="display:flex; align-items:center; gap:6px;">
+          £<input type="number" step="0.01" min="0" id="ipswichFreeThresholdInput" aria-label="Free delivery threshold within Ipswich, in pounds" style="width:76px; padding:4px 6px; border-radius:6px; border:1.5px solid rgba(var(--border-rgb),0.16); font-family:var(--body); font-size:16px;" onchange="setIpswichFreeThreshold(this.value)">
+        </span>
+      </div>
+      <div class="delivery-rule-row">
+        <span>Free delivery outside Ipswich, from</span>
+        <span style="display:flex; align-items:center; gap:6px;">
+          £<input type="number" step="0.01" min="0" id="outsideIpswichFreeThresholdInput" aria-label="Free delivery threshold outside Ipswich, in pounds" style="width:76px; padding:4px 6px; border-radius:6px; border:1.5px solid rgba(var(--border-rgb),0.16); font-family:var(--body); font-size:16px;" onchange="setOutsideIpswichFreeThreshold(this.value)">
+        </span>
+      </div>
+    </div>
+    <div class="delivery-admin-block">
+      <h4>Other threshold rules</h4>
       <div id="deliveryRulesList" class="delivery-rule-list"></div>
       <form id="addDeliveryRuleForm" class="delivery-admin-form">
         <input type="text" id="newRuleName" placeholder="Rule name (e.g. Free over 10 items)" required>
@@ -4868,7 +5068,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-25.18';
+        const BUILD_VERSION = '2026-09-26.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9190,7 +9390,9 @@
             if (dPostcodeField.value.trim() !== raw) return null; // field changed mid-check, this result is stale
             if (result.ok === true) {
                 dPostcodeField.value = result.normalized;
-                dPostcodeHint.textContent = `Valid postcode: ${deliveryEtaLabel(result.normalized)}`;
+                const applicable = applicableFreeDeliveryRule(result.normalized);
+                const thresholdNote = applicable ? ` · Free delivery over ${money(applicable.value)}` : '';
+                dPostcodeHint.textContent = `Valid postcode: ${deliveryEtaLabel(result.normalized)}${thresholdNote}`;
                 dPostcodeHint.className = 'field-hint success';
                 lastPostcodeCheck = { value: result.normalized, result };
             } else if (result.ok === false) {
@@ -9198,7 +9400,9 @@
                 dPostcodeHint.className = 'field-hint error';
                 lastPostcodeCheck = { value: raw, result };
             } else {
-                dPostcodeHint.textContent = `Couldn't fully verify this postcode right now: ${deliveryEtaLabel(raw)}`;
+                const applicable = applicableFreeDeliveryRule(raw);
+                const thresholdNote = applicable ? ` · Free delivery over ${money(applicable.value)}` : '';
+                dPostcodeHint.textContent = `Couldn't fully verify this postcode right now: ${deliveryEtaLabel(raw)}${thresholdNote}`;
                 dPostcodeHint.className = 'field-hint checking';
                 lastPostcodeCheck = { value: raw, result };
             }
@@ -12376,6 +12580,7 @@
                 // retireBundlesIntoCombos), cheap enough to just check on
                 // every admin session rather than track its own timing.
                 retireBundlesIntoCombos();
+                migrateDeliveryThresholdRulesToRegional();
             } else unsubscribeAdminOrderNotifications();
             syncAdminNavLink();
         }
@@ -13842,9 +14047,7 @@
         function deliveryFaqAnswer() {
             const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
             const parts = sorted.map(t => `${t.label.toLowerCase()} is ${money(t.fee)}`);
-            const freeRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price');
-            const freeNote = freeRule ? ` It's free once your order reaches ${money(freeRule.value)}.` : '';
-            return `Delivery is priced by the total weight of your order rather than a flat rate, ${parts.join(', ')}.${freeNote} There's no minimum order for delivery or pickup.`;
+            return `Delivery is priced by the total weight of your order rather than a flat rate, ${parts.join(', ')}.${freeDeliveryNoteText()} There's no minimum order for delivery or pickup.`;
         }
         const FAQS = [
             { q: 'What areas do you deliver to?', a: "We'll deliver to every UK postcode. Use the postcode checker on the Delivery Information page to double-check the format of yours." },
@@ -14384,7 +14587,10 @@
             if (!raw) { resultEl.textContent = 'Type a postcode to check.'; resultEl.className = 'pc-result'; return; }
             const validFormat = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(raw);
             if (validFormat) {
-                resultEl.textContent = `Yes, we'll deliver there.`;
+                const inIpswich = isIpswichPostcode(raw);
+                const applicable = applicableFreeDeliveryRule(raw);
+                const thresholdNote = applicable ? ` Free delivery on this order once it reaches ${money(applicable.value)}.` : '';
+                resultEl.textContent = `Yes, we'll deliver there${inIpswich ? ' (Ipswich)' : ''}.${thresholdNote}`;
                 resultEl.className = 'pc-result yes';
             } else {
                 resultEl.textContent = `That doesn't look like a full UK postcode, but we'll deliver everywhere in the UK, double-check it and try again.`;
@@ -14567,8 +14773,13 @@
         // Loads real, admin-configured delivery/subscription/bundle rates
         // for every visitor (not just when an admin opens edit mode) —
         // the defaults rendered just above are only what's shown until
-        // this resolves.
-        loadPricingSettings().then(() => {
+        // this resolves. Captured as a named promise (rather than just
+        // chaining .then() straight off the call, as every other boot
+        // load here does) so migrateDeliveryThresholdRulesToRegional()
+        // can await this exact settling point too - see its own comment
+        // for why that race matters.
+        const pricingSettingsReady = loadPricingSettings();
+        pricingSettingsReady.then(() => {
             renderBundles();
             renderCombos();
             // Same reasoning as renderBundles()/renderCombos() just above —
