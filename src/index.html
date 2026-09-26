@@ -13394,22 +13394,36 @@
         // split - same fire-and-forget pattern as retireBundlesIntoCombos
         // right above, just idempotent by checking for the two fixed rule
         // ids directly instead of a separate "already migrated" flag column.
-        // Replaces any pre-existing region-less price-based free rule (the
-        // single "free over £X" rule this split replaces) with the two new
-        // regional defaults, rather than leaving it in place alongside them
-        // where it would keep applying everywhere on top of both.
+        // Replaces the specific legacy default rule (id "rule-free70", the
+        // single region-less "free over £X" rule this split replaces) with
+        // the two new regional defaults. Deliberately matched by that exact
+        // id rather than "any region-less free price rule" - an admin may
+        // have added their own separate region-less promotion (e.g. "free
+        // over £200") through the generic rule builder, and that has to
+        // survive this migration untouched, not get silently swept up
+        // alongside the one rule this is actually replacing.
+        //
+        // Awaits the same boot-time pricingSettingsReady promise
+        // loadPricingSettings() itself resolves before doing anything, so
+        // this never races that initial load - without this, the load
+        // could still be in flight (fetched from before this migration's
+        // own write) and overwrite deliveryThresholdRules right back to
+        // the pre-migration rules once it resolves, leaving the client's
+        // checkout math disagreeing with both the edge function and
+        // whatever an admin's next save would write back to Supabase.
         let migratingDeliveryThresholdsInFlight = false;
         async function migrateDeliveryThresholdRulesToRegional() {
             if (!supabaseClient || !currentIsAdmin || migratingDeliveryThresholdsInFlight) return;
             migratingDeliveryThresholdsInFlight = true;
             try {
+                await pricingSettingsReady;
                 const { data, error } = await supabaseClient.from('pricing_settings').select('delivery_threshold_rules').eq('id', true).maybeSingle();
                 if (error || !data) return;
                 const existing = Array.isArray(data.delivery_threshold_rules) ? data.delivery_threshold_rules : [];
                 const alreadyRegional = existing.some(r => r.id === IPSWICH_FREE_RULE_ID) && existing.some(r => r.id === OUTSIDE_IPSWICH_FREE_RULE_ID);
                 if (alreadyRegional) return;
                 const rules = [
-                    ...existing.filter(r => !(r.effect === 'free' && r.conditionType === 'price' && !r.region)),
+                    ...existing.filter(r => r.id !== 'rule-free70'),
                     { id: IPSWICH_FREE_RULE_ID, name: 'Free delivery over £70 (Ipswich addresses)', conditionType: 'price', operator: 'gte', value: 70, effect: 'free', region: 'ipswich' },
                     { id: OUTSIDE_IPSWICH_FREE_RULE_ID, name: 'Free delivery over £120 (delivery outside Ipswich)', conditionType: 'price', operator: 'gte', value: 120, effect: 'free', region: 'outside_ipswich' },
                 ];
@@ -13560,9 +13574,19 @@
         // district's last digit and the inward code's own leading digit
         // sit right next to each other with no word-boundary between two
         // digits, so "IP4" in "IP42NY" would silently fail to match.
+        //
+        // The full-format check below guards against a short/malformed
+        // string like "IP1" on its own (no inward code at all): without
+        // it, that's under 5 characters so the length guard above used to
+        // leave it unsliced, and "IP1" itself happens to match the
+        // district regex - incorrectly classing an incomplete postcode as
+        // Ipswich. A postcode that doesn't fit the real shape now falls
+        // through to "not Ipswich" (the higher, safer £120 threshold)
+        // rather than trusting a fragment enough to hand out the lower one.
         function isIpswichPostcode(postcode) {
             const compact = (postcode || '').replace(/\s+/g, '').toUpperCase();
-            const outward = compact.length >= 5 ? compact.slice(0, -3) : compact;
+            if (!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(compact)) return false;
+            const outward = compact.slice(0, -3);
             return /^IP[1-6]$/.test(outward) || outward === 'IP8';
         }
         function deliveryEtaLabel(postcode) {
@@ -14399,13 +14423,13 @@
       <div class="delivery-rule-row">
         <span>Free delivery within Ipswich, from</span>
         <span style="display:flex; align-items:center; gap:6px;">
-          £<input type="number" step="0.01" min="0" id="ipswichFreeThresholdInput" style="width:76px; padding:4px 6px; border-radius:6px; border:1.5px solid rgba(var(--border-rgb),0.16); font-family:var(--body); font-size:16px;" onchange="setIpswichFreeThreshold(this.value)">
+          £<input type="number" step="0.01" min="0" id="ipswichFreeThresholdInput" aria-label="Free delivery threshold within Ipswich, in pounds" style="width:76px; padding:4px 6px; border-radius:6px; border:1.5px solid rgba(var(--border-rgb),0.16); font-family:var(--body); font-size:16px;" onchange="setIpswichFreeThreshold(this.value)">
         </span>
       </div>
       <div class="delivery-rule-row">
         <span>Free delivery outside Ipswich, from</span>
         <span style="display:flex; align-items:center; gap:6px;">
-          £<input type="number" step="0.01" min="0" id="outsideIpswichFreeThresholdInput" style="width:76px; padding:4px 6px; border-radius:6px; border:1.5px solid rgba(var(--border-rgb),0.16); font-family:var(--body); font-size:16px;" onchange="setOutsideIpswichFreeThreshold(this.value)">
+          £<input type="number" step="0.01" min="0" id="outsideIpswichFreeThresholdInput" aria-label="Free delivery threshold outside Ipswich, in pounds" style="width:76px; padding:4px 6px; border-radius:6px; border:1.5px solid rgba(var(--border-rgb),0.16); font-family:var(--body); font-size:16px;" onchange="setOutsideIpswichFreeThreshold(this.value)">
         </span>
       </div>
     </div>
@@ -14724,7 +14748,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-26.1';
+        const BUILD_VERSION = '2026-09-26.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -24429,8 +24453,13 @@
         // Loads real, admin-configured delivery/subscription/bundle rates
         // for every visitor (not just when an admin opens edit mode) —
         // the defaults rendered just above are only what's shown until
-        // this resolves.
-        loadPricingSettings().then(() => {
+        // this resolves. Captured as a named promise (rather than just
+        // chaining .then() straight off the call, as every other boot
+        // load here does) so migrateDeliveryThresholdRulesToRegional()
+        // can await this exact settling point too - see its own comment
+        // for why that race matters.
+        const pricingSettingsReady = loadPricingSettings();
+        pricingSettingsReady.then(() => {
             renderBundles();
             renderCombos();
             // Same reasoning as renderBundles()/renderCombos() just above —

@@ -123,8 +123,17 @@ function isIpswichPostcode(postcode: string | null | undefined): boolean {
   // once that space is gone, since the district's last digit and the
   // inward code's own leading digit then sit with no word-boundary
   // between them.
+  //
+  // The full-format check below rejects a short/malformed value like
+  // "IP1" on its own (no inward code) before it ever reaches the slice -
+  // this is the actual charge calculation, called directly from a client
+  // payload with no other postcode validation server-side, so a caller
+  // submitting an incomplete postcode must not be able to claim the
+  // lower Ipswich threshold. Anything that doesn't fit the real shape
+  // falls through to "not Ipswich" (the higher, safer threshold).
   const compact = (postcode ?? "").replace(/\s+/g, "").toUpperCase();
-  const outward = compact.length >= 5 ? compact.slice(0, -3) : compact;
+  if (!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(compact)) return false;
+  const outward = compact.slice(0, -3);
   return /^IP[1-6]$/.test(outward) || outward === "IP8";
 }
 type BundleDef = { name: string; discountPercent: number; items: { catSlug: string; idx: number }[] };
