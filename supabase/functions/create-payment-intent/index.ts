@@ -99,10 +99,43 @@ let DELIVERY_WEIGHT_TIERS: { maxWeight: number; fee: number }[] = [
   { maxWeight: 20, fee: 11.99 },
   { maxWeight: Infinity, fee: 15.99 },
 ];
-type ThresholdRule = { conditionType: "price" | "weight" | "items"; operator: "gte" | "lte"; value: number; effect: "free" | "fixed"; feeOverride?: number };
+// region: which delivery area a rule applies to - "ipswich" or
+// "outside_ipswich" restricts it to that area only (checked against
+// deliveryInfo.postcode below), omitted/undefined means every UK address,
+// matching how a rule saved before the Ipswich/outside split still
+// applies everywhere rather than nowhere.
+type ThresholdRule = { conditionType: "price" | "weight" | "items"; operator: "gte" | "lte"; value: number; effect: "free" | "fixed"; feeOverride?: number; region?: "ipswich" | "outside_ipswich" };
 let DELIVERY_THRESHOLD_RULES: ThresholdRule[] = [
-  { conditionType: "price", operator: "gte", value: 50, effect: "free" },
+  { conditionType: "price", operator: "gte", value: 70, effect: "free", region: "ipswich" },
+  { conditionType: "price", operator: "gte", value: 120, effect: "free", region: "outside_ipswich" },
 ];
+// Mirrors isIpswichPostcode() in index.html exactly - same Ipswich postal
+// district list (IP1-IP6, IP8; not the wider Suffolk "IP" area IP7/IP9/
+// IP28+ also use for local-delivery ETA purposes), same reasoning: this
+// governs which of the two free-delivery thresholds above actually
+// applies, so it has to draw the same line the client already shows the
+// customer at checkout, not a looser/tighter one.
+function isIpswichPostcode(postcode: string | null | undefined): boolean {
+  // A UK postcode's inward code is always exactly 3 characters (a digit
+  // then 2 letters), so slicing those off the whitespace-stripped string
+  // reliably isolates the district regardless of whether the postcode
+  // still has its usual internal space or not - a \b-based regex breaks
+  // once that space is gone, since the district's last digit and the
+  // inward code's own leading digit then sit with no word-boundary
+  // between them.
+  //
+  // The full-format check below rejects a short/malformed value like
+  // "IP1" on its own (no inward code) before it ever reaches the slice -
+  // this is the actual charge calculation, called directly from a client
+  // payload with no other postcode validation server-side, so a caller
+  // submitting an incomplete postcode must not be able to claim the
+  // lower Ipswich threshold. Anything that doesn't fit the real shape
+  // falls through to "not Ipswich" (the higher, safer threshold).
+  const compact = (postcode ?? "").replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(compact)) return false;
+  const outward = compact.slice(0, -3);
+  return /^IP[1-6]$/.test(outward) || outward === "IP8";
+}
 type BundleDef = { name: string; discountPercent: number; items: { catSlug: string; idx: number }[] };
 const BUNDLES: BundleDef[] = [
   { name: "Classic Jollof Night", discountPercent: 10, items: [{ catSlug: "rice", idx: 1 }, { catSlug: "oils", idx: 2 }, { catSlug: "condiments", idx: 0 }, { catSlug: "seasoning", idx: 0 }] },
@@ -679,7 +712,15 @@ Deno.serve(async (req) => {
       const tier = DELIVERY_WEIGHT_TIERS.find((t) => totalWeight <= t.maxWeight) ?? DELIVERY_WEIGHT_TIERS[DELIVERY_WEIGHT_TIERS.length - 1];
       delivery = tier.fee;
       const itemCount = lines.reduce((s, l) => s + l.qty, 0);
+      // validate-discount's own request body never includes deliveryInfo
+      // (see index.html's validateDiscount()) - this just falls through to
+      // "not Ipswich" for that preview-only call, which is fine, nothing
+      // reads this path's delivery/region figures, only its discount field.
+      const bodyDeliveryInfo = body.deliveryInfo as Record<string, unknown> | undefined;
+      const inIpswich = isIpswichPostcode(typeof bodyDeliveryInfo?.postcode === "string" ? bodyDeliveryInfo.postcode : "");
       for (const rule of DELIVERY_THRESHOLD_RULES) {
+        if (rule.region === "ipswich" && !inIpswich) continue;
+        if (rule.region === "outside_ipswich" && inIpswich) continue;
         const actual = rule.conditionType === "price" ? subtotal : rule.conditionType === "weight" ? totalWeight : rule.conditionType === "items" ? itemCount : null;
         if (actual === null) continue;
         const met = rule.operator === "gte" ? actual >= rule.value : actual <= rule.value;
