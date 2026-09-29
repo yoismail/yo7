@@ -5461,6 +5461,106 @@
             .cookie-notice-inner button { width: 100%; }
         }
 
+        /* Same fixed-bottom-bar language as .cookie-notice above, on
+           purpose - deliberately held back until that one is out of the
+           way (see initInstallBanner's own comment) so a first-time
+           visitor never sees two bottom banners stacked at once. */
+        .install-banner {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 209;
+            background: var(--card-bg);
+            border-top: 1px solid rgba(var(--border-rgb), 0.14);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(.2, .8, .3, 1);
+        }
+        .install-banner.is-visible { transform: translateY(0); }
+        .install-banner-inner {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .install-banner-icon {
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .install-banner-text {
+            flex: 1;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .install-banner-text strong {
+            font-family: var(--display);
+            font-size: 14px;
+            color: var(--heading);
+        }
+        .install-banner-text span {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-body);
+        }
+        .install-banner-text .share-icon-inline {
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+        }
+        .install-banner-actions {
+            flex-shrink: 0;
+            display: flex;
+            gap: 8px;
+        }
+        .install-banner-actions button {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        #installBannerInstallBtn, .install-banner-actions button:only-child {
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+        }
+        #installBannerInstallBtn:hover, .install-banner-actions button:only-child:hover { background: var(--chartreuse-soft); }
+        #installBannerDismissBtn:not(:only-child) {
+            background: none;
+            color: var(--text-muted);
+        }
+        @media (max-width: 640px) {
+            .install-banner-inner { padding: 14px 16px; }
+        }
+
+        /* Mirrors .mobile-menu a's own row styling (same font/size/padding/
+           divider) since it sits in that same list, just as a <button>
+           instead of an <a> - hidden by default, installInit() only
+           reveals it once the browser (or, on iOS Safari, the platform
+           itself) has actually confirmed there's something to install. */
+        .mobile-menu-install-btn {
+            display: none;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            border-bottom: 1px solid rgba(44, 28, 16, 0.08);
+            color: var(--chartreuse-rich);
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 15px;
+            padding: 12px 4px;
+            cursor: pointer;
+        }
+
         .float-order.is-visible {
             opacity: 1;
             transform: scale(1) translateY(0);
@@ -10045,6 +10145,7 @@
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
+            <button type="button" class="mobile-menu-install-btn" id="mobileMenuInstallBtn">Install app</button>
             <div class="mobile-menu-auth" id="mobileMenuAuth">
                 <a href="#/signup">Create an account</a>
                 <a href="#/login">Log in</a>
@@ -12625,6 +12726,13 @@
         </div>
     </div>
 
+    <!-- Filled in by initInstallBanner() (see that function's own comment)
+         - empty until JS actually confirms there's something to install,
+         never guessed at server-side, since installability is a real
+         per-browser/per-platform capability check, not something this
+         markup can know in advance. -->
+    <div class="install-banner" id="installBanner" role="region" aria-label="Install app notice"></div>
+
     <!-- Moved here from <head> — performance fix. Both were previously
          blocking <script src> tags in <head>, forcing the browser to
          complete two full CDN round trips (jsdelivr, then js.stripe.com)
@@ -14813,7 +14921,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.11';
+        const BUILD_VERSION = '2026-09-29.12';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16796,13 +16904,151 @@
             if (!notice || !dismissBtn) return;
             let dismissed = false;
             try { dismissed = localStorage.getItem('cookieNoticeDismissed') === 'true'; } catch (e) { /* private browsing etc. */ }
-            if (dismissed) return;
+            if (dismissed) { maybeShowInstallBanner(); return; }
             setTimeout(() => notice.classList.add('is-visible'), 600);
             dismissBtn.addEventListener('click', () => {
                 notice.classList.remove('is-visible');
                 try { localStorage.setItem('cookieNoticeDismissed', 'true'); } catch (e) { /* not fatal, it'll just reappear next visit */ }
+                // A first-time visitor who's just dismissed this is the one
+                // case the boot-time maybeShowInstallBanner() call below
+                // can't already have covered - it deliberately holds off
+                // while this notice is still up, so the two never stack.
+                maybeShowInstallBanner();
             });
         }
+
+        /* ================= INSTALL APP BANNER =================
+           A real "Install app" affordance isn't guaranteed anywhere in a
+           browser's own UI - Chrome/Edge/Samsung Internet tuck it behind
+           an address-bar icon or a three-dot menu most people never
+           notice, and iOS Safari has no install UI of its own at all,
+           just the generic Share sheet's "Add to Home Screen" (already
+           used the same way for the push-notification opt-in on
+           #/notifications - see isIosSafari()/isIosNonStandalone() and
+           renderPushToggle() further down). This surfaces the same
+           capability once, unmissably, instead of leaving it undiscovered.
+
+           beforeinstallprompt is Chromium-only (Chrome, Edge, Samsung
+           Internet, etc.) - Firefox and Safari never fire it, and there's
+           no reliable feature-detect for "will this browser ever fire
+           it" ahead of time, so deferredInstallPrompt staying null just
+           means this quietly never shows there, same as if there were
+           nothing to offer. */
+        let deferredInstallPrompt = null;
+        function isStandaloneDisplay() {
+            return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+        }
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Stops Chrome's own mini-infobar from also appearing
+            // alongside this banner - one prompt, not two competing ones.
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            maybeShowInstallBanner();
+            updateInstallMenuBtn();
+        });
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            dismissInstallBanner();
+            updateInstallMenuBtn();
+            showToast('Yo7 Foods installed - find it on your Home Screen.', undefined, 'success');
+        });
+        function installBannerDismissed() {
+            try { return localStorage.getItem('installBannerDismissed') === 'true'; } catch (e) { return false; }
+        }
+        function dismissInstallBanner() {
+            const el = document.getElementById('installBanner');
+            if (el) el.classList.remove('is-visible');
+            try { localStorage.setItem('installBannerDismissed', 'true'); } catch (e) { /* not fatal, it'll just reappear next visit */ }
+        }
+        // Called at boot (for the iOS Safari case, which has no event to
+        // wait for) and again whenever beforeinstallprompt actually fires
+        // (the common Android/Chrome/Edge case, which can happen well
+        // after boot) - safe to call repeatedly, it's a no-op once
+        // dismissed, already running standalone, or genuinely nothing to
+        // offer on this browser.
+        function maybeShowInstallBanner() {
+            const el = document.getElementById('installBanner');
+            if (!el || isStandaloneDisplay() || installBannerDismissed()) return;
+            // Never stacks on top of the cookie notice - if that's still
+            // showing (a first-time visitor who hasn't dismissed it yet),
+            // its own dismiss handler above calls this again right after.
+            const cookieNotice = document.getElementById('cookieNotice');
+            if (cookieNotice && cookieNotice.classList.contains('is-visible')) return;
+
+            if (deferredInstallPrompt) {
+                el.innerHTML = `
+      <div class="install-banner-inner">
+        <img src="/favicon-192x192.png" width="40" height="40" alt="" class="install-banner-icon">
+        <div class="install-banner-text">
+          <strong>Get the Yo7 Foods app</strong>
+          <span>Add it to your Home Screen for one-tap ordering and order updates, no app store needed.</span>
+        </div>
+        <div class="install-banner-actions">
+          <button type="button" id="installBannerInstallBtn">Install</button>
+          <button type="button" id="installBannerDismissBtn" aria-label="Not now">Not now</button>
+        </div>
+      </div>`;
+                document.getElementById('installBannerInstallBtn').addEventListener('click', async () => {
+                    if (!deferredInstallPrompt) return;
+                    const promptEvent = deferredInstallPrompt;
+                    deferredInstallPrompt = null;
+                    dismissInstallBanner();
+                    updateInstallMenuBtn();
+                    // A used beforeinstallprompt event can't be replayed -
+                    // this browser won't fire another one until it decides
+                    // the site's worth re-offering, which is exactly why
+                    // "Install app" also stays reachable from the menu
+                    // whenever a captured prompt exists, not just here.
+                    promptEvent.prompt();
+                    await promptEvent.userChoice;
+                });
+                document.getElementById('installBannerDismissBtn').addEventListener('click', dismissInstallBanner);
+            } else if (isIosSafari() && isIosNonStandalone()) {
+                const shareIcon = '<svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
+                el.innerHTML = `
+      <div class="install-banner-inner">
+        <img src="/favicon-192x192.png" width="40" height="40" alt="" class="install-banner-icon">
+        <div class="install-banner-text">
+          <strong>Get the Yo7 Foods app</strong>
+          <span>Tap the Share icon ${shareIcon} in Safari's toolbar, then <strong>Add to Home Screen</strong>, for one-tap ordering and order updates.</span>
+        </div>
+        <div class="install-banner-actions">
+          <button type="button" id="installBannerDismissBtn">Got it</button>
+        </div>
+      </div>`;
+                document.getElementById('installBannerDismissBtn').addEventListener('click', dismissInstallBanner);
+            } else {
+                return; // Nothing installable to offer on this browser.
+            }
+            setTimeout(() => el.classList.add('is-visible'), 50);
+        }
+        // Kept reachable from the menu even after the one-time banner is
+        // dismissed or missed - a captured beforeinstallprompt event, or
+        // (on iOS Safari) the same not-yet-installed check the banner
+        // itself uses, is what decides whether it's actually worth
+        // showing, not just "has the banner been seen".
+        function updateInstallMenuBtn() {
+            const btn = document.getElementById('mobileMenuInstallBtn');
+            if (!btn) return;
+            const canOfferInstall = !isStandaloneDisplay() && (deferredInstallPrompt || (isIosSafari() && isIosNonStandalone()));
+            btn.style.display = canOfferInstall ? 'block' : 'none';
+        }
+        document.getElementById('mobileMenuInstallBtn').addEventListener('click', async () => {
+            if (deferredInstallPrompt) {
+                const promptEvent = deferredInstallPrompt;
+                deferredInstallPrompt = null;
+                updateInstallMenuBtn();
+                promptEvent.prompt();
+                await promptEvent.userChoice;
+                return;
+            }
+            // iOS Safari has no programmatic install - re-show the same
+            // instructional banner instead (bypassing its own dismissed
+            // flag, since this is the visitor actively asking again, not
+            // an unprompted nag).
+            try { localStorage.removeItem('installBannerDismissed'); } catch (e) { /* not fatal */ }
+            maybeShowInstallBanner();
+        });
         function initThemeToggle() {
             const btn = document.getElementById('themeToggle');
             if (!btn) return;
@@ -24980,6 +25226,7 @@
         renderAdvertCarousel();
         loadAdvertBanners();
         initCookieNotice();
+        updateInstallMenuBtn();
         initDragScroll();
         observeReveals();
         updateCartBadge();
