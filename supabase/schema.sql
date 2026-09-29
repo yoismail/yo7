@@ -1087,9 +1087,20 @@ begin
     return; -- Resend not configured yet, see setup-order-emails.md
   end if;
 
-  -- Only checkouts 1–20 hours old, not yet reminded, not converted to paid order
+  -- initStripePayment() (src/index.html) deliberately creates a fresh
+  -- PaymentIntent, and so a fresh pending_checkouts row, every time the
+  -- customer reaches the payment step - including a second time, if they
+  -- go back to the delivery step and forward again, still the same
+  -- shopping session. Each of those rows is a real safety net for its own
+  -- payment_intent_id (see stripe-webhook's own comment) and is never
+  -- deleted for that reason, but it means one abandoned session can leave
+  -- several eligible rows behind. distinct on (user_id) here picks just
+  -- the latest attempt (the truest picture of what they actually left in
+  -- their basket) to email about, once per person per run - without this,
+  -- three back-and-forth attempts meant three simultaneous "you left
+  -- something in your basket" emails for the exact same cart.
   for v_row in
-    select pc.*, p.email as customer_email
+    select distinct on (pc.user_id) pc.*, p.email as customer_email
     from public.pending_checkouts pc
     join public.profiles p on p.id = pc.user_id
     where pc.abandoned_reminder_sent_at is null
@@ -1100,6 +1111,7 @@ begin
       and not exists (
         select 1 from public.orders o where o.stripe_payment_intent_id = pc.payment_intent_id
       )
+    order by pc.user_id, pc.created_at desc
   loop
     v_item_count := jsonb_array_length(v_row.items);
     select string_agg(coalesce(item ->> 'name', 'an item'), ', ')
@@ -1137,7 +1149,22 @@ begin
       )
     );
 
-    update public.pending_checkouts set abandoned_reminder_sent_at = now() where payment_intent_id = v_row.payment_intent_id;
+    -- Marks every one of this user's still-eligible sibling rows as
+    -- reminded too, not just the one just emailed - otherwise an earlier
+    -- attempt from the same abandonment episode (still abandoned_reminder_sent_at
+    -- is null) would sit there and get distinct-on-selected on a LATER
+    -- run instead, once the row that's now marked is no longer a
+    -- candidate - the same duplicate email this fix exists to stop, just
+    -- spread across cron runs instead of firing within one.
+    update public.pending_checkouts
+    set abandoned_reminder_sent_at = now()
+    where user_id = v_row.user_id
+      and abandoned_reminder_sent_at is null
+      and created_at <= now() - interval '1 hour'
+      and created_at >= now() - interval '20 hours'
+      and not exists (
+        select 1 from public.orders o where o.stripe_payment_intent_id = pending_checkouts.payment_intent_id
+      );
   end loop;
 end;
 $$;
