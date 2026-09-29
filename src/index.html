@@ -11605,7 +11605,7 @@
         <section class="legal-section">
             <div class="wrap">
                 <div class="legal-content">
-                    <div class="legal-updated">Last updated: August 2026</div>
+                    <div class="legal-updated">Last updated: September 2026</div>
 
                     <h2>Who we are</h2>
                     <p>Yo7 Foods Limited ("Yo7", "we", "us"), 7 Lancaster Road, Ipswich, IP4 2NY. You can reach us at hello@yo7foods.co.uk or via WhatsApp.</p>
@@ -11616,6 +11616,9 @@
 
                     <h2>Payment information</h2>
                     <p>Card and every other payment method we offer, including Apple Pay, Google Pay, Klarna, Revolut Pay, Amazon Pay, PayPal, Clearpay, and Pay by Bank, are processed securely by Stripe. We never see or store your full card details, they're sent directly to Stripe over an encrypted connection. Stripe is a PCI-DSS Level 1 certified payment processor.</p>
+
+                    <h2>Job applications</h2>
+                    <p>If you apply for a role on our <a href="#/careers">Careers</a> page, we collect your name, email, and whatever else you choose to include, phone number, a message, and a CV if you attach one. This is used only to consider you for that role and get in touch about it, it isn't added to our marketing list or used for anything else. Applications are visible only to Yo7 Foods admin staff reviewing that role, and are kept until the role is filled or closed, at which point they're deleted along with the listing, CV file included.</p>
 
                     <h2>What we do with it</h2>
                     <ul>
@@ -22989,6 +22992,14 @@
             // re-render (not just the body.edit-mode-on toggle) to reappear
             // the moment an admin turns edit mode on with an empty list.
             if (typeof renderAdvertCarousel === 'function') renderAdvertCarousel();
+            // Unlike the renders above, this one does a real Supabase
+            // fetch every call (see renderCareersPage's own comment on
+            // why it's never cached), so it's only worth repeating when
+            // Careers is actually the page on screen - otherwise toggling
+            // edit mode anywhere else on the site would silently refetch
+            // vacancies nobody's looking at.
+            const careersView = document.getElementById('view-careers');
+            if (careersView && !careersView.classList.contains('hidden-view')) renderCareersPage();
             syncNavSpacer();
         }
         document.getElementById('editModeToggle').addEventListener('click', async () => {
@@ -24606,9 +24617,22 @@
         }
         async function deleteVacancyFromPanel(vacancyId, btn) {
             const v = vacancies.find(x => x.id === vacancyId);
-            if (!confirm(`Delete "${v ? v.title : 'this vacancy'}"? This also removes any applications submitted for it. This can't be undone.`)) return;
+            if (!confirm(`Delete "${v ? v.title : 'this vacancy'}"? This also removes any applications submitted for it, including their CVs. This can't be undone.`)) return;
             btn.disabled = true;
             btn.textContent = 'Deleting…';
+            // The DB rows cascade automatically (job_applications has an
+            // ON DELETE CASCADE FK to job_vacancies), but the CV files
+            // those rows point to live in Storage, a separate system that
+            // cascade knows nothing about - deleting the vacancy without
+            // this step would leave every applicant's CV orphaned in the
+            // bucket forever, with no surviving row to even find it by.
+            const { data: apps, error: fetchError } = await supabaseClient.from('job_applications').select('cv_path').eq('vacancy_id', vacancyId);
+            if (fetchError) { showToast('Couldn\'t delete: ' + fetchError.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Delete vacancy'; return; }
+            const cvPaths = (apps || []).map(a => a.cv_path).filter(Boolean);
+            if (cvPaths.length) {
+                const { error: removeError } = await supabaseClient.storage.from('job-applications').remove(cvPaths);
+                if (removeError) { showToast('Couldn\'t delete: ' + removeError.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Delete vacancy'; return; }
+            }
             const { error } = await supabaseClient.from('job_vacancies').delete().eq('id', vacancyId);
             if (error) { showToast('Couldn\'t delete: ' + error.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Delete vacancy'; return; }
             logAdminAction('vacancy_deleted', 'job_vacancy', v ? v.title : vacancyId, {});
@@ -24626,6 +24650,7 @@
           <div class="field"><label for="apply-phone-${vacancyId}">Phone (optional)</label><input type="tel" id="apply-phone-${vacancyId}"></div>
           <div class="field"><label for="apply-message-${vacancyId}">Tell us why you're a good fit (optional)</label><textarea id="apply-message-${vacancyId}" rows="3"></textarea></div>
           <div class="field"><label for="apply-cv-${vacancyId}">CV (optional, PDF or Word document)</label><input type="file" id="apply-cv-${vacancyId}" accept=".pdf,.doc,.docx"></div>
+          <p style="font-size:12px; color:var(--text-muted); margin:-4px 0 12px;">See our <a href="#/privacy">Privacy Policy</a> for how we handle job applications.</p>
           <div class="apply-form-actions">
             <button class="btn btn-primary" type="submit">Submit application</button>
             <button class="apply-form-cancel" type="button" onclick="document.getElementById('apply-slot-${vacancyId}').innerHTML=''; document.getElementById('apply-btn-${vacancyId}').style.display='';">Cancel</button>
@@ -24654,7 +24679,7 @@
             }
             const { error } = await supabaseClient.from('job_applications').insert({ vacancy_id: vacancyId, name, email, phone, message, cv_path });
             if (error) { showToast('Couldn\'t submit your application: ' + error.message, 6000, 'error'); submitBtn.disabled = false; submitBtn.textContent = 'Submit application'; return; }
-            document.getElementById(`apply-slot-${vacancyId}`).innerHTML = `<p class="auth-success">Thanks, ${escapeHtml(name)}, your application's in. We'll be in touch if it's a good fit.</p>`;
+            document.getElementById(`apply-slot-${vacancyId}`).innerHTML = `<p class="auth-success" role="status">Thanks, ${escapeHtml(name)}, your application's in. We'll be in touch if it's a good fit.</p>`;
         }
         async function toggleVacancyApplications(vacancyId) {
             const slot = document.getElementById(`applications-slot-${vacancyId}`);

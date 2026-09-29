@@ -36,6 +36,7 @@ const ROUTES = [
   '#/build-bundle', '#/checkout', '#/login', '#/signup', '#/forgot-password',
   '#/orders', '#/notifications', '#/refer', '#/admin', '#/privacy', '#/terms',
   '#/returns', '#/cookie-policy', '#/delivery-policy', '#/buy-again',
+  '#/work-with-us', '#/careers',
 ];
 
 const results = [];
@@ -268,6 +269,44 @@ async function dismissWelcome(page) {
     assert(results2.length === 0, `searchProducts() returned ${results2.length} results for a nonsense query, expected 0`);
 
     await page.close();
+  });
+
+  // --- Careers: graceful no-Supabase degradation, and admin edit-mode
+  //     affordances render correctly even before any data has loaded.
+  //     A full guest-apply / admin-CRUD / RLS round trip needs a real (or
+  //     network-intercepted) Supabase client, which this file deliberately
+  //     never provides (see the comment above BLOCKED_SCRIPT_PATTERN) -
+  //     that coverage lives in manual Playwright runs against a scripted
+  //     Supabase-shaped mock instead, not here. ---
+  await check('careers page degrades gracefully without Supabase and renders admin affordances', async () => {
+    const page = await newPage(browser);
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    await page.goto(BASE_URL);
+    await page.waitForTimeout(700);
+    await dismissWelcome(page);
+
+    await gotoHash(page, '#/careers');
+    const guestState = await page.evaluate(() => ({
+      emptyShown: getComputedStyle(document.getElementById('careersEmptyState')).display !== 'none',
+      listEmpty: document.getElementById('careersList').children.length === 0,
+      hasAddBtn: !!document.querySelector('.careers-add-btn'),
+    }));
+    assert(guestState.emptyShown, 'careersEmptyState should show when supabaseClient is null');
+    assert(guestState.listEmpty, 'careersList should be empty when supabaseClient is null');
+    assert(!guestState.hasAddBtn, 'the admin "+ Add vacancy" button should not render for a signed-out guest');
+
+    await page.evaluate(() => {
+      currentIsAdmin = true;
+      editModeOn = true;
+      return renderCareersPage();
+    });
+    await page.waitForTimeout(300);
+    const adminState = await page.evaluate(() => !!document.querySelector('.careers-add-btn'));
+    assert(adminState, 'the admin "+ Add vacancy" button should render once currentIsAdmin/editModeOn are both true');
+
+    await page.close();
+    assert(errors.length === 0, `careers page threw: ${errors.join('; ')}`);
   });
 
   // --- Signup: native validation blocks a too-short password and a malformed email ---

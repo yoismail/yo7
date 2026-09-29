@@ -2560,7 +2560,9 @@ CREATE POLICY "Anyone can read loyalty settings" ON "public"."loyalty_settings" 
 
 
 
-CREATE POLICY "Anyone can submit a job application" ON "public"."job_applications" FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can submit a job application" ON "public"."job_applications" FOR INSERT WITH CHECK ((("reviewed_at" IS NULL) AND (EXISTS ( SELECT 1
+   FROM "public"."job_vacancies" "v"
+  WHERE (("v"."id" = "job_applications"."vacancy_id") AND ("v"."is_open" = true))))));
 
 
 

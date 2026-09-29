@@ -75,7 +75,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Regenerate the 9 static content pages
+      - name: Regenerate the static content pages
         run: python3 scripts/generate-static-pages.py
 
       - name: Regenerate static product pages (live catalogue) + sitemap.xml

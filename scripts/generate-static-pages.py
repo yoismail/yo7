@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Generates real, separately-crawlable URLs for Yo7 Foods' informational
-pages (About Us, Delivery Information, FAQ/guide, Contact Us, and the 5
-legal pages), which otherwise only exist as hash routes (#/about) that
-Google never indexes as distinct pages.
+pages (About Us, Delivery Information, FAQ/guide, Contact Us, Work with
+Us, Careers, and the 5 legal pages), which otherwise only exist as hash
+routes (#/about) that Google never indexes as distinct pages.
 
-This is NOT a build pipeline — the site has none by design, and this
+This is NOT a build pipeline, the site has none by design, and this
 script doesn't turn it into one. It's a small manual step: whenever
 index.html changes, re-run this before pushing, the same way perftest.html
 already gets regenerated before every ship. It takes the current
 index.html (the single source of truth for every line of app logic) and
-writes 9 near-identical copies, each to a real path GitHub Pages serves
+writes one near-identical copy per entry in PAGES below, each to a real path GitHub Pages serves
 directly as <path>/index.html for a request to /<path>/. Every copy is
 byte-identical to the source except:
 
