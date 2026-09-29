@@ -1560,6 +1560,22 @@
             width: 19px;
             height: 19px;
         }
+        /* Hamburger-to-X morph, the standard affordance for "tap again to
+           close" - each bar rotates/fades around its own centre (fill-box)
+           rather than the icon's, so the top and bottom bars land exactly
+           on the middle bar's position and cross cleanly into an X instead
+           of drifting off-centre. */
+        .ham-line {
+            transform-box: fill-box;
+            transform-origin: center;
+            transition: transform 0.25s cubic-bezier(.4,0,.2,1), opacity 0.2s ease;
+        }
+        .nav-hamburger.open .ham-line-1 { transform: translateY(6px) rotate(45deg); }
+        .nav-hamburger.open .ham-line-2 { opacity: 0; }
+        .nav-hamburger.open .ham-line-3 { transform: translateY(-6px) rotate(-45deg); }
+        @media (prefers-reduced-motion: reduce) {
+            .ham-line { transition: none; }
+        }
 
         @media (max-width:900px) {
             .nav-hamburger {
@@ -10004,9 +10020,11 @@
                     </div>
                 </div>
             </div>
-            <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Menu">
+            <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mobileMenu">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M3 6h18M3 12h18M3 18h18" />
+                    <line class="ham-line ham-line-1" x1="3" y1="6" x2="21" y2="6" />
+                    <line class="ham-line ham-line-2" x1="3" y1="12" x2="21" y2="12" />
+                    <line class="ham-line ham-line-3" x1="3" y1="18" x2="21" y2="18" />
                 </svg>
             </button>
         </div>
@@ -14787,7 +14805,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.8';
+        const BUILD_VERSION = '2026-09-29.9';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -23738,9 +23756,13 @@
         const mobileMenu = document.getElementById('mobileMenu');
         function closeMobileMenu() {
             mobileMenu.classList.remove('open');
+            navHamburger.classList.remove('open');
+            navHamburger.setAttribute('aria-expanded', 'false');
         }
         navHamburger.addEventListener('click', () => {
-            mobileMenu.classList.toggle('open');
+            const isOpen = mobileMenu.classList.toggle('open');
+            navHamburger.classList.toggle('open', isOpen);
+            navHamburger.setAttribute('aria-expanded', String(isOpen));
         });
         mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
         window.addEventListener('hashchange', closeMobileMenu);
