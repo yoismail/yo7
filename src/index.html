@@ -13482,7 +13482,13 @@
                 if (actual === null) continue;
                 const met = rule.operator === 'gte' ? actual >= rule.value : actual <= rule.value;
                 if (!met) continue;
-                if (rule.effect === 'free') { fee = 0; freeReason = { type: 'rule', name: rule.name }; }
+                // addressDependent marks whether this free/reduced fee only
+                // holds for the address just checked (a region-scoped rule)
+                // versus one that would hold no matter what the shopper's
+                // address turns out to be (any region-less rule) - read by
+                // updateSummaries() to decide whether the cart step, which
+                // has no confirmed address yet, can honestly show it early.
+                if (rule.effect === 'free') { fee = 0; freeReason = { type: 'rule', name: rule.name, addressDependent: !!rule.region }; }
                 else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') {
                     fee = Math.min(fee, rule.feeOverride);
                     // An admin can set a "fixed" rule's override to £0, which
@@ -13492,12 +13498,14 @@
                     // own name never got the credit. Only claims it when
                     // nothing already has (a rule this loop already set free
                     // stays attributed to that rule, not a later fixed-£0 one).
-                    if (fee === 0 && !freeReason) freeReason = { type: 'rule', name: rule.name };
+                    if (fee === 0 && !freeReason) freeReason = { type: 'rule', name: rule.name, addressDependent: !!rule.region };
                 }
             }
             if (appliedDiscount && appliedDiscount.type === 'freeDelivery' && cartQualifiesForDiscount(appliedDiscount)) {
                 fee = 0;
-                freeReason = { type: 'discount', code: appliedDiscount.code };
+                // A discount code's free delivery holds regardless of where
+                // the order ships, so it's never addressDependent.
+                freeReason = { type: 'discount', code: appliedDiscount.code, addressDependent: false };
             }
             return { fee, region: inIpswich ? 'ipswich' : 'outside_ipswich', freeReason };
         }
@@ -14755,7 +14763,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.1';
+        const BUILD_VERSION = '2026-09-29.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18931,7 +18939,14 @@
             // before continuing - see checkoutStepName's own comment.
             const onCartStep = checkoutStepName === 'cart';
             const cartStepFee = resolveWeightTierFee(cartTotalWeight());
-            const delivery = (cart.length && fulfilmentMethod === 'delivery') ? (onCartStep ? cartStepFee : resolvedFee) : 0;
+            // A free-delivery discount code or a region-less promotional
+            // rule holds no matter what address the shopper eventually
+            // confirms, so it's honest to show even on the cart step -
+            // only a region-scoped rule (Ipswich/outside-Ipswich) needs to
+            // wait for the delivery step, since only that one depends on
+            // an address that hasn't actually been reviewed yet.
+            const addressIndependentFree = resolvedFee === 0 && freeReason && !freeReason.addressDependent;
+            const delivery = (cart.length && fulfilmentMethod === 'delivery') ? (onCartStep && !addressIndependentFree ? cartStepFee : resolvedFee) : 0;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
             // A referral code and the loyalty reward never both apply to
             // the same order (mirrors the same rule in create-payment-intent's
@@ -18942,7 +18957,7 @@
             const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
             const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
-            const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && !onCartStep && resolvedFee === 0);
+            const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && (addressIndependentFree || (!onCartStep && resolvedFee === 0)));
             const totalWeight = cartTotalWeight();
             ['sumSubtotal', 'sumSubtotal2', 'sumSubtotal3'].forEach(id => document.getElementById(id).textContent = money(sub));
             ['sumWeight', 'sumWeight2', 'sumWeight3'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = `${totalWeight.toFixed(totalWeight % 1 === 0 ? 0 : 1)}kg`; });
@@ -18959,13 +18974,13 @@
                 el.style.display = 'block';
                 if (fulfilmentMethod === 'pickup') {
                     el.textContent = deliveryFreeReasonText({ type: 'pickup' });
+                } else if (resolvedFee === 0 && freeReason && (!onCartStep || !freeReason.addressDependent)) {
+                    el.textContent = deliveryFreeReasonText(freeReason);
                 } else if (onCartStep) {
                     // Explicitly says the figure above is an estimate, not
                     // yet the real fee - see the cartStepFee comment above
                     // for why this can't just resolve the actual one here.
                     el.textContent = 'Estimated by order weight. Confirm your delivery address on the next step to see your exact fee, including whether you qualify for free delivery.';
-                } else if (resolvedFee === 0 && freeReason) {
-                    el.textContent = deliveryFreeReasonText(freeReason);
                 } else {
                     el.textContent = 'Delivery is priced by total order weight, not a flat rate.';
                 }
