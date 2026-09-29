@@ -28,14 +28,19 @@ name: Regenerate static pages
 # (scripts/minify.py), and if the result differs from what's committed,
 # pushes the fix straight back to main.
 #
-# The `paths: [src/index.html]` push trigger is also what stops *that*
-# path from looping forever — the commit this workflow makes only
-# touches repo-root index.html, the generated directories, and
-# sitemap.xml, never src/index.html itself, so it doesn't match the push
-# trigger and this workflow doesn't re-run on its own commit. The
-# schedule trigger has no such loop to worry about — a scheduled run
-# that finds nothing changed just exits without committing (see the last
-# step below), so it's a no-op the vast majority of hours.
+# generate-product-pages.py also keeps a PRODUCT_SLUGS map inside
+# src/index.html itself in sync with the live catalogue (see that
+# script's own update_product_slugs_in_source()), so this workflow's own
+# commit CAN touch src/index.html, not just the generated output - what
+# actually stops that from looping this workflow back into itself is the
+# [skip ci] tag on the commit message below, which GitHub Actions
+# honours regardless of which paths a commit touches; the
+# `paths: [src/index.html]` filter on the push trigger above is only
+# there to keep this workflow from firing on push commits that don't
+# touch it at all. The schedule trigger has no loop to worry about
+# either way - a scheduled run that finds nothing changed just exits
+# without committing (see the last step below), so it's a no-op the
+# vast majority of hours.
 
 on:
   push:
@@ -87,6 +92,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html about/ contact/ cookie-policy/ delivery-info/ delivery-policy/ guide/ privacy/ returns/ terms/ product/ sitemap.xml
+          git add src/index.html index.html about/ contact/ cookie-policy/ delivery-info/ delivery-policy/ guide/ privacy/ returns/ terms/ product/ sitemap.xml
           git commit -m "Regenerate + minify static pages for the latest src/index.html and catalogue [skip ci]"
           git push origin HEAD:main
