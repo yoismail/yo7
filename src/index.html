@@ -14787,7 +14787,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.7';
+        const BUILD_VERSION = '2026-09-29.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16831,9 +16831,13 @@
             const canManage = currentIsAdmin && editModeOn;
             if (advertBanners.length === 0 && !canManage) { section.classList.remove('is-visible'); return; }
             section.classList.add('is-visible');
-            const slides = advertBanners.map(b => `
+            // Only the first slide is ever actually visible without
+            // scrolling the carousel - it should load eagerly like any
+            // other above-the-fold image, everything behind it in the
+            // strip stays lazy same as before.
+            const slides = advertBanners.map((b, i) => `
     <div class="advert-slide">
-      <img src="${escapeHtml(b.image_url)}" alt="Advertisement" loading="lazy">
+      <img src="${escapeHtml(b.image_url)}" alt="Advertisement" loading="${i === 0 ? 'eager' : 'lazy'}"${i === 0 ? ' fetchpriority="high"' : ''}>
       <button type="button" class="advert-remove-btn" onclick="removeAdvertBanner('${b.id}')" aria-label="Remove this advert image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>`).join('');
             const addTile = `
@@ -17900,9 +17904,17 @@
             placeholder.innerHTML = `<span class="pd-placeholder-emoji">${p.emoji || DEFAULT_ITEM_ICON_SVG}</span><span>Photo coming soon</span>`;
             if (p.image) {
                 const img = document.createElement('img');
+                // This is the one product photo that's always already in
+                // the viewport the moment this page loads, the exact
+                // opposite of what loading="lazy" is for - marking it lazy
+                // (as this did until now) tells the browser it's safe to
+                // deprioritize, so it can visibly lag behind everything
+                // else on the page instead of being the first thing that
+                // finishes. fetchPriority nudges it ahead of the pack too.
+                img.loading = 'eager';
+                img.fetchPriority = 'high';
                 img.src = p.image;
                 img.alt = p.name;
-                img.loading = 'lazy';
                 img.decoding = 'async';
                 img.className = 'product-photo-img';
                 img.onerror = () => { img.style.display = 'none'; placeholder.style.display = 'flex'; };

@@ -440,9 +440,13 @@ def inject_static_product_content(html, p, cat_slug, cat_name_escaped, name_html
         ))
     image_url = p.get('image')
     if image_url:
+        # Always the first thing in the viewport on this page - loading="lazy"
+        # here tells the browser it's safe to deprioritize, the opposite of
+        # what an always-visible hero image needs (mirrors the same fix in
+        # src/index.html's own PD render, renderProductDetail).
         replacements.append((
             '<span class="pd-placeholder" id="pdPlaceholder"></span>',
-            f'<img src="{html_escape(image_url)}" alt="{name_html}" loading="lazy" decoding="async" class="product-photo-img">'
+            f'<img src="{html_escape(image_url)}" alt="{name_html}" loading="eager" fetchpriority="high" decoding="async" class="product-photo-img">'
             f'<span class="pd-placeholder" id="pdPlaceholder" style="display:none;"></span>',
         ))
 
