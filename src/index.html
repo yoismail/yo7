@@ -14780,7 +14780,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.4';
+        const BUILD_VERSION = '2026-09-29.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -19162,6 +19162,20 @@
             return result;
         }
         dPostcodeField.addEventListener('blur', () => { if (fulfilmentMethod === 'delivery') checkPostcodeField(); });
+        // Enter in this field would otherwise submit the whole form (the
+        // browser's default for the only submit button in it) and jump
+        // straight to the payment step - the shopper never blurs the
+        // field first, so they'd never actually see the postcode result
+        // (correct region, free-delivery threshold) this step exists to
+        // show them. Enter here just runs the same check in place instead,
+        // same pattern as the discount code field's own Enter handler
+        // above; a second Enter/click on Continue is what actually moves
+        // on, by which point the hint is already on screen to review.
+        dPostcodeField.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            if (fulfilmentMethod === 'delivery') checkPostcodeField();
+        });
 
         /* ================= PREFILL FROM LAST ORDER =================
            "Log in to see your orders and save your delivery details" is
