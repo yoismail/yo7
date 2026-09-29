@@ -13488,17 +13488,28 @@
                 // address turns out to be (any region-less rule) - read by
                 // updateSummaries() to decide whether the cart step, which
                 // has no confirmed address yet, can honestly show it early.
-                if (rule.effect === 'free') { fee = 0; freeReason = { type: 'rule', name: rule.name, addressDependent: !!rule.region }; }
-                else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') {
+                // An admin can order rules however they like (and the
+                // regional-split migration appends its two rules after
+                // whatever an admin already had), so a later match in the
+                // array must never demote an already-found address-
+                // independent reason back to an address-dependent one - once
+                // the cart is honestly free regardless of address, that's
+                // the reason worth keeping and showing early.
+                if (rule.effect === 'free') {
+                    fee = 0;
+                    const candidate = { type: 'rule', name: rule.name, addressDependent: !!rule.region };
+                    if (!freeReason || (freeReason.addressDependent && !candidate.addressDependent)) freeReason = candidate;
+                } else if (rule.effect === 'fixed' && typeof rule.feeOverride === 'number') {
                     fee = Math.min(fee, rule.feeOverride);
                     // An admin can set a "fixed" rule's override to £0, which
                     // zeroes the fee exactly like a "free" rule does - without
                     // this, that case fell through with no freeReason, so the
                     // customer saw "Free" with no explanation and this rule's
-                    // own name never got the credit. Only claims it when
-                    // nothing already has (a rule this loop already set free
-                    // stays attributed to that rule, not a later fixed-£0 one).
-                    if (fee === 0 && !freeReason) freeReason = { type: 'rule', name: rule.name, addressDependent: !!rule.region };
+                    // own name never got the credit.
+                    if (fee === 0) {
+                        const candidate = { type: 'rule', name: rule.name, addressDependent: !!rule.region };
+                        if (!freeReason || (freeReason.addressDependent && !candidate.addressDependent)) freeReason = candidate;
+                    }
                 }
             }
             if (appliedDiscount && appliedDiscount.type === 'freeDelivery' && cartQualifiesForDiscount(appliedDiscount)) {
@@ -14763,7 +14774,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.2';
+        const BUILD_VERSION = '2026-09-29.3';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
