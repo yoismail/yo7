@@ -7966,6 +7966,12 @@
             margin: -4px 0 6px;
             line-height: 1.4;
         }
+        /* Plain weight-pricing copy stays muted (it's just background
+           context) - these two variants are for the cases the shopper
+           actually needs to notice: an unsettled estimate they should act
+           on, or confirmation that they've genuinely got free delivery. */
+        .delivery-fee-note--notice { color: var(--warn-text); font-weight: 600; }
+        .delivery-fee-note--free { color: var(--chartreuse-rich); font-weight: 600; }
 
         .summary-row.total {
             font-family: var(--display);
@@ -14774,7 +14780,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.3';
+        const BUILD_VERSION = '2026-09-29.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18983,15 +18989,22 @@
                 const el = document.getElementById(id);
                 if (!el) return;
                 el.style.display = 'block';
+                el.classList.remove('delivery-fee-note--notice', 'delivery-fee-note--free');
                 if (fulfilmentMethod === 'pickup') {
                     el.textContent = deliveryFreeReasonText({ type: 'pickup' });
+                    el.classList.add('delivery-fee-note--free');
                 } else if (resolvedFee === 0 && freeReason && (!onCartStep || !freeReason.addressDependent)) {
                     el.textContent = deliveryFreeReasonText(freeReason);
+                    el.classList.add('delivery-fee-note--free');
                 } else if (onCartStep) {
                     // Explicitly says the figure above is an estimate, not
                     // yet the real fee - see the cartStepFee comment above
                     // for why this can't just resolve the actual one here.
+                    // Coloured (not just muted grey) since this is the one
+                    // note on this step the shopper actually needs to act
+                    // on, not background pricing trivia.
                     el.textContent = 'Estimated by order weight. Confirm your delivery address on the next step to see your exact fee, including whether you qualify for free delivery.';
+                    el.classList.add('delivery-fee-note--notice');
                 } else {
                     el.textContent = 'Delivery is priced by total order weight, not a flat rate.';
                 }
