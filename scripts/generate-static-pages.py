@@ -83,6 +83,14 @@ PAGES = [
      'Cookie Policy | Yo7 Foods',
      "How Yo7 Foods uses cookies, including the strictly-necessary ones used to process payments securely.",
      'Cookie Policy'),
+    ('work-with-us', '#/work-with-us',
+     'Work with Us | Yo7 Foods',
+     "Interested in joining Yo7 Foods? Find out what it's like working with us, then see our current openings.",
+     'Work with Us'),
+    ('careers', '#/careers',
+     'Careers | Yo7 Foods',
+     "Current job openings at Yo7 Foods in Ipswich, and how to apply.",
+     'Careers'),
 ]
 
 # The exact homepage-wide values currently in index.html's <head>. If any

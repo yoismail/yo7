@@ -45,8 +45,8 @@ REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 SRC = os.path.join(REPO_ROOT, 'src', 'index.html')
 
 STATIC_PAGE_SLUGS = [
-    'about', 'contact', 'cookie-policy', 'delivery-info', 'delivery-policy',
-    'guide', 'privacy', 'returns', 'terms',
+    'about', 'careers', 'contact', 'cookie-policy', 'delivery-info', 'delivery-policy',
+    'guide', 'privacy', 'returns', 'terms', 'work-with-us',
 ]
 
 
