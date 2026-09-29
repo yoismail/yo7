@@ -8019,13 +8019,20 @@
             margin-top: 18px;
         }
         .trust-pill {
-            display: inline-flex; align-items: center; gap: 6px;
+            display: inline-flex; align-items: flex-start; gap: 7px;
             font-family: var(--display); font-weight: 600; font-size: 11.5px;
+            line-height: 1.45;
             color: var(--heading); background: rgba(144,184,0,0.1);
-            border: 1px solid rgba(144,184,0,0.3); border-radius: 999px;
-            padding: 6px 12px;
+            border: 1px solid rgba(144,184,0,0.3);
+            /* A full stadium radius (999px) reads fine on the short,
+               single-line pills ("Secure checkout") this was designed
+               for, but pinches text against the curve once a longer one
+               (the free-delivery pill) wraps to two lines - a fixed,
+               moderate radius stays comfortably rounded either way. */
+            border-radius: 14px;
+            padding: 7px 13px;
         }
-        .trust-pill svg { width: 13px; height: 13px; color: var(--heading-mid); flex-shrink: 0; }
+        .trust-pill svg { width: 13px; height: 13px; margin-top: 1px; color: var(--heading-mid); flex-shrink: 0; }
 
         .payment-badges-label {
             font-family: var(--display); font-weight: 600; font-size: 10.5px;
@@ -10674,7 +10681,7 @@
                             </div>
                             <div class="trust-pill">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                <span class="free-delivery-text">Free delivery: £70+ Ipswich, £120+ elsewhere</span>
+                                <span class="free-delivery-text">Free delivery: over £70 in Ipswich, over £120 elsewhere</span>
                             </div>
                             <div class="trust-pill">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
@@ -10811,7 +10818,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    <span class="free-delivery-text">Free delivery: £70+ Ipswich, £120+ elsewhere</span>
+                                    <span class="free-delivery-text">Free delivery: over £70 in Ipswich, over £120 elsewhere</span>
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -10943,7 +10950,7 @@
                                 </div>
                                 <div class="trust-pill">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-                                    <span class="free-delivery-text">Free delivery: £70+ Ipswich, £120+ elsewhere</span>
+                                    <span class="free-delivery-text">Free delivery: over £70 in Ipswich, over £120 elsewhere</span>
                                 </div>
                             </div>
                         </div>
@@ -14315,7 +14322,7 @@
             // panel or the shipped-default fallback alike.
             let pillText = null;
             if (ipswichRule && outsideRule) {
-                pillText = `Free delivery: £${fmtAmt(ipswichRule.value)}+ Ipswich, £${fmtAmt(outsideRule.value)}+ elsewhere`;
+                pillText = `Free delivery: over £${fmtAmt(ipswichRule.value)} in Ipswich, over £${fmtAmt(outsideRule.value)} elsewhere`;
             } else if (ipswichRule) {
                 pillText = `Free delivery over £${fmtAmt(ipswichRule.value)} (Ipswich)`;
             } else if (outsideRule) {
@@ -14780,7 +14787,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.6';
+        const BUILD_VERSION = '2026-09-29.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
