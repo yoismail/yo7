@@ -8760,15 +8760,20 @@
         }
 
         .hours-table tr.today td {
-            background: var(--orange);
-            color: var(--aubergine-deep);
             font-weight: 700;
-            padding-left: 10px;
         }
 
-        .hours-table tr.today td:last-child {
+        .hours-table tr.today td span {
+            background: var(--orange);
             color: var(--aubergine-deep);
-            padding-right: 10px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+        }
+
+        .hours-table tr.today td:last-child span {
+            display: inline-block;
         }
 
         .open-badge {
@@ -14922,7 +14927,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.13';
+        const BUILD_VERSION = '2026-09-29.14';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -24252,7 +24257,7 @@
             const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
             document.getElementById('hoursTable').innerHTML = OPENING_HOURS.map((h, i) => `
-    <tr class="${i === idx ? 'today' : ''}"><td>${h.day}</td><td>${h.open} &ndash; ${h.close}</td></tr>`).join('');
+    <tr class="${i === idx ? 'today' : ''}"><td><span>${h.day}</span></td><td><span>${h.open} &ndash; ${h.close}</span></td></tr>`).join('');
 
             const today = OPENING_HOURS[idx];
             const isOpen = nowMinutes >= timeToMinutes(today.open) && nowMinutes < timeToMinutes(today.close);
