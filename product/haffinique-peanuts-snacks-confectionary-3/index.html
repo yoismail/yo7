@@ -4917,6 +4917,13 @@
         let cart = loadCartFromStorage(); // {id, name, unit, price, emoji, qty, catSlug}, restored from localStorage so a refresh doesn't lose it
         let favorites = loadFavoritesFromStorage(); // array of catSlug::idx keys, restored from localStorage the same way
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
+        // Which of the 3 checkout steps (cart, delivery, payment) is
+        // currently showing - set by showCheckoutStep(), read by
+        // updateSummaries() so it can tell an address that's merely
+        // sitting in dPostcode (possibly pre-filled from a past order,
+        // never reviewed by the shopper this session) apart from one
+        // they've actually reached and can see/edit on the delivery step.
+        let checkoutStepName = 'cart';
         let currentUser = null;
         let currentSupabaseUser = null; // the real Supabase auth user object, null when logged out or not connected
         // Starts false on every page load, flips true once restoreSupabaseSession()
@@ -5068,7 +5075,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-26.2';
+        const BUILD_VERSION = '2026-09-29.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -9230,7 +9237,21 @@
             const postcodeField = document.getElementById('dPostcode');
             const postcode = postcodeField ? postcodeField.value : '';
             const { fee: resolvedFee, freeReason } = resolveDeliveryFee(postcode);
-            const delivery = (cart.length && fulfilmentMethod === 'delivery') ? resolvedFee : 0;
+            // On the cart step specifically, dPostcode can already hold a
+            // real address from prefillDeliveryFromLastOrder() before the
+            // shopper has reached (or even seen) the delivery step this
+            // session - resolving the actual region-specific fee/free-
+            // delivery claim here would present something as settled that
+            // hasn't actually been collected or confirmed for this order
+            // yet. The plain weight-tier fee is always a safe, honest
+            // upper-bound estimate to show instead; the real figure (and
+            // whichever free-delivery threshold it clears, if any) only
+            // ever shows once the shopper reaches the delivery step, where
+            // the address is genuinely visible to them to review or change
+            // before continuing - see checkoutStepName's own comment.
+            const onCartStep = checkoutStepName === 'cart';
+            const cartStepFee = resolveWeightTierFee(cartTotalWeight());
+            const delivery = (cart.length && fulfilmentMethod === 'delivery') ? (onCartStep ? cartStepFee : resolvedFee) : 0;
             const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
             // A referral code and the loyalty reward never both apply to
             // the same order (mirrors the same rule in create-payment-intent's
@@ -9241,7 +9262,7 @@
             const loyaltyDiscountAmount = pendingReward ? Math.min(sub * pendingReward.pct / 100, sub - discountAmount) : 0;
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
             const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
-            const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && resolvedFee === 0);
+            const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && !onCartStep && resolvedFee === 0);
             const totalWeight = cartTotalWeight();
             ['sumSubtotal', 'sumSubtotal2', 'sumSubtotal3'].forEach(id => document.getElementById(id).textContent = money(sub));
             ['sumWeight', 'sumWeight2', 'sumWeight3'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = `${totalWeight.toFixed(totalWeight % 1 === 0 ? 0 : 1)}kg`; });
@@ -9258,6 +9279,11 @@
                 el.style.display = 'block';
                 if (fulfilmentMethod === 'pickup') {
                     el.textContent = deliveryFreeReasonText({ type: 'pickup' });
+                } else if (onCartStep) {
+                    // Explicitly says the figure above is an estimate, not
+                    // yet the real fee - see the cartStepFee comment above
+                    // for why this can't just resolve the actual one here.
+                    el.textContent = 'Estimated by order weight. Confirm your delivery address on the next step to see your exact fee, including whether you qualify for free delivery.';
                 } else if (resolvedFee === 0 && freeReason) {
                     el.textContent = deliveryFreeReasonText(freeReason);
                 } else {
@@ -9307,6 +9333,7 @@
         }
 
         function showCheckoutStep(step) {
+            checkoutStepName = step;
             ['cart', 'delivery', 'payment'].forEach(s => {
                 document.getElementById('checkout-step-' + s).classList.toggle('hidden-view', s !== step);
                 const el = document.getElementById('cstep-' + s);
@@ -9330,6 +9357,12 @@
             // scrolled down to the order summary/discount box) carried
             // straight over to the next step instead of starting at its top.
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            // Refreshes the delivery-fee figure/copy for the step just
+            // switched to - most relevant moving into 'delivery', where a
+            // postcode that was only ever sitting unreviewed in the field
+            // (see checkoutStepName's own comment) is now something the
+            // shopper can actually see, so the real fee is fair to show.
+            updateSummaries();
         }
 
         // An order needs an owner to be trackable in Order History and to be
