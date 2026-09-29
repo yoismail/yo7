@@ -1640,6 +1640,13 @@
             padding: 4px 20px 18px;
             background: #FFFFFF;
             overflow-y: auto;
+            /* Stops a swipe that runs out of menu to scroll (a short list,
+               or one that's already scrolled to its end) from "chaining"
+               into the page underneath once this panel's own scroll hits
+               its boundary - iOS Safari does that by default unless told
+               not to, which is what made swiping up sometimes close the
+               menu on its own via the scroll-dismiss handler below. */
+            overscroll-behavior-y: contain;
             z-index: 96;
             opacity: 0;
             pointer-events: none;
@@ -14805,7 +14812,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.9';
+        const BUILD_VERSION = '2026-09-29.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -23754,15 +23761,56 @@
         /* ================= MOBILE HAMBURGER MENU ================= */
         const navHamburger = document.getElementById('navHamburger');
         const mobileMenu = document.getElementById('mobileMenu');
+        // This panel is a genuine full-screen overlay (everything below
+        // the header), so it locks background scroll while open, the
+        // standard behaviour for a mobile nav like this - combined with
+        // overscroll-behavior-y above, no swipe on the open menu can
+        // reach the page behind it (and therefore can't trip the
+        // scroll-dismiss handler further down either, which is what let
+        // an ordinary swipe close this menu on its own sometimes).
+        // Pinning body via position:fixed rather than the simpler
+        // `overflow: hidden` on purpose - overflow:hidden alone doesn't
+        // reliably block every scroll input on every engine (iOS Safari
+        // in particular is well known to still let the page rubber-band
+        // scroll underneath it), where a fixed body genuinely has no
+        // scrollable box left for any input method to act on. The
+        // current scroll position is preserved in its top offset and
+        // restored on unlock, so the page doesn't jump when this closes.
+        let scrollLockY = 0;
+        function setBodyScrollLocked(locked) {
+            if (locked) {
+                scrollLockY = window.scrollY;
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${scrollLockY}px`;
+                document.body.style.left = '0';
+                document.body.style.right = '0';
+            } else {
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.left = '';
+                document.body.style.right = '';
+                window.scrollTo(0, scrollLockY);
+            }
+        }
         function closeMobileMenu() {
+            // This runs unconditionally on every scroll/hashchange/etc.
+            // (see the shared dismiss handler below), most of which fire
+            // constantly with the menu already closed - only an actual
+            // open-to-closed transition should unlock and restore scroll,
+            // or every ordinary scroll on the page would get snapped back
+            // to wherever scrollLockY last was (0, before the menu was
+            // ever opened this session).
+            const wasOpen = mobileMenu.classList.contains('open');
             mobileMenu.classList.remove('open');
             navHamburger.classList.remove('open');
             navHamburger.setAttribute('aria-expanded', 'false');
+            if (wasOpen) setBodyScrollLocked(false);
         }
         navHamburger.addEventListener('click', () => {
             const isOpen = mobileMenu.classList.toggle('open');
             navHamburger.classList.toggle('open', isOpen);
             navHamburger.setAttribute('aria-expanded', String(isOpen));
+            setBodyScrollLocked(isOpen);
         });
         mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
         window.addEventListener('hashchange', closeMobileMenu);
@@ -23778,17 +23826,25 @@
         window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => {
             if (e.matches) closeMobileMenu();
         });
-        // Both the hamburger menu and the account dropdown float above the
-        // page content with no scroll boundary of their own — scrolling
-        // the page behind them (rather than tapping outside, the only
-        // thing that closed them before) left them stuck open, overlapping
-        // whatever the user actually scrolled to see. A scroll is a clear
-        // enough signal of intent to dismiss both, the same as it already
-        // does for the cookie banner elsewhere on the site. Passive: this
-        // never calls preventDefault, so it shouldn't block the browser's
-        // own scroll-performance optimizations.
+        // The account dropdown and the shop/category filters float above
+        // the page content with no scroll boundary of their own.
+        // Scrolling the page behind them (rather than tapping outside,
+        // the only thing that closed them before) left them stuck open,
+        // overlapping whatever the user actually scrolled to see. A
+        // scroll is a clear enough signal of intent to dismiss them, the
+        // same as it already does for the cookie banner elsewhere on the
+        // site. Passive: this never calls preventDefault, so it shouldn't
+        // block the browser's own scroll-performance optimizations.
+        // closeMobileMenu() is deliberately NOT called from here (it used
+        // to be, alongside the other three) - the mobile menu locks
+        // background scroll for as long as it's open (see
+        // setBodyScrollLocked), so a genuine window scroll literally can't
+        // happen while it's showing. Worse, toggling that lock's own
+        // position:fixed synthesises a native 'scroll' event on its own,
+        // which reached this same handler and closed the menu the instant
+        // it opened - calling it here was actively self-defeating, not
+        // just redundant.
         window.addEventListener('scroll', () => {
-            closeMobileMenu();
             closeAccountDropdown();
             closeShopAllFilter();
             closeCatFilter();
