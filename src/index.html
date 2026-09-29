@@ -16999,6 +16999,14 @@
             const cookieNotice = document.getElementById('cookieNotice');
             if (cookieNoticePending || (cookieNotice && cookieNotice.classList.contains('is-visible'))) return;
 
+            // About to render fresh content - cancel any pending
+            // hide-and-clear from a just-dismissed banner so its delayed
+            // cleanup can't wipe out what's rendered here, no matter how
+            // close together the dismiss and this re-show land (the
+            // is-visible class alone isn't a safe enough signal for that
+            // timer, since it's only added a further 50ms below).
+            if (installBannerHideTimer) { clearTimeout(installBannerHideTimer); installBannerHideTimer = null; }
+
             if (deferredInstallPrompt) {
                 el.innerHTML = `
       <div class="install-banner-inner">
