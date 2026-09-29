@@ -1638,6 +1638,40 @@ CREATE TABLE IF NOT EXISTS "public"."google_reviews_cache" (
 ALTER TABLE "public"."google_reviews_cache" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."job_applications" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "vacancy_id" "uuid" NOT NULL,
+    "name" "text" NOT NULL,
+    "email" "text" NOT NULL,
+    "phone" "text",
+    "message" "text",
+    "cv_path" "text",
+    "reviewed_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."job_applications" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."job_applications"."cv_path" IS 'Storage object path in the private job-applications bucket, not a URL. Admin downloads generate a fresh short-lived signed URL on demand rather than storing one that would go stale.';
+
+
+CREATE TABLE IF NOT EXISTS "public"."job_vacancies" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "title" "text" NOT NULL,
+    "department" "text",
+    "location" "text",
+    "employment_type" "text",
+    "description" "text" NOT NULL,
+    "is_open" boolean DEFAULT true NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."job_vacancies" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."loyalty_rewards" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid" NOT NULL,
@@ -2029,6 +2063,16 @@ ALTER TABLE ONLY "public"."google_reviews_cache"
 
 
 
+ALTER TABLE ONLY "public"."job_applications"
+    ADD CONSTRAINT "job_applications_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."job_vacancies"
+    ADD CONSTRAINT "job_vacancies_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."loyalty_rewards"
     ADD CONSTRAINT "loyalty_rewards_code_key" UNIQUE ("code");
 
@@ -2183,6 +2227,10 @@ CREATE INDEX "favorites_user_id_idx" ON "public"."favorites" USING "btree" ("use
 
 
 
+CREATE INDEX "job_applications_vacancy_id_idx" ON "public"."job_applications" USING "btree" ("vacancy_id");
+
+
+
 CREATE UNIQUE INDEX "loyalty_rewards_source_order_id_idx" ON "public"."loyalty_rewards" USING "btree" ("source_order_id") WHERE ("source_order_id" IS NOT NULL);
 
 
@@ -2333,6 +2381,11 @@ ALTER TABLE ONLY "public"."favorites"
 
 
 
+ALTER TABLE ONLY "public"."job_applications"
+    ADD CONSTRAINT "job_applications_vacancy_id_fkey" FOREIGN KEY ("vacancy_id") REFERENCES "public"."job_vacancies"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."loyalty_rewards"
     ADD CONSTRAINT "loyalty_rewards_source_order_id_fkey" FOREIGN KEY ("source_order_id") REFERENCES "public"."orders"("id") ON DELETE SET NULL;
 
@@ -2427,6 +2480,14 @@ CREATE POLICY "Admins can manage discount codes" ON "public"."discount_codes" US
 
 
 
+CREATE POLICY "Admins can manage job applications" ON "public"."job_applications" USING ("public"."is_admin_user"()) WITH CHECK ("public"."is_admin_user"());
+
+
+
+CREATE POLICY "Admins can manage job vacancies" ON "public"."job_vacancies" USING ("public"."is_admin_user"()) WITH CHECK ("public"."is_admin_user"());
+
+
+
 CREATE POLICY "Admins can manage notifications" ON "public"."notifications" USING ("public"."is_admin_user"()) WITH CHECK ("public"."is_admin_user"());
 
 
@@ -2499,7 +2560,17 @@ CREATE POLICY "Anyone can read loyalty settings" ON "public"."loyalty_settings" 
 
 
 
+CREATE POLICY "Anyone can submit a job application" ON "public"."job_applications" FOR INSERT WITH CHECK ((("reviewed_at" IS NULL) AND (EXISTS ( SELECT 1
+   FROM "public"."job_vacancies" "v"
+  WHERE (("v"."id" = "job_applications"."vacancy_id") AND ("v"."is_open" = true))))));
+
+
+
 CREATE POLICY "Anyone can view custom products" ON "public"."custom_products" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Anyone can view open vacancies" ON "public"."job_vacancies" FOR SELECT USING ((("is_open" = true) OR "public"."is_admin_user"()));
 
 
 
@@ -2624,6 +2695,12 @@ ALTER TABLE "public"."favorites" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."google_reviews_cache" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."job_applications" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."job_vacancies" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."loyalty_rewards" ENABLE ROW LEVEL SECURITY;
@@ -3143,6 +3220,18 @@ GRANT ALL ON TABLE "public"."favorites" TO "service_role";
 GRANT ALL ON TABLE "public"."google_reviews_cache" TO "anon";
 GRANT ALL ON TABLE "public"."google_reviews_cache" TO "authenticated";
 GRANT ALL ON TABLE "public"."google_reviews_cache" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."job_applications" TO "anon";
+GRANT ALL ON TABLE "public"."job_applications" TO "authenticated";
+GRANT ALL ON TABLE "public"."job_applications" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."job_vacancies" TO "anon";
+GRANT ALL ON TABLE "public"."job_vacancies" TO "authenticated";
+GRANT ALL ON TABLE "public"."job_vacancies" TO "service_role";
 
 
 

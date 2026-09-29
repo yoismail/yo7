@@ -19,7 +19,7 @@ its own, that's one URL to Google. Three scripts turn `src/index.html`
 into what's actually served:
 
 ```
-python3 scripts/generate-static-pages.py    # the 9 content pages (About, Contact, legal, ...)
+python3 scripts/generate-static-pages.py    # the content pages (About, Contact, legal, ...)
 python3 scripts/generate-product-pages.py   # the statically-defined products
 python3 scripts/minify.py                   # minifies repo-root index.html + every generated page, run last
 ```

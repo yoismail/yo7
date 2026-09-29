@@ -6,7 +6,7 @@ panel (the `custom_products` and `product_overrides` Supabase tables).
 Right now every product only exists behind a hash route
 (#/product/<catSlug>/<idx>), which Google never indexes as a distinct
 page — a search for a specific item can only ever land on the homepage.
-This is the same approach already used for the 9 content pages
+This is the same approach already used for the content pages
 (scripts/generate-static-pages.py, reused directly here for head-patching):
 one near-identical copy of index.html per product, written to a real path
 GitHub Pages serves directly (product/<slug>/index.html for a request to

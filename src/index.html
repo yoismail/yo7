@@ -2977,6 +2977,122 @@
             .about-block-alt { padding: 40px 22px; border-radius: 18px; }
         }
 
+        /* ================= CAREERS ================= */
+        .careers-section { padding: 48px 0 72px; }
+        .careers-admin-slot:empty { display: none; }
+        .careers-add-btn { margin-bottom: 24px; }
+        .careers-loading { text-align: center; color: var(--text-muted); padding: 32px 0; }
+        .careers-list { display: flex; flex-direction: column; gap: 16px; }
+        .vacancy-card {
+            position: relative;
+            background: var(--card-bg);
+            border: 1.5px solid rgba(var(--border-rgb), 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .vacancy-card-closed { opacity: 0.7; }
+        .vacancy-card-head {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 52px 18px 22px;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .vacancy-card-head-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .vacancy-title {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--heading);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .vacancy-closed-tag {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border: 1px solid rgba(var(--border-rgb), 0.2);
+            border-radius: 999px;
+            padding: 2px 9px;
+        }
+        .vacancy-meta { font-size: 13px; color: var(--text-muted); }
+        .vacancy-chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); transition: transform 0.2s ease; }
+        .vacancy-card.is-open .vacancy-chevron { transform: rotate(180deg); }
+        .vacancy-edit-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-bg);
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            border-radius: 50%;
+            color: var(--heading-mid);
+            cursor: pointer;
+        }
+        .vacancy-edit-btn svg { width: 14px; height: 14px; }
+        .vacancy-card-body { padding: 0 22px 22px; }
+        .vacancy-desc { font-size: 14.5px; line-height: 1.7; color: var(--text-body); margin-bottom: 18px; }
+        .vacancy-applications-toggle {
+            background: none;
+            border: none;
+            color: var(--chartreuse-rich);
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 12.5px;
+            padding: 8px 0;
+            cursor: pointer;
+            display: block;
+        }
+        /* Public-facing, so it borrows .field (the signup/checkout form
+           look), not .edit-panel's yellow admin-editing styling. A
+           visitor applying for a job shouldn't see what reads as an
+           internal "editing this record" panel. */
+        .apply-form { margin-top: 6px; max-width: 440px; }
+        .apply-form-actions { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
+        .apply-form-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; text-decoration: underline; }
+        .vacancy-applications-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+        .vacancy-applications-list li {
+            border: 1px solid rgba(var(--border-rgb), 0.14);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .vacancy-applications-list li.is-reviewed { opacity: 0.65; }
+        .vacancy-application-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+        .vacancy-application-head span { color: var(--text-muted); font-size: 12px; }
+        .vacancy-application-contact { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+        .vacancy-application-message { font-size: 13px; line-height: 1.6; margin: 8px 0 0; }
+        .vacancy-application-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .vacancy-application-actions button {
+            background: none;
+            border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 10px;
+            cursor: pointer;
+            color: var(--heading);
+        }
+        .vacancy-reviewed-tag { font-size: 11.5px; font-weight: 700; color: var(--chartreuse-rich); text-transform: uppercase; letter-spacing: 0.03em; }
+        @media (max-width: 560px) {
+            .vacancy-card-head { padding: 16px 46px 16px 16px; }
+            .vacancy-card-body { padding: 0 16px 18px; }
+            .vacancy-edit-btn { top: 12px; right: 12px; }
+        }
+
         /* ================= SHOP / CATEGORY GRID ================= */
         .shop-section {
             /* No corner glow here, since #shopByGroup below already has
@@ -5012,7 +5128,7 @@
            now gets a deliberate, evenly-weighted track instead. */
         .footer-top {
             display: grid;
-            grid-template-columns: minmax(220px, 1.15fr) repeat(3, minmax(140px, 1fr));
+            grid-template-columns: minmax(220px, 1.15fr) repeat(4, minmax(140px, 1fr));
             gap: 44px 32px;
             padding-bottom: 44px;
             border-bottom: 1px solid rgba(44, 28, 16, 0.1);
@@ -5021,14 +5137,22 @@
         [data-theme="dark"] .footer-top {
             border-bottom-color: rgba(var(--border-rgb), 0.14);
         }
-        @media (max-width: 900px) {
-            /* Two even columns, brand block spanning both — was the
-               source of a real bug below 900px: with the old flex-wrap
-               layout, Site (short) and Contact (long, incl. the full
-               address) both fit on the same cramped row while Legal
-               dropped alone to the next, an uneven, unbalanced stack
-               that also clipped the address text at the edge. Every
-               column now gets its own full-width track. */
+        @media (max-width: 1024px) {
+            /* Two even columns, brand block spanning both - was the
+               source of a real bug below the old 900px threshold: with
+               the earlier flex-wrap layout, Site (short) and Contact
+               (long, incl. the full address) both fit on the same
+               cramped row while Legal dropped alone to the next, an
+               uneven, unbalanced stack that also clipped the address
+               text at the edge. Every column now gets its own
+               full-width track.
+               Threshold raised from 900px to 1024px once a 4th link
+               column (Company) was added: the flat 5-column desktop
+               grid (brand + 4 link columns, each min 140px, plus 4x32px
+               gaps) needs roughly 964px just for its column minimums,
+               so anything narrower than that has to drop into this
+               2-column layout instead of trying to fit 5 flat columns
+               and overflowing. */
             .footer-top {
                 grid-template-columns: 1fr 1fr;
                 gap: 36px 24px;
@@ -11412,6 +11536,64 @@
         </section>
     </div>
 
+    <!-- ================= WORK WITH US ================= -->
+    <div id="view-work-with-us" class="hidden-view">
+        <header class="shop-header shop-header-story">
+            <svg class="shop-header-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Work with Us</div>
+                <h1>Work with Us</h1>
+                <p>Help us bring proper African and Caribbean groceries to more of the UK, from our base in Ipswich.</p>
+            </div>
+        </header>
+        <section class="about-section">
+            <div class="wrap">
+                <div class="about-prose about-block scroll-reveal">
+                    <div class="section-eyebrow">Why Yo7 Foods</div>
+                    <h2>A small team, close to the customers we serve</h2>
+                    <p>We're a growing local business, not a faceless warehouse, so what you do here is felt directly by real customers, often people from the same communities we're serving. Everyone pitches in, and everyone's work actually shows up in how the shop runs.</p>
+                </div>
+
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
+                <div class="about-block scroll-reveal">
+                    <div class="about-mission" style="margin-bottom:32px;">
+                        <div class="section-eyebrow">What to expect</div>
+                        <h2>What it's like working here</h2>
+                    </div>
+                    <div class="about-values-grid">
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6v6c0 5 3.8 8.4 9 10 5.2-1.6 9-5 9-10V6l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg>
+                            <h3>Real responsibility</h3>
+                            <p>A small team means your work matters from day one, not lost in layers of process.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <h3>A team that knows the culture</h3>
+                            <p>You're working alongside people who understand the food and the customers we're serving.</p>
+                        </div>
+                        <div class="about-value-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
+                            <h3>Room to grow</h3>
+                            <p>We're still growing, so there's genuine opportunity to grow along with us.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
+                <div class="about-mission about-block scroll-reveal">
+                    <div class="section-eyebrow">Current openings</div>
+                    <h2>Ready to see what's available?</h2>
+                    <p class="about-mission-note">Every role we're hiring for right now is listed on our Careers page, along with what's involved and how to apply.</p>
+                </div>
+
+                <div class="about-cta scroll-reveal">
+                    <a class="btn btn-primary" href="#/careers">View open roles</a>
+                    <a class="btn btn-outline-dark" href="#/contact">Get in touch</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <div id="view-privacy" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
@@ -11423,7 +11605,7 @@
         <section class="legal-section">
             <div class="wrap">
                 <div class="legal-content">
-                    <div class="legal-updated">Last updated: August 2026</div>
+                    <div class="legal-updated">Last updated: September 2026</div>
 
                     <h2>Who we are</h2>
                     <p>Yo7 Foods Limited ("Yo7", "we", "us"), 7 Lancaster Road, Ipswich, IP4 2NY. You can reach us at hello@yo7foods.co.uk or via WhatsApp.</p>
@@ -11434,6 +11616,9 @@
 
                     <h2>Payment information</h2>
                     <p>Card and every other payment method we offer, including Apple Pay, Google Pay, Klarna, Revolut Pay, Amazon Pay, PayPal, Clearpay, and Pay by Bank, are processed securely by Stripe. We never see or store your full card details, they're sent directly to Stripe over an encrypted connection. Stripe is a PCI-DSS Level 1 certified payment processor.</p>
+
+                    <h2>Job applications</h2>
+                    <p>If you apply for a role on our <a href="#/careers">Careers</a> page, we collect your name, email, and whatever else you choose to include, phone number, a message, and a CV if you attach one. This is used only to consider you for that role and get in touch about it, it isn't added to our marketing list or used for anything else. Applications are visible only to Yo7 Foods admin staff reviewing that role, and are kept until the role is filled or closed, at which point they're deleted along with the listing, CV file included.</p>
 
                     <h2>What we do with it</h2>
                     <ul>
@@ -11829,6 +12014,33 @@
                     <p>Tap the heart on any product to save it here, so it's easy to find and add to your basket later.</p>
                     <a class="btn btn-primary" href="#/shop">Browse the shop</a>
                     <div class="empty-state-suggestions" id="favoritesEmptyStateSuggestions"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= CAREERS =================
+         Vacancies are fully admin-managed content (job_vacancies /
+         job_applications, see renderCareersPage() and the CAREERS section
+         of the main script), the same edit-mode-on-the-live-page pattern
+         products already use, not a separate admin dashboard. -->
+    <div id="view-careers" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Careers</div>
+                <h1>Careers</h1>
+                <p>Current openings at Yo7 Foods in Ipswich. Not seeing the right fit? <a href="#/work-with-us">Read more about working with us</a>.</p>
+            </div>
+        </header>
+        <section class="careers-section">
+            <div class="wrap">
+                <div class="careers-admin-slot" id="careersAdminSlot"></div>
+                <div class="careers-list" id="careersList"></div>
+                <div class="empty-state" id="careersEmptyState" style="display:none;">
+                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    <h3>No open roles right now</h3>
+                    <p>We're not hiring at the moment, check back soon or get in touch if you'd like to be considered for future openings.</p>
+                    <a class="btn btn-primary" href="#/contact">Get in touch</a>
                 </div>
             </div>
         </section>
@@ -12621,6 +12833,11 @@
                         <a href="#/returns">Returns &amp; Refunds Policy</a>
                         <a href="#/delivery-policy">Delivery Policy</a>
                         <a href="#/cookie-policy">Cookie Policy</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Yo7</h4>
+                        <a href="#/work-with-us">Work with Us</a>
+                        <a href="#/careers">Careers</a>
                     </div>
                 </div>
             </div>
@@ -14927,7 +15144,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.15';
+        const BUILD_VERSION = '2026-09-29.17';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -22775,6 +22992,14 @@
             // re-render (not just the body.edit-mode-on toggle) to reappear
             // the moment an admin turns edit mode on with an empty list.
             if (typeof renderAdvertCarousel === 'function') renderAdvertCarousel();
+            // Unlike the renders above, this one does a real Supabase
+            // fetch every call (see renderCareersPage's own comment on
+            // why it's never cached), so it's only worth repeating when
+            // Careers is actually the page on screen - otherwise toggling
+            // edit mode anywhere else on the site would silently refetch
+            // vacancies nobody's looking at.
+            const careersView = document.getElementById('view-careers');
+            if (careersView && !careersView.classList.contains('hidden-view')) renderCareersPage();
             syncNavSpacer();
         }
         document.getElementById('editModeToggle').addEventListener('click', async () => {
@@ -24267,8 +24492,249 @@
             text.textContent = isOpen ? `Open now, until ${today.close}` : `Closed now, opens ${today.open}`;
         }
 
+        /* ================= CAREERS =================
+           Vacancies are ordinary Supabase-backed content, fetched fresh
+           every time this page is visited rather than cached at boot like
+           the product catalogue - a small, infrequently-changing list, so
+           the simplicity of always re-fetching beats the complexity of
+           keeping a cache in sync with admin edits made moments earlier
+           on the same page. Admin post/edit/delete happens right here on
+           the live page under edit mode, the same pattern product cards
+           already use (openEditPanel), not a separate admin-only screen. */
+        let vacancies = [];
+        function vacancyMetaText(v) {
+            return [v.department, v.location, v.employment_type].filter(Boolean).join(' · ');
+        }
+        function vacancyDescriptionHTML(desc) {
+            return escapeHtml(desc || '').replace(/\n/g, '<br>');
+        }
+        async function renderCareersPage() {
+            const listEl = document.getElementById('careersList');
+            const emptyEl = document.getElementById('careersEmptyState');
+            const adminSlot = document.getElementById('careersAdminSlot');
+            const canManage = currentIsAdmin && editModeOn;
+            adminSlot.innerHTML = canManage
+                ? `<button type="button" class="btn btn-outline-dark careers-add-btn" onclick="openVacancyEditPanel(null)">+ Add vacancy</button>`
+                : '';
+            listEl.innerHTML = `<p class="careers-loading">Loading open roles…</p>`;
+            emptyEl.style.display = 'none';
+            if (!supabaseClient) { listEl.innerHTML = ''; emptyEl.style.display = ''; return; }
+            const { data, error } = await supabaseClient.from('job_vacancies').select('*').order('created_at', { ascending: false });
+            if (error) { listEl.innerHTML = `<p class="careers-loading">Couldn't load open roles right now, try refreshing.</p>`; return; }
+            vacancies = data || [];
+            const visible = canManage ? vacancies : vacancies.filter(v => v.is_open);
+            if (!visible.length) { listEl.innerHTML = ''; emptyEl.style.display = ''; return; }
+            listEl.innerHTML = visible.map(v => vacancyCardHTML(v, canManage)).join('');
+        }
+        function vacancyCardHTML(v, canManage) {
+            const meta = vacancyMetaText(v);
+            return `
+      <div class="vacancy-card${!v.is_open ? ' vacancy-card-closed' : ''}" id="vacancy-${v.id}">
+        <button type="button" class="vacancy-card-head" onclick="toggleVacancyCard('${v.id}')" aria-expanded="false" aria-controls="vacancy-body-${v.id}">
+          <span class="vacancy-card-head-text">
+            <span class="vacancy-title">${escapeHtml(v.title)}${!v.is_open ? '<span class="vacancy-closed-tag">Closed</span>' : ''}</span>
+            ${meta ? `<span class="vacancy-meta">${escapeHtml(meta)}</span>` : ''}
+          </span>
+          <svg class="vacancy-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        ${canManage ? `<button type="button" class="vacancy-edit-btn" aria-label="Edit vacancy" onclick="event.stopPropagation(); openVacancyEditPanel('${v.id}');"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : ''}
+        <div class="edit-panel-slot" id="vacancy-edit-slot-${v.id}"></div>
+        <div class="vacancy-card-body" id="vacancy-body-${v.id}" hidden>
+          <div class="vacancy-desc">${vacancyDescriptionHTML(v.description)}</div>
+          ${v.is_open ? `<button type="button" class="btn btn-primary vacancy-apply-btn" id="apply-btn-${v.id}" onclick="showApplyForm('${v.id}')">Apply for this role</button>
+          <div id="apply-slot-${v.id}"></div>` : ''}
+          ${canManage ? `<button type="button" class="vacancy-applications-toggle" onclick="toggleVacancyApplications('${v.id}')">View applications</button>
+          <div id="applications-slot-${v.id}"></div>` : ''}
+        </div>
+      </div>`;
+        }
+        function toggleVacancyCard(vacancyId) {
+            const body = document.getElementById(`vacancy-body-${vacancyId}`);
+            const head = document.querySelector(`#vacancy-${vacancyId} .vacancy-card-head`);
+            if (!body || !head) return;
+            const opening = body.hidden;
+            body.hidden = !opening;
+            head.setAttribute('aria-expanded', String(opening));
+            document.getElementById(`vacancy-${vacancyId}`).classList.toggle('is-open', opening);
+        }
+        function openVacancyEditPanel(vacancyId) {
+            const v = vacancyId ? vacancies.find(x => x.id === vacancyId) : null;
+            const slot = vacancyId ? document.getElementById(`vacancy-edit-slot-${vacancyId}`) : document.getElementById('careersAdminSlot');
+            if (!slot) return;
+            const idAttr = vacancyId || 'new';
+            slot.innerHTML = `
+        <div class="edit-panel">
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div><label for="ep-vac-title-${idAttr}">Job title</label><input type="text" id="ep-vac-title-${idAttr}" value="${escapeHtml(v ? v.title : '')}"></div>
+          </div>
+          <div class="ep-row">
+            <div><label for="ep-vac-dept-${idAttr}">Department (optional)</label><input type="text" id="ep-vac-dept-${idAttr}" placeholder="e.g. Warehouse" value="${escapeHtml(v && v.department || '')}"></div>
+            <div><label for="ep-vac-location-${idAttr}">Location (optional)</label><input type="text" id="ep-vac-location-${idAttr}" placeholder="e.g. Ipswich" value="${escapeHtml(v && v.location || '')}"></div>
+          </div>
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div><label for="ep-vac-type-${idAttr}">Employment type (optional)</label><input type="text" id="ep-vac-type-${idAttr}" placeholder="e.g. Full-time" value="${escapeHtml(v && v.employment_type || '')}"></div>
+          </div>
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <div><label for="ep-vac-desc-${idAttr}">Full description</label><textarea id="ep-vac-desc-${idAttr}" rows="6">${escapeHtml(v ? v.description : '')}</textarea></div>
+          </div>
+          <div class="ep-row" style="grid-template-columns:1fr;">
+            <label style="display:flex; align-items:center; gap:8px; font-weight:400;"><input type="checkbox" id="ep-vac-open-${idAttr}" ${(!v || v.is_open) ? 'checked' : ''}> Open (visible to visitors)</label>
+          </div>
+          <div class="ep-actions">
+            <button class="ep-save" type="button" onclick="saveVacancyEditPanel('${vacancyId || ''}', this)">Save</button>
+            <button class="ep-cancel" type="button" onclick="${vacancyId ? `this.closest('.edit-panel-slot').innerHTML=''` : `renderCareersPage()`}">Cancel</button>
+            ${vacancyId ? `<button class="ep-delete" type="button" onclick="deleteVacancyFromPanel('${vacancyId}', this)">Delete vacancy</button>` : ''}
+          </div>
+        </div>`;
+        }
+        async function saveVacancyEditPanel(vacancyId, btn) {
+            const idAttr = vacancyId || 'new';
+            const title = document.getElementById(`ep-vac-title-${idAttr}`).value.trim();
+            const description = document.getElementById(`ep-vac-desc-${idAttr}`).value.trim();
+            if (!title || !description) { showToast('Job title and description are both required.'); return; }
+            const row = {
+                title,
+                department: document.getElementById(`ep-vac-dept-${idAttr}`).value.trim() || null,
+                location: document.getElementById(`ep-vac-location-${idAttr}`).value.trim() || null,
+                employment_type: document.getElementById(`ep-vac-type-${idAttr}`).value.trim() || null,
+                description,
+                is_open: document.getElementById(`ep-vac-open-${idAttr}`).checked,
+            };
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+            if (vacancyId) {
+                const { error } = await supabaseClient.from('job_vacancies').update(row).eq('id', vacancyId);
+                if (error) { showToast('Couldn\'t save that change: ' + error.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Save'; return; }
+                logAdminAction('vacancy_updated', 'job_vacancy', title, {});
+                showToast(`Saved changes to "${title}".`, undefined, 'success');
+            } else {
+                const { error } = await supabaseClient.from('job_vacancies').insert(row);
+                if (error) { showToast('Couldn\'t create that vacancy: ' + error.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Save'; return; }
+                logAdminAction('vacancy_created', 'job_vacancy', title, {});
+                showToast(`Posted "${title}".`, undefined, 'success');
+            }
+            renderCareersPage();
+        }
+        async function deleteVacancyFromPanel(vacancyId, btn) {
+            const v = vacancies.find(x => x.id === vacancyId);
+            if (!confirm(`Delete "${v ? v.title : 'this vacancy'}"? This also removes any applications submitted for it, including their CVs. This can't be undone.`)) return;
+            btn.disabled = true;
+            btn.textContent = 'Deleting…';
+            // The DB rows cascade automatically (job_applications has an
+            // ON DELETE CASCADE FK to job_vacancies), but the CV files
+            // those rows point to live in Storage, a separate system that
+            // cascade knows nothing about - deleting the vacancy without
+            // this step would leave every applicant's CV orphaned in the
+            // bucket forever, with no surviving row to even find it by.
+            const { data: apps, error: fetchError } = await supabaseClient.from('job_applications').select('cv_path').eq('vacancy_id', vacancyId);
+            if (fetchError) { showToast('Couldn\'t delete: ' + fetchError.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Delete vacancy'; return; }
+            const cvPaths = (apps || []).map(a => a.cv_path).filter(Boolean);
+            if (cvPaths.length) {
+                const { error: removeError } = await supabaseClient.storage.from('job-applications').remove(cvPaths);
+                if (removeError) { showToast('Couldn\'t delete: ' + removeError.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Delete vacancy'; return; }
+            }
+            const { error } = await supabaseClient.from('job_vacancies').delete().eq('id', vacancyId);
+            if (error) { showToast('Couldn\'t delete: ' + error.message, 6000, 'error'); btn.disabled = false; btn.textContent = 'Delete vacancy'; return; }
+            logAdminAction('vacancy_deleted', 'job_vacancy', v ? v.title : vacancyId, {});
+            renderCareersPage();
+        }
+        function showApplyForm(vacancyId) {
+            const slot = document.getElementById(`apply-slot-${vacancyId}`);
+            const applyBtn = document.getElementById(`apply-btn-${vacancyId}`);
+            if (!slot) return;
+            applyBtn.style.display = 'none';
+            slot.innerHTML = `
+        <form class="apply-form" onsubmit="submitApplication(event, '${vacancyId}')">
+          <div class="field"><label for="apply-name-${vacancyId}">Full name</label><input type="text" id="apply-name-${vacancyId}" required></div>
+          <div class="field"><label for="apply-email-${vacancyId}">Email</label><input type="email" id="apply-email-${vacancyId}" required></div>
+          <div class="field"><label for="apply-phone-${vacancyId}">Phone (optional)</label><input type="tel" id="apply-phone-${vacancyId}"></div>
+          <div class="field"><label for="apply-message-${vacancyId}">Tell us why you're a good fit (optional)</label><textarea id="apply-message-${vacancyId}" rows="3"></textarea></div>
+          <div class="field"><label for="apply-cv-${vacancyId}">CV (optional, PDF or Word document)</label><input type="file" id="apply-cv-${vacancyId}" accept=".pdf,.doc,.docx"></div>
+          <p style="font-size:12px; color:var(--text-muted); margin:-4px 0 12px;">See our <a href="#/privacy">Privacy Policy</a> for how we handle job applications.</p>
+          <div class="apply-form-actions">
+            <button class="btn btn-primary" type="submit">Submit application</button>
+            <button class="apply-form-cancel" type="button" onclick="document.getElementById('apply-slot-${vacancyId}').innerHTML=''; document.getElementById('apply-btn-${vacancyId}').style.display='';">Cancel</button>
+          </div>
+        </form>`;
+        }
+        async function submitApplication(e, vacancyId) {
+            e.preventDefault();
+            if (!supabaseClient) { showToast('Applications need a moment to connect, try again shortly.'); return; }
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting…';
+            const name = document.getElementById(`apply-name-${vacancyId}`).value.trim();
+            const email = document.getElementById(`apply-email-${vacancyId}`).value.trim();
+            const phone = document.getElementById(`apply-phone-${vacancyId}`).value.trim() || null;
+            const message = document.getElementById(`apply-message-${vacancyId}`).value.trim() || null;
+            const fileInput = document.getElementById(`apply-cv-${vacancyId}`);
+            const file = fileInput && fileInput.files[0];
+            let cv_path = null;
+            if (file) {
+                const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const path = `${vacancyId}/${Date.now()}-${safeName}`;
+                const { error: uploadError } = await supabaseClient.storage.from('job-applications').upload(path, file, { contentType: file.type });
+                if (uploadError) { showToast('Couldn\'t upload your CV: ' + uploadError.message, 6000, 'error'); submitBtn.disabled = false; submitBtn.textContent = 'Submit application'; return; }
+                cv_path = path;
+            }
+            const { error } = await supabaseClient.from('job_applications').insert({ vacancy_id: vacancyId, name, email, phone, message, cv_path });
+            if (error) { showToast('Couldn\'t submit your application: ' + error.message, 6000, 'error'); submitBtn.disabled = false; submitBtn.textContent = 'Submit application'; return; }
+            document.getElementById(`apply-slot-${vacancyId}`).innerHTML = `<p class="auth-success" role="status">Thanks, ${escapeHtml(name)}, your application's in. We'll be in touch if it's a good fit.</p>`;
+        }
+        async function toggleVacancyApplications(vacancyId) {
+            const slot = document.getElementById(`applications-slot-${vacancyId}`);
+            if (!slot) return;
+            if (slot.dataset.open === 'true') { slot.innerHTML = ''; slot.dataset.open = 'false'; return; }
+            slot.dataset.open = 'true';
+            slot.innerHTML = `<p class="careers-loading">Loading applications…</p>`;
+            const { data, error } = await supabaseClient.from('job_applications').select('*').eq('vacancy_id', vacancyId).order('created_at', { ascending: false });
+            if (error) { slot.innerHTML = `<p class="careers-loading">Couldn't load applications.</p>`; return; }
+            if (!data.length) { slot.innerHTML = `<p class="careers-loading">No applications yet.</p>`; return; }
+            slot.innerHTML = `<ul class="vacancy-applications-list">${data.map(a => `
+        <li class="${a.reviewed_at ? 'is-reviewed' : ''}">
+          <div class="vacancy-application-head">
+            <strong>${escapeHtml(a.name)}</strong>
+            <span>${new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          </div>
+          <div class="vacancy-application-contact"><a href="mailto:${escapeHtml(a.email)}">${escapeHtml(a.email)}</a>${a.phone ? ` · ${escapeHtml(a.phone)}` : ''}</div>
+          ${a.message ? `<p class="vacancy-application-message">${escapeHtml(a.message)}</p>` : ''}
+          <div class="vacancy-application-actions">
+            ${a.cv_path ? `<button type="button" onclick="downloadApplicationCv('${a.cv_path}', this)">Download CV</button>` : ''}
+            ${!a.reviewed_at ? `<button type="button" onclick="markApplicationReviewed('${a.id}', this)">Mark reviewed</button>` : `<span class="vacancy-reviewed-tag">Reviewed</span>`}
+          </div>
+        </li>`).join('')}</ul>`;
+        }
+        async function downloadApplicationCv(cvPath, btn) {
+            btn.disabled = true;
+            const { data, error } = await supabaseClient.storage.from('job-applications').createSignedUrl(cvPath, 300);
+            btn.disabled = false;
+            if (error || !data) { showToast('Couldn\'t open that CV: ' + (error ? error.message : 'unknown error'), 6000, 'error'); return; }
+            window.open(data.signedUrl, '_blank', 'noopener');
+        }
+        async function markApplicationReviewed(applicationId, btn) {
+            btn.disabled = true;
+            const { error } = await supabaseClient.from('job_applications').update({ reviewed_at: new Date().toISOString() }).eq('id', applicationId);
+            if (error) { showToast('Couldn\'t update that: ' + error.message, 6000, 'error'); btn.disabled = false; return; }
+            const li = btn.closest('li');
+            li.classList.add('is-reviewed');
+            btn.outerHTML = '<span class="vacancy-reviewed-tag">Reviewed</span>';
+        }
+        // Referenced from inline onclick/onsubmit attributes in the HTML
+        // this section renders, same reason product editing exposes
+        // openEditPanel/saveEditPanel/deleteProductFromPanel the same way.
+        window.renderCareersPage = renderCareersPage;
+        window.toggleVacancyCard = toggleVacancyCard;
+        window.openVacancyEditPanel = openVacancyEditPanel;
+        window.saveVacancyEditPanel = saveVacancyEditPanel;
+        window.deleteVacancyFromPanel = deleteVacancyFromPanel;
+        window.showApplyForm = showApplyForm;
+        window.submitApplication = submitApplication;
+        window.toggleVacancyApplications = toggleVacancyApplications;
+        window.downloadApplicationCv = downloadApplicationCv;
+        window.markApplicationReviewed = markApplicationReviewed;
+
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
@@ -24580,6 +25046,11 @@
                 showView('view-delivery-info');
             } else if (hash === '#/about') {
                 showView('view-about');
+            } else if (hash === '#/work-with-us') {
+                showView('view-work-with-us');
+            } else if (hash === '#/careers') {
+                showView('view-careers');
+                renderCareersPage();
             } else if (hash === '#/guide') {
                 showView('view-guide');
                 renderFAQ();
