@@ -14812,7 +14812,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.10';
+        const BUILD_VERSION = '2026-09-29.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -23793,10 +23793,18 @@
             }
         }
         function closeMobileMenu() {
+            // This runs unconditionally on every scroll/hashchange/etc.
+            // (see the shared dismiss handler below), most of which fire
+            // constantly with the menu already closed - only an actual
+            // open-to-closed transition should unlock and restore scroll,
+            // or every ordinary scroll on the page would get snapped back
+            // to wherever scrollLockY last was (0, before the menu was
+            // ever opened this session).
+            const wasOpen = mobileMenu.classList.contains('open');
             mobileMenu.classList.remove('open');
             navHamburger.classList.remove('open');
             navHamburger.setAttribute('aria-expanded', 'false');
-            setBodyScrollLocked(false);
+            if (wasOpen) setBodyScrollLocked(false);
         }
         navHamburger.addEventListener('click', () => {
             const isOpen = mobileMenu.classList.toggle('open');
@@ -23818,17 +23826,25 @@
         window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => {
             if (e.matches) closeMobileMenu();
         });
-        // Both the hamburger menu and the account dropdown float above the
-        // page content with no scroll boundary of their own — scrolling
-        // the page behind them (rather than tapping outside, the only
-        // thing that closed them before) left them stuck open, overlapping
-        // whatever the user actually scrolled to see. A scroll is a clear
-        // enough signal of intent to dismiss both, the same as it already
-        // does for the cookie banner elsewhere on the site. Passive: this
-        // never calls preventDefault, so it shouldn't block the browser's
-        // own scroll-performance optimizations.
+        // The account dropdown and the shop/category filters float above
+        // the page content with no scroll boundary of their own.
+        // Scrolling the page behind them (rather than tapping outside,
+        // the only thing that closed them before) left them stuck open,
+        // overlapping whatever the user actually scrolled to see. A
+        // scroll is a clear enough signal of intent to dismiss them, the
+        // same as it already does for the cookie banner elsewhere on the
+        // site. Passive: this never calls preventDefault, so it shouldn't
+        // block the browser's own scroll-performance optimizations.
+        // closeMobileMenu() is deliberately NOT called from here (it used
+        // to be, alongside the other three) - the mobile menu locks
+        // background scroll for as long as it's open (see
+        // setBodyScrollLocked), so a genuine window scroll literally can't
+        // happen while it's showing. Worse, toggling that lock's own
+        // position:fixed synthesises a native 'scroll' event on its own,
+        // which reached this same handler and closed the menu the instant
+        // it opened - calling it here was actively self-defeating, not
+        // just redundant.
         window.addEventListener('scroll', () => {
-            closeMobileMenu();
             closeAccountDropdown();
             closeShopAllFilter();
             closeCatFilter();
