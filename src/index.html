@@ -5490,6 +5490,7 @@
         .install-banner-icon {
             border-radius: 10px;
             flex-shrink: 0;
+            align-self: flex-start;
         }
         .install-banner-text {
             flex: 1;
@@ -14921,7 +14922,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.12';
+        const BUILD_VERSION = '2026-09-29.13';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -16898,6 +16899,13 @@
         // Not a consent gate, there's nothing optional here to gate (see
         // #/cookie-policy), just a one-time, dismissible notice. Persisted
         // in localStorage so it doesn't nag a returning visitor.
+        // True from the moment a not-yet-dismissed cookie notice is
+        // scheduled until it's dismissed - covers the gap before its own
+        // 600ms reveal timer has actually added is-visible, which the
+        // install banner's own stacking guard below also has to check,
+        // not just the class (an early beforeinstallprompt can otherwise
+        // land in that gap and show the install banner first).
+        let cookieNoticePending = false;
         function initCookieNotice() {
             const notice = document.getElementById('cookieNotice');
             const dismissBtn = document.getElementById('cookieNoticeDismiss');
@@ -16905,9 +16913,11 @@
             let dismissed = false;
             try { dismissed = localStorage.getItem('cookieNoticeDismissed') === 'true'; } catch (e) { /* private browsing etc. */ }
             if (dismissed) { maybeShowInstallBanner(); return; }
+            cookieNoticePending = true;
             setTimeout(() => notice.classList.add('is-visible'), 600);
             dismissBtn.addEventListener('click', () => {
                 notice.classList.remove('is-visible');
+                cookieNoticePending = false;
                 try { localStorage.setItem('cookieNoticeDismissed', 'true'); } catch (e) { /* not fatal, it'll just reappear next visit */ }
                 // A first-time visitor who's just dismissed this is the one
                 // case the boot-time maybeShowInstallBanner() call below
@@ -16955,9 +16965,23 @@
         function installBannerDismissed() {
             try { return localStorage.getItem('installBannerDismissed') === 'true'; } catch (e) { return false; }
         }
+        let installBannerHideTimer = null;
         function dismissInstallBanner() {
             const el = document.getElementById('installBanner');
-            if (el) el.classList.remove('is-visible');
+            if (el) {
+                el.classList.remove('is-visible');
+                // Emptied only after the slide-out transition finishes, not
+                // immediately - clearing it right away would cut the
+                // animation short. Guarded against a rapid re-show (the
+                // menu's "Install app" button can call maybeShowInstallBanner()
+                // again within that window) by checking is-visible is still
+                // absent before wiping freshly-rendered content.
+                if (installBannerHideTimer) clearTimeout(installBannerHideTimer);
+                installBannerHideTimer = setTimeout(() => {
+                    installBannerHideTimer = null;
+                    if (!el.classList.contains('is-visible')) el.innerHTML = '';
+                }, 400);
+            }
             try { localStorage.setItem('installBannerDismissed', 'true'); } catch (e) { /* not fatal, it'll just reappear next visit */ }
         }
         // Called at boot (for the iOS Safari case, which has no event to
@@ -16973,7 +16997,15 @@
             // showing (a first-time visitor who hasn't dismissed it yet),
             // its own dismiss handler above calls this again right after.
             const cookieNotice = document.getElementById('cookieNotice');
-            if (cookieNotice && cookieNotice.classList.contains('is-visible')) return;
+            if (cookieNoticePending || (cookieNotice && cookieNotice.classList.contains('is-visible'))) return;
+
+            // About to render fresh content - cancel any pending
+            // hide-and-clear from a just-dismissed banner so its delayed
+            // cleanup can't wipe out what's rendered here, no matter how
+            // close together the dismiss and this re-show land (the
+            // is-visible class alone isn't a safe enough signal for that
+            // timer, since it's only added a further 50ms below).
+            if (installBannerHideTimer) { clearTimeout(installBannerHideTimer); installBannerHideTimer = null; }
 
             if (deferredInstallPrompt) {
                 el.innerHTML = `
