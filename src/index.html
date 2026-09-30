@@ -15293,7 +15293,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.3';
+        const BUILD_VERSION = '2026-09-30.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -25307,6 +25307,30 @@
                 setNotFoundNoindex(true);
             }
             updateBreadcrumbJsonLd();
+            // Re-asserts the scroll reset once more, after the new view's
+            // swap (and whatever CSS transition that triggers) has had a
+            // real frame to settle, not just been requested. The
+            // scrollTo() above fires before any of that (deliberately, so
+            // there's no flash of the new page still showing the old
+            // page's scroll position), but that means it can't account
+            // for anything that nudges layout afterward, above all a
+            // route whose render call is itself async and can still be
+            // mid-flight when this function returns. A no-op on every
+            // browser that already got it right the first time, which is
+            // most of them, this exists for the ones that don't. Double
+            // rAF (not a single one) waits for a full paint to actually
+            // complete first, not just a queued frame, the difference
+            // that matters while .route-view-enter's own transition is
+            // still in flight.
+            if (!(opts && opts.preserveScroll)) {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (window.scrollY !== 0 || window.scrollX !== 0) {
+                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                        }
+                    });
+                });
+            }
         }
         window.addEventListener('hashchange', queueRoute);
 
