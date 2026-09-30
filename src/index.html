@@ -10687,6 +10687,12 @@
                     <button class="cat-nav-arrow cat-nav-arrow-next" id="bestSellerCarouselNext" type="button" aria-label="Scroll best sellers right">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
+                    <!-- aria-labels above read "Scroll best sellers left/right" by
+                         default; applyPreLaunchBestSellersLabels() swaps them to
+                         "Scroll popular picks left/right" pre-launch, same as
+                         every other Best Sellers string on this section, so a
+                         screen-reader user isn't told the sales claim the
+                         visible "Popular picks" text was changed to avoid. -->
                 </div>
                 <p class="swipe-hint">Swipe to see more</p>
             </div>
@@ -15303,9 +15309,19 @@
            and fully wired, but isn't switched on for customers until
            launch: initStripePayment() checks this first and shows a
            WhatsApp/launch-list message instead of the real Payment
-           Element whenever it's false. Flip to true on launch day and
-           the payment step starts taking real card payments with no
-           other code changes needed. */
+           Element whenever it's false. This flag alone only controls
+           whether that code path runs, it does NOT switch Stripe itself
+           from test to live mode. STRIPE_PUBLISHABLE_KEY above is
+           currently a pk_test_ key, and the create-payment-intent Edge
+           Function holds a matching Stripe test secret key in its own
+           Supabase secrets (see supabase-payment-setup-guide.md). Going
+           live for real launch day needs all three: this flag set to
+           true, STRIPE_PUBLISHABLE_KEY swapped to the matching pk_live_
+           key, and the Edge Function's secret swapped to the matching
+           live secret key. Until both keys are swapped, this flag can
+           safely stay true for QA: every "real" charge still runs
+           through Stripe's test mode, so nothing here ever moves real
+           money. */
         const ORDERING_LIVE = true;
         let stripe = (STRIPE_PUBLISHABLE_KEY.startsWith('pk_') && window.Stripe)
             ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
@@ -24218,6 +24234,14 @@
             if (h1) h1.textContent = 'Popular Picks';
             const subtitle = document.getElementById('bestSellersSubtitle');
             if (subtitle) subtitle.textContent = 'A starting selection while we get ready to launch. Once Yo7 Foods goes live, this updates to genuine best sellers ranked by real sales.';
+            // Screen-reader-only text needs the same honesty pass as the
+            // visible copy above, a sighted visitor sees "Popular picks"
+            // but a screen-reader user would otherwise still hear "Scroll
+            // best sellers left/right" from these carousel buttons.
+            const prevBtn = document.getElementById('bestSellerCarouselPrev');
+            if (prevBtn) prevBtn.setAttribute('aria-label', 'Scroll popular picks left');
+            const nextBtn = document.getElementById('bestSellerCarouselNext');
+            if (nextBtn) nextBtn.setAttribute('aria-label', 'Scroll popular picks right');
         }
         applyPreLaunchBestSellersLabels();
 
