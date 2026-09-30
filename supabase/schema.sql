@@ -634,6 +634,23 @@ $$;
 ALTER FUNCTION "public"."has_purchased_product"("p_user_id" "uuid", "p_product_key" "text") OWNER TO "postgres";
 
 
+-- Same five characters escapeHtml() in index.html escapes, in the same
+-- order (& first, so the entities this itself inserts never get escaped
+-- a second time). Used wherever public, unauthenticated free text ends
+-- up inside an HTML email: without escaping the quote too, a value like
+-- x"onmouseover="evil() placed inside a double-quoted href breaks out of
+-- the attribute rather than just failing to be a valid email address.
+CREATE OR REPLACE FUNCTION "public"."html_escape"("s" "text") RETURNS "text"
+    LANGUAGE "sql" IMMUTABLE
+    AS $$
+  select replace(replace(replace(replace(replace(coalesce(s, ''),
+    '&', '&amp;'), '<', '&lt;'), '>', '&gt;'), '"', '&quot;'), '''', '&#39;');
+$$;
+
+
+ALTER FUNCTION "public"."html_escape"("s" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."is_admin_user"() RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -697,11 +714,23 @@ ALTER FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") OW
 -- address, so it reaches whoever is actually flagged is_admin (today
 -- that's ismailyomi@gmail.com) and keeps working unchanged if that ever
 -- changes. Name/phone/message come straight from a public, unauthenticated
--- form (no signup required to apply), so they're HTML-escaped before
--- going into the email body, unlike the profile-sourced text elsewhere in
--- this file, since a real name or postcode is comparatively low-risk but
--- free text from an anonymous applicant landing straight in an admin's
--- inbox is not.
+-- form (no signup required to apply), so they're passed through
+-- html_escape() before going into the email body, unlike the
+-- profile-sourced text elsewhere in this file, since a real name or
+-- postcode is comparatively low-risk but free text from an anonymous
+-- applicant landing straight in an admin's inbox is not.
+--
+-- The same "Anyone can submit a job application" INSERT policy that makes
+-- the form usable without an account also makes this trigger callable at
+-- any rate: every row is one Resend request per admin, so an
+-- unauthenticated caller hammering the insert endpoint directly (not
+-- through this form at all) could otherwise flood the admin's inbox and
+-- burn the account's send quota, the same threat check_rpc_rate_limit()
+-- already exists to stop for register_coming_soon_interest() and
+-- subscribe_to_newsletter() below. It only throttles these emails, not
+-- the insert itself, a genuinely rate-limited applicant's application
+-- still goes through and is still visible on the Careers page, they just
+-- don't also trigger a fresh admin email past the limit.
 CREATE OR REPLACE FUNCTION "public"."notify_job_application_submitted"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -720,16 +749,17 @@ begin
     return new;
   end if;
 
+  if not public.check_rpc_rate_limit('job-application-submitted', 5, 600) then
+    return new;
+  end if;
+
   select title into v_vacancy_title from public.job_vacancies where id = new.vacancy_id;
 
-  v_name_html := replace(replace(replace(new.name, '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
-  v_email_html := replace(replace(replace(new.email, '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
-  v_phone_html := case when new.phone is not null
-    then replace(replace(replace(new.phone, '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
-    else null
-  end;
+  v_name_html := public.html_escape(new.name);
+  v_email_html := public.html_escape(new.email);
+  v_phone_html := case when new.phone is not null then public.html_escape(new.phone) else null end;
   v_message_html := case when new.message is not null and length(trim(new.message)) > 0
-    then replace(replace(replace(new.message, '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
+    then public.html_escape(new.message)
     else null
   end;
 
@@ -3114,6 +3144,12 @@ GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."has_purchased_product"("p_user_id" "uuid", "p_product_key" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."has_purchased_product"("p_user_id" "uuid", "p_product_key" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."has_purchased_product"("p_user_id" "uuid", "p_product_key" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."html_escape"("s" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."html_escape"("s" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."html_escape"("s" "text") TO "service_role";
 
 
 
