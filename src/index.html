@@ -10452,7 +10452,7 @@
             <div class="trust-bar-set">
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span>Sign up today to secure 10% off your first box</span>
+                <span>Sign up today to secure 10% off your first order</span>
                 <span class="trust-sep">&bull;</span>
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>UK-wide delivery available</span>
                 <span class="trust-sep">&bull;</span>
@@ -10460,7 +10460,7 @@
             <div class="trust-bar-set" aria-hidden="true">
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span>Sign up today to secure 10% off your first box</span>
+                <span>Sign up today to secure 10% off your first order</span>
                 <span class="trust-sep">&bull;</span>
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>UK-wide delivery available</span>
                 <span class="trust-sep">&bull;</span>
@@ -15337,7 +15337,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.7';
+        const BUILD_VERSION = '2026-09-30.8';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -24054,12 +24054,12 @@
             // is the message almost everyone sees straight after signing up.
             if (data.user && !data.session) {
                 document.getElementById('signupAuthNote').style.display = 'none';
-                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account. You\'ve already got 10% off your first order, and it applies automatically at checkout.');
+                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account. Want 10% off your first order at launch? Join our launch list in the footer to get your code.');
                 e.target.reset();
                 return;
             }
             setUser(name, data.user);
-            showToast('🎉 You\'ve got 10% off your first order, it applies automatically at checkout', 5000);
+            showToast('🎉 Account created. Join our launch list for 10% off your first order at launch.', 5000);
             redirectAfterAuth();
         });
         // Shared by every .password-field (login, signup, reset password,
