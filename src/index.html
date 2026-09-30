@@ -15293,7 +15293,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.4';
+        const BUILD_VERSION = '2026-09-30.5';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -25130,6 +25130,37 @@
         }
         window.addEventListener('popstate', queueRoute);
 
+        // Bumped once per route() call, and closed over by
+        // scheduleScrollRestoreAfter() below - a handful of routes render
+        // async (an awaited Supabase fetch), so their completion can land
+        // well after route() itself has already returned. If the user's
+        // navigated on again by the time that completion fires, this
+        // stale token no longer matches the live one, and the correction
+        // is skipped rather than yanking whatever page is now showing
+        // back to the top of a route the user already left.
+        let routeNavToken = 0;
+        // renderPromise is only actually a promise for the handful of
+        // route() branches whose render call is itself async (Careers,
+        // order history, notifications, admin, ...) - everything else
+        // passes a plain function-call return value here (usually
+        // undefined), which .then/.finally don't exist on, so this is a
+        // deliberate no-op for every synchronous route.
+        function scheduleScrollRestoreAfter(renderPromise, navToken, opts) {
+            if (!renderPromise || typeof renderPromise.finally !== 'function') return;
+            renderPromise.finally(() => {
+                if (navToken !== routeNavToken) return;
+                if (opts && opts.preserveScroll) return;
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (navToken !== routeNavToken) return;
+                        if (window.scrollY !== 0 || window.scrollX !== 0) {
+                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                        }
+                    });
+                });
+            });
+        }
+
         function route(opts) {
             // "#edit" is a shortcut straight into edit mode for whoever's
             // already logged in as admin, it still goes through the same
@@ -25160,6 +25191,7 @@
             syncHashFromPath();
             const hash = window.location.hash;
             syncAddressBarToHash(hash);
+            const myNavToken = ++routeNavToken;
             // Skipped only when refreshCatalogOnForeground() (see its own
             // comment) re-renders the current page in place to pick up a
             // price/stock change — every other call site is a genuine
@@ -25203,7 +25235,7 @@
                 prefillDeliveryFromLastOrder();
             } else if (hash === '#/order-confirmation') {
                 showView('view-confirm');
-                renderConfirmation();
+                scheduleScrollRestoreAfter(renderConfirmation(), myNavToken, opts);
             } else if (hash === '#/login') {
                 showView('view-login');
             } else if (hash === '#/signup') {
@@ -25220,19 +25252,19 @@
                 handleUnsubscribeNewsletter(hash.replace('#/unsubscribe-newsletter/', ''));
             } else if (hash === '#/orders') {
                 showView('view-orders');
-                renderOrderHistory();
+                scheduleScrollRestoreAfter(renderOrderHistory(), myNavToken, opts);
             } else if (hash === '#/notifications') {
                 showView('view-notifications');
-                renderNotificationsPage();
+                scheduleScrollRestoreAfter(renderNotificationsPage(), myNavToken, opts);
             } else if (hash === '#/refer') {
                 showView('view-refer');
                 renderReferPage();
             } else if (hash === '#/admin' || hash === '#/admin/orders') {
                 showView('view-admin');
-                renderAdminPage();
+                scheduleScrollRestoreAfter(renderAdminPage(), myNavToken, opts);
             } else if (hash.startsWith('#/admin/order/')) {
                 showView('view-admin-order-detail');
-                renderAdminOrderDetail(hash.replace('#/admin/order/', ''));
+                scheduleScrollRestoreAfter(renderAdminOrderDetail(hash.replace('#/admin/order/', '')), myNavToken, opts);
             } else if (hash === '#/contact') {
                 showView('view-contact');
                 renderContactPage();
@@ -25244,7 +25276,7 @@
                 showView('view-work-with-us');
             } else if (hash === '#/careers') {
                 showView('view-careers');
-                renderCareersPage();
+                scheduleScrollRestoreAfter(renderCareersPage(), myNavToken, opts);
             } else if (hash === '#/guide') {
                 showView('view-guide');
                 renderFAQ();
@@ -25256,7 +25288,7 @@
                 renderBestSellersPage();
             } else if (hash === '#/buy-again') {
                 showView('view-buy-again');
-                renderBuyAgainPage();
+                scheduleScrollRestoreAfter(renderBuyAgainPage(), myNavToken, opts);
             } else if (hash === '#/favorites') {
                 showView('view-favorites');
                 renderFavoritesPage();
