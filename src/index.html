@@ -3033,7 +3033,7 @@
         .vacancy-card-head {
             width: 100%;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 16px;
             padding: 20px 52px 20px 20px;
             background: none;
@@ -3084,7 +3084,7 @@
             padding: 2px 9px;
         }
         .vacancy-meta-pills { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-        .vacancy-meta-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-muted); }
+        .vacancy-meta-pill { display: inline-flex; align-items: flex-start; gap: 5px; font-size: 12.5px; color: var(--text-muted); }
         .vacancy-meta-pill svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--text-faint); }
         .vacancy-chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); transition: transform 0.25s ease; }
         .vacancy-card.is-open .vacancy-chevron { transform: rotate(180deg); color: var(--chartreuse-rich); }
@@ -10224,15 +10224,24 @@
         // scroll position control entirely to route()'s own scrollTo(0,0).
         if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }
         // Safety net for #pageLoader (defined right after <body>, removed
-        // by the main app script once the first route has rendered): if
-        // that script errors out or hangs before reaching its removal
-        // code, this guarantees the loading screen doesn't trap the whole
-        // page behind a spinner forever. 8s is generous, well past even a
-        // very slow load, so it never fires on a genuinely working page.
-        setTimeout(function () {
-            var pl = document.getElementById('pageLoader');
-            if (pl) pl.style.display = 'none';
-        }, 8000);
+        // by showView() the first time any real view actually renders): if
+        // the app script errors out or hangs before reaching that point,
+        // this guarantees the loading screen doesn't trap the whole page
+        // behind a spinner forever. Started from DOMContentLoaded, not
+        // from here, since here is still the very start of the document,
+        // before the (large) app script has even downloaded, let alone
+        // run. Starting the clock immediately meant this could fire
+        // while a slow connection was still mid-download, hiding the
+        // loader over the same blank page it exists to prevent. Waiting
+        // for DOMContentLoaded means the 8s only ever measures time after
+        // parsing (and the app script's own synchronous execution) has
+        // actually finished, so it only ever catches a genuine hang.
+        window.addEventListener('DOMContentLoaded', function () {
+            setTimeout(function () {
+                var pl = document.getElementById('pageLoader');
+                if (pl) pl.style.display = 'none';
+            }, 8000);
+        });
         // Runs before first paint to avoid a flash of the wrong theme.
         // Defaults to light regardless of the device's OS-level preference;
         // dark mode only applies if the person has explicitly chosen it via
@@ -15278,7 +15287,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.1';
+        const BUILD_VERSION = '2026-09-30.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -24955,6 +24964,24 @@
                 void activeEl.offsetWidth; // reflow, so the animation replays even on repeat navigation
                 activeEl.classList.add('route-view-enter');
             }
+            // #pageLoader (see its CSS) is dismissed here rather than
+            // unconditionally at the end of boot, since a Supabase auth
+            // callback (password recovery, invite, magic link) skips
+            // calling route() on this pass entirely, waiting instead for
+            // the SDK's auth event or its own few-seconds fallback before
+            // ever reaching this function - dismissing at boot's end
+            // regardless would have exposed the same blank, still-hidden
+            // views this loader exists to cover during that wait. Every
+            // view stays hidden until route() calls showView() for real,
+            // whichever path gets it there, so this is the one moment
+            // that's actually true for all of them. Removed from the DOM
+            // after the first call, so this is a no-op on every view
+            // switch after the first.
+            const pageLoader = document.getElementById('pageLoader');
+            if (pageLoader) {
+                pageLoader.classList.add('page-loader-hide');
+                setTimeout(() => pageLoader.remove(), 300);
+            }
         }
         // Takes the route's hash explicitly (route()'s own already-captured
         // local variable) rather than re-reading window.location.hash
@@ -25941,16 +25968,6 @@
         // actually showing, it's safe to reveal.
         const siteFooterWrap = document.getElementById('siteFooterWrap');
         if (siteFooterWrap) siteFooterWrap.classList.remove('boot-hidden');
-        // Same boot moment for #pageLoader (see its CSS, and the safety
-        // net next to the theme IIFE near the top of <head>): the first
-        // route is now actually showing, so fade the loading screen out
-        // and drop it from the DOM once the fade finishes, rather than
-        // leaving an invisible full-viewport element sitting there.
-        const pageLoader = document.getElementById('pageLoader');
-        if (pageLoader) {
-            pageLoader.classList.add('page-loader-hide');
-            setTimeout(() => pageLoader.remove(), 300);
-        }
         // .scroll-reveal sections (home, About, Delivery Info) — revealed
         // once, the first time any part of one enters the viewport, then
         // left alone. Falls back to just showing everything immediately in
