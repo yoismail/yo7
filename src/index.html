@@ -10671,11 +10671,11 @@
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
-                        <div class="section-eyebrow">Best sellers</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">See what customers have been picking up recently</h2>
+                        <div class="section-eyebrow" id="bestSellersEyebrow">Best sellers</div>
+                        <h2 id="bestSellersHeadline" style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">See what customers have been picking up recently</h2>
                     </div>
                     <a class="view-all-btn" href="#/best-sellers">
-                        View best sellers
+                        <span id="bestSellersViewAllText">View best sellers</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                 </div>
@@ -10957,8 +10957,8 @@
                 </div>
                 <div class="empty-state" id="emptyState" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
-                    <h3>Nothing matches that yet</h3>
-                    <p>Try another word, or message us directly, we're adding stock every week.</p>
+                    <h3>We couldn't find a match</h3>
+                    <p>Try another search, browse a category below, or message us directly, we're adding stock every week.</p>
                     <div class="empty-state-suggestions" id="emptyStateSuggestions"></div>
                 </div>
             </div>
@@ -10997,8 +10997,8 @@
                 </div>
                 <div class="empty-state" id="shopAllEmptyState" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
-                    <h3>Nothing matches that yet</h3>
-                    <p>Try another word, or message us directly, we're adding stock every week.</p>
+                    <h3>We couldn't find a match</h3>
+                    <p>Try another search, browse a category below, or message us directly, we're adding stock every week.</p>
                     <div class="empty-state-suggestions" id="shopAllEmptyStateSuggestions"></div>
                 </div>
             </div>
@@ -12134,9 +12134,9 @@
     <div id="view-best-sellers" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Best Sellers</div>
-                <h1>Best Sellers</h1>
-                <p>Ranked by real sales from the last 30 days. Until there's enough order history to rank from, this shows a starting selection instead.</p>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; <span id="bestSellersBreadcrumbLabel">Best Sellers</span></div>
+                <h1 id="bestSellersH1">Best Sellers</h1>
+                <p id="bestSellersSubtitle">Ranked by real sales from the last 30 days.</p>
                 <div class="result-count" id="bestSellersCount"></div>
             </div>
         </header>
@@ -15337,7 +15337,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.6';
+        const BUILD_VERSION = '2026-09-30.7';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17151,7 +17151,7 @@
                 .filter(p => !flaggedKeys.has(p.catSlug + '::' + p.idx));
             return [...flagged, ...real];
         }
-        // "Nothing matches that yet" on its own is a dead end — this gives
+        // "We couldn't find a match" on its own is a dead end, this gives
         // whoever hit it (an unmatched search, or a genuinely thin
         // category) somewhere to go next instead of just a shrug. Looks
         // for an element named "<emptyId>Suggestions" (e.g. emptyState ->
@@ -24178,6 +24178,30 @@
         }
         restoreSupabaseSession();
 
+        // Pre-launch honesty: "Best Sellers" implies real sales data, which
+        // doesn't exist until Yo7 Foods actually launches (see ORDERING_LIVE
+        // above). Swaps the customer-facing copy to an honest "Popular
+        // picks" framing until then; once ORDERING_LIVE flips to true, this
+        // function simply does nothing and the real Best Sellers wording
+        // already sitting in the HTML shows as written, no second edit
+        // needed on launch day.
+        function applyPreLaunchBestSellersLabels() {
+            if (ORDERING_LIVE) return;
+            const eyebrow = document.getElementById('bestSellersEyebrow');
+            if (eyebrow) eyebrow.textContent = 'Popular picks';
+            const headline = document.getElementById('bestSellersHeadline');
+            if (headline) headline.textContent = 'A closer look at our range while we get ready for launch';
+            const viewAll = document.getElementById('bestSellersViewAllText');
+            if (viewAll) viewAll.textContent = 'View popular picks';
+            const breadcrumb = document.getElementById('bestSellersBreadcrumbLabel');
+            if (breadcrumb) breadcrumb.textContent = 'Popular Picks';
+            const h1 = document.getElementById('bestSellersH1');
+            if (h1) h1.textContent = 'Popular Picks';
+            const subtitle = document.getElementById('bestSellersSubtitle');
+            if (subtitle) subtitle.textContent = 'A starting selection while we get ready to launch. Once Yo7 Foods goes live, this updates to genuine best sellers ranked by real sales.';
+        }
+        applyPreLaunchBestSellersLabels();
+
         // Edit-mode changes (photo, price, stock, description, etc.) are
         // saved to product_overrides keyed by "catSlug::index" and merged
         // onto the built-in catalog here, for every visitor, not just
@@ -24396,7 +24420,7 @@
             if (items.length === 0) {
                 resultsEl.innerHTML = `
     <div class="search-empty">No matches for "${escapeHtml(query)}" yet, try another word.</div>
-    <a class="search-see-all" href="#/best-sellers">Browse best sellers instead</a>`;
+    <a class="search-see-all" href="#/best-sellers">${ORDERING_LIVE ? 'Browse best sellers instead' : 'Browse popular picks instead'}</a>`;
                 resultsEl.classList.add('open');
                 return;
             }
