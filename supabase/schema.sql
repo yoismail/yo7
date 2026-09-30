@@ -692,6 +692,91 @@ $$;
 ALTER FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") OWNER TO "postgres";
 
 
+-- Mirrors notify_order_status_change()'s own "admin alert" loop below:
+-- sends every admin profile a Resend email rather than a single hardcoded
+-- address, so it reaches whoever is actually flagged is_admin (today
+-- that's ismailyomi@gmail.com) and keeps working unchanged if that ever
+-- changes. Name/phone/message come straight from a public, unauthenticated
+-- form (no signup required to apply), so they're HTML-escaped before
+-- going into the email body, unlike the profile-sourced text elsewhere in
+-- this file, since a real name or postcode is comparatively low-risk but
+-- free text from an anonymous applicant landing straight in an admin's
+-- inbox is not.
+CREATE OR REPLACE FUNCTION "public"."notify_job_application_submitted"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_api_key text;
+  v_vacancy_title text;
+  v_admin record;
+  v_name_html text;
+  v_message_html text;
+  v_email_html text;
+  v_phone_html text;
+begin
+  select decrypted_secret into v_api_key from vault.decrypted_secrets where name = 'resend_api_key';
+  if v_api_key is null then
+    return new;
+  end if;
+
+  select title into v_vacancy_title from public.job_vacancies where id = new.vacancy_id;
+
+  v_name_html := replace(replace(replace(new.name, '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
+  v_email_html := replace(replace(replace(new.email, '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
+  v_phone_html := case when new.phone is not null
+    then replace(replace(replace(new.phone, '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
+    else null
+  end;
+  v_message_html := case when new.message is not null and length(trim(new.message)) > 0
+    then replace(replace(replace(new.message, '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
+    else null
+  end;
+
+  for v_admin in select email from public.profiles where is_admin = true and email is not null loop
+    perform net.http_post(
+      url := 'https://api.resend.com/emails',
+      headers := jsonb_build_object(
+        'Authorization', 'Bearer ' || v_api_key,
+        'Content-Type', 'application/json'
+      ),
+      body := jsonb_build_object(
+        'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+        'reply_to', new.email,
+        'to', v_admin.email,
+        'subject', 'New application for ' || coalesce(v_vacancy_title, 'a role') || ' from ' || new.name,
+        'html',
+          '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<h2 style="color:#063B00;">New job application</h2>' ||
+          '<p>' || v_name_html || ' just applied for <strong>' || coalesce(v_vacancy_title, 'a role') || '</strong>.</p>' ||
+          '<p style="color:#333;font-size:14px;"><a href="mailto:' || v_email_html || '">' || v_email_html || '</a>' ||
+            (case when v_phone_html is not null then ' &middot; ' || v_phone_html else '' end) ||
+          '</p>' ||
+          (case when v_message_html is not null then '<p style="color:#333;font-size:14px;">' || v_message_html || '</p>' else '' end) ||
+          (case when new.cv_path is not null then '<p style="color:#666;font-size:13px;">A CV is attached to this application.</p>' else '' end) ||
+          '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/careers" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Review on the Careers page</a></p>' ||
+          '<p style="color:#999;font-size:12px;">Yo7 Foods admin notifications</p>' ||
+          '</div>',
+        'text',
+          'New job application' || E'\n\n' ||
+          new.name || ' just applied for ' || coalesce(v_vacancy_title, 'a role') || '.' || E'\n' ||
+          new.email || (case when new.phone is not null then ' · ' || new.phone else '' end) || E'\n\n' ||
+          coalesce(new.message, '') ||
+          (case when new.cv_path is not null then E'\n\nA CV is attached to this application.' else '' end) || E'\n\n' ||
+          'Review on the Careers page: https://yo7foods.co.uk/#/careers'
+      )
+    );
+  end loop;
+
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."notify_job_application_submitted"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."notify_order_status_change"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -2335,6 +2420,10 @@ CREATE OR REPLACE TRIGGER "trg_assign_order_number" BEFORE INSERT ON "public"."o
 
 
 
+CREATE OR REPLACE TRIGGER "trg_notify_job_application_submitted" AFTER INSERT ON "public"."job_applications" FOR EACH ROW EXECUTE FUNCTION "public"."notify_job_application_submitted"();
+
+
+
 CREATE OR REPLACE TRIGGER "trg_notify_order_status_change" AFTER INSERT OR UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."notify_order_status_change"();
 
 
@@ -3037,6 +3126,12 @@ GRANT ALL ON FUNCTION "public"."is_admin_user"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."issue_loyalty_reward_if_earned"("p_order_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."notify_job_application_submitted"() TO "anon";
+GRANT ALL ON FUNCTION "public"."notify_job_application_submitted"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."notify_job_application_submitted"() TO "service_role";
 
 
 
