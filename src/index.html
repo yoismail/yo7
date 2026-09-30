@@ -8453,6 +8453,27 @@
             color: var(--heading-mid);
         }
 
+        .payment-note-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .checkout-prelaunch-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: var(--orange);
+            color: var(--aubergine);
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+        .checkout-prelaunch-note svg { flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; }
+
         #stripePaymentElement {
             margin-bottom: 4px;
         }
@@ -10431,7 +10452,7 @@
             <div class="trust-bar-set">
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span>Sign up today to secure 10% off your first box</span>
+                <span>Sign up today to secure 10% off your first order</span>
                 <span class="trust-sep">&bull;</span>
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>UK-wide delivery available</span>
                 <span class="trust-sep">&bull;</span>
@@ -10439,7 +10460,7 @@
             <div class="trust-bar-set" aria-hidden="true">
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Launching January 2027</span>
                 <span class="trust-sep">&bull;</span>
-                <span>Sign up today to secure 10% off your first box</span>
+                <span>Sign up today to secure 10% off your first order</span>
                 <span class="trust-sep">&bull;</span>
                 <span><svg class="trust-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>UK-wide delivery available</span>
                 <span class="trust-sep">&bull;</span>
@@ -10650,11 +10671,11 @@
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
-                        <div class="section-eyebrow">Best sellers</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">See what customers have been picking up recently</h2>
+                        <div class="section-eyebrow" id="bestSellersEyebrow">Best sellers</div>
+                        <h2 id="bestSellersHeadline" style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">See what customers have been picking up recently</h2>
                     </div>
                     <a class="view-all-btn" href="#/best-sellers">
-                        View best sellers
+                        <span id="bestSellersViewAllText">View best sellers</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                 </div>
@@ -10666,6 +10687,12 @@
                     <button class="cat-nav-arrow cat-nav-arrow-next" id="bestSellerCarouselNext" type="button" aria-label="Scroll best sellers right">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                     </button>
+                    <!-- aria-labels above read "Scroll best sellers left/right" by
+                         default; applyPreLaunchBestSellersLabels() swaps them to
+                         "Scroll popular picks left/right" pre-launch, same as
+                         every other Best Sellers string on this section, so a
+                         screen-reader user isn't told the sales claim the
+                         visible "Popular picks" text was changed to avoid. -->
                 </div>
                 <p class="swipe-hint">Swipe to see more</p>
             </div>
@@ -10936,8 +10963,8 @@
                 </div>
                 <div class="empty-state" id="emptyState" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
-                    <h3>Nothing matches that yet</h3>
-                    <p>Try another word, or message us directly, we're adding stock every week.</p>
+                    <h3>We couldn't find a match</h3>
+                    <p>Try another search, browse a category below, or message us directly, we're adding stock every week.</p>
                     <div class="empty-state-suggestions" id="emptyStateSuggestions"></div>
                 </div>
             </div>
@@ -10976,8 +11003,8 @@
                 </div>
                 <div class="empty-state" id="shopAllEmptyState" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
-                    <h3>Nothing matches that yet</h3>
-                    <p>Try another word, or message us directly, we're adding stock every week.</p>
+                    <h3>We couldn't find a match</h3>
+                    <p>Try another search, browse a category below, or message us directly, we're adding stock every week.</p>
                     <div class="empty-state-suggestions" id="shopAllEmptyStateSuggestions"></div>
                 </div>
             </div>
@@ -11164,6 +11191,11 @@
                     </span> Payment</div>
                 </div>
 
+                <div class="checkout-prelaunch-note" id="checkoutPrelaunchNote">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+                    <span>Yo7 Foods launches January 2027. You can build your basket and check out today, card payments open when we go live, place this order on WhatsApp in the meantime.</span>
+                </div>
+
                 <!-- STEP 1: CART -->
                 <div id="checkout-step-cart">
                     <div class="checkout-grid">
@@ -11317,8 +11349,28 @@
                                 Secure checkout
                             </div>
                             <div class="payment-note" id="paymentNotConfiguredNote" style="display:none;">
-                                <strong>Card payments aren't available right now.</strong> You're
-                                welcome to message us on WhatsApp to place this order instead.
+                                <strong>Yo7 Foods launches January 2027.</strong> Card payments
+                                open when we go live. Message us on WhatsApp to place this order
+                                now, or join our launch list for 10% off your first order at launch.
+                                <div class="payment-note-actions">
+                                    <button type="button" class="btn btn-outline-dark btn-block whatsapp-order-btn" id="paymentWhatsappBtn">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+                                        Order this basket on WhatsApp
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-block" id="paymentJoinLaunchListBtn">Join the launch list for 10% off</button>
+                                </div>
+                            </div>
+                            <div class="payment-note" id="paymentFailedNote" style="display:none;">
+                                <strong>Card payments aren't available right now.</strong> This
+                                looks like a temporary issue on our end, not yours. Please try
+                                again in a moment, or message us on WhatsApp to place this order
+                                instead.
+                                <div class="payment-note-actions">
+                                    <button type="button" class="btn btn-outline-dark btn-block whatsapp-order-btn" id="paymentFailedWhatsappBtn">
+                                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+                                        Order this basket on WhatsApp
+                                    </button>
+                                </div>
                             </div>
                             <form id="paymentForm">
                                 <div id="stripePaymentElement"></div>
@@ -11693,8 +11745,8 @@
             <div class="wrap">
                 <div class="about-prose about-block scroll-reveal">
                     <div class="section-eyebrow">Why Yo7 Foods</div>
-                    <h2>More than a food business</h2>
-                    <p>We're building more than a food business. We're building a team that knows our customers, understands the communities we serve and takes pride in getting things done well.</p>
+                    <h2>A small team, close to the customers we serve</h2>
+                    <p>We're a small team that knows our customers, understands the African and Caribbean communities we serve, and takes pride in getting things done well.</p>
                     <p>As a growing business, we're not a huge organisation where your contribution disappears into layers of process. What you do can have a visible impact on our customers and on how the business operates every day.</p>
                 </div>
 
@@ -12100,9 +12152,9 @@
     <div id="view-best-sellers" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Best Sellers</div>
-                <h1>Best Sellers</h1>
-                <p>Ranked by real sales from the last 30 days. Until there's enough order history to rank from, this shows a starting selection instead.</p>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; <span id="bestSellersBreadcrumbLabel">Best Sellers</span></div>
+                <h1 id="bestSellersH1">Best Sellers</h1>
+                <p id="bestSellersSubtitle">Ranked by real sales from the last 30 days.</p>
                 <div class="result-count" id="bestSellersCount"></div>
             </div>
         </header>
@@ -15251,6 +15303,26 @@
            Supabase Edge Function's own secrets, never here.
            See supabase-payment-setup-guide.md for where to get this. */
         const STRIPE_PUBLISHABLE_KEY = 'pk_test_51TzyoTJ223ML9UT0U2ZBk84I8z8594kF9Oh4DTcULkBYeXlpJz5i30rPxbdN0jJXtH4gKiA0k6gD3EHOYhHD0NG900GMQPYErP';
+
+        /* Yo7 Foods hasn't launched yet (see the site-wide "Launching
+           January 2027" messaging). The Stripe integration above is real
+           and fully wired, but isn't switched on for customers until
+           launch: initStripePayment() checks this first and shows a
+           WhatsApp/launch-list message instead of the real Payment
+           Element whenever it's false. This flag alone only controls
+           whether that code path runs, it does NOT switch Stripe itself
+           from test to live mode. STRIPE_PUBLISHABLE_KEY above is
+           currently a pk_test_ key, and the create-payment-intent Edge
+           Function holds a matching Stripe test secret key in its own
+           Supabase secrets (see supabase-payment-setup-guide.md). Going
+           live for real launch day needs all three: this flag set to
+           true, STRIPE_PUBLISHABLE_KEY swapped to the matching pk_live_
+           key, and the Edge Function's secret swapped to the matching
+           live secret key. Until both keys are swapped, this flag can
+           safely stay true for QA: every "real" charge still runs
+           through Stripe's test mode, so nothing here ever moves real
+           money. */
+        const ORDERING_LIVE = true;
         let stripe = (STRIPE_PUBLISHABLE_KEY.startsWith('pk_') && window.Stripe)
             ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
             : null;
@@ -15293,7 +15365,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.5';
+        const BUILD_VERSION = '2026-09-30.11';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17107,7 +17179,7 @@
                 .filter(p => !flaggedKeys.has(p.catSlug + '::' + p.idx));
             return [...flagged, ...real];
         }
-        // "Nothing matches that yet" on its own is a dead end — this gives
+        // "We couldn't find a match" on its own is a dead end, this gives
         // whoever hit it (an unmatched search, or a genuinely thin
         // category) somewhere to go next instead of just a shrug. Looks
         // for an element named "<emptyId>Suggestions" (e.g. emptyState ->
@@ -20023,10 +20095,20 @@
         async function initStripePayment() {
             const mountEl = document.getElementById('stripePaymentElement');
             const noteEl = document.getElementById('paymentNotConfiguredNote');
+            const failedNoteEl = document.getElementById('paymentFailedNote');
             const errorEl = document.getElementById('stripePaymentError');
             const placeOrderBtn = document.getElementById('placeOrderBtn');
             errorEl.style.display = 'none';
+            failedNoteEl.style.display = 'none';
             stripeElements = null;
+
+            if (!ORDERING_LIVE) {
+                noteEl.style.display = 'block';
+                mountEl.innerHTML = '';
+                placeOrderBtn.style.display = 'none';
+                return;
+            }
+            noteEl.style.display = 'none';
 
             if (!stripe && supabaseClient) {
                 // Supabase loaded fine, so the page itself is working —
@@ -20039,12 +20121,16 @@
             }
 
             if (!stripe || !supabaseClient) {
-                noteEl.style.display = 'block';
+                // Distinct from the !ORDERING_LIVE note above: ordering IS
+                // open, this is a genuine transient failure (Stripe.js or
+                // Supabase didn't load), so the copy here must not repeat
+                // the pre-launch "card payments open when we go live" line,
+                // which would be actively false once orders are live.
+                failedNoteEl.style.display = 'block';
                 mountEl.innerHTML = '';
                 placeOrderBtn.disabled = true;
                 return;
             }
-            noteEl.style.display = 'none';
             placeOrderBtn.disabled = true; // re-enabled once the Payment Element is actually ready to submit
             mountEl.innerHTML = '<div class="payment-element-loading"><span class="payment-spinner" aria-hidden="true"></span>Loading payment options…</div>';
 
@@ -24003,12 +24089,12 @@
             // is the message almost everyone sees straight after signing up.
             if (data.user && !data.session) {
                 document.getElementById('signupAuthNote').style.display = 'none';
-                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account. You\'ve already got 10% off your first order, and it applies automatically at checkout.');
+                setAuthSuccess('signupSuccess', '✅ Account created successfully! Please check your email to confirm your account. Want 10% off your first order at launch? Join our launch list in the footer to get your code.');
                 e.target.reset();
                 return;
             }
             setUser(name, data.user);
-            showToast('🎉 You\'ve got 10% off your first order, it applies automatically at checkout', 5000);
+            showToast('🎉 Account created. Join our launch list for 10% off your first order at launch.', 5000);
             redirectAfterAuth();
         });
         // Shared by every .password-field (login, signup, reset password,
@@ -24126,6 +24212,47 @@
             }
         }
         restoreSupabaseSession();
+
+        // Pre-launch honesty: "Best Sellers" implies real sales data, which
+        // doesn't exist until Yo7 Foods actually launches (see ORDERING_LIVE
+        // above). Swaps the customer-facing copy to an honest "Popular
+        // picks" framing until then; once ORDERING_LIVE flips to true, this
+        // function simply does nothing and the real Best Sellers wording
+        // already sitting in the HTML shows as written, no second edit
+        // needed on launch day.
+        function applyPreLaunchBestSellersLabels() {
+            if (ORDERING_LIVE) return;
+            const eyebrow = document.getElementById('bestSellersEyebrow');
+            if (eyebrow) eyebrow.textContent = 'Popular picks';
+            const headline = document.getElementById('bestSellersHeadline');
+            if (headline) headline.textContent = 'A closer look at our range while we get ready for launch';
+            const viewAll = document.getElementById('bestSellersViewAllText');
+            if (viewAll) viewAll.textContent = 'View popular picks';
+            const breadcrumb = document.getElementById('bestSellersBreadcrumbLabel');
+            if (breadcrumb) breadcrumb.textContent = 'Popular Picks';
+            const h1 = document.getElementById('bestSellersH1');
+            if (h1) h1.textContent = 'Popular Picks';
+            const subtitle = document.getElementById('bestSellersSubtitle');
+            if (subtitle) subtitle.textContent = 'A starting selection while we get ready to launch. Once Yo7 Foods goes live, this updates to genuine best sellers ranked by real sales.';
+            // Screen-reader-only text needs the same honesty pass as the
+            // visible copy above, a sighted visitor sees "Popular picks"
+            // but a screen-reader user would otherwise still hear "Scroll
+            // best sellers left/right" from these carousel buttons.
+            const prevBtn = document.getElementById('bestSellerCarouselPrev');
+            if (prevBtn) prevBtn.setAttribute('aria-label', 'Scroll popular picks left');
+            const nextBtn = document.getElementById('bestSellerCarouselNext');
+            if (nextBtn) nextBtn.setAttribute('aria-label', 'Scroll popular picks right');
+        }
+        applyPreLaunchBestSellersLabels();
+
+        // The compact "card payments open when we go live" banner shown
+        // across all three checkout steps only makes sense pre-launch,
+        // once ORDERING_LIVE is true it would be actively false (card
+        // payments do work), so it's hidden rather than shown unconditionally.
+        if (ORDERING_LIVE) {
+            const note = document.getElementById('checkoutPrelaunchNote');
+            if (note) note.style.display = 'none';
+        }
 
         // Edit-mode changes (photo, price, stock, description, etc.) are
         // saved to product_overrides keyed by "catSlug::index" and merged
@@ -24345,7 +24472,7 @@
             if (items.length === 0) {
                 resultsEl.innerHTML = `
     <div class="search-empty">No matches for "${escapeHtml(query)}" yet, try another word.</div>
-    <a class="search-see-all" href="#/best-sellers">Browse best sellers instead</a>`;
+    <a class="search-see-all" href="#/best-sellers">${ORDERING_LIVE ? 'Browse best sellers instead' : 'Browse popular picks instead'}</a>`;
                 resultsEl.classList.add('open');
                 return;
             }
@@ -25748,6 +25875,15 @@
         if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
         const whatsappOrderBtn = document.getElementById('whatsappOrderBtn');
         if (whatsappOrderBtn) whatsappOrderBtn.addEventListener('click', sendCartViaWhatsApp);
+        const paymentWhatsappBtn = document.getElementById('paymentWhatsappBtn');
+        if (paymentWhatsappBtn) paymentWhatsappBtn.addEventListener('click', sendCartViaWhatsApp);
+        const paymentFailedWhatsappBtn = document.getElementById('paymentFailedWhatsappBtn');
+        if (paymentFailedWhatsappBtn) paymentFailedWhatsappBtn.addEventListener('click', sendCartViaWhatsApp);
+        const paymentJoinLaunchListBtn = document.getElementById('paymentJoinLaunchListBtn');
+        if (paymentJoinLaunchListBtn) paymentJoinLaunchListBtn.addEventListener('click', () => {
+            const wrap = document.getElementById('heroCaptureWrap');
+            if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         const whatsappListSendBtn = document.getElementById('whatsappListSendBtn');
         if (whatsappListSendBtn) {
             whatsappListSendBtn.addEventListener('click', () => {
