@@ -362,6 +362,40 @@
             display: none !important;
         }
 
+        /* Full-page loading screen, shown from the very first paint and
+           removed once the first route has actually rendered (see the JS
+           next to where .boot-hidden is removed from the footer, the same
+           boot moment). Without this, a slow connection shows the nav bar
+           alone for several seconds with a blank body underneath, then
+           the whole page pops in at once, which reads as broken rather
+           than loading. Covering the full viewport (nav included) turns
+           that same wait into one clean, expected loading state instead. */
+        .page-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--page-bg);
+            transition: opacity 0.25s ease;
+        }
+        .page-loader-spinner {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 3px solid rgba(var(--border-rgb), 0.15);
+            border-top-color: var(--chartreuse);
+            animation: btnSpin 0.8s linear infinite;
+        }
+        .page-loader.page-loader-hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .page-loader-spinner { animation-duration: 1.6s; }
+        }
+
         /* Route-level page transition: plays once on the view that just
            became active, so navigating feels like an app, not a hard cut. */
         .route-view-enter {
@@ -2982,33 +3016,57 @@
         .careers-admin-slot:empty { display: none; }
         .careers-add-btn { margin-bottom: 24px; }
         .careers-loading { text-align: center; color: var(--text-muted); padding: 32px 0; }
-        .careers-list { display: flex; flex-direction: column; gap: 16px; }
+        .careers-list { display: flex; flex-direction: column; gap: 18px; }
         .vacancy-card {
             position: relative;
             background: var(--card-bg);
             border: 1.5px solid rgba(var(--border-rgb), 0.12);
-            border-radius: 16px;
+            border-radius: 18px;
             overflow: hidden;
+            box-shadow: 0 1px 2px rgba(var(--border-rgb), 0.04);
+            transition: box-shadow 0.25s ease, border-color 0.25s ease;
         }
+        .vacancy-card:hover { box-shadow: 0 10px 28px rgba(var(--border-rgb), 0.09); border-color: rgba(var(--border-rgb), 0.2); }
+        .vacancy-card.is-open { border-color: rgba(144, 184, 0, 0.4); }
         .vacancy-card-closed { opacity: 0.7; }
+        .vacancy-card-closed:hover { box-shadow: 0 1px 2px rgba(var(--border-rgb), 0.04); }
         .vacancy-card-head {
             width: 100%;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             gap: 16px;
-            padding: 18px 52px 18px 22px;
+            padding: 20px 52px 20px 20px;
             background: none;
             border: none;
             text-align: left;
             cursor: pointer;
             font-family: inherit;
         }
-        .vacancy-card-head-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        /* Same asymmetric wax-seal blob used on empty states and the About
+           page dividers, the brand's one recurring signature shape, so
+           each listing reads as a considered Yo7 moment rather than a
+           generic job-board template. */
+        .vacancy-icon-badge {
+            width: 44px;
+            height: 38px;
+            flex-shrink: 0;
+            border-radius: 42% 58% 61% 39% / 47% 41% 59% 53%;
+            background: linear-gradient(155deg, rgba(144, 184, 0, 0.18), rgba(144, 184, 0, 0.08));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-4deg);
+        }
+        .vacancy-card-closed .vacancy-icon-badge {
+            background: linear-gradient(155deg, rgba(var(--border-rgb), 0.12), rgba(var(--border-rgb), 0.05));
+        }
+        .vacancy-icon-badge svg { width: 19px; height: 19px; color: var(--chartreuse-rich); transform: rotate(4deg); }
+        .vacancy-card-closed .vacancy-icon-badge svg { color: var(--text-muted); }
+        .vacancy-card-head-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
         .vacancy-title {
             font-family: var(--display);
             font-weight: 700;
-            font-size: 17px;
+            font-size: 17.5px;
             color: var(--heading);
             display: flex;
             align-items: center;
@@ -3025,13 +3083,15 @@
             border-radius: 999px;
             padding: 2px 9px;
         }
-        .vacancy-meta { font-size: 13px; color: var(--text-muted); }
-        .vacancy-chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); transition: transform 0.2s ease; }
-        .vacancy-card.is-open .vacancy-chevron { transform: rotate(180deg); }
+        .vacancy-meta-pills { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+        .vacancy-meta-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-muted); }
+        .vacancy-meta-pill svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--text-faint); }
+        .vacancy-chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); transition: transform 0.25s ease; }
+        .vacancy-card.is-open .vacancy-chevron { transform: rotate(180deg); color: var(--chartreuse-rich); }
         .vacancy-edit-btn {
             position: absolute;
-            top: 14px;
-            right: 14px;
+            top: 16px;
+            right: 16px;
             width: 30px;
             height: 30px;
             display: flex;
@@ -3044,8 +3104,23 @@
             cursor: pointer;
         }
         .vacancy-edit-btn svg { width: 14px; height: 14px; }
-        .vacancy-card-body { padding: 0 22px 22px; }
-        .vacancy-desc { font-size: 14.5px; line-height: 1.7; color: var(--text-body); margin-bottom: 18px; }
+        .vacancy-card-body { padding: 0 24px 26px; }
+        .vacancy-desc { font-size: 14.5px; line-height: 1.7; color: var(--text-body); margin-bottom: 20px; }
+        .vacancy-desc p { margin: 0 0 14px; }
+        .vacancy-desc ul { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+        .vacancy-desc p:last-child, .vacancy-desc ul:last-child { margin-bottom: 0; }
+        .vacancy-desc li { position: relative; padding-left: 20px; }
+        .vacancy-desc li::before {
+            content: '';
+            position: absolute;
+            left: 2px;
+            top: 9px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--chartreuse);
+        }
+        .vacancy-divider { height: 1px; background: rgba(var(--border-rgb), 0.1); margin: 4px 0 20px; }
         .vacancy-applications-toggle {
             background: none;
             border: none;
@@ -3060,10 +3135,50 @@
         /* Public-facing, so it borrows .field (the signup/checkout form
            look), not .edit-panel's yellow admin-editing styling. A
            visitor applying for a job shouldn't see what reads as an
-           internal "editing this record" panel. */
-        .apply-form { margin-top: 6px; max-width: 440px; }
+           internal "editing this record" panel. A soft tinted panel of
+           its own (rather than fields sitting bare under the
+           description) makes applying read as its own considered step,
+           not an afterthought tacked onto the card. */
+        .apply-form-panel {
+            margin-top: 4px;
+            max-width: 480px;
+            background: var(--section-alt-bg);
+            border: 1px solid rgba(144, 184, 0, 0.18);
+            border-radius: 14px;
+            padding: 20px 22px 22px;
+        }
+        .apply-form-heading {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 14.5px;
+            color: var(--heading);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .apply-form-heading svg { width: 16px; height: 16px; color: var(--chartreuse-rich); flex-shrink: 0; }
         .apply-form-actions { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
         .apply-form-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; text-decoration: underline; }
+        /* ::file-selector-button is the one part of a native file input
+           that accepts real styling, so that's what carries the brand
+           look here; border/radius/background on the input itself still
+           come from .field input's existing rules. */
+        .apply-form input[type="file"] { padding: 8px 10px; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+        .apply-form input[type="file"]::file-selector-button {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--heading);
+            background: var(--card-bg);
+            border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            border-radius: 8px;
+            padding: 7px 12px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        .apply-form input[type="file"]::file-selector-button:hover { border-color: var(--chartreuse); }
         .vacancy-applications-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
         .vacancy-applications-list li {
             border: 1px solid rgba(var(--border-rgb), 0.14);
@@ -3075,8 +3190,9 @@
         .vacancy-application-head span { color: var(--text-muted); font-size: 12px; }
         .vacancy-application-contact { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
         .vacancy-application-message { font-size: 13px; line-height: 1.6; margin: 8px 0 0; }
-        .vacancy-application-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-        .vacancy-application-actions button {
+        .vacancy-application-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+        .vacancy-application-actions button,
+        .vacancy-application-actions a {
             background: none;
             border: 1.5px solid rgba(var(--border-rgb), 0.18);
             border-radius: 8px;
@@ -3084,13 +3200,18 @@
             font-weight: 600;
             padding: 6px 10px;
             cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
             color: var(--heading);
         }
         .vacancy-reviewed-tag { font-size: 11.5px; font-weight: 700; color: var(--chartreuse-rich); text-transform: uppercase; letter-spacing: 0.03em; }
         @media (max-width: 560px) {
-            .vacancy-card-head { padding: 16px 46px 16px 16px; }
-            .vacancy-card-body { padding: 0 16px 18px; }
+            .vacancy-card-head { padding: 16px 46px 16px 16px; gap: 12px; }
+            .vacancy-icon-badge { width: 38px; height: 33px; }
+            .vacancy-icon-badge svg { width: 16px; height: 16px; }
+            .vacancy-card-body { padding: 0 16px 20px; }
             .vacancy-edit-btn { top: 12px; right: 12px; }
+            .apply-form-panel { padding: 16px 16px 18px; }
         }
 
         /* ================= SHOP / CATEGORY GRID ================= */
@@ -10102,6 +10223,16 @@
         // you in the middle of the page instead of at its top, this hands
         // scroll position control entirely to route()'s own scrollTo(0,0).
         if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }
+        // Safety net for #pageLoader (defined right after <body>, removed
+        // by the main app script once the first route has rendered): if
+        // that script errors out or hangs before reaching its removal
+        // code, this guarantees the loading screen doesn't trap the whole
+        // page behind a spinner forever. 8s is generous, well past even a
+        // very slow load, so it never fires on a genuinely working page.
+        setTimeout(function () {
+            var pl = document.getElementById('pageLoader');
+            if (pl) pl.style.display = 'none';
+        }, 8000);
         // Runs before first paint to avoid a flash of the wrong theme.
         // Defaults to light regardless of the device's OS-level preference;
         // dark mode only applies if the person has explicitly chosen it via
@@ -10116,6 +10247,9 @@
 </head>
 
 <body>
+
+    <div id="pageLoader" class="page-loader" aria-hidden="true"><span class="page-loader-spinner"></span></div>
+    <noscript><style>.page-loader { display: none !important; }</style></noscript>
 
     <svg width="0" height="0" style="position:absolute">
         <defs>
@@ -15144,7 +15278,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-29.17';
+        const BUILD_VERSION = '2026-09-30.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -24502,11 +24636,32 @@
            the live page under edit mode, the same pattern product cards
            already use (openEditPanel), not a separate admin-only screen. */
         let vacancies = [];
-        function vacancyMetaText(v) {
-            return [v.department, v.location, v.employment_type].filter(Boolean).join(' · ');
+        const VACANCY_META_ICONS = {
+            department: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
+            location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+            employment_type: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+        };
+        function vacancyMetaPillsHTML(v) {
+            const pills = ['department', 'location', 'employment_type']
+                .filter(key => v[key])
+                .map(key => `<span class="vacancy-meta-pill">${VACANCY_META_ICONS[key]}${escapeHtml(v[key])}</span>`);
+            return pills.length ? `<span class="vacancy-meta-pills">${pills.join('')}</span>` : '';
         }
+        // Turns a plain admin-typed description into real paragraphs and
+        // bullet lists instead of one flat block of text: a blank line
+        // starts a new paragraph, and a run of lines that all start with
+        // -, * or • becomes a proper <ul> (with that leading marker
+        // stripped, the list styling itself draws the bullet).
         function vacancyDescriptionHTML(desc) {
-            return escapeHtml(desc || '').replace(/\n/g, '<br>');
+            const text = (desc || '').replace(/\r\n/g, '\n').trim();
+            if (!text) return '';
+            return text.split(/\n{2,}/).map(block => {
+                const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length && lines.every(l => /^[-*•]\s+/.test(l))) {
+                    return `<ul>${lines.map(l => `<li>${escapeHtml(l.replace(/^[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
+                }
+                return `<p>${lines.map(l => escapeHtml(l)).join('<br>')}</p>`;
+            }).join('');
         }
         async function renderCareersPage() {
             const listEl = document.getElementById('careersList');
@@ -24527,13 +24682,14 @@
             listEl.innerHTML = visible.map(v => vacancyCardHTML(v, canManage)).join('');
         }
         function vacancyCardHTML(v, canManage) {
-            const meta = vacancyMetaText(v);
+            const pills = vacancyMetaPillsHTML(v);
             return `
       <div class="vacancy-card${!v.is_open ? ' vacancy-card-closed' : ''}" id="vacancy-${v.id}">
         <button type="button" class="vacancy-card-head" onclick="toggleVacancyCard('${v.id}')" aria-expanded="false" aria-controls="vacancy-body-${v.id}">
+          <span class="vacancy-icon-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
           <span class="vacancy-card-head-text">
             <span class="vacancy-title">${escapeHtml(v.title)}${!v.is_open ? '<span class="vacancy-closed-tag">Closed</span>' : ''}</span>
-            ${meta ? `<span class="vacancy-meta">${escapeHtml(meta)}</span>` : ''}
+            ${pills}
           </span>
           <svg class="vacancy-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         </button>
@@ -24541,7 +24697,8 @@
         <div class="edit-panel-slot" id="vacancy-edit-slot-${v.id}"></div>
         <div class="vacancy-card-body" id="vacancy-body-${v.id}" hidden>
           <div class="vacancy-desc">${vacancyDescriptionHTML(v.description)}</div>
-          ${v.is_open ? `<button type="button" class="btn btn-primary vacancy-apply-btn" id="apply-btn-${v.id}" onclick="showApplyForm('${v.id}')">Apply for this role</button>
+          ${v.is_open ? `<div class="vacancy-divider"></div>
+          <button type="button" class="btn btn-primary vacancy-apply-btn" id="apply-btn-${v.id}" onclick="showApplyForm('${v.id}')">Apply for this role</button>
           <div id="apply-slot-${v.id}"></div>` : ''}
           ${canManage ? `<button type="button" class="vacancy-applications-toggle" onclick="toggleVacancyApplications('${v.id}')">View applications</button>
           <div id="applications-slot-${v.id}"></div>` : ''}
@@ -24644,7 +24801,8 @@
             if (!slot) return;
             applyBtn.style.display = 'none';
             slot.innerHTML = `
-        <form class="apply-form" onsubmit="submitApplication(event, '${vacancyId}')">
+        <form class="apply-form-panel apply-form" onsubmit="submitApplication(event, '${vacancyId}')">
+          <div class="apply-form-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Your details</div>
           <div class="field"><label for="apply-name-${vacancyId}">Full name</label><input type="text" id="apply-name-${vacancyId}" required></div>
           <div class="field"><label for="apply-email-${vacancyId}">Email</label><input type="email" id="apply-email-${vacancyId}" required></div>
           <div class="field"><label for="apply-phone-${vacancyId}">Phone (optional)</label><input type="tel" id="apply-phone-${vacancyId}"></div>
@@ -24690,16 +24848,19 @@
             const { data, error } = await supabaseClient.from('job_applications').select('*').eq('vacancy_id', vacancyId).order('created_at', { ascending: false });
             if (error) { slot.innerHTML = `<p class="careers-loading">Couldn't load applications.</p>`; return; }
             if (!data.length) { slot.innerHTML = `<p class="careers-loading">No applications yet.</p>`; return; }
+            const vacancy = vacancies.find(x => x.id === vacancyId);
+            const replySubject = encodeURIComponent(`Re: your application for ${vacancy ? vacancy.title : 'this role'}`);
             slot.innerHTML = `<ul class="vacancy-applications-list">${data.map(a => `
         <li class="${a.reviewed_at ? 'is-reviewed' : ''}">
           <div class="vacancy-application-head">
             <strong>${escapeHtml(a.name)}</strong>
             <span>${new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
           </div>
-          <div class="vacancy-application-contact"><a href="mailto:${escapeHtml(a.email)}">${escapeHtml(a.email)}</a>${a.phone ? ` · ${escapeHtml(a.phone)}` : ''}</div>
+          <div class="vacancy-application-contact"><a href="mailto:${escapeHtml(a.email)}?subject=${replySubject}">${escapeHtml(a.email)}</a>${a.phone ? ` · ${escapeHtml(a.phone)}` : ''}</div>
           ${a.message ? `<p class="vacancy-application-message">${escapeHtml(a.message)}</p>` : ''}
           <div class="vacancy-application-actions">
-            ${a.cv_path ? `<button type="button" onclick="downloadApplicationCv('${a.cv_path}', this)">Download CV</button>` : ''}
+            <a href="mailto:${escapeHtml(a.email)}?subject=${replySubject}">Reply by email</a>
+            ${a.cv_path ? `<button type="button" onclick="downloadApplicationCv('${a.cv_path}', this)">View CV</button>` : ''}
             ${!a.reviewed_at ? `<button type="button" onclick="markApplicationReviewed('${a.id}', this)">Mark reviewed</button>` : `<span class="vacancy-reviewed-tag">Reviewed</span>`}
           </div>
         </li>`).join('')}</ul>`;
@@ -25780,6 +25941,16 @@
         // actually showing, it's safe to reveal.
         const siteFooterWrap = document.getElementById('siteFooterWrap');
         if (siteFooterWrap) siteFooterWrap.classList.remove('boot-hidden');
+        // Same boot moment for #pageLoader (see its CSS, and the safety
+        // net next to the theme IIFE near the top of <head>): the first
+        // route is now actually showing, so fade the loading screen out
+        // and drop it from the DOM once the fade finishes, rather than
+        // leaving an invisible full-viewport element sitting there.
+        const pageLoader = document.getElementById('pageLoader');
+        if (pageLoader) {
+            pageLoader.classList.add('page-loader-hide');
+            setTimeout(() => pageLoader.remove(), 300);
+        }
         // .scroll-reveal sections (home, About, Delivery Info) — revealed
         // once, the first time any part of one enters the viewport, then
         // left alone. Falls back to just showing everything immediately in
