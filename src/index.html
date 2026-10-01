@@ -5832,10 +5832,13 @@
         .shop-header {
             position: relative;
             overflow: hidden;
-            /* This header's own pre-existing corner glow. */
-            background:
-                radial-gradient(circle at 88% -20%, rgba(144, 184, 0, 0.14), transparent 55%),
-                #FFFFFF;
+            /* Flat, not the corner-glow treatment used on larger sections
+               elsewhere, this header is short enough (breadcrumb + h1 +
+               one line) that the same glow's farthest-corner radius ends
+               up dominating the whole box instead of reading as a subtle
+               accent, which looked like an unfinished/mixed background
+               rather than a deliberate one. */
+            background: #FFFFFF;
             color: #2C1C10;
             padding: 52px 0 48px;
             border-bottom: 1px solid rgba(44, 28, 16, 0.08);
@@ -5843,15 +5846,11 @@
         /* This header sits at the very top of every secondary page (Shop,
            About, Contact, every legal page, admin, etc.), so it was a
            fixed white band clashing hard against the rest of the page
-           the moment dark mode was on, the exact same corner-glow
-           treatment as .auth-section, just re-based onto
-           --page-bg/--text-body so it actually flips with the theme
-           instead of staying a fixed light surface like the nav bar
-           deliberately still does. */
+           the moment dark mode was on, re-based onto --page-bg/--text-body
+           so it actually flips with the theme instead of staying a fixed
+           light surface like the nav bar deliberately still does. */
         [data-theme="dark"] .shop-header {
-            background:
-                radial-gradient(circle at 88% -20%, rgba(166, 204, 46, 0.16), transparent 55%),
-                var(--page-bg);
+            background: var(--page-bg);
             color: var(--text-body);
             border-bottom-color: rgba(var(--border-rgb), 0.14);
         }
@@ -5869,20 +5868,16 @@
            stays clipped exactly as before. */
         #view-shop > .shop-header { overflow: visible; }
 
-        /* These two variants had no glow of their own — flat white — so
-           unlike the base .shop-header above, they get the same corner-
-           glow treatment used across the rest of the site. */
+        /* Flat, same reasoning as the base .shop-header above, keeps the
+           whole header family visually consistent rather than some
+           variants glowing and others flat. */
         .shop-header-contact,
         .shop-header-story {
-            background:
-                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                #FFFFFF;
+            background: #FFFFFF;
         }
         [data-theme="dark"] .shop-header-contact,
         [data-theme="dark"] .shop-header-story {
-            background:
-                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                var(--page-bg);
+            background: var(--page-bg);
         }
 
         .breadcrumb {
@@ -15365,7 +15360,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.11';
+        const BUILD_VERSION = '2026-10-01.2';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
