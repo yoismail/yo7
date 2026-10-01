@@ -15360,7 +15360,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-10-01.3';
+        const BUILD_VERSION = '2026-10-01.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -18020,8 +18020,23 @@
                     nextSlide.querySelectorAll('a').forEach(a => a.removeAttribute('tabindex'));
                 }, SLIDE_FADE_MS);
             }
+            // :hover and a plain focus check both still go stale on touch:
+            // mobile browsers can leave :hover matched after a tap with no
+            // real pointer ever "leaving", and a tapped link becomes
+            // document.activeElement the same as a keyboard-tabbed one -
+            // checking live state only fixes staleness for devices that
+            // have a real hover concept to begin with. Scoping hover to
+            // hover-capable pointers (same "desktop hover only" reasoning
+            // initTrustBarPause above already uses) and focus to
+            // :focus-visible (true for keyboard tabbing, not for a tap or
+            // a mouse click) keeps this paused only for the actual
+            // keyboard/mouse interactions the comment above describes
+            // protecting, never for a touch tap.
+            const hoverCapable = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
             function isPaused() {
-                return (banner.matches(':hover')) || banner.contains(document.activeElement);
+                if (hoverCapable && banner.matches(':hover')) return true;
+                const active = document.activeElement;
+                return !!(active && banner.contains(active) && active.matches(':focus-visible'));
             }
             setInterval(() => {
                 if (isPaused()) return; // skip this tick only, re-checked live next time
