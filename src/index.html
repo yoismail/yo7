@@ -15360,7 +15360,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-10-01.2';
+        const BUILD_VERSION = '2026-10-01.4';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
@@ -17959,12 +17959,36 @@
         })();
 
         // Crossfades the launch banner between its two slides (see the
-        // markup comment on the second .launch-banner-slide). Paused on
-        // hover and on keyboard focus, same spirit as initTrustBarPause
-        // above, so content doesn't shift under a pointer or a tabbed-to
-        // link, and skipped entirely under prefers-reduced-motion, same
-        // as every other auto-advancing strip on the page (the trust bar
-        // ticker's own animation, and the carousels' initCarouselPeriodicJump).
+        // markup comment on the second .launch-banner-slide). Paused
+        // while actually hovered or while something inside has focus, so
+        // content doesn't shift under a pointer or a tabbed-to link, and
+        // skipped entirely under prefers-reduced-motion, same as every
+        // other auto-advancing strip on the page (the trust bar ticker's
+        // own animation, and the carousels' initCarouselPeriodicJump).
+        //
+        // Deliberately does NOT track "paused" with hand-maintained
+        // hovered/focused booleans flipped by mouseenter/mouseleave/
+        // focusin/focusout - an earlier version did exactly that, and it
+        // could get stuck true forever with no way back: both slides have
+        // a real link inside (one does a scrollIntoView to the footer,
+        // the other navigates to #/refer), and tapping either on a touch
+        // screen fires a synthetic mouseenter/focusin with no matching
+        // mouseleave ever following (there's no real pointer to "leave"
+        // on touch), or a click that scrolls the page without the pointer
+        // itself moving can leave mouseleave never firing since nothing
+        // re-evaluates hit-testing without a pointermove. Either way the
+        // flag would latch true and the carousel would freeze on
+        // whichever slide was showing, permanently, for the rest of that
+        // page load - exactly the "freezes intermittently" symptom this
+        // replaces (same failure shape the trust bar ticker had, see
+        // initTrustBarPause's own comment on that history).
+        //
+        // Checking live DOM state instead (:hover, document.activeElement)
+        // every time the interval ticks can't desync from reality the way
+        // a cached flag can: whatever caused hover/focus to look "stuck"
+        // stops mattering the moment it's no longer actually true, so the
+        // very next tick (at most 6.5s later) resumes on its own with no
+        // recovery code needed.
         (function initLaunchBannerRotator() {
             const banner = document.getElementById('launchBanner');
             const rotator = document.getElementById('launchBannerRotator');
@@ -17974,7 +17998,6 @@
             if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
             let index = slides.findIndex(s => s.classList.contains('is-active'));
             if (index === -1) index = 0;
-            let timer = null;
             // Matches .launch-banner-slide's own transition-duration (see
             // its CSS comment) - the outgoing slide's fade-out has to
             // actually finish before the incoming one starts fading in,
@@ -17997,22 +18020,28 @@
                     nextSlide.querySelectorAll('a').forEach(a => a.removeAttribute('tabindex'));
                 }, SLIDE_FADE_MS);
             }
-            function start() { if (!timer) timer = setInterval(() => goTo((index + 1) % slides.length), 6500); }
-            function stop() { clearInterval(timer); timer = null; }
-            // Hover and focus are two independent reasons to stay paused,
-            // tracked separately rather than each handler unconditionally
-            // calling start()/stop() - otherwise, hovering while a link
-            // inside is also focused (or vice versa) would let the other
-            // one's "release" event resume rotation while the first
-            // condition still holds.
-            let hovered = false;
-            let focused = false;
-            function updatePause() { if (hovered || focused) stop(); else start(); }
-            start();
-            banner.addEventListener('mouseenter', () => { hovered = true; updatePause(); });
-            banner.addEventListener('mouseleave', () => { hovered = false; updatePause(); });
-            banner.addEventListener('focusin', () => { focused = true; updatePause(); });
-            banner.addEventListener('focusout', () => { focused = false; updatePause(); });
+            // :hover and a plain focus check both still go stale on touch:
+            // mobile browsers can leave :hover matched after a tap with no
+            // real pointer ever "leaving", and a tapped link becomes
+            // document.activeElement the same as a keyboard-tabbed one -
+            // checking live state only fixes staleness for devices that
+            // have a real hover concept to begin with. Scoping hover to
+            // hover-capable pointers (same "desktop hover only" reasoning
+            // initTrustBarPause above already uses) and focus to
+            // :focus-visible (true for keyboard tabbing, not for a tap or
+            // a mouse click) keeps this paused only for the actual
+            // keyboard/mouse interactions the comment above describes
+            // protecting, never for a touch tap.
+            const hoverCapable = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            function isPaused() {
+                if (hoverCapable && banner.matches(':hover')) return true;
+                const active = document.activeElement;
+                return !!(active && banner.contains(active) && active.matches(':focus-visible'));
+            }
+            setInterval(() => {
+                if (isPaused()) return; // skip this tick only, re-checked live next time
+                goTo((index + 1) % slides.length);
+            }, 6500);
         })();
 
         function stockLabel(s) {
