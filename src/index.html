@@ -15322,7 +15322,7 @@
            safely stay true for QA: every "real" charge still runs
            through Stripe's test mode, so nothing here ever moves real
            money. */
-        const ORDERING_LIVE = true;
+        const ORDERING_LIVE = false;
         let stripe = (STRIPE_PUBLISHABLE_KEY.startsWith('pk_') && window.Stripe)
             ? window.Stripe(STRIPE_PUBLISHABLE_KEY)
             : null;
@@ -15365,7 +15365,7 @@
         // a manual file upload rather than something that leaves its own
         // trace (no CI, no commit hash reaching the live site while the
         // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-09-30.11';
+        const BUILD_VERSION = '2026-10-01.1';
 
         /* ================= HELPERS ================= */
         function money(n) { return '£' + n.toFixed(2); }
