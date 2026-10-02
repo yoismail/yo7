@@ -1,0 +1,56 @@
+# Cloudflare Workers Static Assets reads this file the same way Pages
+# does, applying these headers on top of its own defaults. Every HTML
+# response here gets regenerated on deploy (index.html by hand, every
+# static info/product page via CI), so none of them should ever be
+# served stale from a browser's or an intermediate cache: force a
+# revalidation on every load instead of letting a cached copy linger
+# until someone hard-refreshes. Everything else (images, fonts, icons)
+# is untouched and keeps Cloudflare's normal caching.
+
+/
+  Cache-Control: no-cache, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
+/404.html
+  Cache-Control: no-cache, must-revalidate
+
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+
+/about/*
+  Cache-Control: no-cache, must-revalidate
+
+/careers/*
+  Cache-Control: no-cache, must-revalidate
+
+/contact/*
+  Cache-Control: no-cache, must-revalidate
+
+/cookie-policy/*
+  Cache-Control: no-cache, must-revalidate
+
+/delivery-info/*
+  Cache-Control: no-cache, must-revalidate
+
+/delivery-policy/*
+  Cache-Control: no-cache, must-revalidate
+
+/guide/*
+  Cache-Control: no-cache, must-revalidate
+
+/privacy/*
+  Cache-Control: no-cache, must-revalidate
+
+/product/*
+  Cache-Control: no-cache, must-revalidate
+
+/returns/*
+  Cache-Control: no-cache, must-revalidate
+
+/terms/*
+  Cache-Control: no-cache, must-revalidate
+
+/work-with-us/*
+  Cache-Control: no-cache, must-revalidate
