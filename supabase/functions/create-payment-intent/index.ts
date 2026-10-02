@@ -94,6 +94,14 @@ function corsHeaders(origin: string | null) {
 // migration is what turned these from permanently-hardcoded into
 // something an admin's own edits actually reach a real customer through.
 let SUBSCRIPTION_DISCOUNT_PCT = 10;
+// Admin-set GBP -> X rates (see pricing_settings.fx_rates), e.g.
+// { CAD: 1.72, USD: 1.27 } - starts empty, same as the column's own
+// default, meaning no non-GBP currency is actually chargeable until an
+// admin sets a real rate. Never fall back to an assumed rate of 1 for a
+// currency with no entry here - see resolveCharge() below.
+let FX_RATES: Record<string, number> = {};
+const SUPPORTED_CURRENCIES = ["GBP", "CAD", "USD"] as const;
+type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
 let DELIVERY_WEIGHT_TIERS: { maxWeight: number; fee: number }[] = [
   { maxWeight: 10, fee: 7.99 },
   { maxWeight: 20, fee: 11.99 },
@@ -171,6 +179,32 @@ async function loadPricingSettings(db: ReturnType<typeof createClient>) {
   BUNDLES.forEach((b, i) => { if (typeof bundleDiscounts[i] === "number") b.discountPercent = bundleDiscounts[i]; });
   const comboDiscounts = data.combo_discounts || {};
   COMBOS.forEach((c, i) => { if (typeof comboDiscounts[i] === "number") c.discountPercent = comboDiscounts[i]; });
+  if (data.fx_rates && typeof data.fx_rates === "object") FX_RATES = data.fx_rates as Record<string, number>;
+}
+
+// Resolves which currency this charge actually happens in and the GBP
+// amount converted into it. Mirrors priceCart's own trust model: the
+// client can ASK for a currency, but never supplies the rate or the
+// converted amount itself - both come from this function, using only
+// the admin-set rate just loaded above. A currency with no configured
+// rate is refused outright rather than silently charged as GBP-amount-
+// in-a-different-currency's-clothes (which would charge the wrong
+// amount) or silently downgraded to GBP (which would charge a UK
+// currency to someone who explicitly asked for another one).
+function resolveCharge(totalGBP: number, requestedCurrency: unknown):
+  | { ok: true; currency: SupportedCurrency; rate: number; amount: number }
+  | { ok: false; error: string } {
+  const raw = typeof requestedCurrency === "string" ? requestedCurrency.toUpperCase() : "GBP";
+  if (!(SUPPORTED_CURRENCIES as readonly string[]).includes(raw)) {
+    return { ok: false, error: `Unsupported currency: ${raw}` };
+  }
+  const currency = raw as SupportedCurrency;
+  if (currency === "GBP") return { ok: true, currency, rate: 1, amount: totalGBP };
+  const rate = FX_RATES[currency];
+  if (typeof rate !== "number" || !(rate > 0)) {
+    return { ok: false, error: `${currency} isn't available right now, please choose GBP.` };
+  }
+  return { ok: true, currency, rate, amount: round2(totalGBP * rate) };
 }
 
 type CartLineIn = { id: unknown; qty: unknown; isSubscription?: unknown };
@@ -825,8 +859,24 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: priced.discountError }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
-  const amount = Math.round(priced.total * 100);
-  if (amount < 30) {
+  // The client can ask for a currency, but the amount actually charged
+  // is computed here from the trusted GBP total and the admin's own
+  // rate — same "never trust a client-submitted amount" discipline
+  // priceCart() already applies to pricing itself, just one step
+  // further down the pipeline.
+  const charge = resolveCharge(priced.total, body.currency);
+  if (!charge.ok) {
+    return new Response(JSON.stringify({ error: charge.error }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+  const amount = Math.round(charge.amount * 100);
+  // Not Stripe's own exact per-currency minimum (which this sandbox has
+  // no way to look up live) - this is the pre-existing 30p GBP floor,
+  // carried through the same rate so it stays a meaningful near-zero
+  // safety check in whatever currency was actually chosen, rather than
+  // either staying a flat 30 (too low once converted) or disappearing
+  // entirely for a non-GBP charge.
+  const minFloor = Math.round(30 * charge.rate);
+  if (amount < minFloor) {
     return new Response(JSON.stringify({ error: "Order total is below the minimum payable amount." }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
@@ -851,7 +901,7 @@ Deno.serve(async (req) => {
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
-      currency: "gbp",
+      currency: charge.currency.toLowerCase(),
       automatic_payment_methods: { enabled: true },
       receipt_email: typeof body.customerEmail === "string" ? body.customerEmail : undefined,
       description: typeof body.orderDescription === "string" ? body.orderDescription.slice(0, 200) : "Yo7 Foods order",
@@ -891,13 +941,8 @@ Deno.serve(async (req) => {
         stock_lines: priced.stockLines,
         delivery_postcode: typeof deliveryInfo.postcode === "string" ? deliveryInfo.postcode : null,
         loyalty_reward_id: priced.loyaltyRewardId,
-        // Every charge is still GBP-only at this point (currency
-        // selection is a later step) - set explicitly rather than left
-        // to insert as null, so charged_amount is always populated from
-        // here on, matching what finalize_order_from_pending() expects
-        // to copy into the order it creates.
-        charged_currency: "GBP",
-        charged_amount: priced.total,
+        charged_currency: charge.currency,
+        charged_amount: charge.amount,
       });
       if (pendingError) console.error("pending_checkouts insert failed (order still relies on client fast path):", pendingError.message);
     }
@@ -910,6 +955,8 @@ Deno.serve(async (req) => {
         discountAmount: priced.discountAmount,
         loyaltyDiscountAmount: priced.loyaltyDiscountAmount,
         total: priced.total,
+        chargedCurrency: charge.currency,
+        chargedAmount: charge.amount,
       },
     }), {
       status: 200,
