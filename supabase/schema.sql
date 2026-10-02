@@ -410,12 +410,14 @@ BEGIN
   INSERT INTO public.orders (
     user_id, status, fulfilment_method, items, subtotal, delivery_fee, discount, total,
     delivery_name, delivery_address, delivery_postcode, delivery_phone, notes,
-    stripe_payment_intent_id, payment_method_summary, discount_id, discount_code
+    stripe_payment_intent_id, payment_method_summary, discount_id, discount_code,
+    charged_currency, charged_amount
   ) VALUES (
     v_pending.user_id, 'placed', v_pending.fulfilment_method, v_pending.items, v_pending.subtotal,
     v_pending.delivery_fee, v_pending.discount, v_pending.total,
     v_pending.delivery_name, v_pending.delivery_address, v_pending.delivery_postcode, v_pending.delivery_phone, v_pending.notes,
-    p_payment_intent_id, p_payment_method_summary, v_pending.discount_id, v_pending.discount_code
+    p_payment_intent_id, p_payment_method_summary, v_pending.discount_id, v_pending.discount_code,
+    v_pending.charged_currency, v_pending.charged_amount
   )
   RETURNING id, orders.order_number INTO v_order_id, v_order_number;
 
@@ -1893,6 +1895,12 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     "discount_id" "uuid",
     "discount_code" "text",
     "delivery_postcode" "text",
+    -- Same meaning as pending_checkouts' own pair (see its comment) -
+    -- carried straight through by finalize_order_from_pending() so a
+    -- receipt always shows what this order was actually charged, not a
+    -- value that drifts if fx_rates changes later.
+    "charged_currency" "text" DEFAULT 'GBP'::"text" NOT NULL,
+    "charged_amount" numeric(10,2),
     CONSTRAINT "orders_fulfilment_method_check" CHECK (("fulfilment_method" = ANY (ARRAY['delivery'::"text", 'pickup'::"text"]))),
     CONSTRAINT "orders_status_check" CHECK (("status" = ANY (ARRAY['placed'::"text", 'being_prepared'::"text", 'out_for_delivery'::"text", 'ready_for_pickup'::"text", 'delivered'::"text", 'cancelled'::"text", 'returned'::"text"])))
 );
@@ -1931,7 +1939,15 @@ CREATE TABLE IF NOT EXISTS "public"."pending_checkouts" (
     "stock_lines" "jsonb",
     "delivery_postcode" "text",
     "abandoned_reminder_sent_at" timestamp with time zone,
-    "loyalty_reward_id" "uuid"
+    "loyalty_reward_id" "uuid",
+    -- What Stripe actually charges for this payment - total/subtotal/etc
+    -- above stay GBP always (the one true internal currency, what every
+    -- discount threshold, delivery rule and admin report is denominated
+    -- in). charged_amount is nullable only for rows that predate this
+    -- column; every new insert sets it explicitly (equal to total when
+    -- charged_currency is GBP), so nothing downstream needs to guess.
+    "charged_currency" "text" DEFAULT 'GBP'::"text" NOT NULL,
+    "charged_amount" numeric(10,2)
 );
 
 
@@ -1953,6 +1969,14 @@ CREATE TABLE IF NOT EXISTS "public"."pricing_settings" (
     "google_place_id" "text",
     "dish_templates_data" "jsonb",
     "category_overrides" "jsonb" DEFAULT '{}'::"jsonb",
+    -- Admin-set GBP -> X rates for the currency selector, e.g.
+    -- {"CAD": 1.72, "USD": 1.27}. Deliberately starts empty rather than
+    -- defaulting to a specific-looking rate: a real exchange rate drifts
+    -- constantly, and inventing one here would silently convert prices
+    -- at a number nobody actually set. A currency with no entry here
+    -- is treated as not yet configured, not as "rate 1" - never
+    -- display or charge a converted amount the admin hasn't actually set.
+    "fx_rates" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     CONSTRAINT "pricing_settings_singleton" CHECK ("id")
 );
 

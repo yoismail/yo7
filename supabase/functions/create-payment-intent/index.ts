@@ -891,6 +891,13 @@ Deno.serve(async (req) => {
         stock_lines: priced.stockLines,
         delivery_postcode: typeof deliveryInfo.postcode === "string" ? deliveryInfo.postcode : null,
         loyalty_reward_id: priced.loyaltyRewardId,
+        // Every charge is still GBP-only at this point (currency
+        // selection is a later step) - set explicitly rather than left
+        // to insert as null, so charged_amount is always populated from
+        // here on, matching what finalize_order_from_pending() expects
+        // to copy into the order it creates.
+        charged_currency: "GBP",
+        charged_amount: priced.total,
       });
       if (pendingError) console.error("pending_checkouts insert failed (order still relies on client fast path):", pendingError.message);
     }
