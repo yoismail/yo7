@@ -2000,8 +2000,11 @@ CREATE TABLE IF NOT EXISTS "public"."product_region_prices" (
     "price" numeric NOT NULL,
     "sale_price" numeric,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    CONSTRAINT "product_region_prices_region_check" CHECK (("region" = ANY (ARRAY['UK'::"text", 'CA'::"text", 'US'::"text"]))),
-    CONSTRAINT "product_region_prices_currency_check" CHECK (("currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text"])))
+    CONSTRAINT "product_region_prices_region_currency_check" CHECK (
+        (("region" = 'UK'::"text") AND ("currency" = 'GBP'::"text")) OR
+        (("region" = 'CA'::"text") AND ("currency" = 'CAD'::"text")) OR
+        (("region" = 'US'::"text") AND ("currency" = 'USD'::"text"))
+    )
 );
 
 
