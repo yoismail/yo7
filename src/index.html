@@ -1323,8 +1323,10 @@
            show its own glyph rather than jumping to whichever end
            position its current rendered state happens to match. Left to
            right reads light / dark / system, matching the click-to-
-           cycle order below, so the thumb always sweeps the same
-           direction instead of jumping back and forth. */
+           cycle order below, so the thumb sweeps left -> center -> right
+           on the way through the cycle, then wraps right back to left
+           for the next light click - one wrap-around jump instead of
+           bouncing back and forth on every click. */
         .theme-switch[data-mode="dark"] .theme-switch-thumb {
             transform: translateX(13px);
         }
