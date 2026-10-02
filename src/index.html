@@ -1888,6 +1888,18 @@
                 height: 17px;
             }
 
+            /* .theme-switch-icon has no mobile override elsewhere, so
+               without this it stays the desktop 20px square inside a
+               thumb that's shrunk to 17px here - the icon overflows its
+               own circle rather than fitting inside it, which reads as
+               clipped/oversized and (for the system icon's flat-edged
+               half-circle especially) loses the shape entirely. Scaled
+               to the same icon-to-thumb ratio the desktop size uses. */
+            .theme-switch-icon {
+                width: 11px;
+                height: 11px;
+            }
+
             .theme-switch[data-mode="dark"] .theme-switch-thumb {
                 transform: translateX(12px);
             }
