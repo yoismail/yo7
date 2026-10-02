@@ -1984,6 +1984,30 @@ CREATE TABLE IF NOT EXISTS "public"."product_overrides" (
 );
 
 
+-- Foundation for multi-region expansion (UK/CA/US) - inert today, not yet
+-- read or written by any client code. product_overrides above stays the
+-- single source of truth for the one region the live site actually
+-- serves; this table only comes into play once the client is taught to
+-- pick a region and look prices up here instead. Deliberately flat
+-- (price/sale_price per product_key+region, no per-weight-variant
+-- pricing yet) - extending to match product_overrides.weight_variants'
+-- shape is real follow-up work once this simpler case is proven out,
+-- not something to guess at now.
+CREATE TABLE IF NOT EXISTS "public"."product_region_prices" (
+    "product_key" "text" NOT NULL,
+    "region" "text" NOT NULL,
+    "currency" "text" NOT NULL,
+    "price" numeric NOT NULL,
+    "sale_price" numeric,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "product_region_prices_region_check" CHECK (("region" = ANY (ARRAY['UK'::"text", 'CA'::"text", 'US'::"text"]))),
+    CONSTRAINT "product_region_prices_currency_check" CHECK (("currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text"])))
+);
+
+
+ALTER TABLE "public"."product_region_prices" OWNER TO "postgres";
+
+
 ALTER TABLE "public"."product_overrides" OWNER TO "postgres";
 
 
@@ -2243,6 +2267,11 @@ ALTER TABLE ONLY "public"."product_overrides"
 
 
 
+ALTER TABLE ONLY "public"."product_region_prices"
+    ADD CONSTRAINT "product_region_prices_pkey" PRIMARY KEY ("product_key", "region");
+
+
+
 ALTER TABLE ONLY "public"."product_reviews"
     ADD CONSTRAINT "product_reviews_pkey" PRIMARY KEY ("id");
 
@@ -2392,6 +2421,10 @@ CREATE UNIQUE INDEX "orders_stripe_payment_intent_id_key" ON "public"."orders" U
 -- Matching the query's own column order (and sort direction) means the
 -- index can serve it directly without an extra sort step.
 CREATE INDEX "orders_user_id_created_at_idx" ON "public"."orders" USING "btree" ("user_id", "created_at" DESC);
+
+
+
+CREATE INDEX "product_region_prices_region_idx" ON "public"."product_region_prices" USING "btree" ("region");
 
 
 
@@ -2671,6 +2704,10 @@ CREATE POLICY "Admins can write product overrides" ON "public"."product_override
 
 
 
+CREATE POLICY "Admins can write regional product prices" ON "public"."product_region_prices" USING ("public"."is_admin_user"()) WITH CHECK ("public"."is_admin_user"());
+
+
+
 CREATE POLICY "Anyone can read cached google reviews" ON "public"."google_reviews_cache" FOR SELECT USING (true);
 
 
@@ -2702,6 +2739,10 @@ CREATE POLICY "Anyone can view product overrides" ON "public"."product_overrides
 
 
 CREATE POLICY "Anyone can view products" ON "public"."products" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Anyone can view regional product prices" ON "public"."product_region_prices" FOR SELECT USING (true);
 
 
 
@@ -2847,6 +2888,9 @@ ALTER TABLE "public"."pricing_settings" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."product_overrides" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."product_region_prices" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."product_reviews" ENABLE ROW LEVEL SECURITY;
@@ -3423,6 +3467,12 @@ GRANT ALL ON TABLE "public"."pricing_settings" TO "service_role";
 GRANT ALL ON TABLE "public"."product_overrides" TO "anon";
 GRANT ALL ON TABLE "public"."product_overrides" TO "authenticated";
 GRANT ALL ON TABLE "public"."product_overrides" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."product_region_prices" TO "anon";
+GRANT ALL ON TABLE "public"."product_region_prices" TO "authenticated";
+GRANT ALL ON TABLE "public"."product_region_prices" TO "service_role";
 
 
 
