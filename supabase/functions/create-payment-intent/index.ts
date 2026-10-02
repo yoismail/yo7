@@ -163,6 +163,19 @@ const COMBOS: BundleDef[] = [
 // request, not just the next cold start. Cheap enough to just do it
 // every time: one extra indexed lookup on a single-row table.
 async function loadPricingSettings(db: ReturnType<typeof createClient>) {
+  // FX_RATES specifically gets cleared up front, before either early
+  // return below, since a warm Deno instance reuses this module's state
+  // across requests, so a transient error or missing row here must
+  // not leave a PREVIOUS successful load's rates sitting around for
+  // resolveCharge() to keep trusting. Every other setting below
+  // deliberately keeps its last-known value on failure (a real error
+  // here shouldn't block checkout over stale delivery fee tiers), but
+  // an FX rate that's gone stale isn't a cosmetic miss the way a
+  // delivery fee is: it can charge a real payment at a rate that's
+  // no longer the one actually configured. Treat any uncertain load
+  // the same as "nothing configured" (resolveCharge already refuses a
+  // currency with no entry here), never as "whatever we last saw".
+  FX_RATES = {};
   const { data, error } = await db.from("pricing_settings").select("*").eq("id", true).maybeSingle();
   // Deliberately still falls back to the module-level defaults either
   // way (a real error here shouldn't block checkout over stale delivery
@@ -861,7 +874,7 @@ Deno.serve(async (req) => {
 
   // The client can ask for a currency, but the amount actually charged
   // is computed here from the trusted GBP total and the admin's own
-  // rate — same "never trust a client-submitted amount" discipline
+  // rate, the same "never trust a client-submitted amount" discipline
   // priceCart() already applies to pricing itself, just one step
   // further down the pipeline.
   const charge = resolveCharge(priced.total, body.currency);
