@@ -1562,6 +1562,147 @@
             flex-shrink: 0;
         }
 
+        /* ================= CURRENCY FAB =================
+           A single floating control (not a nav button, see its own JS
+           comment for why) pinned to the left edge, vertically centred -
+           a fixed landmark a shopper can return to from anywhere on the
+           site, the same "always reachable regardless of scroll
+           position" reasoning .float-cart/.float-order already use for
+           the basket and WhatsApp ordering, just anchored to the opposite
+           edge and the opposite (middle, not bottom) side so none of the
+           three ever overlap. Hidden until renderCurrencySwitch() (see
+           its own comment) finds at least one admin-configured non-GBP
+           rate - with nothing to pick but GBP, a floating control would
+           just be dead weight sitting over page content for no reason. */
+        .currency-fab-wrap {
+            position: fixed;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 92;
+            display: none;
+        }
+        .currency-fab-wrap.is-visible { display: block; }
+        .currency-fab-wrap.float-suppressed { display: none !important; }
+
+        .currency-fab {
+            position: relative;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--cream);
+            box-shadow: 0 10px 28px rgba(22, 33, 13, 0.22), 0 0 0 1px rgba(6, 59, 0, 0.08);
+            transition: transform 0.25s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.2s ease;
+            padding: 0;
+        }
+        .currency-fab:hover { transform: scale(1.08); box-shadow: 0 14px 32px rgba(22, 33, 13, 0.28), 0 0 0 1px rgba(6, 59, 0, 0.1); }
+        .currency-fab-flag {
+            font-size: 22px;
+            line-height: 1;
+            /* Emoji flags render as a flat rectangle on platforms with no
+               region-flag font support - the circular mask + ring below
+               keeps that fallback looking like a deliberate badge instead
+               of a broken glyph spilling past the button's edge. */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1.5px rgba(22, 33, 13, 0.1);
+        }
+        /* Small chartreuse ring, the same accent colour the rest of the
+           brand uses for "this is interactive/live" moments (cart badge,
+           active nav link) - signals this circle opens something, not
+           just a static flag icon. */
+        .currency-fab::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 1.5px solid var(--chartreuse-rich);
+            opacity: 0.55;
+            pointer-events: none;
+        }
+        [data-theme="dark"] .currency-fab {
+            background: var(--aubergine-deep);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--aubergine-mid);
+        }
+
+        .currency-fab-panel {
+            position: absolute;
+            left: calc(100% + 14px);
+            top: 50%;
+            transform: translateY(-50%) translateX(-8px);
+            min-width: 168px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            box-shadow: 0 20px 44px rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.25s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        .currency-fab-wrap.open .currency-fab-panel {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(-50%) translateX(0);
+        }
+        .currency-fab-panel-label {
+            padding: 6px 10px 8px;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 10.5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .currency-fab-panel button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+            padding: 9px 10px;
+            border: none;
+            background: none;
+            border-radius: 10px;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--heading);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .currency-fab-panel button:hover { background: rgba(var(--border-rgb), 0.07); }
+        .currency-fab-panel button.is-selected { background: rgba(144, 184, 0, 0.14); color: var(--heading); }
+        .currency-fab-panel-flag { font-size: 18px; line-height: 1; flex-shrink: 0; }
+        .currency-fab-panel-code { flex: 1; }
+        .currency-fab-panel-check {
+            width: 15px;
+            height: 15px;
+            color: var(--chartreuse-rich);
+            opacity: 0;
+            flex-shrink: 0;
+        }
+        .currency-fab-panel button.is-selected .currency-fab-panel-check { opacity: 1; }
+        /* Panel opens to the RIGHT of the fab by default (it sits at the
+           left edge, nothing but page content to its left) - on a narrow
+           viewport that's still plenty of room since the panel is a fixed
+           168px regardless of screen width, so no separate mobile
+           position override is needed the way the old nav/mobile-menu
+           controls each needed their own layout. */
+        @media (prefers-reduced-motion: reduce) {
+            .currency-fab, .currency-fab-panel { transition: none; }
+        }
+
         @media (max-width:900px) {
 
             .nav-links {
@@ -1770,6 +1911,25 @@
         .mobile-search {
             max-width: none;
             margin-bottom: 6px;
+        }
+
+        /* A slightly smaller fab on mobile (44px vs 52px) - the panel
+           itself stays a flat 168px regardless of width (see its own
+           rule), still comfortably clear of the left edge at 320px wide
+           since it opens to the fab's right, not its left. */
+        @media (max-width:900px) {
+            .currency-fab-wrap {
+                left: 10px;
+            }
+            .currency-fab {
+                width: 44px;
+                height: 44px;
+            }
+            .currency-fab-flag {
+                width: 26px;
+                height: 26px;
+                font-size: 19px;
+            }
         }
 
         @media (max-width:480px) {
@@ -13125,6 +13285,15 @@
         </svg>
     </a>
 
+    <div class="currency-fab-wrap" id="currencyFabWrap">
+        <button type="button" class="currency-fab" id="currencyFab" aria-haspopup="true" aria-expanded="false" aria-label="Choose currency">
+            <span class="currency-fab-flag" id="currencyFabFlag">🇬🇧</span>
+        </button>
+        <div class="currency-fab-panel" id="currencyFabPanel">
+            <div class="currency-fab-panel-label">Currency</div>
+        </div>
+    </div>
+
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
     <div class="modal-overlay" id="categoryEditModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="categoryEditModalTitle">
@@ -13923,6 +14092,7 @@
             if (typeof data.trustpilot_url === 'string') trustpilotUrl = data.trustpilot_url;
             if (typeof data.google_business_url === 'string') googleBusinessUrl = data.google_business_url;
             if (typeof data.google_place_id === 'string') googlePlaceId = data.google_place_id;
+            if (data.fx_rates && typeof data.fx_rates === 'object') fxRates = data.fx_rates;
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -14702,13 +14872,13 @@
         /* ================= DISCOUNT ADMIN PANEL (edit mode) ================= */
         function discountDescribe(d) {
             const typeLabel = d.type === 'percent' ? `${d.value}% off`
-                : d.type === 'fixed' ? `${money(d.value)} off`
+                : d.type === 'fixed' ? `${gbp(d.value)} off`
                 : d.type === 'freeDelivery' ? 'Free delivery'
                 : d.type === 'bogo' ? `Buy ${d.buyQty}, get ${d.getQty} free` : d.type;
             const scopeLabel = d.qualifyingScope === 'category' ? `on ${d.qualifyingCategory}`
                 : d.qualifyingScope === 'product' ? 'on one product' : 'on all items';
             const dateLabel = (d.startDate || d.endDate) ? `, ${d.startDate || 'any time'} to ${d.endDate || 'no end date'}` : '';
-            const minLabel = d.minOrder ? `, min order ${money(d.minOrder)}` : '';
+            const minLabel = d.minOrder ? `, min order ${gbp(d.minOrder)}` : '';
             const maxLabel = d.maxPerCustomer ? `, max ${d.maxPerCustomer}/customer` : '';
             return `"${escapeHtml(d.code)}", ${typeLabel} ${scopeLabel}${dateLabel}${minLabel}${maxLabel}`;
         }
@@ -14927,14 +15097,14 @@
             // panel or the shipped-default fallback alike.
             let pillText = null;
             if (ipswichRule && outsideRule) {
-                pillText = `Free delivery: over £${fmtAmt(ipswichRule.value)} in Ipswich, over £${fmtAmt(outsideRule.value)} elsewhere`;
+                pillText = `Free delivery: over ${moneyWhole(ipswichRule.value)} in Ipswich, over ${moneyWhole(outsideRule.value)} elsewhere`;
             } else if (ipswichRule) {
-                pillText = `Free delivery over £${fmtAmt(ipswichRule.value)} (Ipswich)`;
+                pillText = `Free delivery over ${moneyWhole(ipswichRule.value)} (Ipswich)`;
             } else if (outsideRule) {
-                pillText = `Free delivery over £${fmtAmt(outsideRule.value)}`;
+                pillText = `Free delivery over ${moneyWhole(outsideRule.value)}`;
             } else {
                 const anyRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && !r.region);
-                pillText = anyRule ? `Free delivery over £${fmtAmt(anyRule.value)}` : null;
+                pillText = anyRule ? `Free delivery over ${moneyWhole(anyRule.value)}` : null;
             }
             if (pillText) document.querySelectorAll('.free-delivery-text').forEach(el => { el.textContent = pillText; });
             const el = document.getElementById('dinfoFeeText');
@@ -15317,7 +15487,13 @@
         // the admin side. This is the single place that decides which one
         // wins, used everywhere a product's unit is shown.
         function effectiveUnit(p) { return unitOverrideLabel(p.unitOverride) || p.unit; }
-        function variantSummary(variants) { return variants.map(v => `${v.label} ${money(v.price)}`).join(', '); }
+        // Only ever used to build the "before"/"after" snapshot for the
+        // admin audit log (persistProductOverride() below) - that's a
+        // permanent record of what the admin actually set, in the
+        // business's own GBP, so this stays gbp() rather than following
+        // whatever currency the editing admin's own browser happens to
+        // have selected.
+        function variantSummary(variants) { return variants.map(v => `${v.label} ${gbp(v.price)}`).join(', '); }
         let deliveryInfo = null;
         let lastOrder = null;
         let adminOrdersChannel = null; // realtime subscription for "new order placed" notifications, admins only
@@ -15415,7 +15591,80 @@
         const BUILD_VERSION = '2026-10-01.4';
 
         /* ================= HELPERS ================= */
-        function money(n) { return '£' + n.toFixed(2); }
+        // Currency selector state. selectedCurrency is the customer's own
+        // choice (persisted across visits); fxRates is the admin-set
+        // GBP -> X rate map loaded from pricing_settings.fx_rates by
+        // loadPricingSettings() below, starting empty until that resolves
+        // (same "nothing configured yet" default the server itself uses).
+        // Every price anywhere in the app is computed and stored in GBP -
+        // this is purely a display/payment-currency layer on top, never a
+        // second source of truth for what anything actually costs.
+        let selectedCurrency = (function () {
+            try { return localStorage.getItem('yo7-currency') || 'GBP'; } catch (e) { return 'GBP'; }
+        })();
+        let fxRates = {};
+        const CURRENCY_SYMBOLS = { GBP: '£', CAD: 'CA$', USD: 'US$' };
+        // The currency actually safe to display/charge in right now - not
+        // necessarily selectedCurrency itself, if that currency's rate
+        // isn't (or is no longer) configured. Falls back to GBP rather
+        // than showing a non-GBP symbol next to an unconverted GBP amount,
+        // without touching the stored preference - if the admin re-adds
+        // the rate later, a returning visitor's own choice still applies
+        // again with no need to re-select it.
+        function effectiveCurrency() {
+            if (selectedCurrency === 'GBP') return 'GBP';
+            const rate = fxRates[selectedCurrency];
+            return (typeof rate === 'number' && rate > 0) ? selectedCurrency : 'GBP';
+        }
+        function convertFromGBP(n) {
+            const cur = effectiveCurrency();
+            return cur === 'GBP' ? n : n * fxRates[cur];
+        }
+        function money(n) { return CURRENCY_SYMBOLS[effectiveCurrency()] + convertFromGBP(n).toFixed(2); }
+        // Same conversion as money(), but omits trailing ".00" the way
+        // fmtAmt() already does for a whole GBP figure - used for the
+        // free-delivery threshold copy ("over £70"/"over $88.90"), which
+        // reads as a rounder, more natural amount than a receipt line
+        // does. Admin-panel copy (rule names, input labels) stays plain
+        // fmtAmt() + a literal £ on purpose - the admin always sets and
+        // sees these in GBP regardless of what a customer has selected.
+        function moneyWhole(n) {
+            const cur = effectiveCurrency();
+            const amount = convertFromGBP(n);
+            return CURRENCY_SYMBOLS[cur] + (Number.isInteger(amount) ? String(amount) : amount.toFixed(2));
+        }
+        // A placed order's own receipt (confirmation page, order history,
+        // invoice PDF) must always show the amount actually charged to
+        // the card, frozen at checkout - never re-converted through
+        // today's fxRates, which may have moved since (or been removed
+        // entirely). orders.charged_currency/charged_amount (set once, at
+        // checkout, by create-payment-intent) is that frozen figure;
+        // dividing it by the order's own GBP total recovers the exact
+        // rate that was actually applied, so every line on one receipt
+        // (items, subtotal, delivery, discount, total) converts using
+        // that same frozen rate and stays internally consistent, however
+        // long after the fact it's viewed. Accepts both the snake_case
+        // shape a raw Supabase row uses and the camelCase shape
+        // orderRowToLastOrder()/pendingOrderContext use, since this is
+        // called with either depending on which page it's rendering.
+        function orderChargeInfo(order) {
+            const currency = order.charged_currency || order.chargedCurrency || 'GBP';
+            const amount = order.charged_amount != null ? order.charged_amount : order.chargedAmount;
+            if (currency === 'GBP' || typeof amount !== 'number' || !order.total) return { currency: 'GBP', rate: 1 };
+            return { currency, rate: amount / order.total };
+        }
+        function moneyAt(amountGBP, currency, rate) {
+            return CURRENCY_SYMBOLS[currency] + (amountGBP * rate).toFixed(2);
+        }
+        // The admin order list/detail pages show the business's own GBP
+        // books - what the database actually records, same reasoning as
+        // the delivery-threshold admin inputs already use plain fmtAmt()
+        // + a literal £. These must NOT follow money()/effectiveCurrency():
+        // selectedCurrency is just whatever this browser's own visitor
+        // (who might also be the admin, shopping on the same site) last
+        // picked for themselves, and has nothing to do with which
+        // currency an order's figures are recorded in.
+        function gbp(n) { return '£' + fmtAmt(n); }
         // Shaped loading placeholders for the admin analytics/activity
         // panels, shared so both build the same shimmer markup instead of
         // each hand-rolling its own.
@@ -17925,7 +18174,7 @@
             const label = document.getElementById('ato-current-price');
             if (!label) return;
             label.textContent = p
-                ? `Current price: ${money(p.price)}${typeof p.salePrice === 'number' ? `, already on offer at ${money(p.salePrice)}` : ''}`
+                ? `Current price: ${gbp(p.price)}${typeof p.salePrice === 'number' ? `, already on offer at ${gbp(p.salePrice)}` : ''}`
                 : '';
         }
         async function saveProductToOffer(slotId) {
@@ -17936,7 +18185,7 @@
             const product = cat && cat.products[idx];
             if (!product) return;
             if (isNaN(salePrice) || salePrice <= 0) { showToast('Enter a valid sale price.'); return; }
-            if (salePrice >= product.price) { showToast(`Sale price needs to be lower than the current price (${money(product.price)}).`); return; }
+            if (salePrice >= product.price) { showToast(`Sale price needs to be lower than the current price (${gbp(product.price)}).`); return; }
             product.salePrice = salePrice;
             // Same product_overrides table every other product edit (price,
             // stock, description, photo) already saves to, keyed the same
@@ -17952,7 +18201,7 @@
             }
             document.getElementById(slotId).innerHTML = '';
             renderSpecialOffersPage();
-            showToast(`${product.name} added to special offers at ${money(salePrice)}.`, undefined, 'success');
+            showToast(`${product.name} added to special offers at ${gbp(salePrice)}.`, undefined, 'success');
         }
         window.saveProductToOffer = saveProductToOffer;
         // The inverse of saveProductToOffer above: clears the salePrice
@@ -20276,6 +20525,14 @@
                         items: cartLineItemsForServer(),
                         discountCode: appliedDiscount ? appliedDiscount.code : undefined,
                         fulfilmentMethod,
+                        // effectiveCurrency(), not selectedCurrency directly -
+                        // if the admin has since removed the rate for
+                        // whatever this customer picked, this falls back to
+                        // GBP exactly like every on-screen price already
+                        // has, rather than sending a currency the server
+                        // itself would just refuse (see resolveCharge() in
+                        // create-payment-intent/index.ts).
+                        currency: effectiveCurrency(),
                         customerEmail: currentSupabaseUser ? currentSupabaseUser.email : undefined,
                         orderDescription: `Yo7 Foods order, ${cart.length} item${cart.length === 1 ? '' : 's'}`,
                         // Lets the server write a pending_checkouts row (see
@@ -20315,6 +20572,8 @@
                     discountAmount: data.verifiedTotal.discountAmount,
                     loyaltyDiscountAmount: data.verifiedTotal.loyaltyDiscountAmount,
                     total: data.verifiedTotal.total,
+                    chargedCurrency: data.verifiedTotal.chargedCurrency,
+                    chargedAmount: data.verifiedTotal.chargedAmount,
                 });
                 savePendingOrderContext(pendingOrderContext);
             }
@@ -20686,6 +20945,7 @@
             returned: '#9D6B11',
         };
         function orderHistoryRowHTML(order) {
+            const { currency: orderCur, rate: orderRate } = orderChargeInfo(order);
             const status = order.status || 'placed';
             const items = Array.isArray(order.items) ? order.items : [];
             const orderCreatedAt = new Date(order.created_at);
@@ -20708,7 +20968,7 @@
         </div>
         <div class="order-card-bottom">
             <span class="order-card-total-label">${items.length} item${items.length === 1 ? '' : 's'}</span>
-            <span class="order-card-total">${money(order.total)}</span>
+            <span class="order-card-total">${moneyAt(order.total, orderCur, orderRate)}</span>
         </div>
         ${cancellationNote}
         <div class="order-card-actions">
@@ -21427,7 +21687,7 @@
         <td>${escapeHtml(order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase()))}</td>
         <td>${dateLabel}</td>
         <td><span class="order-status-badge ${status}">${ORDER_STATUS_LABELS[status] || status}</span></td>
-        <td class="admin-orders-total">${money(order.total)}</td>
+        <td class="admin-orders-total">${gbp(order.total)}</td>
         <td>${escapeHtml(billingName)}</td>
         <td>${escapeHtml(order.delivery_name || '-')}</td>
         <td>${order.fulfilment_method === 'pickup' ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode)}</td>
@@ -21733,8 +21993,18 @@
             document.getElementById('aodMethod').textContent = isPickup ? 'Pickup' : deliveryEtaLabel(order.delivery_postcode);
             document.getElementById('aodAddress').textContent = isPickup ? `Collect in store: ${YO7_STORE_ADDRESS}` : (order.delivery_address || 'Not provided');
             document.getElementById('aodNote').textContent = order.notes || 'None left at checkout.';
+            // The actual card charge, in whatever currency the customer
+            // picked - only shown when it differs from the GBP total
+            // above, so an admin reconciling against Stripe's own payout
+            // (which settles in that charged currency, not GBP) can see
+            // what really hit the account without it cluttering the
+            // common, charged-in-GBP case with a redundant repeat of
+            // aodTotal.
+            const chargedNote = (order.charged_currency && order.charged_currency !== 'GBP' && typeof order.charged_amount === 'number')
+                ? `<br><span style="font-size:11.5px; color:var(--text-muted);">Charged: ${CURRENCY_SYMBOLS[order.charged_currency]}${order.charged_amount.toFixed(2)}</span>`
+                : '';
             document.getElementById('aodPaymentMethod').innerHTML = order.stripe_payment_intent_id
-                ? `${escapeHtml(order.payment_method_summary || 'Paid online')}<br><span style="font-size:11.5px; color:var(--text-muted);">Stripe reference: ${escapeHtml(order.stripe_payment_intent_id)}</span>`
+                ? `${escapeHtml(order.payment_method_summary || 'Paid online')}<br><span style="font-size:11.5px; color:var(--text-muted);">Stripe reference: ${escapeHtml(order.stripe_payment_intent_id)}</span>${chargedNote}`
                 : 'No payment reference on file for this order.';
             document.getElementById('aodBillingAddress').textContent = 'Not collected separately in the current checkout, delivery address is the only address on file.';
             const items = Array.isArray(order.items) ? order.items : [];
@@ -21746,18 +22016,18 @@
     <tr>
         <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${unitLine}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
         <td class="qty">&times;${i.qty}</td>
-        <td class="line-total">${money((i.price || 0) * i.qty)}</td>
+        <td class="line-total">${gbp((i.price || 0) * i.qty)}</td>
     </tr>`;
             }).join('');
-            document.getElementById('aodSubtotal').textContent = money(order.subtotal || 0);
-            document.getElementById('aodDeliveryFee').textContent = order.delivery_fee ? money(order.delivery_fee) : 'Free';
+            document.getElementById('aodSubtotal').textContent = gbp(order.subtotal || 0);
+            document.getElementById('aodDeliveryFee').textContent = order.delivery_fee ? gbp(order.delivery_fee) : 'Free';
             if (order.discount) {
                 document.getElementById('aodDiscountRow').style.display = 'flex';
-                document.getElementById('aodDiscount').textContent = '−' + money(order.discount);
+                document.getElementById('aodDiscount').textContent = '−' + gbp(order.discount);
             } else {
                 document.getElementById('aodDiscountRow').style.display = 'none';
             }
-            document.getElementById('aodTotal').textContent = money(order.total);
+            document.getElementById('aodTotal').textContent = gbp(order.total);
             populateAdminOrderStatusSelect(order.status || 'placed');
             document.getElementById('aodCommentInput').value = (order.status === 'cancelled' ? order.cancellation_reason : order.admin_note) || '';
             updateAodSendEmailNote();
@@ -22167,17 +22437,17 @@
 
             content.innerHTML = `
     <div class="analytics-stat-grid">
-      <div class="analytics-stat-card stat-revenue"><div class="analytics-stat-label">Revenue</div><div class="analytics-stat-value">${money(revenue)}</div><div class="analytics-stat-sub">${nonCancelled.length} order${nonCancelled.length === 1 ? '' : 's'} &middot; incl. delivery fees</div></div>
-      <div class="analytics-stat-card stat-aov"><div class="analytics-stat-label">Average order</div><div class="analytics-stat-value">${money(aov)}</div></div>
+      <div class="analytics-stat-card stat-revenue"><div class="analytics-stat-label">Revenue</div><div class="analytics-stat-value">${gbp(revenue)}</div><div class="analytics-stat-sub">${nonCancelled.length} order${nonCancelled.length === 1 ? '' : 's'} &middot; incl. delivery fees</div></div>
+      <div class="analytics-stat-card stat-aov"><div class="analytics-stat-label">Average order</div><div class="analytics-stat-value">${gbp(aov)}</div></div>
       <div class="analytics-stat-card stat-customers"><div class="analytics-stat-label">Customers</div><div class="analytics-stat-value">${userIds.length}</div><div class="analytics-stat-sub">${newCount} new &middot; ${returningCount} returning</div></div>
       <div class="analytics-stat-card stat-cancelled"><div class="analytics-stat-label">Cancelled</div><div class="analytics-stat-value">${cancelledCount}</div></div>
     </div>
     <div class="analytics-subsection">
       <h4>Revenue breakdown</h4>
       <div class="analytics-revenue-split">
-        <span><span class="analytics-legend-dot" style="background:var(--chartreuse-rich)"></span>Product sales: ${money(productRevenue)}</span>
-        <span><span class="analytics-legend-dot" style="background:var(--aubergine-mid)"></span>Delivery fees: ${money(deliveryFeeRevenue)}</span>
-        <span class="analytics-split-total">${money(revenue)} total</span>
+        <span><span class="analytics-legend-dot" style="background:var(--chartreuse-rich)"></span>Product sales: ${gbp(productRevenue)}</span>
+        <span><span class="analytics-legend-dot" style="background:var(--aubergine-mid)"></span>Delivery fees: ${gbp(deliveryFeeRevenue)}</span>
+        <span class="analytics-split-total">${gbp(revenue)} total</span>
       </div>
     </div>
     <div class="analytics-subsection">
@@ -22186,14 +22456,14 @@
       <div class="analytics-bar-row">
         <span class="analytics-bar-label" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
         <span class="analytics-bar-track"><span class="analytics-bar-fill" style="width:${maxProductRevenue ? Math.round(s.revenue / maxProductRevenue * 100) : 0}%"></span></span>
-        <span class="analytics-bar-value">${money(s.revenue)} &middot; ${s.qty} sold</span>
+        <span class="analytics-bar-value">${gbp(s.revenue)} &middot; ${s.qty} sold</span>
       </div>`).join('') : '<div class="analytics-empty">No orders yet in this period.</div>'}
     </div>
     <div class="analytics-subsection">
       <h4>Discount codes</h4>
       <div class="analytics-split-row">
         <span>${discountedOrders.length} order${discountedOrders.length === 1 ? '' : 's'} used a code</span>
-        <span style="color:#9a7f00; font-weight:600;">${money(discountTotal)} given in discounts</span>
+        <span style="color:#9a7f00; font-weight:600;">${gbp(discountTotal)} given in discounts</span>
       </div>
     </div>
     <div class="analytics-subsection">
@@ -22464,6 +22734,8 @@
                 loyaltyRewardEarned: false,
                 paymentMethodSummary: row.payment_method_summary,
                 stripePaymentIntentId: row.stripe_payment_intent_id,
+                chargedCurrency: row.charged_currency,
+                chargedAmount: row.charged_amount,
             };
         }
         async function renderConfirmation() {
@@ -22519,6 +22791,10 @@
                 if (justEarned) showToast(`🎉 You've unlocked ${loyaltyRewardPct}% off your next order`, 5000);
             }
             document.getElementById('invNumber').textContent = lastOrder.number;
+            // Every money figure below this point is this order's own
+            // frozen charge, not a live conversion - see orderChargeInfo()'s
+            // own comment.
+            const { currency: invCur, rate: invRate } = orderChargeInfo(lastOrder);
             const invLoyaltyEl = document.getElementById('invLoyaltyNote');
             if (invLoyaltyEl) {
                 if (lastOrder.loyaltyRewardEarned) {
@@ -22543,12 +22819,12 @@
             document.getElementById('invItems').innerHTML = lastOrder.items.map(i => `
     <tr>
       <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${i.isCombo && i.comboItems ? `Includes: ${i.comboItems.map(it => escapeHtml(comboItemLabel(it))).join(', ')}` : escapeHtml(i.unit || '')}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
-      <td class="inv-unit-price">${money(i.price)}${i.onSale ? `<span class="inv-was">was ${money(i.originalPrice)}</span>` : ''}</td>
+      <td class="inv-unit-price">${moneyAt(i.price, invCur, invRate)}${i.onSale ? `<span class="inv-was">was ${moneyAt(i.originalPrice, invCur, invRate)}</span>` : ''}</td>
       <td class="inv-qty">${i.qty}</td>
-      <td class="inv-line-total">${money(i.price * i.qty)}</td>
+      <td class="inv-line-total">${moneyAt(i.price * i.qty, invCur, invRate)}</td>
     </tr>`).join('');
-            document.getElementById('invSubtotal').textContent = money(lastOrder.subtotal);
-            document.getElementById('invDelivery').textContent = lastOrder.delivery === 0 ? 'Free' : money(lastOrder.delivery);
+            document.getElementById('invSubtotal').textContent = moneyAt(lastOrder.subtotal, invCur, invRate);
+            document.getElementById('invDelivery').textContent = lastOrder.delivery === 0 ? 'Free' : moneyAt(lastOrder.delivery, invCur, invRate);
             const invFreeNoteEl = document.getElementById('invDeliveryFreeNote');
             if (invFreeNoteEl) {
                 if (isPickup) {
@@ -22561,19 +22837,19 @@
                     invFreeNoteEl.style.display = 'none';
                 }
             }
-            document.getElementById('invTotal').textContent = money(lastOrder.total);
+            document.getElementById('invTotal').textContent = moneyAt(lastOrder.total, invCur, invRate);
             const invDiscountRow = document.getElementById('invDiscountRow');
             if (lastOrder.discount > 0) {
                 invDiscountRow.style.display = 'flex';
                 document.getElementById('invDiscountLabel').textContent = lastOrder.discountCode ? `Discount (${lastOrder.discountCode})` : 'Discount';
-                document.getElementById('invDiscount').textContent = '-' + money(lastOrder.discount);
+                document.getElementById('invDiscount').textContent = '-' + moneyAt(lastOrder.discount, invCur, invRate);
             } else {
                 invDiscountRow.style.display = 'none';
             }
             const invLoyaltyDiscountRow = document.getElementById('invLoyaltyDiscountRow');
             if (lastOrder.loyaltyDiscount > 0) {
                 invLoyaltyDiscountRow.style.display = 'flex';
-                document.getElementById('invLoyaltyDiscount').textContent = '-' + money(lastOrder.loyaltyDiscount);
+                document.getElementById('invLoyaltyDiscount').textContent = '-' + moneyAt(lastOrder.loyaltyDiscount, invCur, invRate);
             } else {
                 invLoyaltyDiscountRow.style.display = 'none';
             }
@@ -22698,6 +22974,7 @@
            on one page and only a genuinely long item list spills to a
            second, with the column headers repeated there for clarity. */
         async function buildInvoicePdfBlob(order = lastOrder) {
+            const { currency: pdfCur, rate: pdfRate } = orderChargeInfo(order);
             await ensurePdfLibsLoaded();
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
@@ -22845,9 +23122,9 @@
                 setText(10, 'bold', ink);
                 pdf.text(nameLines, colItem, y);
                 setText(10, 'normal', ink);
-                pdf.text(money(item.price), colUnit, y);
+                pdf.text(moneyAt(item.price, pdfCur, pdfRate), colUnit, y);
                 pdf.text(String(item.qty), colQty, y);
-                pdf.text(money(item.price * item.qty), colTotal, y, { align: 'right' });
+                pdf.text(moneyAt(item.price * item.qty, pdfCur, pdfRate), colTotal, y, { align: 'right' });
                 y += nameLines.length * 12;
 
                 if (subLines.length) {
@@ -22906,18 +23183,18 @@
                 pdf.text(value, totalsX, y, { align: 'right' });
                 y += opts.gap || 16;
             };
-            totalRow('Subtotal', money(order.subtotal));
-            totalRow(order.fulfilment === 'pickup' ? 'Pickup' : 'Delivery', order.delivery === 0 ? 'Free' : money(order.delivery));
+            totalRow('Subtotal', moneyAt(order.subtotal, pdfCur, pdfRate));
+            totalRow(order.fulfilment === 'pickup' ? 'Pickup' : 'Delivery', order.delivery === 0 ? 'Free' : moneyAt(order.delivery, pdfCur, pdfRate));
             if (order.discount > 0) {
-                totalRow(`Discount${order.discountCode ? ' (' + order.discountCode + ')' : ''}`, '-' + money(order.discount), { color: accent });
+                totalRow(`Discount${order.discountCode ? ' (' + order.discountCode + ')' : ''}`, '-' + moneyAt(order.discount, pdfCur, pdfRate), { color: accent });
             }
             if (order.loyaltyDiscount > 0) {
-                totalRow('Loyalty reward', '-' + money(order.loyaltyDiscount), { color: accent });
+                totalRow('Loyalty reward', '-' + moneyAt(order.loyaltyDiscount, pdfCur, pdfRate), { color: accent });
             }
             y += 4;
             hr(y);
             y += 16;
-            totalRow('Total paid', money(order.total), { size: 13, bold: true, gap: 20 });
+            totalRow('Total paid', moneyAt(order.total, pdfCur, pdfRate), { size: 13, bold: true, gap: 20 });
             if (order.paymentMethodSummary) {
                 setText(9.5, 'normal', muted);
                 pdf.text(order.paymentMethodSummary, totalsX, y - 6, { align: 'right' });
@@ -22983,6 +23260,8 @@
                 fulfilment: order.fulfilment_method,
                 loyaltyRewardEarned: false,
                 paymentMethodSummary: order.payment_method_summary || 'Paid online',
+                chargedCurrency: order.charged_currency,
+                chargedAmount: order.charged_amount,
             };
         }
         // Order history cards keep a lightweight lookup here so the "View
@@ -23273,6 +23552,111 @@
         document.addEventListener('click', (e) => {
             if (!document.getElementById('accountWrap').contains(e.target)) {
                 closeAccountDropdown();
+            }
+        });
+
+        /* ================= CURRENCY FAB =================
+           One floating control, not a nav button - adding a 7th item to
+           an already-tight nav-right row (see .nav-fav-btn's own comment
+           on how little width that row has to spare) made the bar read
+           cluttered, reported directly. A fixed, always-reachable circle
+           at the left edge is the same "find it from anywhere, no matter
+           how far you've scrolled or which page you're on" affordance
+           .float-cart/.float-order already give the basket and WhatsApp
+           ordering, just mirrored to the opposite edge so it never
+           competes with either for space or attention. */
+        const CURRENCY_NAMES = { GBP: 'GBP', CAD: 'CAD', USD: 'USD' };
+        const CURRENCY_FLAGS = { GBP: '🇬🇧', CAD: '🇨🇦', USD: '🇺🇸' };
+        function currencyCheckSvg() {
+            return '<svg class="currency-fab-panel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        }
+        function closeCurrencyFabPanel() {
+            const wrap = document.getElementById('currencyFabWrap');
+            if (wrap) wrap.classList.remove('open');
+            const btn = document.getElementById('currencyFab');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+        // Only ever offers a currency fxRates actually has a usable rate
+        // for - GBP is always in the list since it needs no rate at all.
+        // Rebuilt from scratch on every call (cheap: at most 3 options)
+        // rather than diffed, so a rate the admin just removed can't leave
+        // a stale, now-unselectable option sitting in the panel.
+        function availableCurrencies() {
+            return ['GBP', 'CAD', 'USD'].filter(c => c === 'GBP' || (typeof fxRates[c] === 'number' && fxRates[c] > 0));
+        }
+        function renderCurrencySwitch() {
+            const options = availableCurrencies();
+            // Nothing to pick between yet (admin hasn't configured any
+            // rate) - the fab stays off-screen entirely rather than
+            // floating a circle over page content with only one,
+            // disabled-looking option inside it.
+            const show = options.length > 1;
+            const wrap = document.getElementById('currencyFabWrap');
+            if (wrap) wrap.classList.toggle('is-visible', show);
+            if (!show) return;
+            const cur = effectiveCurrency();
+            const flagEl = document.getElementById('currencyFabFlag');
+            if (flagEl) flagEl.textContent = CURRENCY_FLAGS[cur];
+            const btn = document.getElementById('currencyFab');
+            if (btn) btn.setAttribute('aria-label', `Currency: ${CURRENCY_NAMES[cur]}. Click to change.`);
+            const optionsHTML = options.map(code => `
+                <button type="button" class="${code === cur ? 'is-selected' : ''}" data-currency="${code}">
+                    <span class="currency-fab-panel-flag">${CURRENCY_FLAGS[code]}</span>
+                    <span class="currency-fab-panel-code">${CURRENCY_NAMES[code]}</span>
+                    ${currencyCheckSvg()}
+                </button>
+            `).join('');
+            const panel = document.getElementById('currencyFabPanel');
+            if (panel) panel.innerHTML = '<div class="currency-fab-panel-label">Currency</div>' + optionsHTML;
+        }
+        // currentHash via pathToHash(), same reasoning as the
+        // pricingSettingsReady re-render just above route()'s own
+        // definition: syncAddressBarToHash clears window.location.hash
+        // after every render, so reading it directly here would almost
+        // always see an empty string instead of the real current route.
+        function refreshPricesForCurrencyChange() {
+            const hash = pathToHash(window.location.pathname);
+            if (hash === '#/checkout') {
+                // route()'s own #/checkout branch always calls
+                // showCheckoutStep('cart'), which would bounce someone
+                // back to the cart step mid-checkout just for switching
+                // currency. renderCartList()+updateSummaries() are the
+                // same two calls updateSummaries() itself already
+                // documents as the lighter-weight refresh for exactly
+                // this "prices changed, step didn't" situation.
+                renderCartList();
+                updateSummaries();
+            } else {
+                route({ preserveScroll: true });
+            }
+        }
+        function setCurrency(code) {
+            selectedCurrency = code;
+            try { localStorage.setItem('yo7-currency', code); } catch (e) { /* best-effort, same as every other localStorage write in this file */ }
+            closeCurrencyFabPanel();
+            renderCurrencySwitch();
+            refreshPricesForCurrencyChange();
+        }
+        const currencyFabBtn = document.getElementById('currencyFab');
+        const currencyFabWrap = document.getElementById('currencyFabWrap');
+        if (currencyFabBtn && currencyFabWrap) {
+            currencyFabBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const nowOpen = !currencyFabWrap.classList.contains('open');
+                currencyFabWrap.classList.toggle('open', nowOpen);
+                currencyFabBtn.setAttribute('aria-expanded', String(nowOpen));
+            });
+        }
+        const currencyFabPanel = document.getElementById('currencyFabPanel');
+        if (currencyFabPanel) {
+            currencyFabPanel.addEventListener('click', (e) => {
+                const btn = e.target.closest('button[data-currency]');
+                if (btn) setCurrency(btn.dataset.currency);
+            });
+        }
+        document.addEventListener('click', (e) => {
+            if (currencyFabWrap && !currencyFabWrap.contains(e.target)) {
+                closeCurrencyFabPanel();
             }
         });
 
@@ -23696,8 +24080,8 @@
             };
             const changes = diffFields(before, after, [
                 { key: 'name', label: 'Name' },
-                { key: 'price', label: 'Price', format: money },
-                { key: 'salePrice', label: 'Sale price', format: money },
+                { key: 'price', label: 'Price', format: gbp },
+                { key: 'salePrice', label: 'Sale price', format: gbp },
                 { key: 'stock', label: 'Stock', format: stockLabel },
                 { key: 'stockQuantity', label: 'Stock quantity' },
                 { key: 'weight', label: 'Weight', format: w => w + 'kg' },
@@ -25135,6 +25519,11 @@
         const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
+        // Unlike the other two floats, the currency fab stays up through
+        // checkout and the confirmation page - that's exactly where the
+        // currency actually being charged matters most. Only suppressed
+        // where there's no price on screen for it to affect at all.
+        const CURRENCY_FAB_HIDDEN_VIEWS = ['view-login', 'view-signup'];
         // Deliberately does not require currentSupabaseUser/sign-in — see
         // the comment on view-unsubscribe-reminder above for why. The
         // token itself (unsubscribe_reminder(), migration 30) is the only
@@ -25186,6 +25575,8 @@
             if (floatBtn) floatBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const floatCartBtn = document.getElementById('floatCart');
             if (floatCartBtn) floatCartBtn.classList.toggle('float-suppressed', FLOAT_CART_HIDDEN_VIEWS.includes(id));
+            const currencyFabWrapEl = document.getElementById('currencyFabWrap');
+            if (currencyFabWrapEl) currencyFabWrapEl.classList.toggle('float-suppressed', CURRENCY_FAB_HIDDEN_VIEWS.includes(id));
             const activeEl = document.getElementById(id);
             if (activeEl) {
                 activeEl.classList.remove('route-view-enter');
@@ -25915,6 +26306,21 @@
             // real, admin-edited delivery pricing unless an admin happens to be
             // actively editing the panel in the same session.
             renderDeliveryFeeInfo();
+            // renderCurrencySwitch() itself only exists once fxRates is
+            // loaded too - before this resolves, the control stays
+            // hidden (its own default), same reasoning as every other
+            // call in this block.
+            renderCurrencySwitch();
+            // A returning visitor who'd previously picked CAD/USD has
+            // fxRates still empty for everything rendered before this
+            // resolves, so every price on screen briefly shows as if GBP
+            // (effectiveCurrency() falls back safely, never shows a wrong
+            // symbol), then needs a real refresh once the real rate is
+            // in. Same preserveScroll re-render refreshCatalogOnForeground()
+            // already uses for "a price just changed, redraw in place
+            // without jumping the page", skipped entirely for the common
+            // GBP case, where this would be a no-op redraw anyway.
+            if (selectedCurrency !== 'GBP') route({ preserveScroll: true });
         });
         const editModeBannerVersionEl = document.getElementById('editModeBannerVersion');
         if (editModeBannerVersionEl) editModeBannerVersionEl.textContent = `v${BUILD_VERSION}`;
