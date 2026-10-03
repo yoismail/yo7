@@ -13286,10 +13286,13 @@
     </a>
 
     <div class="currency-fab-wrap" id="currencyFabWrap">
-        <button type="button" class="currency-fab" id="currencyFab" aria-haspopup="true" aria-expanded="false" aria-label="Choose currency">
+        <button type="button" class="currency-fab" id="currencyFab" aria-haspopup="menu" aria-expanded="false" aria-label="Choose currency">
             <span class="currency-fab-flag" id="currencyFabFlag">🇬🇧</span>
         </button>
-        <div class="currency-fab-panel" id="currencyFabPanel">
+        <!-- inert by default (closed) - opacity:0/pointer-events:none alone
+             still leaves its buttons reachable by keyboard Tab while
+             invisible, see setCurrencyFabOpen()'s own comment. -->
+        <div class="currency-fab-panel" id="currencyFabPanel" role="menu" inert>
             <div class="currency-fab-panel-label">Currency</div>
         </div>
     </div>
@@ -20436,7 +20439,20 @@
         // could be stale if the customer went back and changed something.
         let stripeElements = null;
         let pendingOrderContext = null;
+        // Bumped on every call, captured locally as myInitToken - lets a
+        // call tell whether it's still the most recent one by the time its
+        // own async create-payment-intent request finally resolves.
+        // Without this, switching currency twice in quick succession (or
+        // just once, racing an earlier in-flight call from first entering
+        // this step) could let an OLDER response win the race and mount
+        // Elements bound to a stale PaymentIntent - the on-screen total
+        // would read as the currency just picked, but submitting would
+        // still confirm whichever PaymentIntent (and currency) actually
+        // got mounted last, not the one the total implies. Caught in
+        // review.
+        let stripePaymentInitToken = 0;
         async function initStripePayment() {
+            const myInitToken = ++stripePaymentInitToken;
             const mountEl = document.getElementById('stripePaymentElement');
             const noteEl = document.getElementById('paymentNotConfiguredNote');
             const failedNoteEl = document.getElementById('paymentFailedNote');
@@ -20553,6 +20569,13 @@
             } catch (err) {
                 error = err;
             }
+            // A newer call already started (e.g. the customer switched
+            // currency again, or switched it right after first reaching
+            // this step) - that one owns mountEl/stripeElements/
+            // pendingOrderContext now, so this now-stale response must not
+            // touch any of them, successful or not. See stripePaymentInitToken's
+            // own comment above.
+            if (myInitToken !== stripePaymentInitToken) return;
             if (error || !data || !data.client_secret) {
                 mountEl.innerHTML = '';
                 const reason = (data && data.error) || (error && error.message) || 'unknown error';
@@ -20771,6 +20794,13 @@
                 loyaltyRewardEarned: false, // filled in below once the order is saved and has a real id to check against
                 paymentMethodSummary: 'Paid online', // replaced below once confirm-order responds with the real one
                 stripePaymentIntentId: paymentIntent.id,
+                // Without these two, orderChargeInfo(lastOrder) (used by
+                // renderConfirmation() right after this) falls back to
+                // treating the order as GBP until a reload re-fetches the
+                // real row - the receipt would show the wrong currency for
+                // the first view of a non-GBP order. Caught in review.
+                chargedCurrency: ctx.chargedCurrency,
+                chargedAmount: ctx.chargedAmount,
             };
             // The actual order record is created server-side now, not by
             // this insert — see confirm-order's own header comment for
@@ -23570,12 +23600,23 @@
         function currencyCheckSvg() {
             return '<svg class="currency-fab-panel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
         }
-        function closeCurrencyFabPanel() {
+        // Single place that opens/closes the panel, so the visual .open
+        // class, aria-expanded, and the panel's own inert state can never
+        // drift out of sync the way they would toggling each separately
+        // at every call site. opacity:0 + pointer-events:none (the panel's
+        // closed-state CSS) stops a mouse/touch click from reaching a
+        // hidden option, but neither stops Tab from focusing one - inert
+        // additionally pulls the whole subtree out of the tab order and
+        // out of a screen reader's view while closed. Caught in review.
+        function setCurrencyFabOpen(open) {
             const wrap = document.getElementById('currencyFabWrap');
-            if (wrap) wrap.classList.remove('open');
+            if (wrap) wrap.classList.toggle('open', open);
             const btn = document.getElementById('currencyFab');
-            if (btn) btn.setAttribute('aria-expanded', 'false');
+            if (btn) btn.setAttribute('aria-expanded', String(open));
+            const panel = document.getElementById('currencyFabPanel');
+            if (panel) panel.inert = !open;
         }
+        function closeCurrencyFabPanel() { setCurrencyFabOpen(false); }
         // Only ever offers a currency fxRates actually has a usable rate
         // for - GBP is always in the list since it needs no rate at all.
         // Rebuilt from scratch on every call (cheap: at most 3 options)
@@ -23600,7 +23641,7 @@
             const btn = document.getElementById('currencyFab');
             if (btn) btn.setAttribute('aria-label', `Currency: ${CURRENCY_NAMES[cur]}. Click to change.`);
             const optionsHTML = options.map(code => `
-                <button type="button" class="${code === cur ? 'is-selected' : ''}" data-currency="${code}">
+                <button type="button" class="${code === cur ? 'is-selected' : ''}" data-currency="${code}" role="menuitemradio" aria-checked="${code === cur}">
                     <span class="currency-fab-panel-flag">${CURRENCY_FLAGS[code]}</span>
                     <span class="currency-fab-panel-code">${CURRENCY_NAMES[code]}</span>
                     ${currencyCheckSvg()}
@@ -23626,6 +23667,20 @@
                 // this "prices changed, step didn't" situation.
                 renderCartList();
                 updateSummaries();
+                // The payment step has its own, separate source of truth
+                // beyond just what's on screen - a real Stripe PaymentIntent
+                // already created in the previous currency, with Elements
+                // already mounted against it. updateSummaries() alone only
+                // fixes the displayed total; without this, that total would
+                // read as the newly picked currency while submitting still
+                // confirmed the OLD PaymentIntent, charging the old
+                // currency/amount regardless of what the screen showed.
+                // initStripePayment() recreates both from scratch for the
+                // new currency (and is itself guarded against an older,
+                // still in-flight call winning a race against this one -
+                // see stripePaymentInitToken's own comment). Caught in
+                // review.
+                if (checkoutStepName === 'payment') initStripePayment();
             } else {
                 route({ preserveScroll: true });
             }
@@ -23642,9 +23697,7 @@
         if (currencyFabBtn && currencyFabWrap) {
             currencyFabBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const nowOpen = !currencyFabWrap.classList.contains('open');
-                currencyFabWrap.classList.toggle('open', nowOpen);
-                currencyFabBtn.setAttribute('aria-expanded', String(nowOpen));
+                setCurrencyFabOpen(!currencyFabWrap.classList.contains('open'));
             });
         }
         const currencyFabPanel = document.getElementById('currencyFabPanel');
