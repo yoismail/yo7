@@ -15724,6 +15724,14 @@
         // (shown in the admin panel), never read by money()/checkout.
         let fxRatesFetchedAt = null;
         const CURRENCY_SYMBOLS = { GBP: '£', CAD: 'CA$', USD: 'US$', NGN: '₦' };
+        // Apple Pay/Google Pay aren't reliable Stripe presentment currencies
+        // for NGN — a real order (YO7-0046) was placed with NGN selected and
+        // Apple Pay as the payment method, and ended up charged in GBP
+        // instead. Used by initStripePayment() below to hide those wallet
+        // rows from the Payment Element entirely for these currencies, so
+        // the mismatch can't happen again — card payment already works
+        // correctly for NGN, so it stays available.
+        const WALLET_UNSUPPORTED_CURRENCIES = ['NGN'];
         // The currency actually safe to display/charge in right now - not
         // necessarily selectedCurrency itself, if that currency's rate
         // isn't (or is no longer) configured. Falls back to GBP rather
@@ -20788,9 +20796,16 @@
             // directly answering "make it visually obvious which payment
             // method is selected" without us reaching inside Stripe's
             // iframe (which isn't something the public API allows).
+            // pendingOrderContext.chargedCurrency is the server-verified
+            // currency this PaymentIntent was actually created in (set from
+            // data.verifiedTotal just above) — the authoritative value to
+            // gate wallets on, not effectiveCurrency(), which only reflects
+            // what the client asked for a moment earlier.
+            const walletsOk = !WALLET_UNSUPPORTED_CURRENCIES.includes(pendingOrderContext.chargedCurrency || 'GBP');
             const paymentElement = stripeElements.create('payment', {
                 layout: { type: 'accordion', defaultCollapsed: true, radios: true, spacedAccordionItems: true },
                 paymentMethodOrder: ['apple_pay', 'google_pay', 'card', 'klarna', 'revolut_pay', 'amazon_pay'],
+                wallets: { applePay: walletsOk ? 'auto' : 'never', googlePay: walletsOk ? 'auto' : 'never' },
             });
             paymentElement.mount('#stripePaymentElement');
             paymentElement.on('ready', () => { placeOrderBtn.disabled = false; });
