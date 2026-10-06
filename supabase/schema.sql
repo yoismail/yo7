@@ -1979,6 +1979,20 @@ CREATE TABLE IF NOT EXISTS "public"."pricing_settings" (
     -- is treated as not yet configured, not as "rate 1" - never
     -- display or charge a converted amount the admin hasn't actually set.
     "fx_rates" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    -- Per-currency switch, e.g. {"CAD": true, "USD": false} - a currency
+    -- missing here (or false) stays manual: the admin's own fx_rates
+    -- entry is the only thing that ever changes it. A currency set to
+    -- true here is instead kept current by update-fx-rates (a daily
+    -- cron-triggered Edge Function, see that function's own comment),
+    -- which overwrites ONLY that currency's fx_rates entry and leaves
+    -- every manual one completely untouched.
+    "fx_rates_auto" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    -- When update-fx-rates last successfully wrote a live rate - distinct
+    -- from updated_at (which also changes on a purely manual edit) so the
+    -- function's own freshness guard can tell "already refreshed today"
+    -- from "an admin just changed something else" without re-fetching on
+    -- every cron ping once a day's already done.
+    "fx_rates_fetched_at" timestamp with time zone,
     CONSTRAINT "pricing_settings_singleton" CHECK ("id")
 );
 
@@ -3589,6 +3603,30 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
+
+-- ================= SCHEDULED JOBS =================
+-- pg_cron (extension declared at the top of this file) pings
+-- update-fx-rates once a day. The Edge Function itself is what actually
+-- decides whether to do anything - it no-ops instantly if no currency is
+-- set to auto-update (pricing_settings.fx_rates_auto) or if it already
+-- refreshed within the last 20 hours, so this ping is cheap even on a
+-- day nothing changes. cron.schedule() upserts by job name, so re-running
+-- this statement (e.g. replaying this whole file against an existing
+-- database) safely updates the existing job in place instead of creating
+-- a duplicate. :17, not :00, for the same reason regenerate-pages.yml's
+-- own hourly cron picked that minute - avoids piling onto whatever else
+-- fires exactly on the hour.
+SELECT cron.schedule(
+    'daily-fx-rate-refresh',
+    '17 3 * * *',
+    $$
+    SELECT net.http_post(
+        url := 'https://mcxfzfvhdtcjfyjmnamr.supabase.co/functions/v1/update-fx-rates',
+        headers := jsonb_build_object('Content-Type', 'application/json'),
+        body := '{}'::jsonb
+    );
+    $$
+);
 
 
 
