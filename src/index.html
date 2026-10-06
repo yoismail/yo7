@@ -12546,6 +12546,7 @@
         <div class="wrap">
             <div id="loyaltyAdmin"></div>
             <div id="discountAdmin"></div>
+            <div id="currencyRatesAdmin"></div>
         </div>
     </div>
 
@@ -22255,6 +22256,7 @@
                 case 'discount_deleted': return `${who} deleted discount code ${label}`;
                 case 'pricing_settings_updated': return `${who} updated delivery &amp; pricing settings`;
                 case 'review_platforms_updated': return `${who} updated review platform links`;
+                case 'fx_rates_updated': return `${who} updated currency exchange rates${entry.details && entry.details.currencies ? ` (${escapeHtml(entry.details.currencies.join(', ') || 'none configured')})` : ''}`;
                 case 'order_status_changed': {
                     const d = entry.details || {};
                     const from = d.fromStatus ? (ORDER_STATUS_LABELS[d.fromStatus] || d.fromStatus) : null;
@@ -23746,6 +23748,7 @@
             if (typeof renderDeliveryRulesAdmin === 'function') renderDeliveryRulesAdmin();
             if (typeof renderLoyaltyAdminPanel === 'function') renderLoyaltyAdminPanel();
             if (typeof renderDiscountAdminPanel === 'function') renderDiscountAdminPanel();
+            if (typeof renderCurrencyRatesAdmin === 'function') renderCurrencyRatesAdmin();
             // Bundle/combo cards build their per-item weight editor into the
             // markup at render time (not a CSS-only toggle), so they need a
             // fresh render too whenever edit mode flips while one of those
@@ -26421,6 +26424,62 @@
                     if (!error) logAdminAction('loyalty_settings_updated', 'loyalty_settings', null, { referralMinOrder });
                 }
             });
+        }
+        // Same pattern as the other admin panels: only exists in the DOM
+        // for a confirmed admin with edit mode on. Lives here (alongside
+        // loyalty/discount settings, both similarly homeless) rather than
+        // on any one customer-facing page, since there isn't a "currency"
+        // page for this to sit next to the way delivery/review-platform
+        // settings each have one.
+        function renderCurrencyRatesAdmin() {
+            const el = document.getElementById('currencyRatesAdmin');
+            if (!el) return;
+            if (!(currentIsAdmin && editModeOn)) { el.className = ''; el.innerHTML = ''; return; }
+            el.className = 'delivery-admin-panel';
+            el.innerHTML = `
+    <h3>Currency rates <span class="admin-only-tag">Edit mode only</span></h3>
+    <p class="delivery-admin-note">Every price, discount, and report stays in GBP everywhere else on the site and in this admin panel, regardless of what's set here - this only sets the rate a shopper's chosen currency converts to, for on-screen display and for what Stripe actually charges their card. Leave a field blank to turn that currency off: the floating currency picker only ever offers a currency with a real rate set here, and disappears entirely once fewer than two are available.</p>
+    <div class="field-row">
+      <div class="field"><label for="fxRateCadInput">GBP &rarr; CAD rate</label><input type="number" step="0.0001" min="0" id="fxRateCadInput" placeholder="e.g. 1.71" value="${typeof fxRates.CAD === 'number' ? fxRates.CAD : ''}"></div>
+      <div class="field"><label for="fxRateUsdInput">GBP &rarr; USD rate</label><input type="number" step="0.0001" min="0" id="fxRateUsdInput" placeholder="e.g. 1.27" value="${typeof fxRates.USD === 'number' ? fxRates.USD : ''}"></div>
+    </div>
+    <button type="button" class="btn btn-primary" id="currencyRatesSaveBtn">Save changes</button>`;
+            document.getElementById('currencyRatesSaveBtn').addEventListener('click', saveCurrencyRates);
+        }
+        async function saveCurrencyRates() {
+            const btn = document.getElementById('currencyRatesSaveBtn');
+            if (!supabaseClient) { showToast('Currency rates need accounts connected first, this is preview mode right now.', 6000); return; }
+            const cadRaw = document.getElementById('fxRateCadInput').value.trim();
+            const usdRaw = document.getElementById('fxRateUsdInput').value.trim();
+            const cad = cadRaw === '' ? null : parseFloat(cadRaw);
+            const usd = usdRaw === '' ? null : parseFloat(usdRaw);
+            if ((cad !== null && (isNaN(cad) || cad <= 0)) || (usd !== null && (isNaN(usd) || usd <= 0))) {
+                showToast('Rates must be a positive number, or left blank to turn that currency off.', 5000);
+                return;
+            }
+            // Rebuilt from only CAD/USD rather than patching the existing
+            // fxRates object - every currency this site ever offers is
+            // hardcoded (CURRENCY_NAMES/CURRENCY_SYMBOLS/CURRENCY_FLAGS all
+            // list exactly GBP/CAD/USD), so there's never a legitimate
+            // third key to accidentally preserve, and this can't drift out
+            // of sync with what the two inputs actually show.
+            const next = {};
+            if (cad !== null) next.CAD = cad;
+            if (usd !== null) next.USD = usd;
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+            const { error } = await supabaseClient.from('pricing_settings').update({
+                fx_rates: next,
+                updated_at: new Date().toISOString(),
+            }).eq('id', true);
+            if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
+            if (error) { showToast('Couldn\'t save that: ' + error.message, 6000, 'error'); return; }
+            fxRates = next;
+            // Immediately reflects the new rate set (or reveals/hides the
+            // fab if this just crossed the "fewer than two currencies
+            // available" line) without needing a refresh.
+            renderCurrencySwitch();
+            logAdminAction('fx_rates_updated', 'pricing_settings', null, { currencies: Object.keys(next) });
+            showToast('Currency rates saved.', undefined, 'success');
         }
         const addBundleBtn = document.getElementById('addBundleBtn');
         if (addBundleBtn) addBundleBtn.addEventListener('click', openAddBundleForm);
