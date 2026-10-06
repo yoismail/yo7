@@ -20626,6 +20626,24 @@
             placeOrderBtn.disabled = true; // re-enabled once the Payment Element is actually ready to submit
             mountEl.innerHTML = '<div class="payment-element-loading"><span class="payment-spinner" aria-hidden="true"></span>Loading payment options…</div>';
 
+            // fxRates (and deliveryWeightTiers/deliveryThresholdRules, also
+            // used below) start empty and only get their real values once
+            // this resolves - a real order (YO7-0046, then again YO7-0048)
+            // was charged in GBP despite NGN/USD being selected, because
+            // effectiveCurrency() ran before fxRates had loaded and fell
+            // back to GBP exactly as it's designed to for a genuinely
+            // unconfigured currency, except the currency WAS configured,
+            // the client just hadn't heard about it yet. A fast checkout
+            // (prefilled delivery details, a one-tap wallet) reaches this
+            // point quickly enough to beat the fetch on a slow connection;
+            // typing a card out by hand gives it more time, which is why
+            // card payment never showed this. Every other place pricing
+            // settings this fundamental to checkout math already waits on
+            // this same promise (see its own comment above) - the payment
+            // step was simply missed.
+            await pricingSettingsReady;
+            if (myInitToken !== stripePaymentInitToken) return; // a newer call already took over while this awaited
+
             // These are only a same-second estimate for what shows on screen
             // while the request below is in flight — create-payment-intent
             // recomputes every one of these figures itself, from a real
