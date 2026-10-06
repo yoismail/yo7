@@ -15588,11 +15588,11 @@
 
         // Bumped by hand on every delivered change, shown in the edit-mode
         // banner so whoever's looking at the live site can tell which
-        // round of updates it's actually running, since deploys here are
-        // a manual file upload rather than something that leaves its own
-        // trace (no CI, no commit hash reaching the live site while the
-        // GitHub push stays blocked).
-        const BUILD_VERSION = '2026-10-01.4';
+        // round of updates it's actually running. Deploys are automatic
+        // now (push to main -> regenerate-pages.yml -> Cloudflare), but
+        // this still earns its place: a commit hash alone doesn't tell a
+        // non-technical admin anything, where this date-coded string does.
+        const BUILD_VERSION = '2026-10-06.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
