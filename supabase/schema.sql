@@ -456,6 +456,33 @@ $$;
 ALTER FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") OWNER TO "postgres";
 
 
+-- Mirrors CURRENCY_SYMBOLS/money() in src/index.html exactly (symbol per
+-- currency, comma-thousands/period-decimal punctuation) so a customer-
+-- facing transactional email quotes the same figure, in the same
+-- currency, the customer actually sees on their receipt/confirmation
+-- page - never a hardcoded "£" regardless of what was actually charged.
+-- Used only for a charged_currency/charged_amount pair already frozen at
+-- checkout (orders/pending_checkouts' own columns), never for a live
+-- re-conversion - an email sent hours or days later must keep quoting
+-- the exact amount that was actually charged, immune to any fx_rates
+-- change since.
+CREATE OR REPLACE FUNCTION "public"."format_charged_amount"("p_currency" "text", "p_amount" numeric) RETURNS "text"
+    LANGUAGE "plpgsql" IMMUTABLE
+    AS $$
+begin
+  return (case p_currency
+    when 'CAD' then 'CA$'
+    when 'USD' then 'US$'
+    when 'NGN' then '₦'
+    else '£'
+  end) || to_char(coalesce(p_amount, 0), 'FM999,999,990.00');
+end;
+$$;
+
+
+ALTER FUNCTION "public"."format_charged_amount"("p_currency" "text", "p_amount" numeric) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_best_sellers"("p_days" integer DEFAULT 30, "p_limit" integer DEFAULT 12) RETURNS TABLE("product_id" "text", "units_sold" numeric)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -860,14 +887,14 @@ begin
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
           '<p>' || v_copy.body || '</p>' ||
-          '<p style="color:#666;font-size:13px;">Order ' || coalesce(new.order_number, new.id::text) || ' &middot; Total ' || to_char(new.total, 'FM£999999990.00') || '</p>' ||
+          '<p style="color:#666;font-size:13px;">Order ' || coalesce(new.order_number, new.id::text) || ' &middot; Total ' || public.format_charged_amount(new.charged_currency, coalesce(new.charged_amount, new.total)) || '</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View your orders</a></p>' ||
           '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
           '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
           '</div>',
         'text',
           v_copy.headline || E'\n\n' || v_copy.body || E'\n\n' ||
-          'Order ' || coalesce(new.order_number, new.id::text) || ' · Total ' || to_char(new.total, 'FM£999999990.00') || E'\n' ||
+          'Order ' || coalesce(new.order_number, new.id::text) || ' · Total ' || public.format_charged_amount(new.charged_currency, coalesce(new.charged_amount, new.total)) || E'\n' ||
           'View your orders: https://yo7foods.co.uk/#/orders' || E'\n\n' ||
           'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
           'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
@@ -889,7 +916,11 @@ begin
       body := jsonb_build_object(
         'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
         'to', v_admin.email,
-        'subject', 'New order ' || coalesce(new.order_number, new.id::text) || ' — ' || to_char(new.total, 'FM£999999990.00'),
+        -- Deliberately always £ and new.total (the business's own GBP
+        -- books), never charged_currency/charged_amount - same
+        -- "admin always sees GBP regardless of what a customer picked"
+        -- convention gbp()/the admin order pages already use client-side.
+        'subject', 'New order ' || coalesce(new.order_number, new.id::text) || ' — ' || to_char(new.total, 'FM£999,999,990.00'),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
@@ -898,7 +929,7 @@ begin
           '<p style="color:#333;font-size:14px;">' ||
             v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ' &middot; ' ||
             (case when new.fulfilment_method = 'pickup' then 'Pickup' else 'Delivery' end) || ' &middot; ' ||
-            'Total ' || to_char(new.total, 'FM£999999990.00') ||
+            'Total ' || to_char(new.total, 'FM£999,999,990.00') ||
           '</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/admin/order/' || new.id::text || '" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View order</a></p>' ||
           '<p style="color:#999;font-size:12px;">Yo7 Foods admin notifications</p>' ||
@@ -907,7 +938,7 @@ begin
           'New order received' || E'\n\n' ||
           coalesce(v_customer_name, 'A customer') || ' just placed order ' || coalesce(new.order_number, new.id::text) || '.' || E'\n' ||
           v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ' · ' ||
-          (case when new.fulfilment_method = 'pickup' then 'Pickup' else 'Delivery' end) || ' · Total ' || to_char(new.total, 'FM£999999990.00') || E'\n\n' ||
+          (case when new.fulfilment_method = 'pickup' then 'Pickup' else 'Delivery' end) || ' · Total ' || to_char(new.total, 'FM£999,999,990.00') || E'\n\n' ||
           'View order: https://yo7foods.co.uk/#/admin/order/' || new.id::text
       )
     );
@@ -1251,7 +1282,7 @@ begin
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">Still there?</h2>' ||
           '<p>You started an order with us but didn''t quite finish checking out. No rush, your basket''s still saved and waiting whenever you''re ready to come back.</p>' ||
-          '<p style="color:#666;font-size:13px;">' || v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' &middot; Total ' || to_char(v_row.total, 'FM£999999990.00') || '</p>' ||
+          '<p style="color:#666;font-size:13px;">' || v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' &middot; Total ' || public.format_charged_amount(v_row.charged_currency, coalesce(v_row.charged_amount, v_row.total)) || '</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/checkout" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Complete your order</a></p>' ||
           '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
           '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
@@ -1259,7 +1290,7 @@ begin
         'text',
           'Still there?' || E'\n\n' ||
           'You started an order with us but didn''t quite finish checking out. No rush, your basket''s still saved and waiting whenever you''re ready to come back.' || E'\n\n' ||
-          v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' · Total ' || to_char(v_row.total, 'FM£999999990.00') || E'\n' ||
+          v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' · Total ' || public.format_charged_amount(v_row.charged_currency, coalesce(v_row.charged_amount, v_row.total)) || E'\n' ||
           'Complete your order: https://yo7foods.co.uk/#/checkout' || E'\n\n' ||
           'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
           'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
@@ -1424,7 +1455,7 @@ begin
         '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
         '<p>' || v_copy.body || '</p>' ||
         v_note_html ||
-        '<p style="color:#666;font-size:13px;">Order ' || coalesce(v_order.order_number, v_order.id::text) || ' &middot; Total ' || to_char(v_order.total, 'FM£999999990.00') || '</p>' ||
+        '<p style="color:#666;font-size:13px;">Order ' || coalesce(v_order.order_number, v_order.id::text) || ' &middot; Total ' || public.format_charged_amount(v_order.charged_currency, coalesce(v_order.charged_amount, v_order.total)) || '</p>' ||
         '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View your orders</a></p>' ||
         '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
         '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
@@ -1432,7 +1463,7 @@ begin
       'text',
         v_copy.headline || E'\n\n' || v_copy.body || E'\n\n' ||
         v_note_text ||
-        'Order ' || coalesce(v_order.order_number, v_order.id::text) || ' · Total ' || to_char(v_order.total, 'FM£999999990.00') || E'\n' ||
+        'Order ' || coalesce(v_order.order_number, v_order.id::text) || ' · Total ' || public.format_charged_amount(v_order.charged_currency, coalesce(v_order.charged_amount, v_order.total)) || E'\n' ||
         'View your orders: https://yo7foods.co.uk/#/orders' || E'\n\n' ||
         'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
         'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
@@ -1901,7 +1932,7 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     -- value that drifts if fx_rates changes later.
     "charged_currency" "text" DEFAULT 'GBP'::"text" NOT NULL,
     "charged_amount" numeric(10,2),
-    CONSTRAINT "orders_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text"]))),
+    CONSTRAINT "orders_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text", 'NGN'::"text"]))),
     CONSTRAINT "orders_fulfilment_method_check" CHECK (("fulfilment_method" = ANY (ARRAY['delivery'::"text", 'pickup'::"text"]))),
     CONSTRAINT "orders_status_check" CHECK (("status" = ANY (ARRAY['placed'::"text", 'being_prepared'::"text", 'out_for_delivery'::"text", 'ready_for_pickup'::"text", 'delivered'::"text", 'cancelled'::"text", 'returned'::"text"])))
 );
@@ -1949,7 +1980,7 @@ CREATE TABLE IF NOT EXISTS "public"."pending_checkouts" (
     -- charged_currency is GBP), so nothing downstream needs to guess.
     "charged_currency" "text" DEFAULT 'GBP'::"text" NOT NULL,
     "charged_amount" numeric(10,2),
-    CONSTRAINT "pending_checkouts_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text"])))
+    CONSTRAINT "pending_checkouts_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text", 'NGN'::"text"])))
 );
 
 
@@ -3195,6 +3226,12 @@ REVOKE ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_
 GRANT ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."finalize_order_from_pending"("p_payment_intent_id" "text", "p_payment_method_summary" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."format_charged_amount"("p_currency" "text", "p_amount" numeric) TO "anon";
+GRANT ALL ON FUNCTION "public"."format_charged_amount"("p_currency" "text", "p_amount" numeric) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."format_charged_amount"("p_currency" "text", "p_amount" numeric) TO "service_role";
 
 
 
