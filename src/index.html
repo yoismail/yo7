@@ -6856,6 +6856,23 @@
                and wrap its spans onto a second line instead. */
             min-width: 0;
             flex: 1 1 auto;
+            /* price-now/price-was/price-off are adjacent <span>s with no
+               whitespace between them in the template literal. .price-off
+               is inline-block so it gets an automatic wrap opportunity and
+               drops to its own line, but plain-inline .price-was doesn't
+               get one next to .price-now - browsers only insert a soft
+               wrap point at whitespace/atomic-inline edges, not between
+               two ordinary adjacent inline boxes. Longer currency strings
+               (CA$/US$ vs £) pushed .price-was past this container's
+               shrunk width with nowhere to go, so it overflowed straight
+               out over the add button instead of wrapping under it.
+               display:flex here gives every span a real wrap opportunity
+               regardless of adjacency, same as the row-gap fix pattern
+               used for exactly this kind of multi-chunk price. */
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            row-gap: 2px;
         }
         /* .price-now/.price-was/.price-off are shared, global price
            classes (product detail page, cart, checkout upsell, admin...)
@@ -7067,10 +7084,25 @@
            min-width:0 + flex:1 1 auto treatment .product-price already
            uses there instead: the price's own spans wrap onto a second
            line when they must, while the button stays put on the same
-           row, matched to the shop grid look. */
+           row, matched to the shop grid look.
+           min-width:0 alone relies on the browser finding a soft wrap
+           opportunity between the adjacent price-now/price-was/price-off
+           spans, but .price-off is inline-block (gets one automatically)
+           while .price-was is plain inline with no whitespace next to
+           price-now in the markup (gets none) - it stayed glued to
+           price-now and overflowed straight over the button instead of
+           wrapping, same underlying issue .product-price had, just never
+           visible here until a wider CA$/US$ price pushed it past the fit
+           a £-only price happened to leave. display:flex + flex-wrap give
+           every span an explicit wrap opportunity instead of relying on
+           inline-box adjacency. */
         .offer-card .price, .new-card .price, .best-seller-card .price {
             min-width: 0;
             flex: 1 1 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            row-gap: 2px;
         }
 
 
@@ -23669,6 +23701,14 @@
                 // this "prices changed, step didn't" situation.
                 renderCartList();
                 updateSummaries();
+                // Checkout's own "Free delivery: over £X" trust-bar pills
+                // (.free-delivery-text) are set by renderDeliveryFeeInfo(),
+                // not renderCartList()/updateSummaries() - without this
+                // call they stayed frozen in whatever currency was active
+                // when the checkout page first rendered. Caught after #57
+                // shipped: switching currency mid-checkout left this text
+                // quoting GBP even once everything else had converted.
+                renderDeliveryFeeInfo();
                 // The payment step has its own, separate source of truth
                 // beyond just what's on screen - a real Stripe PaymentIntent
                 // already created in the previous currency, with Elements
@@ -25996,6 +26036,16 @@
                 renderNewCarousel();
                 renderBestSellersSpotlight();
                 renderMealSetsHome();
+                // loadBuyAgainSuggestions() used to only run once, from
+                // setUser() at sign-in — fine for the data itself (order
+                // history doesn't change on every home visit), but its
+                // prices are baked into that one render same as everywhere
+                // else, so switching currency while already on the
+                // homepage (refreshPricesForCurrencyChange's non-checkout
+                // branch just re-runs route()) left this carousel frozen
+                // in whichever currency was active at login. It already
+                // no-ops safely for guests/no-history (see its own guard).
+                loadBuyAgainSuggestions();
             } else {
                 // Anything left over is a real, unrecognised path — a typo,
                 // a stale bookmark, a link to something that's been removed
