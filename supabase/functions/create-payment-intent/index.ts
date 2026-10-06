@@ -100,7 +100,7 @@ let SUBSCRIPTION_DISCOUNT_PCT = 10;
 // admin sets a real rate. Never fall back to an assumed rate of 1 for a
 // currency with no entry here - see resolveCharge() below.
 let FX_RATES: Record<string, number> = {};
-const SUPPORTED_CURRENCIES = ["GBP", "CAD", "USD"] as const;
+const SUPPORTED_CURRENCIES = ["GBP", "CAD", "USD", "NGN"] as const;
 type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
 let DELIVERY_WEIGHT_TIERS: { maxWeight: number; fee: number }[] = [
   { maxWeight: 10, fee: 7.99 },
