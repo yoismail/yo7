@@ -33,15 +33,25 @@ name: Regenerate static pages
 # script's own update_product_slugs_in_source()), so this workflow's own
 # commit CAN touch src/index.html, not just the generated output - what
 # actually stops that from looping this workflow back into itself is the
-# [skip ci] tag on the commit message below, which GitHub Actions
-# honours regardless of which paths a commit touches; the
-# `paths: [src/index.html]` filter on the push trigger above is only
-# there to keep this workflow from firing on push commits that don't
-# touch it at all. The schedule trigger has no loop to worry about
-# either way - a scheduled run that finds nothing changed just exits
-# without committing (see the last step below), so it's a no-op the
-# vast majority of hours.
-
+# `if:` guard on the job below, which skips a run only when BOTH the
+# trigger was a push (not schedule/workflow_dispatch) AND the pusher was
+# this same workflow's own prior commit (github-actions[bot], the
+# identity `git push origin HEAD:main` below authenticates as via the
+# default GITHUB_TOKEN). The `paths: [src/index.html]` filter on the push
+# trigger above only stops this workflow firing on pushes that don't
+# touch that file at all - it can't by itself prevent the self-loop,
+# since this workflow's own commit sometimes DOES touch src/index.html.
+#
+# This used to rely on a literal "[skip ci]" tag in the commit message
+# below instead of this actor check - GitHub Actions honours that tag
+# regardless of which paths a commit touches, which is exactly why it
+# worked for the self-loop problem. The actual bug: Cloudflare's own Git
+# integration ALSO treats "[skip ci]" as "don't deploy this commit" -
+# every commit this workflow ever pushed was silently never deployed,
+# while the generated files sitting in the repo looked completely
+# correct. The job-level actor check below solves the original
+# self-loop problem without that side effect, so a real commit message
+# is all that's left and Cloudflare deploys normally again.
 on:
   push:
     branches: [main]
@@ -62,6 +72,7 @@ concurrency:
 jobs:
   regenerate:
     runs-on: ubuntu-latest
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -93,5 +104,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/index.html index.html about/ careers/ contact/ cookie-policy/ delivery-info/ delivery-policy/ guide/ privacy/ returns/ terms/ work-with-us/ product/ sitemap.xml
-          git commit -m "Regenerate + minify static pages for the latest src/index.html and catalogue [skip ci]"
+          git commit -m "Regenerate + minify static pages for the latest src/index.html and catalogue"
           git push origin HEAD:main
