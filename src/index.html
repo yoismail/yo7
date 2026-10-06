@@ -14388,7 +14388,15 @@
                 || deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && !r.region)
                 || null;
         }
-        function fmtAmt(v) { return Number.isInteger(v) ? String(v) : v.toFixed(2); }
+        // toLocaleString over plain toFixed/String so a figure in the
+        // thousands (a NGN price, an admin's total revenue) reads as
+        // "12,330.36" rather than an unbroken "12330.36" that takes a
+        // beat to parse at a glance - reported directly against the
+        // NGN prices this is most visible on, but it's the same
+        // readability problem for any currency once an amount crosses
+        // four digits. minimumFractionDigits matches the previous
+        // "whole numbers drop the trailing .00" behaviour exactly.
+        function fmtAmt(v) { return v.toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 }); }
         // Explains both region thresholds at once, for copy shown before any
         // postcode is known (trust-bar badges, Delivery Info page, the FAQ).
         // Falls back gracefully if an admin ever removes one side of the
@@ -15701,7 +15709,14 @@
             const cur = effectiveCurrency();
             return cur === 'GBP' ? n : n * fxRates[cur];
         }
-        function money(n) { return CURRENCY_SYMBOLS[effectiveCurrency()] + convertFromGBP(n).toFixed(2); }
+        // toLocaleString over toFixed so the thousands digit(s) get a
+        // comma - without this a NGN price like 2,330.36 (a totally
+        // ordinary amount once GBP prices run through a ~2000x rate)
+        // rendered as the much harder-to-parse "2330.36", reported
+        // directly. en-GB's comma-thousands/period-decimal convention
+        // is also standard Nigerian-English formatting, so one locale
+        // suits every currency this site offers.
+        function money(n) { return CURRENCY_SYMBOLS[effectiveCurrency()] + convertFromGBP(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         // Same conversion as money(), but omits trailing ".00" the way
         // fmtAmt() already does for a whole GBP figure - used for the
         // free-delivery threshold copy ("over £70"/"over $88.90"), which
@@ -15712,7 +15727,7 @@
         function moneyWhole(n) {
             const cur = effectiveCurrency();
             const amount = convertFromGBP(n);
-            return CURRENCY_SYMBOLS[cur] + (Number.isInteger(amount) ? String(amount) : amount.toFixed(2));
+            return CURRENCY_SYMBOLS[cur] + amount.toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 });
         }
         // A placed order's own receipt (confirmation page, order history,
         // invoice PDF) must always show the amount actually charged to
@@ -15735,7 +15750,7 @@
             return { currency, rate: amount / order.total };
         }
         function moneyAt(amountGBP, currency, rate) {
-            return CURRENCY_SYMBOLS[currency] + (amountGBP * rate).toFixed(2);
+            return CURRENCY_SYMBOLS[currency] + (amountGBP * rate).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         // The admin order list/detail pages show the business's own GBP
         // books - what the database actually records, same reasoning as
@@ -22109,7 +22124,7 @@
             // common, charged-in-GBP case with a redundant repeat of
             // aodTotal.
             const chargedNote = (order.charged_currency && order.charged_currency !== 'GBP' && typeof order.charged_amount === 'number')
-                ? `<br><span style="font-size:11.5px; color:var(--text-muted);">Charged: ${CURRENCY_SYMBOLS[order.charged_currency]}${order.charged_amount.toFixed(2)}</span>`
+                ? `<br><span style="font-size:11.5px; color:var(--text-muted);">Charged: ${CURRENCY_SYMBOLS[order.charged_currency]}${order.charged_amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`
                 : '';
             document.getElementById('aodPaymentMethod').innerHTML = order.stripe_payment_intent_id
                 ? `${escapeHtml(order.payment_method_summary || 'Paid online')}<br><span style="font-size:11.5px; color:var(--text-muted);">Stripe reference: ${escapeHtml(order.stripe_payment_intent_id)}</span>${chargedNote}`
