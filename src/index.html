@@ -15724,6 +15724,14 @@
         // (shown in the admin panel), never read by money()/checkout.
         let fxRatesFetchedAt = null;
         const CURRENCY_SYMBOLS = { GBP: '£', CAD: 'CA$', USD: 'US$', NGN: '₦' };
+        // Apple Pay/Google Pay aren't reliable Stripe presentment currencies
+        // for NGN — a real order (YO7-0046) was placed with NGN selected and
+        // Apple Pay as the payment method, and ended up charged in GBP
+        // instead. Used by initStripePayment() below to hide those wallet
+        // rows from the Payment Element entirely for these currencies, so
+        // the mismatch can't happen again — card payment already works
+        // correctly for NGN, so it stays available.
+        const WALLET_UNSUPPORTED_CURRENCIES = ['NGN'];
         // The currency actually safe to display/charge in right now - not
         // necessarily selectedCurrency itself, if that currency's rate
         // isn't (or is no longer) configured. Falls back to GBP rather
@@ -20618,6 +20626,24 @@
             placeOrderBtn.disabled = true; // re-enabled once the Payment Element is actually ready to submit
             mountEl.innerHTML = '<div class="payment-element-loading"><span class="payment-spinner" aria-hidden="true"></span>Loading payment options…</div>';
 
+            // fxRates (and deliveryWeightTiers/deliveryThresholdRules, also
+            // used below) start empty and only get their real values once
+            // this resolves - a real order (YO7-0046, then again YO7-0048)
+            // was charged in GBP despite NGN/USD being selected, because
+            // effectiveCurrency() ran before fxRates had loaded and fell
+            // back to GBP exactly as it's designed to for a genuinely
+            // unconfigured currency, except the currency WAS configured,
+            // the client just hadn't heard about it yet. A fast checkout
+            // (prefilled delivery details, a one-tap wallet) reaches this
+            // point quickly enough to beat the fetch on a slow connection;
+            // typing a card out by hand gives it more time, which is why
+            // card payment never showed this. Every other place pricing
+            // settings this fundamental to checkout math already waits on
+            // this same promise (see its own comment above) - the payment
+            // step was simply missed.
+            await pricingSettingsReady;
+            if (myInitToken !== stripePaymentInitToken) return; // a newer call already took over while this awaited
+
             // These are only a same-second estimate for what shows on screen
             // while the request below is in flight — create-payment-intent
             // recomputes every one of these figures itself, from a real
@@ -20788,9 +20814,16 @@
             // directly answering "make it visually obvious which payment
             // method is selected" without us reaching inside Stripe's
             // iframe (which isn't something the public API allows).
+            // pendingOrderContext.chargedCurrency is the server-verified
+            // currency this PaymentIntent was actually created in (set from
+            // data.verifiedTotal just above) — the authoritative value to
+            // gate wallets on, not effectiveCurrency(), which only reflects
+            // what the client asked for a moment earlier.
+            const walletsOk = !WALLET_UNSUPPORTED_CURRENCIES.includes(pendingOrderContext.chargedCurrency || 'GBP');
             const paymentElement = stripeElements.create('payment', {
                 layout: { type: 'accordion', defaultCollapsed: true, radios: true, spacedAccordionItems: true },
                 paymentMethodOrder: ['apple_pay', 'google_pay', 'card', 'klarna', 'revolut_pay', 'amazon_pay'],
+                wallets: { applePay: walletsOk ? 'auto' : 'never', googlePay: walletsOk ? 'auto' : 'never' },
             });
             paymentElement.mount('#stripePaymentElement');
             paymentElement.on('ready', () => { placeOrderBtn.disabled = false; });
