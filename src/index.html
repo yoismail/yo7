@@ -1564,19 +1564,23 @@
 
         /* ================= CURRENCY FAB =================
            A single floating control (not a nav button, see its own JS
-           comment for why) pinned to the left edge, vertically centred -
+           comment for why) pinned to the right edge, vertically centred -
            a fixed landmark a shopper can return to from anywhere on the
            site, the same "always reachable regardless of scroll
            position" reasoning .float-cart/.float-order already use for
-           the basket and WhatsApp ordering, just anchored to the opposite
-           edge and the opposite (middle, not bottom) side so none of the
-           three ever overlap. Hidden until renderCurrencySwitch() (see
-           its own comment) finds at least one admin-configured non-GBP
-           rate - with nothing to pick but GBP, a floating control would
-           just be dead weight sitting over page content for no reason. */
+           the basket and WhatsApp ordering. Shares the right edge with
+           .float-order (WhatsApp), but sits at the vertical middle
+           instead of the bottom, so the two never overlap - on the right
+           edge specifically (not the left, where it first shipped) so it
+           falls under the thumb of whichever hand is holding the phone
+           and scrolling, the common one-handed grip. Hidden until
+           renderCurrencySwitch() (see its own comment) finds at least one
+           admin-configured non-GBP rate - with nothing to pick but GBP, a
+           floating control would just be dead weight sitting over page
+           content for no reason. */
         .currency-fab-wrap {
             position: fixed;
-            left: 14px;
+            right: 14px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 92;
@@ -1637,9 +1641,9 @@
 
         .currency-fab-panel {
             position: absolute;
-            left: calc(100% + 14px);
+            right: calc(100% + 14px);
             top: 50%;
-            transform: translateY(-50%) translateX(-8px);
+            transform: translateY(-50%) translateX(8px);
             min-width: 168px;
             background: var(--card-bg);
             border-radius: 16px;
@@ -1693,12 +1697,15 @@
             flex-shrink: 0;
         }
         .currency-fab-panel button.is-selected .currency-fab-panel-check { opacity: 1; }
-        /* Panel opens to the RIGHT of the fab by default (it sits at the
-           left edge, nothing but page content to its left) - on a narrow
-           viewport that's still plenty of room since the panel is a fixed
-           168px regardless of screen width, so no separate mobile
+        /* Panel opens to the LEFT of the fab by default (it sits at the
+           right edge, nothing but page content to its right) - on a
+           narrow viewport that's still plenty of room since the panel is
+           a fixed 168px regardless of screen width, so no separate mobile
            position override is needed the way the old nav/mobile-menu
-           controls each needed their own layout. */
+           controls each needed their own layout. The fab itself sits on
+           the right edge rather than the left so it falls under the
+           thumb when scrolling one-handed (most people cradle a phone
+           and scroll with their right hand). */
         @media (prefers-reduced-motion: reduce) {
             .currency-fab, .currency-fab-panel { transition: none; }
         }
@@ -1915,11 +1922,11 @@
 
         /* A slightly smaller fab on mobile (44px vs 52px) - the panel
            itself stays a flat 168px regardless of width (see its own
-           rule), still comfortably clear of the left edge at 320px wide
-           since it opens to the fab's right, not its left. */
+           rule), still comfortably clear of the right edge at 320px wide
+           since it opens to the fab's left, not its right. */
         @media (max-width:900px) {
             .currency-fab-wrap {
-                left: 10px;
+                right: 10px;
             }
             .currency-fab {
                 width: 44px;
@@ -23624,11 +23631,14 @@
            an already-tight nav-right row (see .nav-fav-btn's own comment
            on how little width that row has to spare) made the bar read
            cluttered, reported directly. A fixed, always-reachable circle
-           at the left edge is the same "find it from anywhere, no matter
-           how far you've scrolled or which page you're on" affordance
-           .float-cart/.float-order already give the basket and WhatsApp
-           ordering, just mirrored to the opposite edge so it never
-           competes with either for space or attention. */
+           at the right edge, vertically centred, is the same "find it
+           from anywhere, no matter how far you've scrolled or which page
+           you're on" affordance .float-cart/.float-order already give the
+           basket and WhatsApp ordering. It sits at the right edge
+           (reported as easier to reach one-handed while scrolling than
+           the left edge it first shipped at) and at the middle rather
+           than the bottom, so it never competes with .float-order (same
+           edge, bottom corner) for space or attention. */
         const CURRENCY_NAMES = { GBP: 'GBP', CAD: 'CAD', USD: 'USD' };
         const CURRENCY_FLAGS = { GBP: '🇬🇧', CAD: '🇨🇦', USD: '🇺🇸' };
         function currencyCheckSvg() {
