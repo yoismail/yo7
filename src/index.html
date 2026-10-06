@@ -1606,12 +1606,16 @@
         }
         .currency-fab:hover { transform: scale(1.08); box-shadow: 0 14px 32px rgba(22, 33, 13, 0.28), 0 0 0 1px rgba(6, 59, 0, 0.1); }
         .currency-fab-flag {
-            font-size: 22px;
-            line-height: 1;
-            /* Emoji flags render as a flat rectangle on platforms with no
-               region-flag font support - the circular mask + ring below
-               keeps that fallback looking like a deliberate badge instead
-               of a broken glyph spilling past the button's edge. */
+            /* Real inline-SVG flags, not emoji - Windows Chrome/Edge have
+               no colour flag-emoji font installed, so a flag emoji there
+               renders as its own literal two-letter fallback text ("CA",
+               "US"...) instead of a flag, reported directly on a Windows
+               laptop. An SVG draws identically on every platform
+               regardless of what font/emoji support the OS has. Each
+               flag's own svg is sized to fill this box (width/height:100%,
+               preserveAspectRatio="xMidYMid slice") and the circular mask
+               + ring keep it reading as a deliberate round badge rather
+               than a cropped rectangle. */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1621,6 +1625,7 @@
             overflow: hidden;
             box-shadow: inset 0 0 0 1.5px rgba(22, 33, 13, 0.1);
         }
+        .currency-fab-flag svg, .currency-fab-panel-flag svg { width: 100%; height: 100%; display: block; }
         /* Small chartreuse ring, the same accent colour the rest of the
            brand uses for "this is interactive/live" moments (cart badge,
            active nav link) - signals this circle opens something, not
@@ -1687,7 +1692,17 @@
         }
         .currency-fab-panel button:hover { background: rgba(var(--border-rgb), 0.07); }
         .currency-fab-panel button.is-selected { background: rgba(144, 184, 0, 0.14); color: var(--heading); }
-        .currency-fab-panel-flag { font-size: 18px; line-height: 1; flex-shrink: 0; }
+        .currency-fab-panel-flag {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: inset 0 0 0 1px rgba(var(--border-rgb), 0.12);
+        }
         .currency-fab-panel-code { flex: 1; }
         .currency-fab-panel-check {
             width: 15px;
@@ -1935,7 +1950,6 @@
             .currency-fab-flag {
                 width: 26px;
                 height: 26px;
-                font-size: 19px;
             }
         }
 
@@ -13335,7 +13349,7 @@
 
     <div class="currency-fab-wrap" id="currencyFabWrap">
         <button type="button" class="currency-fab" id="currencyFab" aria-haspopup="menu" aria-expanded="false" aria-label="Choose currency to pay in">
-            <span class="currency-fab-flag" id="currencyFabFlag">🇬🇧</span>
+            <span class="currency-fab-flag" id="currencyFabFlag"><svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#00247d"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#cf142b" stroke-width="4"/><rect x="0" y="14" width="60" height="12" fill="#fff"/><rect x="24" y="0" width="12" height="40" fill="#fff"/><rect x="0" y="17" width="60" height="6" fill="#cf142b"/><rect x="27" y="0" width="6" height="40" fill="#cf142b"/></svg></span>
         </button>
         <!-- inert by default (closed) - opacity:0/pointer-events:none alone
              still leaves its buttons reachable by keyboard Tab while
@@ -23648,7 +23662,21 @@
            than the bottom, so it never competes with .float-order (same
            edge, bottom corner) for space or attention. */
         const CURRENCY_NAMES = { GBP: 'GBP', CAD: 'CAD', USD: 'USD', NGN: 'NGN' };
-        const CURRENCY_FLAGS = { GBP: '🇬🇧', CAD: '🇨🇦', USD: '🇺🇸', NGN: '🇳🇬' };
+        // Real inline-SVG flags rather than flag emoji - see
+        // .currency-fab-flag's own CSS comment for why (Windows Chrome/
+        // Edge render a flag emoji as its own literal fallback text, not
+        // a flag). Each one shares a 60x40 viewBox with
+        // preserveAspectRatio="xMidYMid slice" so it fills its circular
+        // badge (set to 100% width/height in CSS) the same way
+        // object-fit:cover would crop a photo - simplified geometry
+        // rather than a fully accurate vexillological rendering, since
+        // these only ever show at 22-30px.
+        const CURRENCY_FLAGS = {
+            GBP: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#00247d"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#cf142b" stroke-width="4"/><rect x="0" y="14" width="60" height="12" fill="#fff"/><rect x="24" y="0" width="12" height="40" fill="#fff"/><rect x="0" y="17" width="60" height="6" fill="#cf142b"/><rect x="27" y="0" width="6" height="40" fill="#cf142b"/></svg>',
+            CAD: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="15" height="40" fill="#d80621"/><rect x="45" width="15" height="40" fill="#d80621"/><path d="M30,9 L32,15 L38,13 L35,19 L41,21 L34,23 L35,29 L30,26 L25,29 L26,23 L19,21 L25,19 L22,13 L28,15 Z" fill="#d80621"/></svg>',
+            USD: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="60" height="5.71" fill="#b22234"/><rect y="11.43" width="60" height="5.71" fill="#b22234"/><rect y="22.86" width="60" height="5.71" fill="#b22234"/><rect y="34.29" width="60" height="5.71" fill="#b22234"/><rect width="24" height="22.86" fill="#3c3b6e"/><circle cx="8" cy="6" r="1.3" fill="#fff"/><circle cx="16" cy="6" r="1.3" fill="#fff"/><circle cx="12" cy="11.4" r="1.3" fill="#fff"/><circle cx="8" cy="16.8" r="1.3" fill="#fff"/><circle cx="16" cy="16.8" r="1.3" fill="#fff"/></svg>',
+            NGN: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#008751"/><rect x="40" width="20" height="40" fill="#008751"/></svg>',
+        };
         function currencyCheckSvg() {
             return '<svg class="currency-fab-panel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
         }
@@ -23689,7 +23717,7 @@
             if (!show) return;
             const cur = effectiveCurrency();
             const flagEl = document.getElementById('currencyFabFlag');
-            if (flagEl) flagEl.textContent = CURRENCY_FLAGS[cur];
+            if (flagEl) flagEl.innerHTML = CURRENCY_FLAGS[cur];
             const btn = document.getElementById('currencyFab');
             if (btn) btn.setAttribute('aria-label', `Pay in ${CURRENCY_NAMES[cur]}. Click to change.`);
             const optionsHTML = options.map(code => `
