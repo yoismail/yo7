@@ -22893,6 +22893,24 @@
                 chargedAmount: row.charged_amount,
             };
         }
+        // Captured once, before anything ever touches it - invoiceBox's
+        // real markup (#invNumber, #invItems, every other field this
+        // function populates below) is the static HTML already sitting in
+        // the page, not something rebuilt from scratch each render. The
+        // loading/no-order states below replace the whole element's
+        // innerHTML, which otherwise destroys those child elements
+        // permanently the moment a visit actually needs the re-fetch path
+        // (any confirmation-page load where lastOrder isn't already in
+        // memory - a real page reload, which is exactly what a redirect-
+        // based payment method like a card needing 3D Secure can trigger,
+        // not just Apple Pay's same-page flow). Once destroyed, every
+        // later document.getElementById('inv...') in this function
+        // returns null, and the very first null.textContent = ... throws,
+        // uncaught - the box is then stuck on "Loading your order…"
+        // forever, and the PDF builder (which reads these same elements)
+        // fails too. Reported directly: a real card-paid order that hit
+        // this exact path.
+        const INVOICE_BOX_TEMPLATE = document.getElementById('invoiceBox').innerHTML;
         async function renderConfirmation() {
             if (!lastOrder && supabaseClient && currentSupabaseUser) {
                 document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">Loading your order…</p>';
@@ -22936,6 +22954,15 @@
                 document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">No recent order found. <a href="#/orders">View your orders</a>.</p>';
                 return;
             }
+            // Puts the real template's fields (#invNumber, #invItems, every
+            // other id this function populates below) back - the loading
+            // state above (or a stale "no order found" state left over
+            // from an earlier failed call) may have wiped them out. A
+            // genuinely fresh load of this page (lastOrder already set,
+            // the re-fetch branch above never ran at all) finds invoiceBox
+            // already holding this exact markup, so this is a harmless
+            // no-op in that, the far more common, case.
+            document.getElementById('invoiceBox').innerHTML = INVOICE_BOX_TEMPLATE;
             const confirmLoyaltyEl = document.getElementById('confirmLoyaltyNote');
             if (confirmLoyaltyEl) {
                 const justEarned = lastOrder.loyaltyRewardEarned;
