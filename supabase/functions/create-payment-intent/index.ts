@@ -220,7 +220,7 @@ function resolveCharge(totalGBP: number, requestedCurrency: unknown):
   return { ok: true, currency, rate, amount: round2(totalGBP * rate) };
 }
 
-type CartLineIn = { id: unknown; qty: unknown; isSubscription?: unknown };
+type CartLineIn = { id: unknown; qty: unknown; isSubscription?: unknown; name?: unknown };
 type ProductRow = { cat_slug: string; idx: number; price: number; sale_price: number | null; stock: string; weight: number | null; stock_quantity?: number | null };
 type WeightVariant = { label: string; price: number; weight?: number; salePrice?: number };
 function effectiveVariantPrice(v: WeightVariant): number {
@@ -511,6 +511,14 @@ Deno.serve(async (req) => {
     function effective(t: { price: number; salePrice: number | null }): number {
       return t.salePrice !== null && t.salePrice < t.price ? t.salePrice : t.price;
     }
+    // Only ever used inside a rejection message shown back to the customer
+    // who submitted it, never trusted for pricing/stock (trusted() above is
+    // the only source for that). A real order hit this with "one of the
+    // items in your basket just sold out" and no indication which one,
+    // leaving the customer unable to tell what to actually remove.
+    function itemDisplayName(it: CartLineIn): string {
+      return typeof it.name === "string" && it.name.trim() ? it.name.trim() : "One of the items in your basket";
+    }
 
     type PricedLine = { unitPrice: number; qty: number; weight: number; catSlug: string | null; productId: string; stockKey?: string };
     const lines: PricedLine[] = [];
@@ -568,7 +576,7 @@ Deno.serve(async (req) => {
         // could pay for an item nobody can actually fulfil. The client
         // already disables "Add to basket" for an out-of-stock product,
         // but that's a UI nicety, not enforcement — this is the real gate.
-        if (t.stock === "out") { rejection = "One of the items in your basket just went out of stock, please remove it and try again."; break; }
+        if (t.stock === "out") { rejection = `${itemDisplayName(it)} just went out of stock, please remove it and try again.`; break; }
         // Only rejects, never reserves — a genuinely simultaneous
         // checkout on the last unit by two different people can still
         // both pass this check; decrement_stock (called once payment is
@@ -579,8 +587,8 @@ Deno.serve(async (req) => {
           requestedQtyByKey.set(parsed.baseKey, requestedSoFar);
           if (requestedSoFar > t.stockQuantity) {
             rejection = t.stockQuantity <= 0
-              ? "One of the items in your basket just sold out, please remove it and try again."
-              : `Only ${t.stockQuantity} of one item in your basket ${t.stockQuantity === 1 ? 'is' : 'are'} left in stock, please reduce the quantity.`;
+              ? `${itemDisplayName(it)} just sold out, please remove it and try again.`
+              : `Only ${t.stockQuantity} of "${itemDisplayName(it)}" ${t.stockQuantity === 1 ? 'is' : 'are'} left in stock, please reduce the quantity.`;
             break;
           }
         }
