@@ -6035,6 +6035,31 @@
             .install-banner-inner { padding: 14px 16px; }
         }
 
+        /* Same fixed-bottom-bar language as .cookie-notice/.install-banner
+           above, for a new app version that's already active in the
+           background (see the service worker registration code) but
+           hasn't been picked up by this already-open tab/installed app
+           yet - reuses .install-banner-inner/-icon/-text/-actions for the
+           inner layout since those are purely structural, nothing
+           install-specific about them, only the outer positioning and
+           this banner's own two button colours need their own rules. */
+        .update-banner {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 211;
+            background: var(--card-bg);
+            border-top: 1px solid rgba(var(--border-rgb), 0.14);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(.2, .8, .3, 1);
+        }
+        .update-banner.is-visible { transform: translateY(0); }
+        #updateBannerRefreshBtn { background: var(--chartreuse); color: var(--aubergine-deep); }
+        #updateBannerRefreshBtn:hover { background: var(--chartreuse-soft); }
+        #updateBannerLaterBtn { background: none; color: var(--text-muted); }
+
         /* Mirrors .mobile-menu a's own row styling (same font/size/padding/
            divider) since it sits in that same list, just as a <button>
            instead of an <a> - hidden by default, installInit() only
@@ -13492,6 +13517,12 @@
          per-browser/per-platform capability check, not something this
          markup can know in advance. -->
     <div class="install-banner" id="installBanner" role="region" aria-label="Install app notice"></div>
+
+    <!-- Filled in by maybeShowUpdateBanner() once the service worker
+         registration confirms a new version actually activated behind
+         this already-open tab/app (see that function's own comment) -
+         empty until then. -->
+    <div class="update-banner" id="updateBanner" role="region" aria-label="App update available notice"></div>
 
     <!-- Moved here from <head> — performance fix. Both were previously
          blocking <script src> tags in <head>, forcing the browser to
@@ -27235,9 +27266,85 @@
         // after 'load' so it never competes with anything on the critical
         // rendering path, and silently no-ops in any browser without
         // serviceWorker support rather than erroring.
+        //
+        // Reported directly: the installed app never picked up an update
+        // on its own, closing and reopening was the only thing that
+        // worked. sw.js's skipWaiting()/clients.claim() already make a
+        // new version take over almost immediately once it's deployed -
+        // the actual gap was on this side: nothing ever told an
+        // ALREADY-OPEN tab/app that had happened, and in standalone
+        // display mode (see manifest.json) there's no browser chrome at
+        // all, so there was never even a reload button to stumble onto
+        // that would have picked it up by accident. maybeShowUpdateBanner
+        // below closes that gap with the one standard, documented pattern
+        // for this (MDN's own service worker lifecycle guide): listen for
+        // a new worker reaching the "installed" state while this tab is
+        // already controlled by a previous one, then let the visitor
+        // choose when to reload rather than yanking the page out from
+        // under them mid-checkout or mid-edit.
+        let updateBannerHideTimer = null;
+        function dismissUpdateBanner() {
+            const el = document.getElementById('updateBanner');
+            if (!el) return;
+            el.classList.remove('is-visible');
+            if (updateBannerHideTimer) clearTimeout(updateBannerHideTimer);
+            updateBannerHideTimer = setTimeout(() => {
+                updateBannerHideTimer = null;
+                if (!el.classList.contains('is-visible')) el.innerHTML = '';
+            }, 400);
+        }
+        function maybeShowUpdateBanner() {
+            const el = document.getElementById('updateBanner');
+            if (!el) return;
+            // Never stacks on top of the cookie notice or the install
+            // banner - same coordination maybeShowInstallBanner already
+            // does against the cookie notice, extended to cover this one
+            // too since all three share the same fixed-bottom-bar slot.
+            const cookieNotice = document.getElementById('cookieNotice');
+            const installBanner = document.getElementById('installBanner');
+            if (cookieNoticePending
+                || (cookieNotice && cookieNotice.classList.contains('is-visible'))
+                || (installBanner && installBanner.classList.contains('is-visible'))) return;
+            if (updateBannerHideTimer) { clearTimeout(updateBannerHideTimer); updateBannerHideTimer = null; }
+            el.innerHTML = `
+      <div class="install-banner-inner">
+        <div class="install-banner-text">
+          <strong>Update available</strong>
+          <span>A new version of Yo7 Foods is ready. Refresh to get the latest.</span>
+        </div>
+        <div class="install-banner-actions">
+          <button type="button" id="updateBannerRefreshBtn">Refresh</button>
+          <button type="button" id="updateBannerLaterBtn" aria-label="Not now">Later</button>
+        </div>
+      </div>`;
+            document.getElementById('updateBannerRefreshBtn').addEventListener('click', () => location.reload());
+            document.getElementById('updateBannerLaterBtn').addEventListener('click', dismissUpdateBanner);
+            requestAnimationFrame(() => el.classList.add('is-visible'));
+        }
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch((err) => {
+                navigator.serviceWorker.register('/sw.js').then((reg) => {
+                    // Covers the (rare, given skipWaiting() below runs
+                    // unconditionally) case where an update somehow is
+                    // already sitting in "waiting" by the time this runs,
+                    // e.g. a previous page load's update never got acted
+                    // on before this one started.
+                    if (reg.waiting && navigator.serviceWorker.controller) maybeShowUpdateBanner();
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (!newWorker) return;
+                        newWorker.addEventListener('statechange', () => {
+                            // navigator.serviceWorker.controller already
+                            // being set is what distinguishes "this is an
+                            // update replacing a previous version" from
+                            // "this is the very first install" - nothing
+                            // to tell a first-time visitor about.
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                maybeShowUpdateBanner();
+                            }
+                        });
+                    });
+                }).catch((err) => {
                     console.error('Service worker registration failed:', err);
                 });
             });
