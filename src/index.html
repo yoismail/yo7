@@ -14149,11 +14149,14 @@
            pricing_settings table (see supabase-migration-21) — the
            defaults below are only what's shown before that load resolves,
            or if Supabase isn't reachable.
-           Important known gap: this only works once products actually have
-           a real weight set via edit mode. No product has one yet, so every
-           order currently falls into the "up to 10kg" tier by default, not
-           because that's accurate, but because an unweighed item
-           contributes 0kg rather than a guessed figure. */
+           Only works at all for a product that actually has a real weight
+           set (edit a product -> Weight field) - an unweighed item
+           contributes 0kg rather than a guessed figure, so it's priced by
+           whatever tier covers the rest of the order, not necessarily the
+           cheapest one. Every product in the catalogue below already has
+           one set; deliveryWeightGapHint (see renderDeliveryAdmin) warns
+           an admin in the delivery rules panel if a future addition or
+           edit ever leaves one unweighed again. */
         let deliveryWeightTiers = [
             { id: 'tier-10kg', label: 'Up to 10kg', maxWeight: 10, fee: 7.99 },
             { id: 'tier-20kg', label: 'Up to 20kg', maxWeight: 20, fee: 11.99 },
@@ -15285,6 +15288,24 @@
             renderFAQ();
         }
         function renderDeliveryAdmin() {
+            // The weight tiers above only ever charge for the weight a
+            // product actually has set - an unweighed item contributes 0kg,
+            // not a guessed figure (see deliveryWeightTiers' own comment).
+            // Silent before launch is fine while the catalogue is still
+            // being set up, but worth surfacing here specifically, since
+            // this is the one place an admin would otherwise have no way to
+            // know delivery is being under-priced for untracked weight.
+            const gapHint = document.getElementById('deliveryWeightGapHint');
+            if (gapHint) {
+                const real = allProducts().filter(p => p.stock !== 'out');
+                const unweighed = real.filter(p => typeof p.weight !== 'number').length;
+                if (unweighed > 0) {
+                    gapHint.style.display = 'block';
+                    gapHint.textContent = `${unweighed} of ${real.length} in-stock products have no weight set, their orders are priced by the cheapest tier above regardless of actual weight.`;
+                } else {
+                    gapHint.style.display = 'none';
+                }
+            }
             const tiersList = document.getElementById('deliveryWeightTiersList');
             if (tiersList) {
                 const sorted = [...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight);
@@ -15381,6 +15402,7 @@
     <div class="delivery-admin-block">
       <h4>Weight tiers</h4>
       <p style="font-size:11.5px; color:var(--text-muted); margin:-4px 0 10px;">Delivery is priced by total order weight. Only applies to products with a weight set (edit a product &rarr; Weight field).</p>
+      <p id="deliveryWeightGapHint" style="display:none; font-size:11.5px; font-weight:600; color:var(--aubergine); background:var(--orange); border-radius:8px; padding:8px 10px; margin:-4px 0 10px;"></p>
       <div id="deliveryWeightTiersList" class="delivery-rule-list"></div>
       <form id="addWeightTierForm" class="delivery-admin-form">
         <input type="text" id="newTierLabel" placeholder="Label (e.g. Up to 15kg)" required>
