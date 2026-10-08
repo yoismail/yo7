@@ -16515,7 +16515,20 @@
         /* ================= RENDER: HOME CATEGORY GRID ================= */
         const CAT_ACCENTS = ['#063B00', '#266210', '#90B800', '#E1E100'];
         function renderCatGrid() {
-            document.getElementById('catGrid').innerHTML = CATEGORIES.map((c, i) => {
+            // Ordered by GROUPS rather than CATEGORIES' own declaration
+            // order (arbitrary, just the order each was added to the
+            // catalogue over time) - reported directly that related
+            // aisles (meat, poultry, sea-foods; the five vegetable
+            // categories; drinks/dairy/herbal-teas) weren't appearing
+            // near each other. GROUPS already encodes exactly that
+            // logical grouping (same grouping that drives the "Shop by
+            // department" row and group pages), and covers all 26
+            // CATEGORIES slugs exactly once (verified when the four
+            // previously-missing ones were added there), so flattening
+            // it back out gives every category a place without needing
+            // a second, separately-maintained ordering.
+            const orderedCategories = GROUPS.flatMap(g => g.categories.map(slug => findCategory(slug))).filter(Boolean);
+            document.getElementById('catGrid').innerHTML = orderedCategories.map((c, i) => {
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
                 const thumbBlock = c.image
                     ? `<span class="cat-flat-photo" style="background-image:url('${escapeHtml(c.image)}'); background-size:cover; background-position:center;"></span>`
