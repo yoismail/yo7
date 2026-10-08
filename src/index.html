@@ -6747,6 +6747,20 @@
         .product-card:hover .product-photo-img {
             transform: scale(1.06);
         }
+        /* Grid-card photo specifically (not .pd-image or the carousel
+           cards sharing this same .product-photo-img class) - a matted,
+           floating product shot rather than full-bleed to the tile's own
+           edges, with a soft contact shadow grounding it, the small
+           details that read as a considered catalogue photo rather than a
+           plain cropped image. Scoped narrowly (.product-thumb specifically)
+           so .pd-image/the carousel cards keep their own existing full-bleed
+           treatment untouched. */
+        .product-thumb .product-photo-img {
+            inset: 13%;
+            width: 74%;
+            height: 74%;
+            filter: drop-shadow(0 10px 14px rgba(var(--border-rgb), 0.22));
+        }
 
         .thumb-placeholder {
             width: 100%; height: 100%;
