@@ -1979,17 +1979,37 @@
                 width: 29px;
                 height: 29px;
                 border-radius: 9px;
+                position: relative;
             }
 
             .nav-hamburger {
                 width: 29px;
                 height: 29px;
                 border-radius: 9px;
+                position: relative;
             }
 
             .icon-btn {
                 width: 34px;
                 height: 34px;
+            }
+
+            /* Same invisible expanded-tap-target technique as
+               .nav-cart-btn/.nav-notif-btn's own ::after below, applied
+               here too - these were the two tiles in the row that still
+               fell short of it. 6px gap between these two (vs. the 4px
+               cart/notif have to share) leaves a bit more room, so -2px
+               each side rather than -1px, while staying under the
+               ::after's own 2px-of-overlap ceiling needed to avoid
+               fighting over the same pixels. */
+            .nav-account::after,
+            .nav-hamburger::after {
+                content: '';
+                position: absolute;
+                top: -6px;
+                bottom: -6px;
+                left: -2px;
+                right: -2px;
             }
 
             /* The notifications bell (added after this breakpoint was
@@ -16334,7 +16354,7 @@
             document.getElementById('shareSheetName').textContent = p.name;
             const thumb = document.getElementById('shareSheetThumb');
             thumb.innerHTML = p.image
-                ? `<img src="${escapeHtml(p.image)}" alt="">`
+                ? `<img src="${escapeHtml(p.image)}" alt="" loading="lazy" decoding="async">`
                 : `<span class="thumb-placeholder-emoji">${p.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
             // navigator.share opens the device's own native share sheet
             // (every app actually installed - WhatsApp, Messages, Mail,
@@ -18765,7 +18785,7 @@
       <div class="group-card-photo" style="background-image:url('${escapeHtml(c.image)}'); background-size:cover; background-position:center;"></div>
       <div class="group-card-body">
         <h3>${c.name}</h3>
-        <p>${c.tagline}</p>
+        <p>${escapeHtml(c.tagline)}</p>
         <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
@@ -18776,7 +18796,7 @@
       <div class="group-card-photo ${photoClass}"></div>
       <div class="group-card-body">
         <h3>${c.name}</h3>
-        <p>${c.tagline}</p>
+        <p>${escapeHtml(c.tagline)}</p>
         <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
@@ -18786,7 +18806,7 @@
       <div class="group-card-photo no-photo">${c.emoji}</div>
       <div class="group-card-body">
         <h3>${c.name}</h3>
-        <p>${c.tagline}</p>
+        <p>${escapeHtml(c.tagline)}</p>
         <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
     </a>`;
@@ -21157,6 +21177,19 @@
             try { return ['http:', 'https:'].includes(new URL(url).protocol); }
             catch (e) { return false; }
         }
+        // Same reasoning as isHttpUrl above, for a field whose only
+        // legitimate values are in-app hash routes (e.g. the admin
+        // announcement composer's "Link" field, placeholder "#/special-offers"),
+        // never an absolute URL. isHttpUrl would wrongly reject that
+        // intended usage, so this instead only allows a same-origin
+        // relative path: '#...' or '/...' but not '//...' (protocol-
+        // relative, i.e. an off-site URL in disguise) or anything with a
+        // scheme ('javascript:', 'data:', 'https:', ...) before the path.
+        function isSafeInAppLink(link) {
+            if (typeof link !== 'string' || !link) return false;
+            if (link.startsWith('#')) return true;
+            return link.startsWith('/') && !link.startsWith('//');
+        }
         // Same solid colours the status badge itself already uses (just
         // the "color" half of the pair, not the pale background), reused
         // as the card's left-edge accent so the two reinforce each other
@@ -21518,8 +21551,9 @@
             const createdAt = new Date(n.created_at);
             const dateLabel = createdAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                 + ', ' + createdAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            const tag = n.link ? 'a' : 'div';
-            const hrefAttr = n.link ? ` href="${escapeHtml(n.link)}"` : '';
+            const hasSafeLink = isSafeInAppLink(n.link);
+            const tag = hasSafeLink ? 'a' : 'div';
+            const hrefAttr = hasSafeLink ? ` href="${escapeHtml(n.link)}"` : '';
             const type = n.category || (n.user_id ? 'order' : 'announcement');
             // A cancellation shares the plain 'order' category with every
             // other routine status update (placed, out for delivery,
