@@ -6719,26 +6719,21 @@
                accent tint .products-section already glows behind the whole
                page with, concentrated here into an actual backdrop for the
                one thing on the card that's a real photo, rather than just
-               a muted container colour. Faint dot-grain stays underneath
-               for texture. Scoped to .product-thumb specifically - the
-               grid card only, not the shared .product-photo-img class's
-               other contexts. Dark mode gets its own version right below:
-               same shape, the theme's own richer chartreuse tint, a
-               near-black base instead of cream. */
+               a muted container colour. Scoped to .product-thumb
+               specifically - the grid card only, not the shared
+               .product-photo-img class's other contexts. Dark mode gets
+               its own version right below: same shape, the theme's own
+               richer chartreuse tint, a near-black base instead of cream. */
             background:
                 radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%),
-                radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px),
                 linear-gradient(165deg, #f4f7ea, #e8edd6);
-            background-size: auto, 16px 16px, auto;
             position: relative;
             overflow: hidden;
         }
         [data-theme="dark"] .product-thumb {
             background:
                 radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%),
-                radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px),
                 linear-gradient(165deg, #1c2611, #11150a);
-            background-size: auto, 16px 16px, auto;
         }
 
         .product-photo-img {
