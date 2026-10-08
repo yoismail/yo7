@@ -166,8 +166,20 @@ BEGIN
     -- An override row (admin has explicitly set tracking on this
     -- product) takes priority over custom_products, matching how
     -- create-payment-intent's own trusted() already layers the two.
+    -- The CASE also sets the qualitative `stock` status to 'out' the
+    -- moment the tracked count actually reaches zero — without this,
+    -- stock_quantity and stock drift apart the instant real orders run a
+    -- tracked product down to 0: the number is right (checkout correctly
+    -- refuses to sell more), but the admin-set status text still reads
+    -- 'in'/'low' everywhere else (PD page badge, card badge, "Add to
+    -- basket" staying enabled), letting a customer add it to their
+    -- basket and reach checkout before finding out. The WHERE clause's
+    -- own `stock_quantity >= v_qty` guarantees this subtraction can only
+    -- land at 0 or above, never negative, so <= 0 here only ever means
+    -- "exactly 0".
     UPDATE public.product_overrides
-    SET stock_quantity = stock_quantity - v_qty
+    SET stock_quantity = stock_quantity - v_qty,
+        stock = CASE WHEN stock_quantity - v_qty <= 0 THEN 'out' ELSE stock END
     WHERE product_key = v_key AND stock_quantity IS NOT NULL AND stock_quantity >= v_qty;
     GET DIAGNOSTICS v_rows = ROW_COUNT;
     IF v_rows > 0 THEN
@@ -181,7 +193,8 @@ BEGIN
     END IF;
 
     UPDATE public.custom_products
-    SET stock_quantity = stock_quantity - v_qty
+    SET stock_quantity = stock_quantity - v_qty,
+        stock = CASE WHEN stock_quantity - v_qty <= 0 THEN 'out' ELSE stock END
     WHERE cat_slug = v_cat_slug AND idx = v_idx AND stock_quantity IS NOT NULL AND stock_quantity >= v_qty;
     GET DIAGNOSTICS v_rows = ROW_COUNT;
 
