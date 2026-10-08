@@ -1864,7 +1864,7 @@
             flex-direction: column;
             gap: 2px;
             padding: 4px 20px 18px;
-            background: #FFFFFF;
+            background: var(--card-bg);
             overflow-y: auto;
             /* Stops a swipe that runs out of menu to scroll (a short list,
                or one that's already scrolled to its end) from "chaining"
@@ -1894,13 +1894,13 @@
         }
 
         .mobile-menu a {
-            color: #2C1C10;
+            color: var(--heading);
             text-decoration: none;
             font-family: var(--display);
             font-weight: 600;
             font-size: 15px;
             padding: 12px 4px;
-            border-bottom: 1px solid rgba(44, 28, 16, 0.08);
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
         }
 
         .mobile-menu a:last-of-type {
@@ -1921,7 +1921,7 @@
         .mobile-menu-auth {
             margin-top: 6px;
             padding-top: 6px;
-            border-top: 1px solid rgba(44, 28, 16, 0.1);
+            border-top: 1px solid rgba(var(--border-rgb), 0.1);
         }
         .mobile-menu-auth a {
             display: block;
@@ -11389,7 +11389,7 @@
                         <div class="pd-cat-tag" id="pdCatTag"></div>
                         <h1 id="pdName"></h1>
                         <div class="pd-code" id="pdCode"></div>
-                        <a class="pd-rating-summary" id="pdRatingSummary" href="javascript:void(0)" onclick="document.getElementById('pdReviewsSection').scrollIntoView({behavior:'smooth', block:'start'})" style="display:none;">
+                        <a class="pd-rating-summary" id="pdRatingSummary" href="javascript:void(0)" onclick="scrollToReviews()" style="display:none;">
                             <span class="pd-stars" id="pdRatingStars"></span>
                             <span id="pdRatingText"></span>
                         </a>
@@ -19448,6 +19448,18 @@
             let html = '';
             for (let i = 1; i <= 5; i++) html += i <= rounded ? STAR_SVG_FILLED : `<span class="star-empty">${STAR_SVG_EMPTY}</span>`;
             return html;
+        }
+        // Plain scrollIntoView() aligns the reviews section's own top edge
+        // with the viewport's top edge, which is exactly where the fixed
+        // nav+trust bar sits, so the section landed hidden behind them -
+        // same fix already applied to the data-scroll-to handler and the
+        // dish-builder jump elsewhere in this file, just missing here.
+        function scrollToReviews() {
+            const el = document.getElementById('pdReviewsSection');
+            if (!el) return;
+            const fixedHeaderHeight = parseFloat(document.body.style.paddingTop) || 0;
+            const targetY = el.getBoundingClientRect().top + window.scrollY - fixedHeaderHeight - 16;
+            window.scrollTo({ top: targetY, behavior: 'smooth' });
         }
         async function renderProductReviews(catSlug, idx) {
             const key = productKey(catSlug, idx);
