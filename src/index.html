@@ -14150,6 +14150,17 @@
         const ICON_SEARCH = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>';
         function findGroup(slug) { return GROUPS.find(g => g.slug === slug); }
         function groupForCategory(catSlug) { return GROUPS.find(g => g.categories.includes(catSlug)); }
+        // All 26 CATEGORIES in GROUPS' own order instead of CATEGORIES'
+        // own declaration order (arbitrary - just the order each was added
+        // to the catalogue over time), so every category list/dropdown
+        // across the site clusters related aisles together (meat next to
+        // poultry next to sea-foods, etc.) the same way "Shop by
+        // department"/renderCatGrid's homepage grid already does, rather
+        // than each place that lists all categories reading differently.
+        // GROUPS covers all 26 slugs exactly once (verified when the four
+        // previously-missing ones were added there), so nothing from
+        // CATEGORIES is silently dropped here.
+        function orderedCategories() { return GROUPS.flatMap(g => g.categories.map(slug => findCategory(slug))).filter(Boolean); }
         // Admin-set category photo/description, keyed by category slug —
         // loaded from pricing_settings.category_overrides (see
         // loadPricingSettings) and merged onto CATEGORIES in place, the
@@ -15100,7 +15111,7 @@
             }
             const catSelect = document.getElementById('newDiscCategory');
             if (catSelect && !catSelect.dataset.populated) {
-                catSelect.innerHTML = CATEGORIES.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+                catSelect.innerHTML = orderedCategories().map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
                 catSelect.dataset.populated = 'true';
             }
             const prodSelect = document.getElementById('newDiscProduct');
@@ -16515,20 +16526,7 @@
         /* ================= RENDER: HOME CATEGORY GRID ================= */
         const CAT_ACCENTS = ['#063B00', '#266210', '#90B800', '#E1E100'];
         function renderCatGrid() {
-            // Ordered by GROUPS rather than CATEGORIES' own declaration
-            // order (arbitrary, just the order each was added to the
-            // catalogue over time) - reported directly that related
-            // aisles (meat, poultry, sea-foods; the five vegetable
-            // categories; drinks/dairy/herbal-teas) weren't appearing
-            // near each other. GROUPS already encodes exactly that
-            // logical grouping (same grouping that drives the "Shop by
-            // department" row and group pages), and covers all 26
-            // CATEGORIES slugs exactly once (verified when the four
-            // previously-missing ones were added there), so flattening
-            // it back out gives every category a place without needing
-            // a second, separately-maintained ordering.
-            const orderedCategories = GROUPS.flatMap(g => g.categories.map(slug => findCategory(slug))).filter(Boolean);
-            document.getElementById('catGrid').innerHTML = orderedCategories.map((c, i) => {
+            document.getElementById('catGrid').innerHTML = orderedCategories().map((c, i) => {
                 const photoClass = CATEGORY_PHOTO_CLASS[c.slug];
                 const thumbBlock = c.image
                     ? `<span class="cat-flat-photo" style="background-image:url('${escapeHtml(c.image)}'); background-size:cover; background-position:center;"></span>`
@@ -16784,7 +16782,7 @@
             const card = btnEl ? btnEl.closest('.bundle-card') : document.getElementById(`bundleCard-${bi}`);
             if (!card || !bundle) return;
             bundleEditNewItems = [...(bundle.items || [])];
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
       <h3>Edit bundle</h3>
       <div class="field"><label for="bbe-name">Bundle name</label><input type="text" id="bbe-name" value="${escapeHtml(bundle.name)}"></div>
@@ -16914,7 +16912,7 @@
             const slot = document.getElementById('addBundleSlot');
             if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newBundleItems = []; return; }
             newBundleItems = [];
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             slot.innerHTML = `
         <div class="add-product-form">
           <h3>Add a new bundle</h3>
@@ -17146,7 +17144,7 @@
             panel.style.display = 'none';
             dishEditNewItems = [...(dish.items || [])];
             dishEditIconSvg = dish.emoji;
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             slot.innerHTML = `
       <div class="dish-builder-edit-form add-product-form">
         <h3>Edit dish</h3>
@@ -17248,7 +17246,7 @@
             if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newDishItems = []; return; }
             newDishItems = [];
             newDishIconSvg = DEFAULT_DISH_ICON_SVG;
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             slot.innerHTML = `
         <div class="add-product-form">
           <h3>Add a new dish</h3>
@@ -17435,7 +17433,7 @@
             const card = btnEl ? btnEl.closest('.combo-card') : document.getElementById(`comboCard-${ci}`);
             if (!card || !combo) return;
             comboEditNewItems = [...(combo.items || [])];
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
       <h3>Edit combo</h3>
       <div class="field"><label for="cce-name">Combo name</label><input type="text" id="cce-name" value="${escapeHtml(combo.name)}"></div>
@@ -17519,7 +17517,7 @@
             const slot = document.getElementById('addComboSlot');
             if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newComboItems = []; return; }
             newComboItems = [];
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             slot.innerHTML = `
         <div class="add-product-form">
           <h3>Add a new combo</h3>
@@ -17656,7 +17654,7 @@
         window.addBundleToCart = addBundleToCart;
 
         function renderCatStrip(activeSlug) {
-            const chipsHTML = CATEGORIES.map(c => `
+            const chipsHTML = orderedCategories().map(c => `
     <a class="cat-chip ${c.slug === activeSlug ? 'active' : ''}" href="#/category/${c.slug}">${c.name}</a>`).join('');
             // duplicated once for a seamless auto-scrolling loop
             document.getElementById('catNavStrip').innerHTML = chipsHTML + chipsHTML;
@@ -17672,7 +17670,7 @@
             // whole new category page rather than refiltering in place.
             const activeCat = CATEGORIES.find(c => c.slug === activeSlug);
             document.getElementById('catFilterLabel').textContent = activeCat ? `Filter: ${activeCat.name.replace(/&amp;/g, '&')}` : 'Filter';
-            document.getElementById('catFilterDropdown').innerHTML = CATEGORIES.map(c => `
+            document.getElementById('catFilterDropdown').innerHTML = orderedCategories().map(c => `
     <a class="shop-all-filter-item ${c.slug === activeSlug ? 'active' : ''}" href="#/category/${c.slug}">${c.name.replace(/&amp;/g, '&')}</a>`).join('');
             // Closing on hashchange (see closeCatFilter's own wiring)
             // misses the one case where the link's href equals the
@@ -18403,7 +18401,7 @@
             const slot = document.getElementById(slotId);
             if (!slot) return;
             if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; return; }
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g, '&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g, '&')}</option>`).join('');
             slot.innerHTML = `
         <div class="add-product-form">
           <h3>Add a product to special offers</h3>
@@ -24727,7 +24725,7 @@
         function openAddProductForm(slotId, presetCategorySlug) {
             const slot = document.getElementById(slotId);
             if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; return; } // toggle closed if already open
-            const catOptions = CATEGORIES.map(c => `<option value="${c.slug}" ${c.slug === presetCategorySlug ? 'selected' : ''}>${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}" ${c.slug === presetCategorySlug ? 'selected' : ''}>${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             const uid = slotId; // unique enough per slot
             slot.innerHTML = `
         <div class="add-product-form">
