@@ -7930,13 +7930,18 @@
             position: relative;
             width: 100%;
             aspect-ratio: 1;
-            background: radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
-            background-size: 14px 14px, auto;
+            /* Same brand-tinted spotlight as .product-thumb/the homepage
+               carousels/the PD page hero, applied here too so the
+               checkout upsell cards match the rest of the site. */
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--text-faint);
             font-size: 22px;
+        }
+        [data-theme="dark"] .checkout-upsell-thumb {
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
         }
         .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: contain; }
         .checkout-upsell-body {
