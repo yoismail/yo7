@@ -4401,12 +4401,12 @@
         .best-seller-card .thumb {
             aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 6px;
-            /* Faint dot-grain layer under the brand gradient — cheap (a
-               repeating CSS gradient, no image request, no per-frame
-               cost) but it's the difference between a flat colour swatch
-               and a textured, considered surface. */
-            background: radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
-            background-size: 16px 16px, auto;
+            /* Same brand-tinted spotlight as .product-thumb (the shop grid
+               card), applied here too so the carousel cards match it. */
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6);
+        }
+        [data-theme="dark"] .best-seller-card .thumb {
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
         }
         /* Bright yellow pill badge — the site's own accent colour
            (var(--orange), same pairing as the section-eyebrow pills)
@@ -4496,7 +4496,8 @@
         /* transform only, no box-shadow transition — see the comment on
            a.best-seller-card:hover for why. */
         .new-card:hover { transform: translateY(-8px); }
-        .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px), linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); background-size: 16px 16px, auto; }
+        .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6); }
+        [data-theme="dark"] .new-card .thumb { background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
         .new-tag {
@@ -4746,7 +4747,8 @@
         /* transform only, no box-shadow transition — see the comment on
            a.best-seller-card:hover for why. */
         a.offer-card:hover { transform: translateY(-8px); }
-        .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px), linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2)); background-size: 16px 16px, auto; }
+        .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6); }
+        [data-theme="dark"] .offer-card .thumb { background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a); }
         /* Edit-mode-only "take this product off special offers" control —
            same on/off mechanism as every other admin-only button on the
            site (body.edit-mode-on toggles display), and functionally just
