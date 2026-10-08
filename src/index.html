@@ -6712,14 +6712,28 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            /* Faint dot-grain layer under the brand gradient — cheap (a
-               repeating CSS gradient, no image request, no per-frame
-               cost) but it's the difference between a flat colour swatch
-               and a textured, considered surface. */
-            background: radial-gradient(rgba(var(--border-rgb), 0.05) 1px, transparent 1px), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
-            background-size: 16px 16px, auto;
+            /* A soft, brand-tinted studio "spotlight" behind the product,
+               not the flat neutral beige/brown swatch (var(--thumb-grad-1/2),
+               shared with .pd-image and the homepage carousel cards, left
+               untouched there) this used to lean on alone. Same chartreuse
+               accent tint .products-section already glows behind the whole
+               page with, concentrated here into an actual backdrop for the
+               one thing on the card that's a real photo, rather than just
+               a muted container colour. Scoped to .product-thumb
+               specifically - the grid card only, not the shared
+               .product-photo-img class's other contexts. Dark mode gets
+               its own version right below: same shape, the theme's own
+               richer chartreuse tint, a near-black base instead of cream. */
+            background:
+                radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%),
+                linear-gradient(165deg, #f4f7ea, #e8edd6);
             position: relative;
             overflow: hidden;
+        }
+        [data-theme="dark"] .product-thumb {
+            background:
+                radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%),
+                linear-gradient(165deg, #1c2611, #11150a);
         }
 
         .product-photo-img {
@@ -6746,6 +6760,20 @@
         }
         .product-card:hover .product-photo-img {
             transform: scale(1.06);
+        }
+        /* Grid-card photo specifically (not .pd-image or the carousel
+           cards sharing this same .product-photo-img class) - a matted,
+           floating product shot rather than full-bleed to the tile's own
+           edges, with a soft contact shadow grounding it, the small
+           details that read as a considered catalogue photo rather than a
+           plain cropped image. Scoped narrowly (.product-thumb specifically)
+           so .pd-image/the carousel cards keep their own existing full-bleed
+           treatment untouched. */
+        .product-thumb .product-photo-img {
+            inset: 13%;
+            width: 74%;
+            height: 74%;
+            filter: drop-shadow(0 10px 14px rgba(var(--border-rgb), 0.22));
         }
 
         .thumb-placeholder {
