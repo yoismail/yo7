@@ -7180,13 +7180,18 @@
         .pd-image {
             aspect-ratio: 1/1;
             border-radius: 24px;
-            background: radial-gradient(rgba(var(--border-rgb), 0.05) 1.5px, transparent 1.5px), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
-            background-size: 20px 20px, auto;
+            /* Same brand-tinted spotlight as .product-thumb (the shop grid
+               card) and the homepage carousel cards, applied here too so
+               the product detail page's hero image matches. */
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
+        }
+        [data-theme="dark"] .pd-image {
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
         }
 
         .pd-image .product-photo-img { width: 100%; height: 100%; object-fit: contain; }
