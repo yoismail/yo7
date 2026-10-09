@@ -18532,13 +18532,31 @@
             // position:fixed right under the nav — exactly where a thumb
             // often lands to start an ordinary page scroll — so a normal
             // vertical scroll with any diagonal drift kept triggering it,
-            // freezing the ticker for 2s at a time. That's what "freezes
-            // intermittently" on real devices actually was.
+            // freezing the ticker for 2s at a time. That was the first
+            // "freezes intermittently" bug here.
+            //
+            // Still reported after that fix, because this comment's own
+            // "desktop hover only" claim was never actually enforced below
+            // - mouseenter/mouseleave were attached unconditionally, and
+            // touch devices can and do fire a synthetic mouseenter on tap
+            // (the same browser click-emulation behaviour already
+            // documented on initLaunchBannerRotator below, which is why
+            // that one re-checks live state instead of trusting a cached
+            // flag). A tap landing on this bar - again, exactly where a
+            // thumb starts an ordinary scroll - paused the ticker via that
+            // synthetic mouseenter, with no guaranteed matching
+            // mouseleave to un-pause it on a device with no real pointer
+            // to "leave" with. Gating attachment behind the same
+            // hover-capable check initLaunchBannerRotator already uses
+            // (window.matchMedia('(hover: hover) and (pointer: fine)'))
+            // means a touch device never registers these listeners at
+            // all, so it can't get stuck paused this way either.
             const track = document.getElementById('trustBarTrack');
             if (!track) return;
-            let resumeTimer = null;
-            track.addEventListener('mouseenter', () => { clearTimeout(resumeTimer); track.classList.add('paused'); });
-            track.addEventListener('mouseleave', () => { clearTimeout(resumeTimer); track.classList.remove('paused'); });
+            const hoverCapable = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            if (!hoverCapable) return;
+            track.addEventListener('mouseenter', () => track.classList.add('paused'));
+            track.addEventListener('mouseleave', () => track.classList.remove('paused'));
         })();
 
         // Crossfades the launch banner between its two slides (see the
