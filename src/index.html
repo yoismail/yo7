@@ -1588,6 +1588,12 @@
         }
         .currency-fab-wrap.is-visible { display: block; }
         .currency-fab-wrap.float-suppressed { display: none !important; }
+        /* On the homepage only, the vertical-centre position above lands
+           right on top of the launch banner's CTA button at narrow
+           widths before the page has been scrolled - same threshold
+           .float-cart/.float-order already wait for below, reused here
+           so the fab simply isn't there yet to collide with anything. */
+        .currency-fab-wrap.hero-pending { display: none !important; }
 
         .currency-fab {
             position: relative;
@@ -3406,6 +3412,12 @@
         .apply-form-heading svg { width: 16px; height: 16px; color: var(--chartreuse-rich); flex-shrink: 0; }
         .apply-form-actions { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
         .apply-form-cancel { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; text-decoration: underline; }
+        /* "Submit application" is long enough to wrap to two lines at
+           320px, where .btn-primary's shared 999px stadium radius pinches
+           the wrapped text against the edges. Scoped to this form instead
+           of changing .btn-primary everywhere else it's used short and
+           single-line. */
+        .apply-form-actions .btn-primary { border-radius: 14px; }
         /* ::file-selector-button is the one part of a native file input
            that accepts real styling, so that's what carries the brand
            look here; border/radius/background on the input itself still
@@ -16763,12 +16775,12 @@
         window.setBundleDiscount = setBundleDiscount;
 
         /* ================= EDIT AN EXISTING BUNDLE (edit mode) =================
-           Mirrors openComboEdit/saveComboEdit below almost exactly — bundles
+           Mirrors openComboEdit/saveComboEdit below almost exactly - bundles
            previously had no way to rename, re-tagline, or change the items
            of a bundle that already existed (only a brand new one, or that
            one's discount %/item weights), so there was no "Save changes"
-           to find. A bundle still needs at least 2 items, same rule as
-           creating one (see saveNewBundle). */
+           to find. A bundle still needs at least 2 items, same rule the
+           old bundle-creation form used to enforce. */
         let bundleEditNewItems = null;
         function openBundleEdit(bi, btnEl) {
             const bundle = BUNDLES[bi];
@@ -16905,73 +16917,6 @@
             if (removed) logAdminAction('bundle_removed', 'bundle', removed.name, null);
         }
         window.removeBundle = removeBundle;
-
-        /* ================= ADD A BUNDLE (edit mode) ================= */
-        let newBundleItems = [];
-        function openAddBundleForm() {
-            const slot = document.getElementById('addBundleSlot');
-            if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newBundleItems = []; return; }
-            newBundleItems = [];
-            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
-            slot.innerHTML = `
-        <div class="add-product-form">
-          <h3>Add a new bundle</h3>
-          <div class="apf-row">
-            <div><label for="abf-name">Bundle name</label><input type="text" id="abf-name" placeholder="e.g. Sunday Stew Pot"></div>
-            <div><label for="abf-tagline">Tagline</label><input type="text" id="abf-tagline" placeholder="e.g. A rich, slow stew from scratch."></div>
-          </div>
-          <div id="abf-items-list" class="delivery-rule-list"></div>
-          <div class="apf-row">
-            <div><label for="abf-cat">Category</label><select id="abf-cat"></select></div>
-            <div><label for="abf-product">Product</label><select id="abf-product"></select></div>
-          </div>
-          <button type="button" class="ep-save" style="margin-bottom:14px;" onclick="addItemToNewBundle()">Add item to bundle</button>
-          <div class="apf-actions">
-            <button class="apf-save" type="button" onclick="saveNewBundle()">Create bundle</button>
-            <button class="apf-cancel" type="button" onclick="document.getElementById('addBundleSlot').innerHTML=''; newBundleItems=[];">Cancel</button>
-          </div>
-        </div>`;
-            document.getElementById('abf-cat').innerHTML = catOptions;
-            populateAbfProductSelect();
-            document.getElementById('abf-cat').addEventListener('change', populateAbfProductSelect);
-        }
-        window.openAddBundleForm = openAddBundleForm;
-        function populateAbfProductSelect() {
-            const catSlug = document.getElementById('abf-cat').value;
-            const cat = findCategory(catSlug);
-            const select = document.getElementById('abf-product');
-            select.innerHTML = productVariantOptionsHTML(cat);
-        }
-        function addItemToNewBundle() {
-            const catSlug = document.getElementById('abf-cat').value;
-            const { idx, variantLabel } = parseProductOptionValue(document.getElementById('abf-product').value);
-            const p = getProduct(catSlug, idx);
-            if (!p) return;
-            newBundleItems.push(variantLabel !== undefined ? { catSlug, idx, variantLabel } : { catSlug, idx });
-            addItemToNewBundle_refresh();
-        }
-        window.addItemToNewBundle = addItemToNewBundle;
-        function addItemToNewBundle_refresh() {
-            document.getElementById('abf-items-list').innerHTML = newBundleItems.map((ref, i) => {
-                const item = resolveComboItem(ref);
-                return `<div class="delivery-rule-row"><span>${comboItemLabelHTML(item)}</span><button type="button" class="rule-remove-btn" onclick="newBundleItems.splice(${i},1); addItemToNewBundle_refresh();">Remove</button></div>`;
-            }).join('');
-        }
-        window.addItemToNewBundle_refresh = addItemToNewBundle_refresh;
-        function saveNewBundle() {
-            const name = document.getElementById('abf-name').value.trim();
-            const tagline = document.getElementById('abf-tagline').value.trim();
-            if (!name || newBundleItems.length < 2) { showToast('Give the bundle a name and at least 2 items.'); return; }
-            const itemNames = newBundleItems.map(r => { const p = resolveComboItem(r); return p ? comboItemLabel(p) : '?'; }).join(', ');
-            BUNDLES.push({ name, tagline: tagline || '', items: [...newBundleItems] });
-            document.getElementById('addBundleSlot').innerHTML = '';
-            newBundleItems = [];
-            renderBundles();
-            savePricingSettings();
-            logAdminAction('bundle_created', 'bundle', name, { items: itemNames });
-            showToast(`Added bundle "${name}".`, undefined, 'success');
-        }
-        window.saveNewBundle = saveNewBundle;
 
         /* ================= COMBOS (advertised meal deals) =================
            Distinct from BUNDLES: bundles are real products at their real
@@ -18675,12 +18620,17 @@
             const outOfStock = stock === 'out';
             const variantCount = Array.isArray(p.weightVariants) ? p.weightVariants.length : 0;
             const cardDelay = ((i || 0) % 10) * 0.045;
+            const favKey = `${p.catSlug}::${pidx}`;
+            const favorited = isFavorited(p.catSlug, pidx);
             return `
     <div class="product-card${p.deleted ? ' is-deleted' : ''}" data-cat="${p.catSlug}" data-idx="${pidx}" style="--card-delay:${cardDelay.toFixed(3)}s">
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
           ${p.deleted ? `<span class="stock-badge deleted">Deleted</span>` : (stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : '')}
           ${productPhotoHTML(p, p.name)}
+          <button class="card-fav-btn${favorited ? ' is-favorited' : ''}" type="button" data-fav-key="${favKey}" aria-pressed="${favorited}" aria-label="${favorited ? 'Remove from favorites' : 'Add to favorites'}" onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromCard('${p.catSlug}', ${pidx}, this);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          </button>
           <button class="card-edit-btn" type="button" aria-label="Edit product" onclick="event.preventDefault(); event.stopPropagation(); openEditPanel(this.closest('.product-card'), '${p.catSlug}', ${pidx});">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
@@ -26477,12 +26427,26 @@
         const floatOrder = document.getElementById('floatOrder');
         const floatCart = document.getElementById('floatCart');
         const mainNavEl = document.getElementById('mainNav');
+        const currencyFabWrapScrollEl = document.getElementById('currencyFabWrap');
         function onScroll() {
             floatOrder.classList.toggle('is-visible', window.scrollY > 260);
             if (floatCart) floatCart.classList.toggle('is-visible', window.scrollY > 260);
+            const onHomepage = window.location.hash === '' || window.location.hash === '#/';
             if (mainNavEl) {
-                const onHomepage = window.location.hash === '' || window.location.hash === '#/';
                 mainNavEl.classList.toggle('nav-solid', !onHomepage || window.scrollY > 80);
+            }
+            if (currencyFabWrapScrollEl) {
+                // location.hash alone isn't reliable here: the router
+                // rewrites a hash route to a clean pushState path and
+                // clears the hash without firing 'hashchange', so by the
+                // time a real scroll happens on, say, a category page,
+                // onHomepage above would already be reading a stale ''
+                // and wrongly call it the homepage too. The view-home
+                // element's own hidden state doesn't depend on the URL at
+                // all, so it stays correct regardless of how we got here.
+                const homeViewEl = document.getElementById('view-home');
+                const onHomeView = !!(homeViewEl && !homeViewEl.classList.contains('hidden-view'));
+                currencyFabWrapScrollEl.classList.toggle('hero-pending', onHomeView && window.scrollY <= 260);
             }
         }
         window.addEventListener('scroll', onScroll, { passive: true });
@@ -26949,8 +26913,6 @@
             renderCurrencySwitch();
             showToast(`Live rates refreshed (${(data?.updated || []).join(', ') || 'none changed'}).`, undefined, 'success');
         }
-        const addBundleBtn = document.getElementById('addBundleBtn');
-        if (addBundleBtn) addBundleBtn.addEventListener('click', openAddBundleForm);
         renderCombos();
         const addComboBtn = document.getElementById('addComboBtn');
         if (addComboBtn) addComboBtn.addEventListener('click', openAddComboForm);
