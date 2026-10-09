@@ -9398,6 +9398,20 @@
             color: var(--aubergine-deep);
             padding-top: 10px;
             padding-bottom: 10px;
+            animation: hoursTodayPulse 2.6s ease-in-out infinite;
+        }
+        /* A slow brightness breathe, not an on/off blink - a hard blink
+           reads as dated and is a real accessibility concern (WCAG flags
+           blinking content). brightness() moves the whole cell (fill and
+           text together) so it stays one coherent unit through the cycle
+           rather than the text swimming against a separately-animated
+           background. */
+        @keyframes hoursTodayPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.12); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hours-table tr.today td { animation: none; }
         }
 
         .hours-table tr.today td:first-child {
