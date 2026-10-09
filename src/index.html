@@ -9383,21 +9383,32 @@
             color: var(--heading);
         }
 
+        /* One continuous highlight bar across the whole row (day cell +
+           time cell share the same background, rounded only at the two
+           outer corners) rather than two separate text-highlighter
+           patches with a gap between them - reads as "this whole row is
+           today" at a glance instead of two disconnected marks. */
+        .hours-table tr.today {
+            border-bottom: none;
+        }
+
         .hours-table tr.today td {
             font-weight: 700;
-        }
-
-        .hours-table tr.today td span {
             background: var(--orange);
             color: var(--aubergine-deep);
-            padding: 3px 8px;
-            border-radius: 6px;
-            box-decoration-break: clone;
-            -webkit-box-decoration-break: clone;
+            padding-top: 10px;
+            padding-bottom: 10px;
         }
 
-        .hours-table tr.today td:last-child span {
-            display: inline-block;
+        .hours-table tr.today td:first-child {
+            padding-left: 12px;
+            border-radius: 10px 0 0 10px;
+        }
+
+        .hours-table tr.today td:last-child {
+            padding-right: 12px;
+            border-radius: 0 10px 10px 0;
+            color: var(--aubergine-deep);
         }
 
         .open-badge {
