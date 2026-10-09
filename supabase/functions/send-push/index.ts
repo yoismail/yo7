@@ -231,6 +231,31 @@ async function encryptPayload(opts: {
 
 // ---------------- Sending ----------------
 
+// push_subscriptions.endpoint is only ever supposed to be a URL the
+// browser's own Push API handed back (reg.pushManager.subscribe() in
+// src/index.html), but RLS on that table only checks user_id, not the
+// endpoint's shape, so a signed-in user can call supabase-js directly
+// and upsert any string there. Without this check, sendPush() below
+// would fetch() an attacker-chosen URL with the service role's network
+// access (a server-side request forgery). Every real push service's
+// endpoint lives on one of these hosts, so anything else is rejected
+// before the VAPID JWT is even built or a network request is made.
+const ALLOWED_PUSH_HOSTS = [
+  "fcm.googleapis.com", // Chrome, Edge, other Chromium browsers
+  "updates.push.services.mozilla.com", // Firefox
+  "web.push.apple.com", // Safari
+];
+function isAllowedPushEndpoint(endpoint: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  return ALLOWED_PUSH_HOSTS.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
+}
+
 interface PushSubscriptionRow {
   endpoint: string;
   p256dh: string;
@@ -343,6 +368,11 @@ Deno.serve(async (req) => {
   const deadEndpoints: string[] = [];
   await Promise.all(
     subs.map(async (sub: PushSubscriptionRow) => {
+      if (!isAllowedPushEndpoint(sub.endpoint)) {
+        console.error(`send-push: rejected endpoint outside the known push-service hosts: ${sub.endpoint}`);
+        deadEndpoints.push(sub.endpoint);
+        return;
+      }
       try {
         const { ok, status } = await sendPush(sub, payload, vapidPublicB64, vapidPrivateB64, vapidSubject);
         if (ok) {
