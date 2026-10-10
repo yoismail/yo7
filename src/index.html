@@ -14268,8 +14268,26 @@
         // rest of the site's offline-safe fallbacks.
         async function loadPricingSettings() {
             if (!supabaseClient) return;
-            const { data, error } = await supabaseClient.from('pricing_settings').select('*').eq('id', true).maybeSingle();
-            if (error || !data) return;
+            // Reported directly: a customer on a visibly weak mobile
+            // connection never saw the currency selector at all, even
+            // though it was genuinely configured. This single fetch had
+            // no retry and no logging, so one transient network blip
+            // during page load silently and permanently disabled
+            // multi-currency (and every other setting here) for their
+            // whole session, with no way to tell afterward why. Two short
+            // retries before giving up, same fallback-to-defaults
+            // philosophy as always below, just not giving up on the very
+            // first hiccup.
+            let data, error;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                ({ data, error } = await supabaseClient.from('pricing_settings').select('*').eq('id', true).maybeSingle());
+                if (!error) break;
+                if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+            }
+            if (error || !data) {
+                if (error) console.error('loadPricingSettings failed after retries:', error.message);
+                return;
+            }
             if (Array.isArray(data.delivery_weight_tiers) && data.delivery_weight_tiers.length) {
                 deliveryWeightTiers = data.delivery_weight_tiers.map(t => ({ ...t, maxWeight: t.maxWeight === null ? Infinity : t.maxWeight }));
             }
