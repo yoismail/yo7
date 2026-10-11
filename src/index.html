@@ -25144,6 +25144,7 @@
                 currentHash === '#/notifications' ||
                 currentHash === '#/refer' ||
                 currentHash === '#/buy-again' ||
+                currentHash === '#/order-confirmation' ||
                 currentHash === '#/admin' || currentHash === '#/admin/orders' ||
                 currentHash.startsWith('#/admin/order/');
             if (needsSessionRerender) {
@@ -25157,6 +25158,24 @@
                 // filled in) and is the only part of that route dispatch
                 // that actually needed the session to be ready.
                 prefillDeliveryFromLastOrder();
+            } else if (currentHash.startsWith('#/product/') && pdCurrent) {
+                // renderStockAlertButton() already avoids flashing the
+                // wrong state while its own subscribed-or-not check is in
+                // flight (see its comment), but that check only ever runs
+                // with whatever currentSupabaseUser was at the time - if
+                // that was still unknown (session restore not resolved
+                // yet), it reads as "not signed in" and shows a clickable
+                // "Notify me", not just briefly but for the rest of that
+                // page view, since nothing else re-checks it. Same story
+                // for the review form (shows "Log in to write a review" to
+                // an already-signed-in visitor and can't pre-fill their
+                // existing review) and the delete-my-review button (isOwn
+                // reads currentSupabaseUser too). A full route()
+                // re-dispatch would also fix all of this but resets the
+                // qty/variant pickers a visitor may have already touched
+                // in that window, so just these two are re-checked instead.
+                renderStockAlertButton(pdCurrent.catSlug, pdCurrent.idx, (pdCurrent.stock || 'in') === 'out');
+                renderProductReviews(pdCurrent.catSlug, pdCurrent.idx);
             }
         }
         restoreSupabaseSession();
@@ -26766,7 +26785,19 @@
         renderCatGrid();
         renderBundles();
         renderDeliveryAdmin();
-        loadLoyaltySettings().then(syncLoyaltyState);
+        // A hard refresh landing straight on #/checkout calls
+        // renderCartList() (which reads pendingLoyaltyReward() for the
+        // "reward earned" note) before this resolves - unlike the other
+        // boot loads above, nothing else re-triggers renderCartList() on
+        // its own afterward, so an already-earned reward could stay
+        // missing from the display for the rest of that checkout session,
+        // not just flash briefly. Re-rendering the cart step once this
+        // settles, if it's actually on screen, fixes that the same way
+        // the currency-switch handler above already refreshes it.
+        loadLoyaltySettings().then(() => syncLoyaltyState()).then(() => {
+            const checkoutView = document.getElementById('view-checkout');
+            if (checkoutView && !checkoutView.classList.contains('hidden-view')) renderCartList();
+        });
         // Loads real, admin-configured delivery/subscription/bundle rates
         // for every visitor (not just when an admin opens edit mode) —
         // the defaults rendered just above are only what's shown until
