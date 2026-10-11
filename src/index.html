@@ -19211,6 +19211,17 @@
             // deleted from (edit mode keeps it visible there), not from a
             // page that's otherwise indistinguishable from any live product.
             if (!p || p.deleted) {
+                // An admin-added product doesn't exist in cat.products at
+                // all until applyProductOverrides() has resolved once (see
+                // its own comment) - reported directly as a false "Product
+                // not found" flash on refresh. Still in flight here, so
+                // leave the page in its natural empty/loading state rather
+                // than show that; applyProductOverrides() calls route()
+                // itself once it resolves, re-rendering this for real
+                // either way. p.deleted can't be hit this early (it only
+                // becomes true once the very data that sets it has loaded),
+                // so this only ever holds the genuinely-missing case back.
+                if (!p && !initialOverridesAttempted) return;
                 clearProductJsonLd();
                 document.getElementById('pdName').textContent = 'Product not found';
                 document.getElementById('pdCrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; Not found`;
@@ -25198,8 +25209,17 @@
             });
             assignProductCodes();
         }
+        // An admin-added product (see loadCustomProducts below) doesn't
+        // exist in cat.products at all until this first resolves - only
+        // then does getProduct() find it. renderProductPage checks this
+        // flag before showing its "not found" state, so a hard refresh
+        // landing directly on one of these pages shows nothing rather
+        // than a false "Product not found" flash while this is still in
+        // flight, the route() call below re-renders it correctly either
+        // way once this settles.
+        let initialOverridesAttempted = false;
         async function applyProductOverrides(opts) {
-            if (!supabaseClient) return;
+            if (!supabaseClient) { initialOverridesAttempted = true; return; }
             // These two reads are independent, so fetched in parallel to cut
             // the network latency roughly in half rather than paying for
             // two round trips back to back — but still PROCESSED in this
@@ -25213,7 +25233,7 @@
                 supabaseClient.from('product_overrides').select('*'),
             ]);
             const { data, error } = overridesRes;
-            if (error || !data) return;
+            if (error || !data) { initialOverridesAttempted = true; return; }
             data.forEach(row => {
                 const [catSlug, idxStr] = String(row.product_key).split('::');
                 const cat = findCategory(catSlug);
@@ -25246,6 +25266,7 @@
                 if (row.cooking_tip) product.cookingTip = row.cooking_tip;
                 product.deleted = row.deleted === true;
             });
+            initialOverridesAttempted = true;
             // skipRerender: true from refreshCatalogOnForeground() below,
             // which decides for itself whether/how to re-render — every
             // other caller wants the normal immediate re-render.
