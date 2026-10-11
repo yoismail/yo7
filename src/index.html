@@ -16532,13 +16532,22 @@
         // same distinction mergeGuestCartIntoAccount makes for the basket -
         // whatever was favorited as a guest before logging in is kept, not
         // silently dropped in favour of the account's own list.
+        // Checked by renderFavoritesPage before it'll show the real "No
+        // favorites yet" empty state - a hard refresh landing straight on
+        // #/favorites runs that render before whichever of the two
+        // functions below has resolved, so a signed-in customer whose
+        // favorites haven't merged/loaded in yet would otherwise see that
+        // false claim for a moment. Set on every exit path of both
+        // (success, error, or no session to load for), never left
+        // perpetually false.
+        let accountFavoritesSettled = false;
         async function mergeGuestFavoritesIntoAccount() {
-            if (!supabaseClient || !currentSupabaseUser) return;
+            if (!supabaseClient || !currentSupabaseUser) { accountFavoritesSettled = true; return; }
             const userId = currentSupabaseUser.id;
             const guestFavorites = favorites;
             const serverKeys = await fetchAccountFavoriteKeys(userId);
-            if (serverKeys === null) return;
-            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) return;
+            if (serverKeys === null) { accountFavoritesSettled = true; return; }
+            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) { accountFavoritesSettled = true; return; }
             const merged = [...new Set([...serverKeys, ...guestFavorites])];
             const missingServerSide = merged.filter(k => !serverKeys.includes(k));
             favorites = merged;
@@ -16549,6 +16558,7 @@
                     .upsert(missingServerSide.map(k => ({ user_id: userId, product_key: k })), { onConflict: 'user_id,product_key', ignoreDuplicates: true })
                     .then(({ error }) => { if (error) console.error('Favorites merge sync failed:', error.message); });
             }
+            accountFavoritesSettled = true;
             renderFavoritesButtonStates();
         }
         // Called on every ordinary page load/refresh while already signed
@@ -16556,14 +16566,15 @@
         // loadAccountCart, no merge with whatever's sitting in localStorage
         // from a previous guest session on this device.
         async function loadAccountFavorites() {
-            if (!supabaseClient || !currentSupabaseUser) return;
+            if (!supabaseClient || !currentSupabaseUser) { accountFavoritesSettled = true; return; }
             const userId = currentSupabaseUser.id;
             const serverKeys = await fetchAccountFavoriteKeys(userId);
-            if (serverKeys === null) return;
-            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) return;
+            if (serverKeys === null) { accountFavoritesSettled = true; return; }
+            if (!currentSupabaseUser || currentSupabaseUser.id !== userId) { accountFavoritesSettled = true; return; }
             favorites = serverKeys;
             tagFavoritesOwner(userId);
             saveFavoritesToStorage();
+            accountFavoritesSettled = true;
             renderFavoritesButtonStates();
         }
         function renderFavoritesButtonStates() {
@@ -22009,6 +22020,15 @@
         // page (best sellers, new arrivals, special offers) already uses,
         // rather than the carousel's own best-seller-card markup.
         async function renderBuyAgainPage() {
+            // Same "haven't checked the session yet" case as
+            // renderOrderHistory() - buyAgainItems() can't tell a genuinely
+            // signed-out visitor apart from "restoreSupabaseSession() just
+            // hasn't resolved yet" and returns [] either way, which would
+            // flash this page as empty for an already-signed-in customer
+            // with real purchase history on a hard refresh. Leaving the
+            // page untouched here costs nothing: restoreSupabaseSession()
+            // re-renders whatever's on screen once it resolves regardless.
+            if (!currentSupabaseUser && !supabaseSessionRestored) return;
             const items = await buyAgainItems();
             document.getElementById('buyAgainPageCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'buyAgainPageGrid');
@@ -22032,6 +22052,15 @@
         }
         function renderFavoritesPage() {
             const items = favoriteItems();
+            // A hard refresh landing straight on this page runs this render
+            // before a signed-in customer's account favorites have merged
+            // in (see accountFavoritesSettled's own comment) - showing
+            // nothing yet here instead of the real empty state avoids a
+            // false "No favorites yet" for someone who actually has some;
+            // renderFavoritesButtonStates() re-renders this for real once
+            // that settles either way. A guest with nothing favorited has
+            // no account data to wait on, so this never delays them.
+            if (items.length === 0 && currentSupabaseUser && !accountFavoritesSettled) return;
             document.getElementById('favoritesPageCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'favoritesPageGrid', 'favoritesEmptyState');
         }
