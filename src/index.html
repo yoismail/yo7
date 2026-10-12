@@ -13479,7 +13479,7 @@
              still leaves its buttons reachable by keyboard Tab while
              invisible, see setCurrencyFabOpen()'s own comment. -->
         <div class="currency-fab-panel" id="currencyFabPanel" role="menu" inert>
-            <div class="currency-fab-panel-label">Pay in</div>
+            <div class="currency-fab-panel-label">Currency</div>
         </div>
     </div>
 
@@ -24072,7 +24072,7 @@
             const flagEl = document.getElementById('currencyFabFlag');
             if (flagEl) flagEl.innerHTML = CURRENCY_FLAGS[cur];
             const btn = document.getElementById('currencyFab');
-            if (btn) btn.setAttribute('aria-label', `Pay in ${CURRENCY_NAMES[cur]}. Click to change.`);
+            if (btn) btn.setAttribute('aria-label', `Currency: ${CURRENCY_NAMES[cur]}. Click to change.`);
             const optionsHTML = options.map(code => `
                 <button type="button" class="${code === cur ? 'is-selected' : ''}" data-currency="${code}" role="menuitemradio" aria-checked="${code === cur}">
                     <span class="currency-fab-panel-flag">${CURRENCY_FLAGS[code]}</span>
@@ -24081,7 +24081,7 @@
                 </button>
             `).join('');
             const panel = document.getElementById('currencyFabPanel');
-            if (panel) panel.innerHTML = '<div class="currency-fab-panel-label">Pay in</div>' + optionsHTML;
+            if (panel) panel.innerHTML = '<div class="currency-fab-panel-label">Currency</div>' + optionsHTML;
         }
         // currentHash via pathToHash(), same reasoning as the
         // pricingSettingsReady re-render just above route()'s own
