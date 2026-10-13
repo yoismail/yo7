@@ -9398,17 +9398,20 @@
             color: var(--aubergine-deep);
             padding-top: 7px;
             padding-bottom: 7px;
+            line-height: 1.2;
             animation: hoursTodayPulse 2.6s ease-in-out infinite;
         }
-        /* A slow brightness breathe, not an on/off blink - a hard blink
+        /* A slow colour breathe between the brand orange and the same hue
+           lightened toward pure yellow, not an on/off blink - a hard blink
            reads as dated and is a real accessibility concern (WCAG flags
-           blinking content). brightness() moves the whole cell (fill and
-           text together) so it stays one coherent unit through the cycle
-           rather than the text swimming against a separately-animated
-           background. */
+           blinking content). Animating background-color directly (rather
+           than a brightness() filter) keeps the shift clearly visible even
+           though --orange's channels already sit close to their max, where
+           a brightness multiplier has little room left to move and reads
+           as no animation at all. */
         @keyframes hoursTodayPulse {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.12); }
+            0%, 100% { background-color: var(--orange); }
+            50% { background-color: #FFFF00; }
         }
         @media (prefers-reduced-motion: reduce) {
             .hours-table tr.today td { animation: none; }
