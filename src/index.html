@@ -25392,6 +25392,20 @@
                 const hash = pathToHash(window.location.pathname);
                 if (isCatalogRefreshSafeHash(hash)) {
                     route({ preserveScroll: true });
+                } else if (hash === '#/build-bundle' && activeDishIndex !== null) {
+                    // Reported directly: a restocked ingredient still
+                    // showed "out of stock" and disabled in an
+                    // already-open Build a Dish panel. route()'s own
+                    // #/build-bundle branch only re-renders the dish
+                    // picker, not whichever dish's builder panel is
+                    // actually open, so #/build-bundle was never in
+                    // isCatalogRefreshSafeHash's list above (a full route()
+                    // there wouldn't have fixed this anyway). renderDishBuilder()
+                    // only reads state that's already committed in memory
+                    // (activeDishIndex, dishSelectedItems), nothing
+                    // half-typed to lose, so it's always safe to re-run
+                    // directly here.
+                    renderDishBuilder();
                 }
             } finally {
                 catalogRefreshInFlight = false;
