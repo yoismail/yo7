@@ -380,20 +380,44 @@
             background: var(--page-bg);
             transition: opacity 0.25s ease;
         }
-        .page-loader-spinner {
-            width: 34px;
-            height: 34px;
+        /* Brand mark breathing in place of a generic spinner, paired with
+           a soft pulsing ring behind it. The ring is what actually reads
+           as "working" at a glance: logoMarkBreathe alone is a slow,
+           calm tilt-scale meant for a mark that's already on screen, and
+           used on its own here it could look closer to static branding
+           than an active loading state. */
+        .page-loader-mark {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .page-loader-mark svg {
+            width: 52px;
+            height: 52px;
+            display: block;
+            animation: logoMarkBreathe 2.2s ease-in-out infinite;
+        }
+        .page-loader-mark::before {
+            content: '';
+            position: absolute;
+            inset: 0;
             border-radius: 50%;
-            border: 3px solid rgba(var(--border-rgb), 0.15);
-            border-top-color: var(--chartreuse);
-            animation: btnSpin 0.8s linear infinite;
+            animation: pageLoaderPulseRing 1.8s ease-out infinite;
+        }
+        @keyframes pageLoaderPulseRing {
+            0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--chartreuse) 45%, transparent); }
+            100% { box-shadow: 0 0 0 18px color-mix(in srgb, var(--chartreuse) 0%, transparent); }
         }
         .page-loader.page-loader-hide {
             opacity: 0;
             pointer-events: none;
         }
         @media (prefers-reduced-motion: reduce) {
-            .page-loader-spinner { animation-duration: 1.6s; }
+            .page-loader-mark svg { animation: none; }
+            .page-loader-mark::before { animation: none; }
         }
 
         /* Route-level page transition: plays once on the view that just
@@ -10667,9 +10691,6 @@
 
 <body>
 
-    <div id="pageLoader" class="page-loader" aria-hidden="true"><span class="page-loader-spinner"></span></div>
-    <noscript><style>.page-loader { display: none !important; }</style></noscript>
-
     <svg width="0" height="0" style="position:absolute">
         <defs>
             <g id="seal-mark">
@@ -10692,6 +10713,15 @@
             </g>
         </defs>
     </svg>
+
+    <div id="pageLoader" class="page-loader" aria-hidden="true">
+        <div class="page-loader-mark">
+            <svg viewBox="65 25 875 900">
+                <use href="#seal-mark" />
+            </svg>
+        </div>
+    </div>
+    <noscript><style>.page-loader { display: none !important; }</style></noscript>
 
     <!-- ================= PERSISTENT NAV (all pages) ================= -->
     <nav id="mainNav">
