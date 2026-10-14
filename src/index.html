@@ -14722,7 +14722,8 @@
             return isSuffolkPostcode(postcode) ? LOCAL_DELIVERY_WINDOW : STANDARD_DELIVERY_WINDOW;
         }
         function deliveryEtaText(postcode) {
-            return `${deliveryEtaLabel(postcode)}: most orders arrive within ${deliveryEtaWindow(postcode)} of confirmation.`;
+            const area = isSuffolkPostcode(postcode) ? 'a local delivery (Suffolk)' : 'a standard delivery (outside Suffolk)';
+            return `This is ${area}, so most orders arrive within ${deliveryEtaWindow(postcode)} of confirmation.`;
         }
 
         /* ================= POSTCODE VALIDATION =================
