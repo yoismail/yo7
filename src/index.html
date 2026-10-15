@@ -5324,15 +5324,6 @@
                 flex: 1;
                 min-width: 0;
             }
-            /* Pre-launch only (see the PRELAUNCH_MODE comment at boot):
-               with the plain newsletter card hidden, flex:1 above would
-               stretch the one remaining card to the full row width instead
-               of the comfortable column it was sized for. Cap it back down
-               and centre the row so a single card doesn't read as a
-               half-finished layout. */
-            .footer-newsletter-grid--single .footer-newsletter {
-                flex: 0 1 460px;
-            }
             .footer-newsletter-grid--single {
                 justify-content: center;
             }
@@ -5379,6 +5370,52 @@
                 padding: 10px 18px;
                 border-radius: 10px;
                 font-size: 12.5px;
+            }
+            /* Pre-launch only (see the PRELAUNCH_MODE comment at boot).
+               Everything above this point in the block is sized for two
+               cards sharing one row, every rule here wins over it (same
+               specificity, declared later) to give the lone remaining
+               card its own full-size presentation instead. At the
+               compact size, the card was actually narrower than each of
+               the two side-by-side cards would have been, half-finished
+               and oversized relative to nothing beside it, and too
+               narrow for its own email+postcode fields to sit side by
+               side (see #heroCaptureForm's container query), so they
+               fell back to their stacked mobile layout even on a wide
+               desktop screen. 620px is close to what one card would have
+               measured sharing that same row with a sibling. */
+            .footer-newsletter-grid--single .footer-newsletter {
+                flex: 0 1 620px;
+                gap: 18px;
+                padding: 34px 38px;
+                border-radius: 22px;
+            }
+            .footer-newsletter-grid--single .footer-newsletter-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+            }
+            .footer-newsletter-grid--single .footer-newsletter-icon svg {
+                width: 19px;
+                height: 19px;
+            }
+            .footer-newsletter-grid--single .footer-newsletter h4 {
+                font-size: 16px;
+            }
+            .footer-newsletter-grid--single .footer-newsletter p {
+                font-size: 13px;
+            }
+            .footer-newsletter-grid--single .newsletter-form {
+                gap: 10px;
+            }
+            .footer-newsletter-grid--single .newsletter-form input {
+                padding: 13px 16px;
+                border-radius: 12px;
+            }
+            .footer-newsletter-grid--single .newsletter-form button {
+                padding: 13px 22px;
+                border-radius: 12px;
+                font-size: 13.5px;
             }
         }
         /* Column, not the old wrapping row of icon+text / form — a row
