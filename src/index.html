@@ -520,6 +520,17 @@
             overflow: hidden;
         }
         .launch-banner.is-visible { display: block; }
+        /* Deliberately kept at full brightness here too (see the comment
+           above), but light mode's own cream page background is close
+           enough in value to this fill that the banner's edges read as a
+           seam, not a clash. Dark mode's near-black page is a much bigger
+           jump, so the exact same flat edges there look like a stray
+           light-mode fragment rather than an intentionally prominent
+           banner. A soft shadow on just the lower edge is enough to read
+           as "a card sitting on the dark page" instead. */
+        [data-theme="dark"] .launch-banner.is-visible {
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+        }
         .launch-banner-inner {
             position: relative;
             display: flex;
