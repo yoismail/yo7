@@ -4426,10 +4426,49 @@
             pointer-events: none;
             z-index: 0;
         }
+        /* .section-eyebrow's own colour (var(--chartreuse-rich), a dark
+           olive chosen for light backgrounds) is nearly invisible against
+           this section's own always-dark gradient, regardless of the
+           site's light/dark theme toggle, the same reason the headline
+           and "View best sellers" link right next to it already need
+           their own light-on-dark overrides below. */
+        .best-sellers-section .section-eyebrow { color: var(--chartreuse-soft); }
         .best-sellers-section .new-section-head h2 { color: #FAF9F2; }
         .best-sellers-section .view-all-btn { color: #FAF9F2; background: rgba(250, 249, 242, 0.12); }
         .best-sellers-section .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
         .best-sellers-section .swipe-hint { color: rgba(250, 249, 242, 0.55); }
+        /* Same "Yo7" wordmark treatment as .hero-text-watermark/
+           .footer-text-watermark (the big faded logo bled off a corner),
+           bottom-right here to balance the two colour glows in ::before
+           above, which already lean toward the top-right and bottom-left.
+           z-index: 0, between ::before (also 0, painted first since it's
+           a ::before) and .wrap (1), so it sits as a backdrop behind the
+           product carousel without ever competing with it. Cream, not
+           --ink, same reasoning .footer-text-watermark's dark-mode
+           override uses: this section is fixed dark in both site themes,
+           so it needs its own fixed light colour rather than one that
+           flips with the toggle. */
+        .best-sellers-watermark {
+            right: -2%;
+            bottom: -0.2em;
+            font-size: clamp(130px, 24vw, 380px);
+            color: #FAF9F2;
+            opacity: 0.07;
+            z-index: 0;
+            transform-origin: 85% 100%;
+            animation: bestSellersWatermarkLive 8.5s ease-in-out infinite;
+            animation-delay: -3s;
+        }
+        .best-sellers-watermark .accent { color: var(--chartreuse-soft); }
+        @keyframes bestSellersWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.07; }
+            32% { transform: rotate(2deg) scale(1.02); }
+            60% { transform: rotate(-2.5deg) scale(1.04); opacity: 0.11; }
+            84% { transform: rotate(0.5deg) scale(1.015); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .best-sellers-watermark { animation: none; }
+        }
         /* Same card-in-a-scrollable-row pattern as the Special Offer and
            Just Landed carousels right above it on the same page, rather
            than the mismatched "one big feature card + a plain list" layout
@@ -5416,6 +5455,18 @@
                 padding: 13px 22px;
                 border-radius: 12px;
                 font-size: 13.5px;
+            }
+            /* Once signed up, the form and its description both disappear
+               (see .hero-capture-wrap.signed-up below), leaving just the
+               heading and a one-line "Done" confirmation - nowhere near
+               enough content to fill a 620px card sized for the full
+               form, so the card read as a near-empty box with the
+               watermark awkwardly exposed in the leftover space (spotted
+               on a real desktop). 3 classes beats the 620px rule's 2, so
+               this wins without needing !important or source-order
+               games. */
+            .footer-newsletter-grid--single .hero-capture-wrap.signed-up {
+                flex: 0 1 460px;
             }
         }
         /* Column, not the old wrapping row of icon+text / form — a row
@@ -11194,6 +11245,7 @@
         </section>
 
         <section class="best-sellers-section">
+            <div class="text-watermark best-sellers-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
