@@ -7332,6 +7332,24 @@
         .card-add-btn:active:not(:disabled) { transform: scale(0.96); }
         .card-add-btn:disabled { background: var(--neutral-track); color: var(--text-faint); cursor: not-allowed; }
         .card-add-btn:disabled:hover { transform: none; }
+        /* Confirms the tap right at the thumb (see confirmAddButton()) -
+           the "+" becomes a checkmark on a darker chartreuse for a beat,
+           then confirmAddButton() swaps it back once the animation ends.
+           Same pop curve as .cart-badge/.float-cart-badge's own
+           badge-pulse, so the two feel like one coordinated interaction
+           (tap here, badge pops there) rather than two unrelated effects. */
+        .card-add-btn.just-added {
+            background: var(--chartreuse-rich);
+            animation: cardAddConfirm 0.5s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        @keyframes cardAddConfirm {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.22); }
+            100% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .card-add-btn.just-added { animation: none; }
+        }
         .card-notify-btn {
             display: flex;
             align-items: center;
@@ -18442,7 +18460,7 @@
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
         <div class="product-row">
           <div class="price">${priceHTML(p)}</div>
-          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx}, this);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         </div>
@@ -18479,7 +18497,7 @@
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
         <div class="product-row">
           <div class="price">${priceHTML(p)}</div>
-          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx}, this);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         </div>
@@ -18572,7 +18590,7 @@
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
         <div class="product-row">
           <div class="price">${priceHTML(p)}</div>
-          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+          <button class="card-add-btn" type="button" ${p.stock === 'out' ? 'disabled' : ''} aria-label="${p.stock === 'out' ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${p.stock === 'out' ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx}, this);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         </div>
@@ -18900,7 +18918,7 @@
           <div class="product-card-rating" data-product-key="${p.catSlug}::${pidx}"></div>
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
-            <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx});` : `quickAdd('${p.catSlug}', ${pidx});`}">
+            <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx}, this);` : `quickAdd('${p.catSlug}', ${pidx}, this);`}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
@@ -18910,11 +18928,35 @@
       <div class="edit-panel-slot"></div>
     </div>`;
         }
-        function quickAdd(catSlug, idx) {
+        // Confirms the exact button a shopper's thumb just tapped, not just
+        // the cart badge elsewhere on screen - on a long mobile scroll the
+        // nav badge pulsing is easy to miss entirely since it's well outside
+        // the thumb's own view, so this gives immediate, located feedback
+        // right where the tap happened: the "+" morphs into a checkmark with
+        // a quick pop, then reverts. Button-agnostic (card-add-btn and
+        // checkout-upsell-add both use the exact same "+" icon markup), so
+        // one helper and one pair of CSS rules cover every add button on the
+        // site rather than duplicating this per button type.
+        const ADD_BTN_PLUS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+        const ADD_BTN_CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+        function confirmAddButton(btn) {
+            if (!btn) return;
+            clearTimeout(btn._justAddedTimer);
+            btn.classList.remove('just-added');
+            void btn.offsetWidth; // restarts the pop animation even if it's still mid-play from a rapid re-tap
+            btn.innerHTML = ADD_BTN_CHECK_SVG;
+            btn.classList.add('just-added');
+            btn._justAddedTimer = setTimeout(() => {
+                btn.classList.remove('just-added');
+                btn.innerHTML = ADD_BTN_PLUS_SVG;
+            }, 900);
+        }
+        function quickAdd(catSlug, idx, btn) {
             const p = getProduct(catSlug, idx);
             if (!p || p.stock === 'out') return;
             addToCart(p, 1);
             showToast(`Added ${p.name} to your basket.`, undefined, 'success');
+            confirmAddButton(btn);
         }
         window.quickAdd = quickAdd;
         // Same id shape (and the same price/weight rules) as buildPdCartItem's
@@ -18923,11 +18965,11 @@
         // any card representing one specific weight variant rather than the
         // base pack (see offerItems()), so its quick "Add to basket" adds the
         // exact size shown, not the base product.
-        function addVariantToCart(catSlug, idx, variantIdx) {
+        function addVariantToCart(catSlug, idx, variantIdx, btn) {
             const p = getProduct(catSlug, idx);
             if (!p || p.stock === 'out') return;
             const variant = Array.isArray(p.weightVariants) ? p.weightVariants[variantIdx] : null;
-            if (!variant) { addToCart(p, 1); return; }
+            if (!variant) { addToCart(p, 1); confirmAddButton(btn); return; }
             const toAdd = {
                 ...p, price: variant.price, unit: variant.label, unitOverride: undefined,
                 salePrice: (typeof variant.salePrice === 'number' && variant.salePrice < variant.price) ? variant.salePrice : undefined,
@@ -18935,6 +18977,7 @@
             };
             addToCart(toAdd, 1);
             showToast(`Added ${p.name} (${variant.label}) to your basket.`, undefined, 'success');
+            confirmAddButton(btn);
         }
         window.addVariantToCart = addVariantToCart;
 
@@ -22221,7 +22264,7 @@
         <div class="cat">${p.catName.replace(/&amp;/g,'&')}</div>
         <div class="product-row">
           <div class="price">${priceHTML(p)}</div>
-          <button class="card-add-btn" type="button" aria-label="Add ${escapeHtml(p.name)} to basket" title="Add to basket" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx});">
+          <button class="card-add-btn" type="button" aria-label="Add ${escapeHtml(p.name)} to basket" title="Add to basket" onclick="event.preventDefault(); event.stopPropagation(); quickAdd('${p.catSlug}', ${p.idx}, this);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         </div>
