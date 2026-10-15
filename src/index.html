@@ -4090,17 +4090,33 @@
             font-size: 12px;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            /* Same gradient stops as the combo card's wax-seal stamp
-               (.combo-stamp) — a small "stamped label" instead of a flat
-               colour swatch, so this pill (used sitewide as a section
-               kicker, About Us alone repeats it 6 times) reads as part of
-               the same deliberate brand family rather than a generic tag. */
-            background: linear-gradient(155deg, #FFEB3B 0%, var(--orange) 100%);
-            color: var(--aubergine-deep);
-            padding: 5px 14px;
-            border-radius: 999px;
+            /* Plain label with a short underline accent, the same quiet
+               treatment .footer-col h4 already uses, rather than a bright
+               filled pill. Used sitewide as a section kicker (About Us
+               alone repeats it 6 times), so this is the single most
+               repeated accent-coloured element on the site, a loud pill
+               shape at that frequency reads as noise rather than hierarchy;
+               the colour itself still carries the brand, just as text and
+               a small rule instead of a solid fill. */
+            color: var(--chartreuse-rich);
+            padding-bottom: 10px;
             margin-bottom: 14px;
-            box-shadow: 0 3px 8px rgba(225, 225, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            position: relative;
+        }
+        .section-eyebrow::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 22px;
+            height: 2px;
+            border-radius: 999px;
+            background: var(--chartreuse);
+            opacity: 0.7;
+        }
+        [data-theme="dark"] .section-eyebrow {
+            color: var(--chartreuse-soft);
         }
 
         .shop-section .section-head h2 {
@@ -4464,17 +4480,18 @@
         [data-theme="dark"] .best-seller-card .thumb {
             background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
         }
-        /* Bright yellow pill badge — the site's own accent colour
-           (var(--orange), same pairing as the section-eyebrow pills)
-           rather than an invented gold, ties this to the rest of the
-           brand instead of introducing a one-off hue. Renders in place
-           immediately (no pop-in) now that the carousel drops all
-           scroll-triggered animation — see the comment above
+        /* Chartreuse, not the brighter var(--orange): a rank badge sits on
+           every single card in this carousel at once, so it reads as
+           status/information rather than the one-off urgency var(--orange)
+           is reserved for elsewhere (a live sale, a low-stock warning).
+           Same pairing .buy-again-tag already uses for the same reason.
+           Renders in place immediately (no pop-in) now that the carousel
+           drops all scroll-triggered animation, see the comment above
            .cat-tile-reveal for why. */
         .best-seller-rank {
             position: absolute; top: 10px; left: 10px; z-index: 3;
             display: flex; align-items: center; gap: 3px;
-            background: var(--orange); color: var(--aubergine-deep);
+            background: var(--chartreuse); color: var(--aubergine-deep);
             font-family: var(--display); font-weight: 700; font-size: 8.5px; letter-spacing: 0.03em;
             padding: 4px 9px 4px 7px; border-radius: 999px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), 0 0 0 2px #FFFDF7;
@@ -4556,11 +4573,14 @@
         [data-theme="dark"] .new-card .thumb { background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
+        /* Chartreuse, not var(--orange), same reasoning as .best-seller-rank
+           above: every card in this carousel wears one, so it's status,
+           not urgency. Matches .buy-again-tag, which already uses it. */
         .new-tag {
-            position: absolute; top: 10px; left: 10px; background: var(--orange); color: var(--aubergine);
+            position: absolute; top: 10px; left: 10px; background: var(--chartreuse); color: var(--aubergine);
             font-family: var(--display); font-weight: 700; font-size: 8.5px; letter-spacing: 0.03em;
             text-transform: uppercase; padding: 4px 9px; border-radius: 999px;
-            box-shadow: 0 3px 8px rgba(225,225,0,0.45), 0 0 0 2px var(--card-bg);
+            box-shadow: 0 3px 8px rgba(144,184,0,0.35), 0 0 0 2px var(--card-bg);
             z-index: 3;
         }
         /* Reuses .best-seller-card/.best-seller-carousel wholesale for the
