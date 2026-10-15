@@ -5601,6 +5601,29 @@
             color: var(--aubergine-deep);
             box-shadow: 0 6px 16px rgba(225,225,0,0.25);
         }
+        /* The brand's own seal mark (the same symbol the nav and footer
+           logo both use), not a generic ticket icon in a tinted chip -
+           this is the one card on the site collecting the actual coupon
+           code, so it gets the one mark that's only Yo7's rather than
+           reading as stock lead-capture card art. The seal already
+           carries its own fill colours, so this undoes the chip
+           background/shadow above instead of layering under it, and
+           breathes with the same slow tilt-scale the nav mark uses so it
+           reads as alive rather than a flat badge. */
+        .hero-capture-seal {
+            background: none;
+            box-shadow: none;
+            width: 48px;
+            height: 48px;
+        }
+        .hero-capture-seal svg {
+            width: 100%;
+            height: 100%;
+            animation: logoMarkBreathe 6s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-capture-seal svg { animation: none; }
+        }
         .footer-interest .newsletter-form input {
             border-color: rgba(225, 225, 0, 0.45);
             background: rgba(225, 225, 0, 0.14);
@@ -13471,10 +13494,10 @@
                  the hero's whole CTA before Shop Now took over that job;
                  kept fully intact here, just less prominent. -->
             <div class="footer-newsletter footer-interest hero-capture-wrap" id="heroCaptureWrap">
-                <svg class="footer-newsletter-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                <svg class="footer-newsletter-watermark hero-capture-watermark" viewBox="65 25 875 900" aria-hidden="true"><use href="#seal-mark" /></svg>
                 <div class="footer-newsletter-text">
-                    <span class="footer-newsletter-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    <span class="footer-newsletter-icon hero-capture-seal">
+                        <svg viewBox="65 25 875 900"><use href="#seal-mark" /></svg>
                     </span>
                     <div>
                         <h4>Get 10% Off Your First Order</h4>
