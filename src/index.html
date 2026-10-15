@@ -5324,6 +5324,18 @@
                 flex: 1;
                 min-width: 0;
             }
+            /* Pre-launch only (see the PRELAUNCH_MODE comment at boot):
+               with the plain newsletter card hidden, flex:1 above would
+               stretch the one remaining card to the full row width instead
+               of the comfortable column it was sized for. Cap it back down
+               and centre the row so a single card doesn't read as a
+               half-finished layout. */
+            .footer-newsletter-grid--single .footer-newsletter {
+                flex: 0 1 460px;
+            }
+            .footer-newsletter-grid--single {
+                justify-content: center;
+            }
             /* Sized for a full-width mobile stack; side by side on
                desktop that same size reads oversized relative to the
                rest of the footer, so trim it down here rather than
@@ -13398,7 +13410,7 @@
         <div class="text-watermark footer-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         <div class="wrap">
             <div class="footer-newsletter-grid">
-            <div class="footer-newsletter">
+            <div class="footer-newsletter" id="generalNewsletterCard">
                 <svg class="footer-newsletter-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
@@ -27438,6 +27450,26 @@
         // actually showing, it's safe to reveal.
         const siteFooterWrap = document.getElementById('siteFooterWrap');
         if (siteFooterWrap) siteFooterWrap.classList.remove('boot-hidden');
+        // Flip to false once the real January 2027 launch happens (the
+        // same manual edit the launch banner's own copy already needs at
+        // that point, see the comment above .launch-banner). While true,
+        // the plain "Join the Family" newsletter card is hidden, since the
+        // "Get 10% Off" card right next to it already captures the same
+        // email, with a stronger incentive and the postcode the business
+        // wants anyway, so showing both asks for the same thing twice.
+        const PRELAUNCH_MODE = true;
+        if (PRELAUNCH_MODE) {
+            const generalNewsletterCard = document.getElementById('generalNewsletterCard');
+            if (generalNewsletterCard) {
+                generalNewsletterCard.style.display = 'none';
+                // The grid's desktop layout gives each card flex:1 so the
+                // pair shares the row evenly, with only one card left that
+                // stretches it edge to edge instead, so cap and centre it
+                // via this class rather than leaving it oversized.
+                const grid = generalNewsletterCard.closest('.footer-newsletter-grid');
+                if (grid) grid.classList.add('footer-newsletter-grid--single');
+            }
+        }
         // .scroll-reveal sections (home, About, Delivery Info) — revealed
         // once, the first time any part of one enters the viewport, then
         // left alone. Falls back to just showing everything immediately in
