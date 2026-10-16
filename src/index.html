@@ -6993,7 +6993,22 @@
             height: 100%;
             object-fit: contain;
             display: block;
-            transition: transform 0.5s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.5s cubic-bezier(.16,.84,.44,1), opacity 0.35s ease;
+            /* Starts invisible and fades in once productPhotoHTML()'s own
+               onload handler adds .is-loaded - a real photo over a slow
+               connection otherwise just snaps into place the instant the
+               last byte lands, which reads as a stutter/glitch on top of
+               the wait itself. The container's own tinted backdrop (see
+               .product-thumb above) is already a considered "waiting"
+               state on its own, so this only needs to smooth the handoff
+               to the photo, not cover for a blank gap. */
+            opacity: 0;
+        }
+        .product-photo-img.is-loaded {
+            opacity: 1;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .product-photo-img { transition: none; }
         }
         .product-card:hover .product-photo-img {
             transform: scale(1.06);
@@ -18882,14 +18897,28 @@
         // any of the product to an off-centre crop; falls back to the
         // Coming Soon placeholder if there's no image yet, or if it fails
         // to load.
-        function productPhotoHTML(p, altText) {
+        // eager: true for the handful of cards likely already in the
+        // viewport on first paint (see productCardHTML's own GRID_EAGER_COUNT
+        // below) - the same reasoning the PD page's own hero image already
+        // uses (see the comment where it sets loading='eager'/fetchPriority),
+        // now applied to grid cards too: marking an already-visible image
+        // "lazy" only tells the browser it's safe to deprioritize behind
+        // everything else loading on the page, the opposite of what a
+        // shopper looking right at it needs.
+        function productPhotoHTML(p, altText, eager) {
             if (p.image) {
-                return `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(altText)}" loading="lazy" decoding="async" class="product-photo-img"
+                return `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(altText)}" ${eager ? `loading="eager" fetchpriority="high"` : `loading="lazy"`} decoding="async" class="product-photo-img"
+                    onload="this.classList.add('is-loaded')"
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="thumb-placeholder" style="display:none;">${comingSoonThumbHTML(p)}</div>`;
             }
             return `<div class="thumb-placeholder">${comingSoonThumbHTML(p)}</div>`;
         }
+        // First couple of rows on a narrow mobile grid (2 columns) or one
+        // row on desktop - generous enough to cover what's actually visible
+        // without scrolling on first paint, not so wide that it starts
+        // competing with itself for bandwidth on a slow connection.
+        const GRID_EAGER_COUNT = 4;
         function productCardHTML(p, i) {
             const pidx = p.idx !== undefined ? p.idx : p.id.split('::')[1];
             const href = `#/product/${p.catSlug}/${pidx}`;
@@ -18904,7 +18933,7 @@
       <a class="product-card-link" href="${href}" draggable="false">
         <div class="product-thumb">
           ${p.deleted ? `<span class="stock-badge deleted">Deleted</span>` : (stock !== 'in' ? `<span class="stock-badge ${stock}">${stockLabel(stock)}</span>` : '')}
-          ${productPhotoHTML(p, p.name)}
+          ${productPhotoHTML(p, p.name, (i || 0) < GRID_EAGER_COUNT)}
           <button class="card-fav-btn${favorited ? ' is-favorited' : ''}" type="button" data-fav-key="${favKey}" aria-pressed="${favorited}" aria-label="${favorited ? 'Remove from favorites' : 'Add to favorites'}" onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromCard('${p.catSlug}', ${pidx}, this);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
           </button>
@@ -19562,6 +19591,7 @@
                 img.alt = p.name;
                 img.decoding = 'async';
                 img.className = 'product-photo-img';
+                img.onload = () => img.classList.add('is-loaded');
                 img.onerror = () => { img.style.display = 'none'; placeholder.style.display = 'flex'; };
                 placeholder.style.display = 'none';
                 pdImageEl.insertBefore(img, placeholder);
