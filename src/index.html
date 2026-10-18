@@ -24386,6 +24386,14 @@
                 if (checkoutStepName === 'payment') initStripePayment();
             } else {
                 route({ preserveScroll: true });
+                // route() rebuilds page markup from scratch, which resets every
+                // .free-delivery-text span back to its hardcoded GBP fallback
+                // ("over £70 in Ipswich, over £120 elsewhere") until this
+                // re-stamps it in the newly selected currency, same as the
+                // checkout branch above already does. Without this, switching
+                // currency anywhere outside checkout (PD page, cart, etc.)
+                // left the free-delivery pill quoting GBP until a hard refresh.
+                renderDeliveryFeeInfo();
             }
         }
         function setCurrency(code) {
