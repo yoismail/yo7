@@ -5363,9 +5363,6 @@
                 flex: 1;
                 min-width: 0;
             }
-            .footer-newsletter-grid--single {
-                justify-content: center;
-            }
             /* Sized for a full-width mobile stack; side by side on
                desktop that same size reads oversized relative to the
                rest of the footer, so trim it down here rather than
@@ -5410,64 +5407,6 @@
                 border-radius: 10px;
                 font-size: 12.5px;
             }
-            /* Pre-launch only (see the PRELAUNCH_MODE comment at boot).
-               Everything above this point in the block is sized for two
-               cards sharing one row, every rule here wins over it (same
-               specificity, declared later) to give the lone remaining
-               card its own full-size presentation instead. At the
-               compact size, the card was actually narrower than each of
-               the two side-by-side cards would have been, half-finished
-               and oversized relative to nothing beside it, and too
-               narrow for its own email+postcode fields to sit side by
-               side (see #heroCaptureForm's container query), so they
-               fell back to their stacked mobile layout even on a wide
-               desktop screen. 620px is close to what one card would have
-               measured sharing that same row with a sibling. */
-            .footer-newsletter-grid--single .footer-newsletter {
-                flex: 0 1 620px;
-                gap: 18px;
-                padding: 34px 38px;
-                border-radius: 22px;
-            }
-            .footer-newsletter-grid--single .footer-newsletter-icon {
-                width: 44px;
-                height: 44px;
-                border-radius: 14px;
-            }
-            .footer-newsletter-grid--single .footer-newsletter-icon svg {
-                width: 19px;
-                height: 19px;
-            }
-            .footer-newsletter-grid--single .footer-newsletter h4 {
-                font-size: 16px;
-            }
-            .footer-newsletter-grid--single .footer-newsletter p {
-                font-size: 13px;
-            }
-            .footer-newsletter-grid--single .newsletter-form {
-                gap: 10px;
-            }
-            .footer-newsletter-grid--single .newsletter-form input {
-                padding: 13px 16px;
-                border-radius: 12px;
-            }
-            .footer-newsletter-grid--single .newsletter-form button {
-                padding: 13px 22px;
-                border-radius: 12px;
-                font-size: 13.5px;
-            }
-            /* Once signed up, the form and its description both disappear
-               (see .hero-capture-wrap.signed-up below), leaving just the
-               heading and a one-line "Done" confirmation - nowhere near
-               enough content to fill a 620px card sized for the full
-               form, so the card read as a near-empty box with the
-               watermark awkwardly exposed in the leftover space (spotted
-               on a real desktop). 3 classes beats the 620px rule's 2, so
-               this wins without needing !important or source-order
-               games. */
-            .footer-newsletter-grid--single .hero-capture-wrap.signed-up {
-                flex: 0 1 460px;
-            }
         }
         /* Column, not the old wrapping row of icon+text / form — a row
            made the two cards' content heights differ by however many
@@ -5500,6 +5439,13 @@
             border-color: rgba(var(--border-rgb), 0.14);
         }
         .footer-newsletter-grid .footer-newsletter { margin-bottom: 0; }
+        /* .footer-newsletter is a <div> everywhere else on the site, but
+           this card is a single click-through link rather than a form, so
+           it's an <a> instead - resets the default anchor treatment the
+           rest of the card's own explicit colors don't already cover. */
+        .journal-teaser-card { text-decoration: none; color: inherit; cursor: pointer; }
+        .journal-teaser-card:hover .journal-teaser-cta { background: var(--aubergine); color: var(--cream); transform: translateX(2px); }
+        .journal-teaser-cta { align-self: flex-start; }
         .footer-newsletter::before {
             content: '';
             position: absolute;
@@ -6870,6 +6816,127 @@
             transform: translateY(-2px);
             box-shadow: 0 14px 30px rgba(225, 225, 0, 0.45);
         }
+
+        /* ================= THE YO7 FOODS JOURNAL ================= */
+        .journal-hero {
+            position: relative;
+            padding: 90px 0 56px;
+            background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('images/journal/journal-hero-ingredients.jpg');
+            background-size: cover;
+            background-position: center;
+            color: var(--cream);
+        }
+        .journal-hero .section-eyebrow {
+            color: var(--chartreuse-soft);
+        }
+        .journal-hero h1 {
+            font-family: var(--display); font-weight: 700;
+            font-size: clamp(30px, 5vw, 46px);
+            letter-spacing: -0.01em;
+            margin-top: 6px;
+            color: var(--cream);
+        }
+        .journal-hero p {
+            margin-top: 14px;
+            max-width: 58ch;
+            font-size: 15.5px;
+            color: rgba(250, 249, 242, 0.84);
+        }
+        .journal-section { padding-top: 40px; }
+        .journal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+        @media (min-width: 720px) {
+            .journal-grid { grid-template-columns: repeat(3, 1fr); gap: 22px; }
+        }
+        .journal-card {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            box-shadow: 0 2px 6px rgba(var(--border-rgb), 0.04), 0 16px 32px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .journal-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(var(--border-rgb), 0.12); }
+        .journal-card-thumb {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            background: rgba(var(--border-rgb), 0.05);
+        }
+        .journal-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .journal-card-category {
+            position: absolute; top: 12px; left: 12px;
+            font-family: var(--display); font-weight: 700; font-size: 11px;
+            letter-spacing: 0.03em; text-transform: uppercase;
+            padding: 6px 12px; border-radius: 14px;
+            background: rgba(4, 37, 0, 0.82); color: var(--cream);
+        }
+        .journal-card-body { padding: 16px 18px 20px; }
+        .journal-card-body h4 {
+            font-family: var(--display); font-weight: 700; font-size: 15.5px;
+            color: var(--heading); line-height: 1.3; margin-bottom: 6px;
+        }
+        .journal-card-excerpt {
+            font-size: 13px; color: var(--text-muted); line-height: 1.5;
+            /* Clamped so a longer excerpt never pushes cards in the same
+               row to different heights - 3 lines is enough to read as a
+               real preview without the grid feeling uneven. */
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .journal-card-meta {
+            display: flex; align-items: center; gap: 8px; margin-top: 12px;
+            font-size: 11.5px; color: var(--text-muted);
+        }
+        /* The admin "Draft" badge only ever shows in edit mode (see
+           renderJournalAdminPanel's own list, not this card), a card a
+           customer can actually see is never anything but published. */
+        .journal-post-header { padding: 56px 0 28px; }
+        .journal-post-meta-top {
+            display: flex; align-items: center; gap: 10px; margin-top: 10px;
+            font-size: 12.5px; color: var(--text-muted);
+        }
+        .journal-post-category {
+            font-family: var(--display); font-weight: 700; font-size: 11px;
+            letter-spacing: 0.03em; text-transform: uppercase;
+            padding: 5px 12px; border-radius: 14px;
+            background: rgba(144, 184, 0, 0.14); color: var(--chartreuse-rich);
+        }
+        .journal-post-header h1 {
+            font-family: var(--display); font-weight: 700;
+            font-size: clamp(26px, 4.4vw, 40px);
+            letter-spacing: -0.01em; margin-top: 12px;
+            color: var(--heading);
+        }
+        .journal-post-byline { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+        .journal-post-section { padding-bottom: 40px; }
+        .journal-post-cover {
+            width: 100%; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden;
+            margin-bottom: 32px; background: rgba(var(--border-rgb), 0.05);
+        }
+        .journal-post-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .journal-post-body {
+            max-width: 72ch;
+            font-size: 16.5px; line-height: 1.75; color: var(--text-body);
+        }
+        .journal-post-body p { margin-bottom: 20px; }
+        .journal-post-body h2 {
+            font-family: var(--display); font-weight: 700; font-size: 21px;
+            color: var(--heading); margin: 32px 0 14px;
+        }
+        .journal-post-body ol, .journal-post-body ul { margin: 0 0 20px 22px; }
+        .journal-post-body li { margin-bottom: 10px; }
+        .journal-post-shop-cta {
+            max-width: 72ch; margin-top: 36px; padding: 22px 26px;
+            border-radius: 18px; background: rgba(144, 184, 0, 0.1);
+            display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+            text-decoration: none; color: inherit;
+        }
+        .journal-post-shop-cta span { font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--heading); }
 
         /* ================= PRODUCT GRID / CARD ================= */
         .products-section {
@@ -10954,6 +11021,7 @@
             <div class="nav-links">
                 <a href="#/" id="navLinkHome">Home</a>
                 <a href="#/shop" id="navLinkShop">Shop</a>
+                <a href="#/journal" id="navLinkJournal">Journal</a>
                 <a href="#/about" id="navLinkStory">About Us</a>
                 <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
                 <a href="#/contact" id="navLinkContact">Contact</a>
@@ -11061,6 +11129,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
+            <a href="#/journal">Journal</a>
             <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
@@ -11639,6 +11708,71 @@
                     <p>Try another search, browse a category below, or message us directly, we're adding stock every week.</p>
                     <div class="empty-state-suggestions" id="shopAllEmptyStateSuggestions"></div>
                 </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= THE YO7 FOODS JOURNAL ================= -->
+    <div id="view-journal" class="hidden-view">
+        <header class="shop-header journal-hero">
+            <div class="wrap">
+                <div class="section-eyebrow">The Yo7 Foods Journal</div>
+                <h1>Recipes, Food Stories &amp; Everyday Inspiration</h1>
+                <p>Good food brings people together. Practical recipes, ingredient guides, cooking tips and stories from the African and Caribbean food cultures we celebrate.</p>
+            </div>
+        </header>
+        <section class="products-section journal-section">
+            <div class="wrap">
+                <div id="journalAdmin"></div>
+                <div class="cat-pill-row" id="journalCatPillRow"></div>
+                <div class="journal-grid" id="journalGrid"></div>
+                <div class="empty-state" id="journalEmptyState" style="display:none;">
+                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                    <h3>More stories on the way</h3>
+                    <p>We're still writing this one. Explore the shop in the meantime, or check back soon.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= JOURNAL ARTICLE ================= -->
+    <div id="view-journal-post" class="hidden-view">
+        <header class="shop-header journal-post-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/journal">Journal</a> &rsaquo; <span id="journalPostCrumb">Article</span></div>
+                <div class="journal-post-meta-top">
+                    <span class="journal-post-category" id="journalPostCategory"></span>
+                    <span id="journalPostReadTime"></span>
+                </div>
+                <h1 id="journalPostTitle"></h1>
+                <div class="journal-post-byline">By <span id="journalPostAuthor"></span> &middot; <span id="journalPostDate"></span></div>
+            </div>
+        </header>
+        <section class="journal-post-section">
+            <div class="wrap">
+                <div class="journal-post-cover" id="journalPostCover" style="display:none;"></div>
+                <div class="journal-post-body" id="journalPostBody"></div>
+                <a class="journal-post-shop-cta" id="journalPostShopCta" href="#/" style="display:none;">
+                    <span id="journalPostShopCtaText"></span>
+                    <span class="view-all-btn">
+                        Shop the ingredients
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </span>
+                </a>
+                <div class="empty-state" id="journalPostNotFound" style="display:none;">
+                    <h3>Article not found</h3>
+                    <p>This story may have been moved, unpublished, or the link's out of date.</p>
+                    <a class="btn btn-primary" href="#/journal">Back to the Journal</a>
+                </div>
+            </div>
+        </section>
+        <section class="products-section" id="journalRelatedSection" style="display:none; padding-top:0;">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <div class="section-eyebrow">More from the Journal</div>
+                    <h2>Keep reading</h2>
+                </div>
+                <div class="journal-grid" id="journalRelatedGrid"></div>
             </div>
         </section>
     </div>
@@ -13578,22 +13712,22 @@
         <div class="text-watermark footer-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         <div class="wrap">
             <div class="footer-newsletter-grid">
-            <div class="footer-newsletter" id="generalNewsletterCard">
-                <svg class="footer-newsletter-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+            <a class="footer-newsletter journal-teaser-card" id="journalTeaserCard" href="#/journal">
+                <svg class="footer-newsletter-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                     </span>
                     <div>
-                        <h4>Join the Yo7 Foods Family</h4>
-                        <p>New arrivals, offers, and updates. No spam, just the useful stuff.</p>
+                        <h4>The Yo7 Foods Journal</h4>
+                        <p>Recipes, ingredient guides and food stories from the cultures we celebrate.</p>
                     </div>
                 </div>
-                <form class="newsletter-form" id="newsletterForm">
-                    <input type="email" id="newsletterEmail" placeholder="you@example.com" required aria-label="Email address for newsletter signup">
-                    <button type="submit">Subscribe</button>
-                </form>
-            </div>
+                <span class="journal-teaser-cta view-all-btn">
+                    Read the Journal
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+            </a>
             <!-- Collects postcode alongside email, unlike the plain
                  newsletter form above — the point is knowing where demand
                  is actually coming from (see register_coming_soon_interest
@@ -19440,6 +19574,460 @@
             else document.getElementById('shopAllPopularPicks').style.display = 'none';
         }
 
+        /* ================= THE YO7 FOODS JOURNAL ================= */
+        // Canonical taxonomy for the whole Journal - both the public filter
+        // pills and the admin form's category picker read from this one
+        // list, so the two can never drift apart.
+        const JOURNAL_CATEGORIES = [
+            { slug: 'recipes', label: 'Recipes', blurb: 'Discover delicious meal ideas for everyday cooking, family gatherings, celebrations and special occasions. Find step-by-step recipes, useful cooking tips and inspiration for making the most of your favourite ingredients.' },
+            { slug: 'ingredient-guides', label: 'Ingredient Guides', blurb: 'Not sure which ingredient to choose or how to use it? These guides help you understand popular African and Caribbean ingredients, explore different varieties and learn how to store and prepare them.' },
+            { slug: 'food-culture', label: 'Food Culture', blurb: 'Every dish has a story. Explore the traditions, regional flavours and food customs behind some of the meals that bring families and communities together.' },
+            { slug: 'kitchen-tips', label: 'Kitchen Tips', blurb: 'Make everyday cooking simpler with practical advice on meal planning, ingredient storage, reducing food waste and getting more from your kitchen essentials.' },
+            { slug: 'seasonal-inspiration', label: 'Seasonal Inspiration', blurb: 'From quick weekday meals to festive celebrations, discover ideas to help you plan menus, prepare ahead and make every gathering feel special.' },
+        ];
+        function journalCategoryLabel(slug) {
+            const cat = JOURNAL_CATEGORIES.find(c => c.slug === slug);
+            return cat ? cat.label : slug;
+        }
+        // One real, ready-to-publish article so the Journal has genuine
+        // content from the moment this ships, rather than an empty page
+        // waiting on an admin to write something through the new panel
+        // first. journalPosts() below only falls back to this (and the
+        // rest of this array, as more get added) for a slug that doesn't
+        // already exist as a real, published blog_posts row - the moment
+        // an admin creates or edits a post with this same slug from the
+        // admin panel, the real row takes over seamlessly and this one
+        // steps aside. Same "cold-start fallback an admin can supersede,
+        // never a permanent fiction" shape as BEST_SELLER_SLUGS.
+        const JOURNAL_FALLBACK_POSTS = [
+            {
+                id: 'fallback::jollof-rice',
+                slug: 'secret-to-a-great-pot-of-jollof-rice',
+                title: 'The Secret to a Great Pot of Jollof Rice',
+                excerpt: 'Five practical tips for a flavourful, perfectly cooked pot of jollof rice, from building the base to getting the rice just right.',
+                meta_description: 'Five practical tips for a better pot of jollof rice, from building the flavour base to choosing the right rice. A recipe guide from Yo7 Foods.',
+                category: 'recipes',
+                linked_category: 'rice',
+                cover_image: 'images/journal/jollof-rice-stew-feature.jpg',
+                author: 'Yo7 Foods Team',
+                published: true,
+                published_at: '2026-10-01T09:00:00.000Z',
+                body: `Jollof rice is more than a meal. Across West Africa, it is a much-loved dish associated with family gatherings, celebrations and friendly debates about whose version is best.
+
+A flavourful pot starts with the right balance of ingredients. Ripe tomatoes, red peppers, onions, seasoning and carefully chosen rice all contribute to the final result.
+
+Here are five tips for better jollof rice:
+
+1. Build your flavour base. Blend your tomatoes, peppers and onions, then cook the mixture thoroughly to develop a richer taste.
+2. Take your time with the sauce. Allow excess moisture to reduce before adding your rice.
+3. Choose suitable rice. Different varieties absorb liquid differently, so follow a recipe suited to the rice you have.
+4. Measure your liquid carefully. Too much liquid can leave the rice soft and wet, while too little can prevent it from cooking evenly.
+5. Let the flavours come together. Cook gently, check for doneness and allow the rice to rest briefly before serving.
+
+Serve with your favourite sides, whether that's fried plantain, grilled chicken, fish or a fresh salad.
+
+The best part? There is room for personal preference. Every kitchen has its own approach, and that is part of what makes jollof rice so special.`,
+            },
+        ];
+        // Loaded once at boot (see loadBlogPosts() call near the other
+        // boot-time fetches) and re-rendered from wherever it's already
+        // showing once it resolves, same pattern as advertBanners/
+        // discounts/every other admin-managed collection in this file.
+        // Holds every row regardless of published state - filtering
+        // happens at render time (journalPosts() for the public list,
+        // renderJournalAdminPanel() for the admin's own, which needs
+        // drafts too), not here, same reasoning allProducts() etc. filter
+        // deleted at their own return point rather than trusting an
+        // earlier check to still hold.
+        let blogPosts = [];
+        async function loadBlogPosts() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('blog_posts').select('*').order('published_at', { ascending: false, nullsFirst: false });
+            if (error || !Array.isArray(data)) return;
+            blogPosts = data;
+            if (document.getElementById('journalGrid')) renderJournalPage();
+            if (document.getElementById('journalPostTitle')) {
+                const hash = window.location.hash;
+                if (hash.startsWith('#/journal/')) renderJournalPostPage(hash.replace('#/journal/', ''));
+            }
+            renderJournalAdminPanel();
+        }
+        // See JOURNAL_FALLBACK_POSTS's own comment for the merge rule: a
+        // live, published row always wins over a fallback with the same
+        // slug, every other fallback still fills in alongside real posts
+        // rather than disappearing the moment any one real post exists.
+        function journalPosts() {
+            const live = blogPosts.filter(p => p.published);
+            const liveSlugs = new Set(live.map(p => p.slug));
+            const fallback = JOURNAL_FALLBACK_POSTS.filter(p => !liveSlugs.has(p.slug));
+            return [...live, ...fallback].sort((a, b) => new Date(b.published_at || b.created_at || 0) - new Date(a.published_at || a.created_at || 0));
+        }
+        function journalReadTime(body) {
+            const words = (body || '').trim().split(/\s+/).filter(Boolean).length;
+            return Math.max(1, Math.round(words / 200));
+        }
+        // Plain text in, safe HTML out - a blank line starts a new block,
+        // a block where every line matches "1. "/"2. " etc. becomes a
+        // proper <ol>, everything else becomes one <p>. No rich-text
+        // editor behind the admin form (see renderJournalAdminPanel), so
+        // this is what turns a plain textarea into readable article
+        // typography without trusting raw HTML from an admin-filled field.
+        function journalBodyHTML(body) {
+            if (!body) return '';
+            const blocks = body.trim().split(/\n\s*\n/);
+            return blocks.map(block => {
+                const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length === 0) return '';
+                const isNumberedList = lines.length > 1 && lines.every(l => /^\d+\.\s+/.test(l));
+                if (isNumberedList) {
+                    return `<ol>${lines.map(l => `<li>${escapeHtml(l.replace(/^\d+\.\s+/, ''))}</li>`).join('')}</ol>`;
+                }
+                return `<p>${escapeHtml(lines.join(' '))}</p>`;
+            }).join('');
+        }
+        function journalCardHTML(post) {
+            const thumb = post.cover_image
+                ? `<img src="${escapeHtml(post.cover_image)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async">`
+                : `<span class="thumb-placeholder-emoji">${DEFAULT_ITEM_ICON_SVG}</span>`;
+            return `
+    <a class="journal-card" href="#/journal/${encodeURIComponent(post.slug)}">
+      <div class="journal-card-thumb">
+        ${post.category ? `<span class="journal-card-category">${escapeHtml(journalCategoryLabel(post.category))}</span>` : ''}
+        ${thumb}
+      </div>
+      <div class="journal-card-body">
+        <h4>${escapeHtml(post.title)}</h4>
+        ${post.excerpt ? `<p class="journal-card-excerpt">${escapeHtml(post.excerpt)}</p>` : ''}
+        <div class="journal-card-meta">
+          <span>${escapeHtml(post.author || 'Yo7 Foods Team')}</span>
+          <span>&middot;</span>
+          <span>${journalReadTime(post.body)} min read</span>
+        </div>
+      </div>
+    </a>`;
+        }
+        let journalActiveCat = 'all';
+        function renderJournalCatPills() {
+            const pills = [{ slug: 'all', label: 'All' }, ...JOURNAL_CATEGORIES];
+            document.getElementById('journalCatPillRow').innerHTML = pills.map(c => `
+    <button type="button" class="cat-pill ${journalActiveCat === c.slug ? 'active' : ''}" data-slug="${c.slug}">${escapeHtml(c.label)}</button>`).join('');
+            document.querySelectorAll('#journalCatPillRow .cat-pill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    journalActiveCat = btn.dataset.slug;
+                    renderJournalPage();
+                });
+            });
+        }
+        function renderJournalPage() {
+            renderJournalCatPills();
+            const posts = journalPosts().filter(p => journalActiveCat === 'all' || p.category === journalActiveCat);
+            const grid = document.getElementById('journalGrid');
+            const empty = document.getElementById('journalEmptyState');
+            if (posts.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+            } else {
+                empty.style.display = 'none';
+                grid.innerHTML = posts.map(p => journalCardHTML(p)).join('');
+            }
+            renderJournalAdminPanel();
+        }
+        // Mirrors updateProductJsonLd()'s own create-or-reuse-the-tag
+        // pattern, Article structured data instead of Product. Original
+        // title/meta/OG/twitter/canonical content is read once, the first
+        // time this ever runs, and kept as the defaults route() restores
+        // via resetJournalPostMeta() on every route that isn't an article
+        // page - nothing in this file touched any of these before the
+        // Journal existed, so there was no earlier "restore point" to read
+        // from other than whatever shipped in the document itself.
+        let journalDefaultMeta = null;
+        function captureJournalDefaultMeta() {
+            if (journalDefaultMeta) return;
+            journalDefaultMeta = {
+                title: document.title,
+                description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+                ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content') || '',
+                ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content') || '',
+                twitterTitle: document.querySelector('meta[name="twitter:title"]')?.getAttribute('content') || '',
+                twitterDescription: document.querySelector('meta[name="twitter:description"]')?.getAttribute('content') || '',
+                canonical: document.getElementById('canonicalLink')?.getAttribute('href') || '',
+            };
+        }
+        function setMetaContent(selector, content) {
+            const el = document.querySelector(selector);
+            if (el) el.setAttribute('content', content);
+        }
+        function resetJournalPostMeta() {
+            captureJournalDefaultMeta();
+            document.title = journalDefaultMeta.title;
+            setMetaContent('meta[name="description"]', journalDefaultMeta.description);
+            setMetaContent('meta[property="og:title"]', journalDefaultMeta.ogTitle);
+            setMetaContent('meta[property="og:description"]', journalDefaultMeta.ogDescription);
+            setMetaContent('meta[name="twitter:title"]', journalDefaultMeta.twitterTitle);
+            setMetaContent('meta[name="twitter:description"]', journalDefaultMeta.twitterDescription);
+            const canonical = document.getElementById('canonicalLink');
+            if (canonical) canonical.setAttribute('href', journalDefaultMeta.canonical);
+            const jsonLd = document.getElementById('journalPostJsonLd');
+            if (jsonLd) jsonLd.remove();
+        }
+        function updateJournalPostMeta(post) {
+            captureJournalDefaultMeta();
+            const title = `${post.title} | The Yo7 Foods Journal`;
+            const description = post.meta_description || post.excerpt || '';
+            const url = `https://yo7foods.co.uk/#/journal/${encodeURIComponent(post.slug)}`;
+            document.title = title;
+            setMetaContent('meta[name="description"]', description);
+            setMetaContent('meta[property="og:title"]', title);
+            setMetaContent('meta[property="og:description"]', description);
+            setMetaContent('meta[name="twitter:title"]', title);
+            setMetaContent('meta[name="twitter:description"]', description);
+            const canonical = document.getElementById('canonicalLink');
+            if (canonical) canonical.setAttribute('href', url);
+            let jsonLd = document.getElementById('journalPostJsonLd');
+            if (!jsonLd) {
+                jsonLd = document.createElement('script');
+                jsonLd.type = 'application/ld+json';
+                jsonLd.id = 'journalPostJsonLd';
+                document.head.appendChild(jsonLd);
+            }
+            jsonLd.textContent = JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'Article',
+                headline: post.title,
+                description,
+                image: post.cover_image ? [`https://yo7foods.co.uk/${post.cover_image}`] : undefined,
+                author: { '@type': 'Organization', name: post.author || 'Yo7 Foods Team' },
+                publisher: { '@type': 'Organization', name: 'Yo7 Foods' },
+                datePublished: post.published_at || post.created_at || undefined,
+                dateModified: post.updated_at || post.published_at || post.created_at || undefined,
+                mainEntityOfPage: url,
+            });
+        }
+        function renderJournalPostPage(rawSlug) {
+            const slug = decodeURIComponent(rawSlug || '');
+            const post = journalPosts().find(p => p.slug === slug);
+            renderJournalAdminPanel();
+            if (!post) {
+                document.getElementById('journalPostNotFound').style.display = 'block';
+                document.getElementById('journalPostTitle').textContent = '';
+                document.getElementById('journalPostBody').innerHTML = '';
+                document.getElementById('journalPostCover').style.display = 'none';
+                document.getElementById('journalPostShopCta').style.display = 'none';
+                document.getElementById('journalRelatedSection').style.display = 'none';
+                return;
+            }
+            document.getElementById('journalPostNotFound').style.display = 'none';
+            updateJournalPostMeta(post);
+            document.getElementById('journalPostCrumb').textContent = post.title;
+            document.getElementById('journalPostCategory').textContent = journalCategoryLabel(post.category);
+            document.getElementById('journalPostReadTime').textContent = `${journalReadTime(post.body)} min read`;
+            document.getElementById('journalPostTitle').textContent = post.title;
+            document.getElementById('journalPostAuthor').textContent = post.author || 'Yo7 Foods Team';
+            const dateSource = post.published_at || post.created_at;
+            document.getElementById('journalPostDate').textContent = dateSource
+                ? new Date(dateSource).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                : '';
+            const coverEl = document.getElementById('journalPostCover');
+            if (post.cover_image) {
+                coverEl.style.display = '';
+                coverEl.innerHTML = `<img src="${escapeHtml(post.cover_image)}" alt="${escapeHtml(post.title)}" loading="eager" fetchpriority="high" decoding="async">`;
+            } else {
+                coverEl.style.display = 'none';
+                coverEl.innerHTML = '';
+            }
+            document.getElementById('journalPostBody').innerHTML = journalBodyHTML(post.body);
+            const shopCta = document.getElementById('journalPostShopCta');
+            // Only offered when the linked category is a real one that
+            // currently has something in it - a dead link to an empty or
+            // renamed category would undercut the trust this whole page is
+            // meant to build, not support it.
+            const linkedCat = post.linked_category ? findCategory(post.linked_category) : null;
+            if (linkedCat && linkedCat.products.some(p => !p.deleted)) {
+                shopCta.style.display = 'flex';
+                shopCta.href = `#/category/${linkedCat.slug}`;
+                document.getElementById('journalPostShopCtaText').textContent = `Looking for ingredients for this? Shop our ${linkedCat.name.replace(/&amp;/g, '&')} aisle.`;
+            } else {
+                shopCta.style.display = 'none';
+            }
+            const related = journalPosts().filter(p => p.slug !== post.slug && p.category === post.category).slice(0, 3);
+            const relatedSection = document.getElementById('journalRelatedSection');
+            if (related.length > 0) {
+                relatedSection.style.display = '';
+                document.getElementById('journalRelatedGrid').innerHTML = related.map(p => journalCardHTML(p)).join('');
+            } else {
+                relatedSection.style.display = 'none';
+            }
+        }
+        function slugify(text) {
+            return (text || '').toLowerCase().trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        }
+        let editingJournalPostId = null;
+        function resetJournalForm() {
+            editingJournalPostId = null;
+            const form = document.getElementById('addJournalForm');
+            if (form) form.reset();
+            const slugField = document.getElementById('newJournalSlug');
+            if (slugField) slugField.dataset.autofilled = 'true';
+            const submitBtn = document.getElementById('journalFormSubmitBtn');
+            if (submitBtn) submitBtn.textContent = 'Create article';
+            const cancelBtn = document.getElementById('journalFormCancelBtn');
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            renderJournalAdminPanel();
+        }
+        function editJournalPost(id) {
+            const post = blogPosts.find(p => String(p.id) === String(id));
+            if (!post) return;
+            editingJournalPostId = post.id;
+            document.getElementById('newJournalTitle').value = post.title || '';
+            document.getElementById('newJournalSlug').value = post.slug || '';
+            document.getElementById('newJournalSlug').dataset.autofilled = 'false';
+            document.getElementById('newJournalCategory').value = post.category || JOURNAL_CATEGORIES[0].slug;
+            document.getElementById('newJournalLinkedCategory').value = post.linked_category || '';
+            document.getElementById('newJournalExcerpt').value = post.excerpt || '';
+            document.getElementById('newJournalCoverImage').value = post.cover_image || '';
+            document.getElementById('newJournalAuthor').value = post.author || 'Yo7 Foods Team';
+            document.getElementById('newJournalMetaDescription').value = post.meta_description || '';
+            document.getElementById('newJournalBody').value = post.body || '';
+            document.getElementById('newJournalPublished').checked = !!post.published;
+            document.getElementById('journalFormSubmitBtn').textContent = 'Save changes';
+            document.getElementById('journalFormCancelBtn').style.display = '';
+            document.getElementById('addJournalForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        window.editJournalPost = editJournalPost;
+        async function removeJournalPost(id) {
+            if (!supabaseClient) return;
+            const post = blogPosts.find(p => String(p.id) === String(id));
+            if (!post) return;
+            if (!confirm(`Delete "${post.title}"? This can't be undone.`)) return;
+            const { error } = await supabaseClient.from('blog_posts').delete().eq('id', id);
+            if (error) { showToast('Could not delete that article: ' + error.message, 6000, 'error'); return; }
+            blogPosts = blogPosts.filter(p => String(p.id) !== String(id));
+            if (editingJournalPostId === id) resetJournalForm();
+            logAdminAction('blog_post_deleted', 'blog_post', post.title, null);
+            showToast('Article deleted.', undefined, 'success');
+            renderJournalAdminPanel();
+            renderJournalPage();
+        }
+        window.removeJournalPost = removeJournalPost;
+        async function toggleJournalPostPublished(id) {
+            if (!supabaseClient) return;
+            const post = blogPosts.find(p => String(p.id) === String(id));
+            if (!post) return;
+            const nextPublished = !post.published;
+            const row = { published: nextPublished, published_at: nextPublished ? (post.published_at || new Date().toISOString()) : post.published_at, updated_at: new Date().toISOString() };
+            const { error } = await supabaseClient.from('blog_posts').update(row).eq('id', id);
+            if (error) { showToast('Could not update that article: ' + error.message, 6000, 'error'); return; }
+            Object.assign(post, row);
+            logAdminAction(nextPublished ? 'blog_post_published' : 'blog_post_unpublished', 'blog_post', post.title, null);
+            showToast(nextPublished ? 'Article published.' : 'Article unpublished.', undefined, 'success');
+            renderJournalAdminPanel();
+            renderJournalPage();
+        }
+        window.toggleJournalPostPublished = toggleJournalPostPublished;
+        // Same pattern as renderDiscountAdminPanel() etc: only exists in
+        // the DOM for a confirmed admin with edit mode on, and only once
+        // its host element is actually in the current page (the journal
+        // list page and the article page both have one, every other page
+        // doesn't).
+        function renderJournalAdminPanel() {
+            const el = document.getElementById('journalAdmin');
+            if (!el) return;
+            if (!(currentIsAdmin && editModeOn)) { el.className = ''; el.innerHTML = ''; return; }
+            el.className = 'delivery-admin-panel discount-admin-panel';
+            const rows = [...blogPosts].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            el.innerHTML = `
+    <h3>Journal articles <span class="admin-only-tag">Edit mode only</span></h3>
+    <p class="delivery-admin-note">Articles save for real and go live for every visitor immediately once published. An unpublished draft is never shown on the public site.</p>
+    <div id="journalPostsList" class="delivery-rule-list">${rows.map(p => `
+      <div class="delivery-rule-row">
+        <span>${escapeHtml(p.title)}${p.published ? '' : ' <em style="color:#b34a4a; font-style:normal;">(draft)</em>'}</span>
+        <span style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="rule-remove-btn rule-edit-btn" onclick="editJournalPost('${p.id}')">Edit</button>
+          <button type="button" class="rule-remove-btn" onclick="toggleJournalPostPublished('${p.id}')">${p.published ? 'Unpublish' : 'Publish'}</button>
+          <button type="button" class="rule-remove-btn" onclick="removeJournalPost('${p.id}')">Delete</button>
+        </span>
+      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No articles created yet - the Journal is showing its built-in starter content below.</p>'}</div>
+    <form id="addJournalForm" class="discount-admin-form">
+      <div class="field"><label for="newJournalTitle">Title</label><input type="text" id="newJournalTitle" placeholder="e.g. The Secret to a Great Pot of Jollof Rice" required></div>
+      <div class="field"><label for="newJournalSlug">URL slug</label><input type="text" id="newJournalSlug" placeholder="auto-filled from the title" data-autofilled="true" required></div>
+      <div class="field-row">
+        <div class="field"><label for="newJournalCategory">Category</label>
+          <select id="newJournalCategory">${JOURNAL_CATEGORIES.map(c => `<option value="${c.slug}">${escapeHtml(c.label)}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label for="newJournalLinkedCategory">Link to shop category (optional)</label>
+          <select id="newJournalLinkedCategory"><option value="">None</option>${orderedCategories().map(c => `<option value="${c.slug}">${escapeHtml(c.name)}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="field"><label for="newJournalExcerpt">Short excerpt (shown on the article card)</label><input type="text" id="newJournalExcerpt" placeholder="One or two sentences" maxlength="200"></div>
+      <div class="field"><label for="newJournalCoverImage">Cover image URL</label><input type="text" id="newJournalCoverImage" placeholder="images/journal/your-photo.jpg"></div>
+      <div class="field-row">
+        <div class="field"><label for="newJournalAuthor">Author</label><input type="text" id="newJournalAuthor" value="Yo7 Foods Team"></div>
+        <div class="field"><label for="newJournalMetaDescription">SEO meta description (optional)</label><input type="text" id="newJournalMetaDescription" maxlength="160"></div>
+      </div>
+      <div class="field"><label for="newJournalBody">Article body</label><textarea id="newJournalBody" rows="10" placeholder="Plain text. Leave a blank line between paragraphs. A block where every line starts '1. ', '2. ' etc. becomes a numbered list." required></textarea></div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text-body);"><input type="checkbox" id="newJournalPublished" style="width:auto;"> Published (visible to every visitor)</label>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button type="submit" class="btn btn-primary" id="journalFormSubmitBtn">Create article</button>
+        <button type="button" id="journalFormCancelBtn" class="rule-remove-btn" style="display:none;">Cancel edit</button>
+      </div>
+    </form>`;
+            const slugField = document.getElementById('newJournalSlug');
+            document.getElementById('newJournalTitle').addEventListener('input', (e) => {
+                if (slugField.dataset.autofilled !== 'false') slugField.value = slugify(e.target.value);
+            });
+            slugField.addEventListener('input', () => { slugField.dataset.autofilled = 'false'; });
+            document.getElementById('journalFormCancelBtn').addEventListener('click', () => resetJournalForm());
+            document.getElementById('addJournalForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!supabaseClient) { showToast('Articles need a moment to connect, try again shortly.'); return; }
+                const title = document.getElementById('newJournalTitle').value.trim();
+                const slug = slugify(document.getElementById('newJournalSlug').value);
+                if (!title || !slug) return;
+                const body = document.getElementById('newJournalBody').value.trim();
+                if (!body) return;
+                const existing = blogPosts.find(p => p.slug === slug);
+                if (existing && String(existing.id) !== String(editingJournalPostId)) { showToast(`An article with slug "${slug}" already exists.`); return; }
+                const published = document.getElementById('newJournalPublished').checked;
+                const row = {
+                    title, slug, body,
+                    category: document.getElementById('newJournalCategory').value,
+                    linked_category: document.getElementById('newJournalLinkedCategory').value || null,
+                    excerpt: document.getElementById('newJournalExcerpt').value.trim() || null,
+                    cover_image: document.getElementById('newJournalCoverImage').value.trim() || null,
+                    author: document.getElementById('newJournalAuthor').value.trim() || 'Yo7 Foods Team',
+                    meta_description: document.getElementById('newJournalMetaDescription').value.trim() || null,
+                    published,
+                    updated_at: new Date().toISOString(),
+                };
+                const submitBtn = document.getElementById('journalFormSubmitBtn');
+                submitBtn.disabled = true;
+                if (editingJournalPostId) {
+                    const previouslyPublished = blogPosts.find(p => String(p.id) === String(editingJournalPostId))?.published;
+                    if (published && !previouslyPublished) row.published_at = new Date().toISOString();
+                    const { error } = await supabaseClient.from('blog_posts').update(row).eq('id', editingJournalPostId);
+                    submitBtn.disabled = false;
+                    if (error) { showToast('Could not save that article: ' + error.message, 6000, 'error'); return; }
+                    Object.assign(blogPosts.find(p => String(p.id) === String(editingJournalPostId)), row);
+                    logAdminAction('blog_post_updated', 'blog_post', title, null);
+                    showToast('Article saved.', undefined, 'success');
+                } else {
+                    if (published) row.published_at = new Date().toISOString();
+                    const { data, error } = await supabaseClient.from('blog_posts').insert(row).select('*').single();
+                    submitBtn.disabled = false;
+                    if (error) { showToast('Could not create that article: ' + error.message, 6000, 'error'); return; }
+                    blogPosts.unshift(data);
+                    logAdminAction('blog_post_created', 'blog_post', title, null);
+                    showToast(`Created "${title}".`, undefined, 'success');
+                }
+                resetJournalForm();
+                renderJournalPage();
+            });
+        }
+
         /* ================= RENDER: PRODUCT DETAIL ================= */
         let pdQty = 1;
         let pdCurrent = null;
@@ -24588,6 +25176,7 @@
             if (typeof renderDeliveryRulesAdmin === 'function') renderDeliveryRulesAdmin();
             if (typeof renderLoyaltyAdminPanel === 'function') renderLoyaltyAdminPanel();
             if (typeof renderDiscountAdminPanel === 'function') renderDiscountAdminPanel();
+            if (typeof renderJournalAdminPanel === 'function') renderJournalAdminPanel();
             if (typeof renderCurrencyRatesAdmin === 'function') renderCurrencyRatesAdmin();
             // Bundle/combo cards build their per-item weight editor into the
             // markup at render time (not a CSS-only toggle), so they need a
@@ -26468,7 +27057,7 @@
         window.markApplicationReviewed = markApplicationReviewed;
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-journal', 'view-journal-post', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Unlike the other two floats, the currency fab stays up through
@@ -26569,6 +27158,7 @@
             const links = {
                 navLinkHome: isHome,
                 navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
+                navLinkJournal: hash === '#/journal' || hash.startsWith('#/journal/'),
                 navLinkStory: hash === '#/about',
                 navLinkDelivery: hash === '#/delivery-info' || hash === '#/delivery-policy',
                 navLinkContact: hash === '#/contact',
@@ -26766,6 +27356,7 @@
             }
             updateActiveNavLink(hash);
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
+            if (!hash.startsWith('#/journal/')) resetJournalPostMeta();
             setNotFoundNoindex(false);
             // cancelOrderModal sits outside every view container (see its
             // own comment) so it renders correctly regardless of which page
@@ -26866,6 +27457,12 @@
             } else if (hash === '#/combos') {
                 showView('view-combos');
                 renderCombosViewAllPage();
+            } else if (hash === '#/journal') {
+                showView('view-journal');
+                renderJournalPage();
+            } else if (hash.startsWith('#/journal/')) {
+                showView('view-journal-post');
+                renderJournalPostPage(hash.replace('#/journal/', ''));
             } else if (hash === '#/privacy') {
                 showView('view-privacy');
             } else if (hash === '#/terms') {
@@ -27727,6 +28324,7 @@
         renderPlatformBadges();
         renderAdvertCarousel();
         loadAdvertBanners();
+        loadBlogPosts();
         initCookieNotice();
         updateInstallMenuBtn();
         initDragScroll();
@@ -27774,26 +28372,6 @@
         // actually showing, it's safe to reveal.
         const siteFooterWrap = document.getElementById('siteFooterWrap');
         if (siteFooterWrap) siteFooterWrap.classList.remove('boot-hidden');
-        // Flip to false once the real January 2027 launch happens (the
-        // same manual edit the launch banner's own copy already needs at
-        // that point, see the comment above .launch-banner). While true,
-        // the plain "Join the Family" newsletter card is hidden, since the
-        // "Get 10% Off" card right next to it already captures the same
-        // email, with a stronger incentive and the postcode the business
-        // wants anyway, so showing both asks for the same thing twice.
-        const PRELAUNCH_MODE = true;
-        if (PRELAUNCH_MODE) {
-            const generalNewsletterCard = document.getElementById('generalNewsletterCard');
-            if (generalNewsletterCard) {
-                generalNewsletterCard.style.display = 'none';
-                // The grid's desktop layout gives each card flex:1 so the
-                // pair shares the row evenly, with only one card left that
-                // stretches it edge to edge instead, so cap and centre it
-                // via this class rather than leaving it oversized.
-                const grid = generalNewsletterCard.closest('.footer-newsletter-grid');
-                if (grid) grid.classList.add('footer-newsletter-grid--single');
-            }
-        }
         // .scroll-reveal sections (home, About, Delivery Info) — revealed
         // once, the first time any part of one enters the viewport, then
         // left alone. Falls back to just showing everything immediately in
