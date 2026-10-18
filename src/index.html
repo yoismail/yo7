@@ -17995,7 +17995,15 @@
             const real = (realBestSellers || [])
                 .map(ref => getProduct(ref.catSlug, ref.idx))
                 .filter(Boolean)
-                .filter(p => !flaggedKeys.has(p.catSlug + '::' + p.idx));
+                // loadRealBestSellers() already excludes a deleted product
+                // when it first builds realBestSellers, but that ref can
+                // outlive the product, an admin deleting it mid-session
+                // doesn't retroactively clear it out. Checking again here,
+                // same as every other product-list getter in this file
+                // (allProducts, favoriteItems, buyAgainItems) already does
+                // at its own return point, is what actually keeps this
+                // honest regardless of when the delete happened.
+                .filter(p => !p.deleted && !flaggedKeys.has(p.catSlug + '::' + p.idx));
             return [...flagged, ...real];
         }
         // "We couldn't find a match" on its own is a dead end, this gives
@@ -18059,7 +18067,15 @@
                     const [catSlug, idxStr] = String(row.product_id).split('::');
                     return { catSlug, idx: Number(idxStr) };
                 })
-                .filter(ref => !!getProduct(ref.catSlug, ref.idx))
+                // getProduct() returns a tombstoned slot same as a live one,
+                // it only drops a flat-out missing index. A product with
+                // genuine sales in the window but deleted since would
+                // otherwise still pass this check and end up ranked here,
+                // same gap loadFrequentlyBoughtTogether() had.
+                .filter(ref => {
+                    const p = getProduct(ref.catSlug, ref.idx);
+                    return !!p && !p.deleted;
+                })
                 .filter(ref => {
                     const key = ref.catSlug + '::' + ref.idx;
                     if (seenRefKeys.has(key)) return false;
