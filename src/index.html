@@ -6821,7 +6821,7 @@
         .journal-hero {
             position: relative;
             padding: 90px 0 56px;
-            background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('images/journal/journal-hero-ingredients.jpg');
+            background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('/images/journal/journal-hero-ingredients.jpg');
             background-size: cover;
             background-position: center;
             color: var(--cream);
@@ -19608,7 +19608,7 @@
                 meta_description: 'Five practical tips for a better pot of jollof rice, from building the flavour base to choosing the right rice. A recipe guide from Yo7 Foods.',
                 category: 'recipes',
                 linked_category: 'rice',
-                cover_image: 'images/journal/jollof-rice-stew-feature.jpg',
+                cover_image: '/images/journal/jollof-rice-stew-feature.jpg',
                 author: 'Yo7 Foods Team',
                 published: true,
                 published_at: '2026-10-01T09:00:00.000Z',
@@ -19876,6 +19876,7 @@ The best part? There is room for personal preference. Every kitchen has its own 
             if (submitBtn) submitBtn.textContent = 'Create article';
             const cancelBtn = document.getElementById('journalFormCancelBtn');
             if (cancelBtn) cancelBtn.style.display = 'none';
+            updateJournalCoverPreview('');
             renderJournalAdminPanel();
         }
         function editJournalPost(id) {
@@ -19889,6 +19890,7 @@ The best part? There is room for personal preference. Every kitchen has its own 
             document.getElementById('newJournalLinkedCategory').value = post.linked_category || '';
             document.getElementById('newJournalExcerpt').value = post.excerpt || '';
             document.getElementById('newJournalCoverImage').value = post.cover_image || '';
+            updateJournalCoverPreview(post.cover_image || '');
             document.getElementById('newJournalAuthor').value = post.author || 'Yo7 Foods Team';
             document.getElementById('newJournalMetaDescription').value = post.meta_description || '';
             document.getElementById('newJournalBody').value = post.body || '';
@@ -19898,6 +19900,48 @@ The best part? There is room for personal preference. Every kitchen has its own 
             document.getElementById('addJournalForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         window.editJournalPost = editJournalPost;
+        // Mirrors the existing ep-photo-preview box used elsewhere (product
+        // edit panels, the add-product form) - reused as-is rather than a
+        // new preview style, it just letterboxes a landscape cover inside
+        // the same square box via object-fit:contain. Also called whenever
+        // the plain URL field changes, so pasting a URL directly previews
+        // the same way an upload does.
+        function updateJournalCoverPreview(url) {
+            const preview = document.getElementById('newJournalCoverPreview');
+            if (!preview) return;
+            preview.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : `<span>${DEFAULT_ITEM_ICON_SVG}</span>`;
+        }
+        window.updateJournalCoverPreview = updateJournalCoverPreview;
+        // Same upload mechanism every other admin photo field already uses
+        // (product photos, category photos, advert banners) - same Storage
+        // bucket too (product-photos), just its own journal/ path prefix,
+        // rather than standing up a separate bucket for one more image
+        // type. Writes the resulting public URL straight into the plain
+        // text field below it, so it stays the one source of truth the
+        // form actually submits either way, a picked file and a pasted URL
+        // both just end up setting the same field.
+        async function handleJournalCoverUpload(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            if (!supabaseClient) { showToast('Image uploads need accounts connected first, this is preview mode right now.'); return; }
+            const preview = document.getElementById('newJournalCoverPreview');
+            if (preview) preview.innerHTML = '<span>Uploading&hellip;</span>';
+            const uploadFile = await compressImageFile(file, 1600, 0.85);
+            const ext = extensionForUpload(uploadFile, file);
+            const path = `journal/${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) {
+                showToast('Could not upload that image: ' + uploadError.message, 6000, 'error');
+                updateJournalCoverPreview(document.getElementById('newJournalCoverImage').value);
+                return;
+            }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            document.getElementById('newJournalCoverImage').value = publicUrl;
+            updateJournalCoverPreview(publicUrl);
+            showToast('Cover image uploaded.', undefined, 'success');
+        }
+        window.handleJournalCoverUpload = handleJournalCoverUpload;
         async function removeJournalPost(id) {
             if (!supabaseClient) return;
             const post = blogPosts.find(p => String(p.id) === String(id));
@@ -19963,7 +20007,15 @@ The best part? There is room for personal preference. Every kitchen has its own 
         </div>
       </div>
       <div class="field"><label for="newJournalExcerpt">Short excerpt (shown on the article card)</label><input type="text" id="newJournalExcerpt" placeholder="One or two sentences" maxlength="200"></div>
-      <div class="field"><label for="newJournalCoverImage">Cover image URL</label><input type="text" id="newJournalCoverImage" placeholder="images/journal/your-photo.jpg"></div>
+      <div class="field">
+        <label for="newJournalCoverUpload">Cover image</label>
+        <div class="ep-photo-row">
+          <div class="ep-photo-preview" id="newJournalCoverPreview"><span>${DEFAULT_ITEM_ICON_SVG}</span></div>
+          <input type="file" accept="image/*" id="newJournalCoverUpload" onchange="handleJournalCoverUpload(this)">
+        </div>
+        <label for="newJournalCoverImage" style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">Or paste an image URL directly</label>
+        <input type="text" id="newJournalCoverImage" placeholder="/images/journal/your-photo.jpg" oninput="updateJournalCoverPreview(this.value)">
+      </div>
       <div class="field-row">
         <div class="field"><label for="newJournalAuthor">Author</label><input type="text" id="newJournalAuthor" value="Yo7 Foods Team"></div>
         <div class="field"><label for="newJournalMetaDescription">SEO meta description (optional)</label><input type="text" id="newJournalMetaDescription" maxlength="160"></div>
