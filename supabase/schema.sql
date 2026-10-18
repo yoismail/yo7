@@ -2058,11 +2058,19 @@ CREATE TABLE IF NOT EXISTS "public"."pricing_settings" (
     -- from "an admin just changed something else" without re-fetching on
     -- every cron ping once a day's already done.
     "fx_rates_fetched_at" timestamp with time zone,
-    -- The Yo7 Foods Journal's own hero background photo (#/journal), admin-
+    -- The Yo7 Foods Blog's own hero background photo (#/blog), admin-
     -- editable in place from the page itself rather than fixed in the
     -- page's own CSS. Null until an admin changes it, which falls back to
     -- that CSS default rather than this column needing to duplicate it.
+    -- Column name predates the page's rename from "Journal" to "Blog".
     "journal_hero_image" "text",
+    -- Same idea as journal_hero_image above, generalised to every other
+    -- page whose header can carry an admin-set photo (Shop Everything,
+    -- About, Contact, Careers) instead of one column per page. Keyed by
+    -- the same id each header's own data-page-header attribute uses
+    -- ("shop-all", "about", "contact", "careers") - a page missing from
+    -- this object just has no photo set yet, not an error.
+    "page_header_images" "jsonb" DEFAULT '{}'::"jsonb",
     CONSTRAINT "pricing_settings_singleton" CHECK ("id")
 );
 

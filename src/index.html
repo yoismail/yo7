@@ -6288,6 +6288,36 @@
         [data-theme="dark"] .shop-header-story {
             background: var(--page-bg);
         }
+        /* Admin-set photo for this specific header (see
+           renderPageHeaderImages() - Shop Everything, About, Contact,
+           Careers, same mechanism as the Blog's own hero). Only applied
+           once a photo actually exists for this page, every .shop-header
+           instance still looks exactly as it always has otherwise - this
+           is an optional per-page upgrade, not a redesign of the shared
+           header. .has-photo wins over both the plain and dark-mode
+           background/color rules above regardless of site theme, same
+           reasoning the Blog hero's own cream-on-photo text already uses:
+           a real photo needs the same legible treatment no matter which
+           theme a visitor's on. */
+        .page-header-editable.has-photo {
+            background-size: cover;
+            background-position: center;
+            color: var(--cream);
+            border-bottom: none;
+        }
+        .page-header-editable.has-photo .section-eyebrow {
+            color: var(--chartreuse-soft);
+        }
+        .page-header-editable.has-photo .breadcrumb,
+        .page-header-editable.has-photo .shop-header p {
+            color: rgba(250, 249, 242, 0.84);
+        }
+        .page-header-editable.has-photo .breadcrumb a {
+            color: var(--chartreuse-soft);
+        }
+        .page-header-editable.has-photo .shop-header-watermark {
+            display: none;
+        }
 
         .breadcrumb {
             font-size: 13px;
@@ -10983,6 +11013,26 @@
                 document.head.appendChild(style);
             }
         })();
+        // Same flash-prevention trick as the journal hero above, for the
+        // other admin-editable page headers (Shop Everything, About,
+        // Contact, Careers). These don't share one CSS class with a
+        // hardcoded default background-image the way .journal-hero does,
+        // so each key gets its own selector rule instead of one shared one.
+        (function () {
+            try {
+                var images = JSON.parse(localStorage.getItem('yo7-page-header-images') || '{}');
+                var css = '';
+                Object.keys(images).forEach(function (key) {
+                    if (!images[key]) return;
+                    css += '[data-page-header="' + key + '"]{background-image:linear-gradient(180deg,rgba(4,37,0,0.78),rgba(4,37,0,0.55) 55%,rgba(4,37,0,0.88)),url(' + JSON.stringify(images[key]) + ');background-size:cover;background-position:center}';
+                });
+                if (css) {
+                    var style = document.createElement('style');
+                    style.textContent = css;
+                    document.head.appendChild(style);
+                }
+            } catch (e) {}
+        })();
     </script>
 </head>
 
@@ -11697,8 +11747,12 @@
 
     <!-- ================= SHOP EVERYTHING (flat catalogue) ================= -->
     <div id="view-shop-all" class="hidden-view">
-        <header class="shop-header shop-all-hero">
+        <header class="shop-header shop-all-hero page-header-editable" data-page-header="shop-all">
             <svg class="shop-header-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg>
+            <label class="card-edit-btn" for="pageHeaderUpload-shop-all" aria-label="Change Shop Everything header image" title="Change header image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <input type="file" accept="image/*" id="pageHeaderUpload-shop-all" data-page-header-key="shop-all" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
+            </label>
             <div class="wrap">
                 <div class="section-eyebrow">The full shelf</div>
                 <h1>Shop every aisle</h1>
@@ -12306,8 +12360,12 @@
 
     <!-- ================= CONTACT US ================= -->
     <div id="view-contact" class="hidden-view">
-        <header class="shop-header shop-header-contact">
+        <header class="shop-header shop-header-contact page-header-editable" data-page-header="contact">
             <svg class="shop-header-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <label class="card-edit-btn" for="pageHeaderUpload-contact" aria-label="Change Contact header image" title="Change header image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <input type="file" accept="image/*" id="pageHeaderUpload-contact" data-page-header-key="contact" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
+            </label>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Contact Us</div>
                 <h1>Contact Us</h1>
@@ -12373,8 +12431,12 @@
 
     <!-- ================= ABOUT US ================= -->
     <div id="view-about" class="hidden-view">
-        <header class="shop-header shop-header-story">
+        <header class="shop-header shop-header-story page-header-editable" data-page-header="about">
             <svg class="shop-header-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <label class="card-edit-btn" for="pageHeaderUpload-about" aria-label="Change About header image" title="Change header image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <input type="file" accept="image/*" id="pageHeaderUpload-about" data-page-header-key="about" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
+            </label>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; About Us</div>
                 <h1>About Us</h1>
@@ -13023,7 +13085,11 @@
          of the main script), the same edit-mode-on-the-live-page pattern
          products already use, not a separate admin dashboard. -->
     <div id="view-careers" class="hidden-view">
-        <header class="shop-header">
+        <header class="shop-header page-header-editable" data-page-header="careers">
+            <label class="card-edit-btn" for="pageHeaderUpload-careers" aria-label="Change Careers header image" title="Change header image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <input type="file" accept="image/*" id="pageHeaderUpload-careers" data-page-header-key="careers" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
+            </label>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Careers</div>
                 <h1>Careers</h1>
@@ -14734,6 +14800,7 @@
             if (data.fx_rates_auto && typeof data.fx_rates_auto === 'object') fxRatesAuto = data.fx_rates_auto;
             if (data.fx_rates_fetched_at) fxRatesFetchedAt = new Date(data.fx_rates_fetched_at);
             if (typeof data.journal_hero_image === 'string') { journalHeroImage = data.journal_hero_image; cacheJournalHeroImage(journalHeroImage); }
+            if (data.page_header_images && typeof data.page_header_images === 'object') { pageHeaderImages = data.page_header_images; cachePageHeaderImages(pageHeaderImages); }
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -15287,6 +15354,64 @@
                 else localStorage.removeItem('yo7-journal-hero-image');
             } catch (e) { /* private browsing etc. - the flash just comes back, nothing worse */ }
         }
+        // Same idea as journalHeroImage/cacheJournalHeroImage above,
+        // generalised to every other page whose header can carry an
+        // admin-set photo (Shop Everything, About, Contact, Careers)
+        // instead of a hardcoded one. Keyed by the same id each header's
+        // own data-page-header attribute carries.
+        let pageHeaderImages = {};
+        function cachePageHeaderImages(images) {
+            try { localStorage.setItem('yo7-page-header-images', JSON.stringify(images || {})); }
+            catch (e) { /* private browsing etc. - the flash just comes back, nothing worse */ }
+        }
+        // Builds the dark-gradient-over-photo background any header with a
+        // photo set uses, same recipe the Blog hero's own CSS/JS override
+        // already uses, so a header photo always reads the same way no
+        // matter which page it's on.
+        function pageHeaderBackgroundCss(url) {
+            return `linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('${url}')`;
+        }
+        // Applies pageHeaderImages to every header on the page that has
+        // one (there's never more than one match per render, but this
+        // intentionally doesn't scope to the current route - these
+        // headers are static markup, always in the DOM, not rendered per
+        // navigation the way the Blog page's own JS-built content is).
+        function renderPageHeaderImages() {
+            document.querySelectorAll('[data-page-header]').forEach(header => {
+                const url = pageHeaderImages[header.dataset.pageHeader];
+                if (url) {
+                    header.classList.add('has-photo');
+                    header.style.backgroundImage = pageHeaderBackgroundCss(url);
+                } else {
+                    header.classList.remove('has-photo');
+                    header.style.backgroundImage = '';
+                }
+            });
+        }
+        async function handlePageHeaderImageUpload(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const key = input.dataset.pageHeaderKey;
+            if (!key) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            if (!supabaseClient) { showToast('Image uploads need accounts connected first, this is preview mode right now.'); return; }
+            showToast('Uploading header image…');
+            const uploadFile = await compressImageFile(file, 1920, 0.85);
+            const ext = extensionForUpload(uploadFile, file);
+            const path = `page-headers/${key}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const nextImages = { ...pageHeaderImages, [key]: publicUrl };
+            const { error: saveError } = await supabaseClient.from('pricing_settings').update({ page_header_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true);
+            if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
+            pageHeaderImages = nextImages;
+            cachePageHeaderImages(pageHeaderImages);
+            renderPageHeaderImages();
+            logAdminAction('page_header_image_updated', 'pricing_settings', key, { imageUrl: publicUrl });
+            showToast('Header image updated.', undefined, 'success');
+        }
+        window.handlePageHeaderImageUpload = handlePageHeaderImageUpload;
         let googlePlaceId = '';
         function renderPlatformBadges() {
             const row = document.getElementById('platformBadgesRow');
@@ -28108,6 +28233,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // never corrected itself, same reason the category page re-
             // render above exists.
             else if (currentHash === '#/blog') renderJournalPage();
+            // page_header_images lives on this same settings row. Unlike
+            // the group/category/blog cases above, these 4 headers are
+            // static markup always present in the DOM regardless of the
+            // current route, so this doesn't need a hash check, it just
+            // needs to run once this data actually exists.
+            renderPageHeaderImages();
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
