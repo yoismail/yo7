@@ -10960,6 +10960,29 @@
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
         })();
+        // Same reasoning as the theme IIFE just above, for the Journal
+        // hero photo instead - .journal-hero's own CSS rule (further down
+        // this same document) paints a real default background-image the
+        // instant it's parsed, before any of the app's own script has had
+        // a chance to run, let alone finish the Supabase fetch that would
+        // know about an admin-set replacement. Appending this rule here,
+        // after that default rule in source order, wins the cascade at
+        // equal specificity and paints the right photo on the very first
+        // frame for anyone whose browser already cached it from a previous
+        // visit (written by cacheJournalHeroImage, including right after
+        // an admin's own upload) - this is also why the rule carries no
+        // !important: the app's own later inline-style override (plain
+        // inline styles always win over a stylesheet rule that isn't
+        // !important) still corrects it painlessly if the real fetched
+        // value turns out to differ from this cached guess.
+        (function () {
+            var heroImg = localStorage.getItem('yo7-journal-hero-image');
+            if (heroImg) {
+                var style = document.createElement('style');
+                style.textContent = '.journal-hero{background-image:linear-gradient(180deg,rgba(4,37,0,0.78),rgba(4,37,0,0.55) 55%,rgba(4,37,0,0.88)),url(' + JSON.stringify(heroImg) + ')}';
+                document.head.appendChild(style);
+            }
+        })();
     </script>
 </head>
 
@@ -11022,7 +11045,7 @@
             <div class="nav-links">
                 <a href="#/" id="navLinkHome">Home</a>
                 <a href="#/shop" id="navLinkShop">Shop</a>
-                <a href="#/journal" id="navLinkJournal">Journal</a>
+                <a href="#/blog" id="navLinkJournal">Blog</a>
                 <a href="#/about" id="navLinkStory">About Us</a>
                 <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
                 <a href="#/contact" id="navLinkContact">Contact</a>
@@ -11130,7 +11153,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
-            <a href="#/journal">Journal</a>
+            <a href="#/blog">Blog</a>
             <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
@@ -11716,12 +11739,12 @@
     <!-- ================= THE YO7 FOODS JOURNAL ================= -->
     <div id="view-journal" class="hidden-view">
         <header class="shop-header journal-hero">
-            <label class="card-edit-btn" for="journalHeroUpload" aria-label="Change Journal hero image" title="Change hero image">
+            <label class="card-edit-btn" for="journalHeroUpload" aria-label="Change Blog hero image" title="Change hero image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="journalHeroUpload" onchange="handleJournalHeroUpload(this)" style="display:none;">
             </label>
             <div class="wrap">
-                <div class="section-eyebrow">The Yo7 Foods Journal</div>
+                <div class="section-eyebrow">The Yo7 Foods Blog</div>
                 <h1>Recipes, Food Stories &amp; Everyday Inspiration</h1>
                 <p>Good food brings people together. Practical recipes, ingredient guides, cooking tips and stories from the African and Caribbean food cultures we celebrate.</p>
             </div>
@@ -11744,7 +11767,7 @@
     <div id="view-journal-post" class="hidden-view">
         <header class="shop-header journal-post-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/journal">Journal</a> &rsaquo; <span id="journalPostCrumb">Article</span></div>
+                <div class="breadcrumb"><a href="#/blog">Blog</a> &rsaquo; <span id="journalPostCrumb">Article</span></div>
                 <div class="journal-post-meta-top">
                     <span class="journal-post-category" id="journalPostCategory"></span>
                     <span id="journalPostReadTime"></span>
@@ -11767,14 +11790,14 @@
                 <div class="empty-state" id="journalPostNotFound" style="display:none;">
                     <h3>Article not found</h3>
                     <p>This story may have been moved, unpublished, or the link's out of date.</p>
-                    <a class="btn btn-primary" href="#/journal">Back to the Journal</a>
+                    <a class="btn btn-primary" href="#/blog">Back to the Blog</a>
                 </div>
             </div>
         </section>
         <section class="products-section" id="journalRelatedSection" style="display:none; padding-top:0;">
             <div class="wrap">
                 <div class="section-head reveal">
-                    <div class="section-eyebrow">More from the Journal</div>
+                    <div class="section-eyebrow">More from the Blog</div>
                     <h2>Keep reading</h2>
                 </div>
                 <div class="journal-grid" id="journalRelatedGrid"></div>
@@ -13717,19 +13740,19 @@
         <div class="text-watermark footer-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
         <div class="wrap">
             <div class="footer-newsletter-grid">
-            <a class="footer-newsletter journal-teaser-card" id="journalTeaserCard" href="#/journal">
+            <a class="footer-newsletter journal-teaser-card" id="journalTeaserCard" href="#/blog">
                 <svg class="footer-newsletter-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                 <div class="footer-newsletter-text">
                     <span class="footer-newsletter-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                     </span>
                     <div>
-                        <h4>The Yo7 Foods Journal</h4>
+                        <h4>The Yo7 Foods Blog</h4>
                         <p>Recipes, ingredient guides and food stories from the cultures we celebrate.</p>
                     </div>
                 </div>
                 <span class="journal-teaser-cta view-all-btn">
-                    Read the Journal
+                    Read the Blog
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </span>
             </a>
@@ -13788,6 +13811,7 @@
                         <h4>Navigation</h4>
                         <a href="#/">Home</a>
                         <a href="#/shop">Shop</a>
+                        <a href="#/blog">Blog</a>
                         <a href="#/checkout">Basket</a>
                         <a href="#/orders">My Orders</a>
                         <a href="#/refer">Refer a Friend</a>
@@ -14709,7 +14733,7 @@
             if (data.fx_rates && typeof data.fx_rates === 'object') fxRates = data.fx_rates;
             if (data.fx_rates_auto && typeof data.fx_rates_auto === 'object') fxRatesAuto = data.fx_rates_auto;
             if (data.fx_rates_fetched_at) fxRatesFetchedAt = new Date(data.fx_rates_fetched_at);
-            if (typeof data.journal_hero_image === 'string') journalHeroImage = data.journal_hero_image;
+            if (typeof data.journal_hero_image === 'string') { journalHeroImage = data.journal_hero_image; cacheJournalHeroImage(journalHeroImage); }
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -15250,6 +15274,19 @@
         // already has a real default background-image, this only needs to
         // override that inline once it's actually set to something else.
         let journalHeroImage = null;
+        // Cached so the early flash-prevention IIFE in <head> (see its own
+        // comment, same mechanism as the dark-theme one right next to it)
+        // can paint the real hero photo on the very first frame instead of
+        // the CSS default, rather than showing that default for however
+        // long loadPricingSettings()'s fetch takes and then visibly
+        // swapping. Written here and right after a successful upload (see
+        // handleJournalHeroUpload) - either one updates it.
+        function cacheJournalHeroImage(url) {
+            try {
+                if (url) localStorage.setItem('yo7-journal-hero-image', url);
+                else localStorage.removeItem('yo7-journal-hero-image');
+            } catch (e) { /* private browsing etc. - the flash just comes back, nothing worse */ }
+        }
         let googlePlaceId = '';
         function renderPlatformBadges() {
             const row = document.getElementById('platformBadgesRow');
@@ -19683,11 +19720,19 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const { data, error } = await supabaseClient.from('blog_posts').select('*').order('published_at', { ascending: false, nullsFirst: false });
             if (error || !Array.isArray(data)) return;
             blogPosts = data;
-            if (document.getElementById('journalGrid')) renderJournalPage();
-            if (document.getElementById('journalPostTitle')) {
-                const hash = window.location.hash;
-                if (hash.startsWith('#/journal/')) renderJournalPostPage(hash.replace('#/journal/', ''));
-            }
+            // route() has already rewritten the address bar to a clean path
+            // by the time this resolves, clearing window.location.hash as a
+            // side effect (see syncAddressBarToHash) - reading it directly
+            // here always saw an empty string, so a visitor landing
+            // straight on an article page (most obviously: refreshing one
+            // right after an admin saved a new cover image for it) never
+            // actually picked up the real data this fetch just brought in.
+            // pathToHash() derives the real route from window.location.pathname
+            // instead, same fix pricingSettingsReady's own .then() already
+            // needed for renderCategoryPage()/renderGroupPage().
+            const hash = pathToHash(window.location.pathname);
+            if (hash === '#/blog') renderJournalPage();
+            else if (hash.startsWith('#/blog/')) renderJournalPostPage(hash.replace('#/blog/', ''));
             renderJournalAdminPanel();
         }
         // See JOURNAL_FALLBACK_POSTS's own comment for the merge rule: a
@@ -19728,7 +19773,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 ? `<img src="${escapeHtml(post.cover_image)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async">`
                 : `<span class="thumb-placeholder-emoji">${DEFAULT_ITEM_ICON_SVG}</span>`;
             return `
-    <a class="journal-card" href="#/journal/${encodeURIComponent(post.slug)}">
+    <a class="journal-card" href="#/blog/${encodeURIComponent(post.slug)}">
       <div class="journal-card-thumb">
         ${post.category ? `<span class="journal-card-category">${escapeHtml(journalCategoryLabel(post.category))}</span>` : ''}
         ${thumb}
@@ -19814,9 +19859,9 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         }
         function updateJournalPostMeta(post) {
             captureJournalDefaultMeta();
-            const title = `${post.title} | The Yo7 Foods Journal`;
+            const title = `${post.title} | The Yo7 Foods Blog`;
             const description = post.meta_description || post.excerpt || '';
-            const url = `https://yo7foods.co.uk/#/journal/${encodeURIComponent(post.slug)}`;
+            const url = `https://yo7foods.co.uk/#/blog/${encodeURIComponent(post.slug)}`;
             document.title = title;
             setMetaContent('meta[name="description"]', description);
             setMetaContent('meta[property="og:title"]', title);
@@ -20062,8 +20107,9 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const { error: saveError } = await supabaseClient.from('pricing_settings').update({ journal_hero_image: publicUrl, updated_at: new Date().toISOString() }).eq('id', true);
             if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
             journalHeroImage = publicUrl;
+            cacheJournalHeroImage(publicUrl);
             renderJournalPage();
-            logAdminAction('journal_hero_updated', 'pricing_settings', 'Journal hero image', { imageUrl: publicUrl });
+            logAdminAction('journal_hero_updated', 'pricing_settings', 'Blog hero image', { imageUrl: publicUrl });
             showToast('Hero image updated.', undefined, 'success');
         }
         window.handleJournalHeroUpload = handleJournalHeroUpload;
@@ -20109,7 +20155,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             el.className = 'delivery-admin-panel discount-admin-panel';
             const rows = [...blogPosts].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
             el.innerHTML = `
-    <h3>Journal articles <span class="admin-only-tag">Edit mode only</span></h3>
+    <h3>Blog articles <span class="admin-only-tag">Edit mode only</span></h3>
     <p class="delivery-admin-note">Articles save for real and go live for every visitor immediately once published. An unpublished draft is never shown on the public site.</p>
     <div id="journalPostsList" class="delivery-rule-list">${rows.map(p => `
       <div class="delivery-rule-row">
@@ -20119,7 +20165,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
           <button type="button" class="rule-remove-btn" onclick="toggleJournalPostPublished('${p.id}')">${p.published ? 'Unpublish' : 'Publish'}</button>
           <button type="button" class="rule-remove-btn" onclick="removeJournalPost('${p.id}')">Delete</button>
         </span>
-      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No articles created yet - the Journal is showing its built-in starter content below.</p>'}</div>
+      </div>`).join('') || '<p style="font-size:12.5px; color:var(--text-muted);">No articles created yet - the Blog is showing its built-in starter content below.</p>'}</div>
     <form id="addJournalForm" class="discount-admin-form">
       <div class="field"><label for="newJournalTitle">Title</label><input type="text" id="newJournalTitle" placeholder="e.g. The Secret to a Great Pot of Jollof Rice" required></div>
       <div class="field"><label for="newJournalSlug">URL slug</label><input type="text" id="newJournalSlug" placeholder="auto-filled from the title" data-autofilled="true" required></div>
@@ -27335,7 +27381,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const links = {
                 navLinkHome: isHome,
                 navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
-                navLinkJournal: hash === '#/journal' || hash.startsWith('#/journal/'),
+                navLinkJournal: hash === '#/blog' || hash.startsWith('#/blog/'),
                 navLinkStory: hash === '#/about',
                 navLinkDelivery: hash === '#/delivery-info' || hash === '#/delivery-policy',
                 navLinkContact: hash === '#/contact',
@@ -27533,7 +27579,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             }
             updateActiveNavLink(hash);
             if (!hash.startsWith('#/product/')) clearProductJsonLd();
-            if (!hash.startsWith('#/journal/')) resetJournalPostMeta();
+            if (!hash.startsWith('#/blog/')) resetJournalPostMeta();
             setNotFoundNoindex(false);
             // cancelOrderModal sits outside every view container (see its
             // own comment) so it renders correctly regardless of which page
@@ -27634,12 +27680,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash === '#/combos') {
                 showView('view-combos');
                 renderCombosViewAllPage();
-            } else if (hash === '#/journal') {
+            } else if (hash === '#/blog') {
                 showView('view-journal');
                 renderJournalPage();
-            } else if (hash.startsWith('#/journal/')) {
+            } else if (hash.startsWith('#/blog/')) {
                 showView('view-journal-post');
-                renderJournalPostPage(hash.replace('#/journal/', ''));
+                renderJournalPostPage(hash.replace('#/blog/', ''));
             } else if (hash === '#/privacy') {
                 showView('view-privacy');
             } else if (hash === '#/terms') {
@@ -28054,6 +28100,14 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const currentHash = pathToHash(window.location.pathname);
             if (currentHash.startsWith('#/group/')) renderGroupPage(currentHash.replace('#/group/', ''));
             else if (currentHash.startsWith('#/category/')) renderCategoryPage(currentHash.replace('#/category/', ''));
+            // journal_hero_image lives on this same settings row - a
+            // visitor landing straight on #/blog (most obviously: an
+            // admin refreshing right after saving a new hero photo) ran
+            // renderJournalPage() once already, at boot, before this
+            // resolved, with journalHeroImage still null. Without this it
+            // never corrected itself, same reason the category page re-
+            // render above exists.
+            else if (currentHash === '#/blog') renderJournalPage();
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
