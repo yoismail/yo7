@@ -17049,7 +17049,14 @@
         window.saveBundleItemWeight = saveBundleItemWeight;
 
         function bundleCardHTML(bundle, bi) {
-            const items = bundle.items.map(ref => resolveComboItem(ref)).filter(Boolean);
+            // Dropped the same way a deleted product already is everywhere
+            // else customer-facing (allProducts, favoriteItems, etc.) -
+            // resolveComboItem() itself still resolves it (the bundle
+            // editor's own diff logging below wants the real before/after
+            // name even for a now-deleted item), so the exclusion belongs
+            // here, at the customer-visible card, not in that shared
+            // resolver.
+            const items = bundle.items.map(ref => resolveComboItem(ref)).filter(p => p && !p.deleted);
             const inStockItems = items.filter(p => p.stock !== 'out');
             const rawTotal = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
             const discountPct = bundle.discountPercent || 0;
@@ -17340,7 +17347,11 @@
             const list = document.getElementById('dishBuilderList');
             list.innerHTML = dish.items.map((ref, idx) => {
                 const p = getProduct(ref.catSlug, ref.idx);
-                if (!p) return '';
+                // Treated the same as a missing product, same reason
+                // bundleCardHTML()/comboCardHTML() exclude a deleted item
+                // rather than letting it render as a normal, selectable,
+                // purchasable row.
+                if (!p || p.deleted) return '';
                 const outOfStock = p.stock === 'out';
                 const checked = dishSelectedItems.has(idx) && !outOfStock;
                 return `
@@ -17357,7 +17368,7 @@
             dish.items.forEach((ref, idx) => {
                 if (!dishSelectedItems.has(idx)) return;
                 const p = getProduct(ref.catSlug, ref.idx);
-                if (p && p.stock !== 'out') total += effectivePrice(p);
+                if (p && !p.deleted && p.stock !== 'out') total += effectivePrice(p);
             });
             document.getElementById('dishBuilderTotal').textContent = money(total);
         }
@@ -17374,7 +17385,7 @@
             dish.items.forEach((ref, idx) => {
                 if (!dishSelectedItems.has(idx)) return;
                 const p = getProduct(ref.catSlug, ref.idx);
-                if (p && p.stock !== 'out') { addToCart(p, 1); added++; }
+                if (p && !p.deleted && p.stock !== 'out') { addToCart(p, 1); added++; }
             });
             if (added === 0) { showToast('Nothing selected to add.'); return; }
             showToast(`Added ${added} item${added > 1 ? 's' : ''} for ${dish.name} to your basket.`);
@@ -17578,7 +17589,8 @@
         window.saveNewDish = saveNewDish;
 
         function comboCardHTML(combo, ci) {
-            const items = (combo.items || []).map(ref => resolveComboItem(ref)).filter(Boolean);
+            // See bundleCardHTML()'s comment on the same filter.
+            const items = (combo.items || []).map(ref => resolveComboItem(ref)).filter(p => p && !p.deleted);
             const inStockItems = items.filter(p => p.stock !== 'out');
             const rawTotal = inStockItems.reduce((sum, p) => sum + effectivePrice(p), 0);
             const discountPct = combo.discountPercent || 0;
@@ -17635,7 +17647,12 @@
         function addComboToCart(ci) {
             const combo = COMBOS[ci];
             if (!combo) return;
-            const items = (combo.items || []).map(ref => resolveComboItem(ref)).filter(Boolean);
+            // See bundleCardHTML()'s comment on the same filter. Excluding
+            // a deleted item here, before the stock filter below, also
+            // keeps the "left out, out of stock" toast honest - a deleted
+            // item was never counted in items.length to begin with, so it
+            // never gets blamed on stock.
+            const items = (combo.items || []).map(ref => resolveComboItem(ref)).filter(p => p && !p.deleted);
             const added = items.filter(p => p.stock !== 'out');
             const skipped = items.length - added.length;
             if (added.length === 0) { showToast(`Everything in "${combo.name}" is currently out of stock.`); return; }
@@ -17885,7 +17902,8 @@
         function addBundleToCart(bundleIdx) {
             const bundle = BUNDLES[bundleIdx];
             if (!bundle) return;
-            const items = bundle.items.map(ref => resolveComboItem(ref)).filter(Boolean);
+            // See addComboToCart()'s comment on the same filter.
+            const items = bundle.items.map(ref => resolveComboItem(ref)).filter(p => p && !p.deleted);
             const added = items.filter(p => p.stock !== 'out');
             const skipped = items.length - added.length;
             if (added.length === 0) { showToast(`Everything in "${bundle.name}" is currently out of stock.`); return; }
@@ -17995,7 +18013,15 @@
             const real = (realBestSellers || [])
                 .map(ref => getProduct(ref.catSlug, ref.idx))
                 .filter(Boolean)
-                .filter(p => !flaggedKeys.has(p.catSlug + '::' + p.idx));
+                // loadRealBestSellers() already excludes a deleted product
+                // when it first builds realBestSellers, but that ref can
+                // outlive the product, an admin deleting it mid-session
+                // doesn't retroactively clear it out. Checking again here,
+                // same as every other product-list getter in this file
+                // (allProducts, favoriteItems, buyAgainItems) already does
+                // at its own return point, is what actually keeps this
+                // honest regardless of when the delete happened.
+                .filter(p => !p.deleted && !flaggedKeys.has(p.catSlug + '::' + p.idx));
             return [...flagged, ...real];
         }
         // "We couldn't find a match" on its own is a dead end, this gives
@@ -18059,7 +18085,15 @@
                     const [catSlug, idxStr] = String(row.product_id).split('::');
                     return { catSlug, idx: Number(idxStr) };
                 })
-                .filter(ref => !!getProduct(ref.catSlug, ref.idx))
+                // getProduct() returns a tombstoned slot same as a live one,
+                // it only drops a flat-out missing index. A product with
+                // genuine sales in the window but deleted since would
+                // otherwise still pass this check and end up ranked here,
+                // same gap loadFrequentlyBoughtTogether() had.
+                .filter(ref => {
+                    const p = getProduct(ref.catSlug, ref.idx);
+                    return !!p && !p.deleted;
+                })
                 .filter(ref => {
                     const key = ref.catSlug + '::' + ref.idx;
                     if (seenRefKeys.has(key)) return false;
@@ -19013,11 +19047,11 @@
           <div class="product-card-rating" data-product-key="${p.catSlug}::${pidx}"></div>
           <div class="product-row">
             <div class="product-price">${priceHTML(p)}</div>
-            <button class="card-add-btn" type="button" ${outOfStock ? 'disabled' : ''} aria-label="${outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`}" title="${outOfStock ? 'Out of stock' : 'Add to basket'}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx}, this);` : `quickAdd('${p.catSlug}', ${pidx}, this);`}">
+            <button class="card-add-btn" type="button" ${(outOfStock || p.deleted) ? 'disabled' : ''} aria-label="${p.deleted ? 'No longer available' : (outOfStock ? 'Out of stock' : `Add ${escapeHtml(p.name)} to basket`)}" title="${p.deleted ? 'No longer available' : (outOfStock ? 'Out of stock' : 'Add to basket')}" onclick="event.preventDefault(); event.stopPropagation(); ${p.variantIdx !== undefined ? `addVariantToCart('${p.catSlug}', ${pidx}, ${p.variantIdx}, this);` : `quickAdd('${p.catSlug}', ${pidx}, this);`}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
-          ${outOfStock ? `<button class="card-notify-btn" type="button" data-notify-key="${p.catSlug}::${pidx}" onclick="event.preventDefault(); event.stopPropagation(); subscribeToStockAlertFromCard('${p.catSlug}', ${pidx}, this);">${cardNotifyBtnInnerHTML()}</button>` : ''}
+          ${(outOfStock && !p.deleted) ? `<button class="card-notify-btn" type="button" data-notify-key="${p.catSlug}::${pidx}" onclick="event.preventDefault(); event.stopPropagation(); subscribeToStockAlertFromCard('${p.catSlug}', ${pidx}, this);">${cardNotifyBtnInnerHTML()}</button>` : ''}
         </div>
       </a>
       <div class="edit-panel-slot"></div>
@@ -19048,7 +19082,7 @@
         }
         function quickAdd(catSlug, idx, btn) {
             const p = getProduct(catSlug, idx);
-            if (!p || p.stock === 'out') return;
+            if (!p || p.deleted || p.stock === 'out') return;
             addToCart(p, 1);
             showToast(`Added ${p.name} to your basket.`, undefined, 'success');
             confirmAddButton(btn);
@@ -19062,7 +19096,7 @@
         // exact size shown, not the base product.
         function addVariantToCart(catSlug, idx, variantIdx, btn) {
             const p = getProduct(catSlug, idx);
-            if (!p || p.stock === 'out') return;
+            if (!p || p.deleted || p.stock === 'out') return;
             const variant = Array.isArray(p.weightVariants) ? p.weightVariants[variantIdx] : null;
             if (!variant) { addToCart(p, 1); confirmAddButton(btn); return; }
             const toAdd = {
@@ -20278,17 +20312,34 @@
         // out-of-stock item can never reach checkout in the first place.
         function pruneOutOfStockFromCart() {
             const removedNames = [];
+            // A product an admin deletes outright, not just marks out of
+            // stock, needs the exact same pruning, otherwise it sat in a
+            // basket that already existed at delete time forever, all the
+            // way through to checkout and payment for something that no
+            // longer exists to fulfil. Named separately from the
+            // out-of-stock case below since "no longer available" is the
+            // honest wording for a deletion, "out of stock" implies it
+            // might come back.
+            const removedDeletedNames = [];
             cart = cart.filter(item => {
                 if (item.isCombo) return true; // combo stock isn't tracked per-line here
                 const liveProduct = getProduct(item.catSlug, Number(item.id.split('::')[1]));
+                if (liveProduct && liveProduct.deleted) {
+                    removedDeletedNames.push(item.name);
+                    return false;
+                }
                 if (liveProduct && liveProduct.stock === 'out') {
                     removedNames.push(item.name);
                     return false;
                 }
                 return true;
             });
+            if (removedNames.length || removedDeletedNames.length) updateCartBadge();
+            if (removedDeletedNames.length) {
+                const label = removedDeletedNames.length === 1 ? `"${removedDeletedNames[0]}" is` : `${removedDeletedNames.length} items are`;
+                showToast(`${label} no longer available and ${removedDeletedNames.length === 1 ? 'was' : 'were'} removed from your basket.`, 6000);
+            }
             if (removedNames.length) {
-                updateCartBadge();
                 const label = removedNames.length === 1 ? `"${removedNames[0]}" is` : `${removedNames.length} items are`;
                 showToast(`${label} now out of stock and ${removedNames.length === 1 ? 'was' : 'were'} removed from your basket.`, 6000);
             }
@@ -21912,7 +21963,11 @@
                     // id (catSlug::idx::<variant>, or a ::sub<freq> suffix)
                     // prices and weighs differently than the plain base
                     // product getProduct() would otherwise hand back here.
-                    if (p && p.stock !== 'out') {
+                    // !p.deleted gates it the same way as every other
+                    // re-add-to-cart path on the site, a product an admin
+                    // has since deleted is no more reorderable than one
+                    // that's merely out of stock.
+                    if (p && !p.deleted && p.stock !== 'out') {
                         const existingLine = cart.find(ci => ci.id === id);
                         if (existingLine) { existingLine.qty += (item.qty || 1); }
                         else {
