@@ -17998,12 +17998,28 @@
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.rpc('get_best_sellers', { p_days: 30, p_limit: 12 });
             if (error || !Array.isArray(data) || data.length === 0) return;
+            // get_best_sellers groups by the exact line-item id, so a weight
+            // variant or subscription purchase ("flour::3::5kg") comes back
+            // as its own row alongside the base product's own ("flour::3") -
+            // same third-::segment case buyAgainItems() already handles.
+            // Both collapse to the same {catSlug, idx} here, so without
+            // deduping, a product bought both ways in the window rendered
+            // as two identical best-seller cards. data is already ordered
+            // by units_sold desc, so keeping the first occurrence of each
+            // key keeps its highest-selling line.
+            const seenRefKeys = new Set();
             const refs = data
                 .map(row => {
                     const [catSlug, idxStr] = String(row.product_id).split('::');
                     return { catSlug, idx: Number(idxStr) };
                 })
-                .filter(ref => !!getProduct(ref.catSlug, ref.idx));
+                .filter(ref => !!getProduct(ref.catSlug, ref.idx))
+                .filter(ref => {
+                    const key = ref.catSlug + '::' + ref.idx;
+                    if (seenRefKeys.has(key)) return false;
+                    seenRefKeys.add(key);
+                    return true;
+                });
             if (refs.length === 0) return;
             realBestSellers = refs;
             renderBestSellersSpotlight();
@@ -19755,7 +19771,7 @@
                     return getProduct(rCatSlug, Number(rIdxStr));
                 })
                 .filter(Boolean)
-                .filter(rp => rp.stock !== 'out');
+                .filter(rp => !rp.deleted && rp.stock !== 'out');
             if (items.length === 0) return;
             stripEl.style.display = '';
             renderGrid(items, 'fbtGrid');
