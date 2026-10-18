@@ -1690,6 +1690,27 @@ CREATE TABLE IF NOT EXISTS "public"."advert_banners" (
 ALTER TABLE "public"."advert_banners" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."blog_posts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "slug" "text" NOT NULL,
+    "title" "text" NOT NULL,
+    "excerpt" "text",
+    "body" "text" NOT NULL,
+    "cover_image" "text",
+    "category" "text",
+    "linked_category" "text",
+    "author" "text" DEFAULT 'Yo7 Foods Team'::"text" NOT NULL,
+    "published" boolean DEFAULT false NOT NULL,
+    "published_at" timestamp with time zone,
+    "meta_description" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."blog_posts" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."carts" (
     "user_id" "uuid" NOT NULL,
     "items" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
@@ -2236,6 +2257,16 @@ ALTER TABLE ONLY "public"."admin_audit_log"
 
 ALTER TABLE ONLY "public"."advert_banners"
     ADD CONSTRAINT "advert_banners_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_posts"
+    ADD CONSTRAINT "blog_posts_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."blog_posts"
+    ADD CONSTRAINT "blog_posts_slug_key" UNIQUE ("slug");
 
 
 
@@ -2923,6 +2954,17 @@ CREATE POLICY "advert_banners_select_all" ON "public"."advert_banners" FOR SELEC
 
 
 
+ALTER TABLE "public"."blog_posts" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "blog_posts_admin_write" ON "public"."blog_posts" USING ("public"."is_admin_user"()) WITH CHECK ("public"."is_admin_user"());
+
+
+
+CREATE POLICY "blog_posts_select_published" ON "public"."blog_posts" FOR SELECT USING ("published" = true);
+
+
+
 ALTER TABLE "public"."carts" ENABLE ROW LEVEL SECURITY;
 
 
@@ -3446,6 +3488,12 @@ GRANT ALL ON SEQUENCE "public"."admin_audit_log_id_seq" TO "service_role";
 GRANT ALL ON TABLE "public"."advert_banners" TO "anon";
 GRANT ALL ON TABLE "public"."advert_banners" TO "authenticated";
 GRANT ALL ON TABLE "public"."advert_banners" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."blog_posts" TO "anon";
+GRANT ALL ON TABLE "public"."blog_posts" TO "authenticated";
+GRANT ALL ON TABLE "public"."blog_posts" TO "service_role";
 
 
 
