@@ -130,14 +130,14 @@
          arrive, which is what display=swap already does even when
          render-blocking, so this changes nothing about the visual result,
          only removes the wait beforehand. <noscript> covers the no-JS case.
-         Fraunces (--body, prose only, see the input/select/textarea rule
+         Inter (--body, prose only, see the input/select/textarea rule
          below that keeps form fields on --display instead) shares this one
          request with Montserrat Alternates rather than adding a second
          render-blocking-risk link of its own. -->
     <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&family=Fraunces:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
         onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&family=Fraunces:wght@400;500;600&display=swap"></noscript>
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"></noscript>
     <!-- Supabase and Stripe's own libraries moved to just before the main
          app script at the bottom of <body> (deliberate performance fix,
          see the note there) — neither is needed until the app script
@@ -174,13 +174,14 @@
             --border-rgb: 6, 59, 0;
             --warn-text: #7a4a26;
             --display: 'Montserrat Alternates', sans-serif;
-            /* Fraunces for actual prose (paragraphs, descriptions) - a warm,
-               soft-serif pairing with --display rather than one font doing
-               both jobs. Headings, badges, buttons, and every form field
-               (see the input/select/textarea rule below) explicitly set
-               --display already, so this only reaches plain text that was
-               never overridden, exactly the body copy it's meant for. */
-            --body: 'Fraunces', Georgia, serif;
+            /* Inter for actual prose (paragraphs, descriptions) - a clean,
+               dependable retail-UI face, pairing with --display rather than
+               one font doing both jobs. Headings, badges, buttons, and
+               every form field (see the input/select/textarea rule below)
+               explicitly set --display already, so this only reaches plain
+               text that was never overridden, exactly the body copy it's
+               meant for. */
+            --body: 'Inter', -apple-system, 'Segoe UI', sans-serif;
             /* The hero's logo watermark is a translucent colour overlay at a
                fixed opacity, tuned against a near-black canvas in dark mode
                where it reads as a clear glow. Against white in light mode
@@ -233,10 +234,11 @@
                more specific below still needs to stay at or above it. */
             font-size: 16px;
             /* Without this, every form field on the site would inherit
-               --body (Fraunces, a serif meant for prose) from the <body>
-               cascade - fine for a paragraph, wrong for something someone's
-               actively typing a postcode or price into. Form fields stay on
-               --display regardless of what --body resolves to. */
+               --body from the <body> cascade instead of the brand's own
+               --display face. Form fields stay on --display regardless of
+               what --body resolves to, so the two can keep diverging (a
+               prose typeface for paragraphs, the brand face for UI) without
+               form fields silently drifting along with --body each time. */
             font-family: var(--display);
         }
 
