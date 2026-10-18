@@ -19755,7 +19755,7 @@
                     return getProduct(rCatSlug, Number(rIdxStr));
                 })
                 .filter(Boolean)
-                .filter(rp => rp.stock !== 'out');
+                .filter(rp => !rp.deleted && rp.stock !== 'out');
             if (items.length === 0) return;
             stripEl.style.display = '';
             renderGrid(items, 'fbtGrid');
