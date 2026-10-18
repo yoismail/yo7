@@ -7296,6 +7296,25 @@
             letter-spacing: 0.03em; text-transform: uppercase;
             color: var(--text-muted); margin-bottom: 16px;
         }
+        /* A visitor who scrolled past every item in Special Offers, New
+           Arrivals, a category, or the full catalogue used to just hit a
+           dead stop with nothing below the grid. This gives them one more
+           thing to look at instead, reusing the same "Popular picks" set
+           the Best Sellers section itself shows (see
+           renderPopularPicksSuggestion). The border-top is what tells it
+           apart from the real results above, rather than reading as more
+           of the same list. */
+        .popular-picks-suggestion {
+            margin-top: 48px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(var(--border-rgb), 0.12);
+        }
+        .popular-picks-suggestion-label {
+            text-align: center;
+            font-family: var(--display); font-weight: 700; font-size: 12px;
+            letter-spacing: 0.03em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 16px;
+        }
 
         /* Everything that used to live on the (now-removed) full-bleed
            .product-thumb tile — rounded top / sharp bottom corners, accent
@@ -11572,6 +11591,7 @@
                 <div class="grid-load-more" id="productGridLoadMore" style="display:none;">
                     <button type="button" class="see-more-btn" id="productGridLoadMoreBtn">See more</button>
                 </div>
+                <div class="popular-picks-suggestion" id="categoryPopularPicks" style="display:none;"></div>
                 <div class="empty-state" id="emptyState" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
                     <h3>We couldn't find a match</h3>
@@ -11612,6 +11632,7 @@
                 <div class="grid-load-more" id="shopAllLoadMore" style="display:none;">
                     <button type="button" class="see-more-btn" id="shopAllLoadMoreBtn">See more</button>
                 </div>
+                <div class="popular-picks-suggestion" id="shopAllPopularPicks" style="display:none;"></div>
                 <div class="empty-state" id="shopAllEmptyState" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
                     <h3>We couldn't find a match</h3>
@@ -12757,6 +12778,7 @@
                 </button>
                 <div id="addProductSlotArrivals"></div>
                 <div class="shop-all-grid" id="newArrivalsGrid"></div>
+                <div class="popular-picks-suggestion" id="newArrivalsPopularPicks" style="display:none;"></div>
             </div>
         </section>
     </div>
@@ -12946,6 +12968,7 @@
                 </button>
                 <div id="addProductSlotOffers"></div>
                 <div class="shop-all-grid" id="specialOffersGrid"></div>
+                <div class="popular-picks-suggestion" id="specialOffersPopularPicks" style="display:none;"></div>
             </div>
         </section>
 
@@ -17994,6 +18017,29 @@
             scheduleLoadProductCardRatings();
             scheduleLoadStockAlertStates();
         }
+        // Same idea as fillEmptyStateSuggestions() above, but for a page
+        // that DID find results, once a visitor scrolls past them, rather
+        // than a dead stop below the grid. Called from Special Offers, New
+        // Arrivals, a category page, and the full catalogue, each with
+        // their own real results excluded so a product already shown above
+        // doesn't also show up again down here. Deliberately labelled
+        // "Popular picks" rather than "Best sellers" everywhere, the same
+        // honest wording the Best Sellers section itself falls back to
+        // pre-launch (see applyPreLaunchBestSellersLabels), so this never
+        // needs its own launch-state copy to keep in sync.
+        function renderPopularPicksSuggestion(containerId, excludeItems) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            const excludeKeys = new Set((excludeItems || []).map(p => p.catSlug + '::' + p.idx));
+            const items = bestSellerItems().filter(p => !excludeKeys.has(p.catSlug + '::' + p.idx)).slice(0, 4);
+            if (items.length === 0) { el.style.display = 'none'; el.innerHTML = ''; return; }
+            el.style.display = '';
+            el.innerHTML = `
+    <div class="popular-picks-suggestion-label">Popular picks</div>
+    <div class="product-grid">${items.map((p, i) => productCardHTML(p, i)).join('')}</div>`;
+            scheduleLoadProductCardRatings();
+            scheduleLoadStockAlertStates();
+        }
         async function loadRealBestSellers() {
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.rpc('get_best_sellers', { p_days: 30, p_limit: 12 });
@@ -18632,6 +18678,8 @@
             const items = newArrivalsItems();
             document.getElementById('newArrivalsCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'newArrivalsGrid');
+            if (items.length > 0) renderPopularPicksSuggestion('newArrivalsPopularPicks', items);
+            else document.getElementById('newArrivalsPopularPicks').style.display = 'none';
         }
         function renderBestSellersPage() {
             const items = bestSellerItems();
@@ -18642,6 +18690,8 @@
             const items = offerItems();
             document.getElementById('specialOffersCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderGrid(items, 'specialOffersGrid');
+            if (items.length > 0) renderPopularPicksSuggestion('specialOffersPopularPicks', items);
+            else document.getElementById('specialOffersPopularPicks').style.display = 'none';
         }
         /* ================= ADD PRODUCT TO SPECIAL OFFERS (edit mode) =================
            Special offers aren't a separate list, they're just any existing
@@ -19125,6 +19175,8 @@
                 .filter(p => !p.deleted || (currentIsAdmin && editModeOn)) : [];
             document.getElementById('resultCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderProductGridPaginated(items);
+            if (items.length > 0) renderPopularPicksSuggestion('categoryPopularPicks', items);
+            else document.getElementById('categoryPopularPicks').style.display = 'none';
         }
         const CATEGORY_PHOTO_CLASS = {
             'drinks': 'group-photo-drinks-treats',
@@ -19291,6 +19343,12 @@
             const items = searchProducts(query);
             document.getElementById('resultCount').textContent = `${items.length} result${items.length === 1 ? '' : 's'}`;
             renderProductGridPaginated(items);
+            // Search skips the Popular Picks suggestion every other product
+            // listing page gets, a searcher's own query stays authoritative
+            // for what they see on this page, not a cross-sell. Hides the
+            // shared #categoryPopularPicks container renderCategoryPage()
+            // fills, since both routes render into the same #view-shop DOM.
+            document.getElementById('categoryPopularPicks').style.display = 'none';
         }
 
         /* ================= RENDER: SHOP EVERYTHING (flat catalogue) ================= */
@@ -19344,6 +19402,8 @@
             items = items.map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
             document.getElementById('shopAllResultCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderShopAllGridPaginated(items);
+            if (items.length > 0) renderPopularPicksSuggestion('shopAllPopularPicks', items);
+            else document.getElementById('shopAllPopularPicks').style.display = 'none';
         }
 
         /* ================= RENDER: PRODUCT DETAIL ================= */
