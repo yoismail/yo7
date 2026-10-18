@@ -6850,7 +6850,11 @@
         /* ================= THE YO7 FOODS JOURNAL ================= */
         .journal-hero {
             position: relative;
-            padding: 90px 0 56px;
+            /* Matches .shop-header's own vertical padding (52px 0 48px)
+               so the Blog header is the same height as every other
+               secondary-page header (Shop, About, Contact, Careers)
+               instead of standing out as taller. */
+            padding: 52px 0 48px;
             background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('/images/journal/journal-hero-ingredients.jpg');
             background-size: cover;
             background-position: center;
@@ -11799,8 +11803,8 @@
             </label>
             <div class="wrap">
                 <div class="section-eyebrow">The Yo7 Foods Blog</div>
-                <h1>Recipes, Food Stories &amp; Everyday Inspiration</h1>
-                <p>Good food brings people together. Practical recipes, ingredient guides, cooking tips and stories from the African and Caribbean food cultures we celebrate.</p>
+                <h1>Recipes &amp; Stories</h1>
+                <p>Recipes, tips and stories from the African and Caribbean cultures we celebrate.</p>
             </div>
         </header>
         <section class="products-section journal-section">
