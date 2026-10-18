@@ -2058,6 +2058,11 @@ CREATE TABLE IF NOT EXISTS "public"."pricing_settings" (
     -- from "an admin just changed something else" without re-fetching on
     -- every cron ping once a day's already done.
     "fx_rates_fetched_at" timestamp with time zone,
+    -- The Yo7 Foods Journal's own hero background photo (#/journal), admin-
+    -- editable in place from the page itself rather than fixed in the
+    -- page's own CSS. Null until an admin changes it, which falls back to
+    -- that CSS default rather than this column needing to duplicate it.
+    "journal_hero_image" "text",
     CONSTRAINT "pricing_settings_singleton" CHECK ("id")
 );
 

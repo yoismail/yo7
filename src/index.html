@@ -6915,6 +6915,7 @@
         .journal-post-byline { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
         .journal-post-section { padding-bottom: 40px; }
         .journal-post-cover {
+            position: relative;
             width: 100%; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden;
             margin-bottom: 32px; background: rgba(var(--border-rgb), 0.05);
         }
@@ -11715,6 +11716,10 @@
     <!-- ================= THE YO7 FOODS JOURNAL ================= -->
     <div id="view-journal" class="hidden-view">
         <header class="shop-header journal-hero">
+            <label class="card-edit-btn" for="journalHeroUpload" aria-label="Change Journal hero image" title="Change hero image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <input type="file" accept="image/*" id="journalHeroUpload" onchange="handleJournalHeroUpload(this)" style="display:none;">
+            </label>
             <div class="wrap">
                 <div class="section-eyebrow">The Yo7 Foods Journal</div>
                 <h1>Recipes, Food Stories &amp; Everyday Inspiration</h1>
@@ -14704,6 +14709,7 @@
             if (data.fx_rates && typeof data.fx_rates === 'object') fxRates = data.fx_rates;
             if (data.fx_rates_auto && typeof data.fx_rates_auto === 'object') fxRatesAuto = data.fx_rates_auto;
             if (data.fx_rates_fetched_at) fxRatesFetchedAt = new Date(data.fx_rates_fetched_at);
+            if (typeof data.journal_hero_image === 'string') journalHeroImage = data.journal_hero_image;
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -15240,6 +15246,10 @@
            with no way to save it at all, reset on every refresh. */
         let trustpilotUrl = '';
         let googleBusinessUrl = '';
+        // Null (not '') until an admin changes it - the hero's own CSS
+        // already has a real default background-image, this only needs to
+        // override that inline once it's actually set to something else.
+        let journalHeroImage = null;
         let googlePlaceId = '';
         function renderPlatformBadges() {
             const row = document.getElementById('platformBadgesRow');
@@ -19628,6 +19638,34 @@ Serve with your favourite sides, whether that's fried plantain, grilled chicken,
 
 The best part? There is room for personal preference. Every kitchen has its own approach, and that is part of what makes jollof rice so special.`,
             },
+            {
+                id: 'fallback::grilled-chicken-and-plantain',
+                slug: 'grilled-chicken-and-fried-plantain-for-jollof',
+                title: 'Grilled Chicken and Fried Plantain: Building the Perfect Jollof Plate',
+                excerpt: "Jollof rice is only half the plate. Here's how to get smoky grilled chicken and perfectly fried plantain right alongside it.",
+                meta_description: 'How to grill chicken and fry plantain properly to go with jollof rice, including tips on picking the right ripeness. A recipe guide from Yo7 Foods.',
+                category: 'recipes',
+                linked_category: 'poultry',
+                cover_image: '/images/journal/jollof-rice-grilled-chicken-plantain.jpg',
+                author: 'Yo7 Foods Team',
+                published: true,
+                published_at: '2026-10-08T09:00:00.000Z',
+                body: `A proper jollof plate is rarely jollof alone. Grilled chicken and fried plantain are two of its most popular companions, and getting both right turns a good bowl of rice into a complete meal.
+
+Grilled chicken brings a smoky, charred contrast to the rice's deep tomato base. The chicken benefits from marinating for at least a few hours, longer if you have the time, so the seasoning actually reaches the meat rather than just sitting on the surface. Grilling, or finishing it hot under an oven grill, keeps it leaner than frying and gives it the char the dish is known for.
+
+Fried plantain is just as much about the fruit itself as the cooking. A plantain that's still mostly green fries firm and starchy, closer to a savoury side. One with plenty of black spotting on yellow skin fries soft and sweet, which is what most people picture alongside jollof.
+
+A few tips for better fried plantain:
+
+1. Choose ripeness on purpose. Yellow with black spots for sweet, firm and green for savoury, not whichever happens to be in the fruit bowl.
+2. Cut evenly. Diagonal slices about a centimetre thick fry through at the same rate, so nothing is raw in the middle while the edges burn.
+3. Don't crowd the pan. Plantain dropped into oil that's too full drops the temperature and the slices steam rather than fry.
+4. Keep the oil moderately hot. Too hot catches the outside before the inside cooks, too cool and the plantain soaks up oil instead of crisping.
+5. Drain it properly. A few minutes on kitchen paper keeps the crisp edge instead of it turning soggy on the plate.
+
+Serve the three together, rice in the centre, chicken and plantain alongside, and you have the full plate most people mean when they say jollof.`,
+            },
         ];
         // Loaded once at boot (see loadBlogPosts() call near the other
         // boot-time fetches) and re-rendered from wherever it's already
@@ -19719,6 +19757,10 @@ The best part? There is room for personal preference. Every kitchen has its own 
             });
         }
         function renderJournalPage() {
+            if (journalHeroImage) {
+                const hero = document.querySelector('.journal-hero');
+                if (hero) hero.style.backgroundImage = `linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('${journalHeroImage}')`;
+            }
             renderJournalCatPills();
             const posts = journalPosts().filter(p => journalActiveCat === 'all' || p.category === journalActiveCat);
             const grid = document.getElementById('journalGrid');
@@ -19803,8 +19845,13 @@ The best part? There is room for personal preference. Every kitchen has its own 
                 mainEntityOfPage: url,
             });
         }
+        // Tracked so handleJournalPostCoverUpload() (triggered from the
+        // pencil icon on the cover image itself, not the admin form) knows
+        // which article it's actually editing.
+        let journalCurrentPostSlug = null;
         function renderJournalPostPage(rawSlug) {
             const slug = decodeURIComponent(rawSlug || '');
+            journalCurrentPostSlug = slug;
             const post = journalPosts().find(p => p.slug === slug);
             renderJournalAdminPanel();
             if (!post) {
@@ -19828,9 +19875,21 @@ The best part? There is room for personal preference. Every kitchen has its own 
                 ? new Date(dateSource).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                 : '';
             const coverEl = document.getElementById('journalPostCover');
+            // The edit affordance itself is always built in, visibility is
+            // CSS-gated by body.edit-mode-on same as every other
+            // .card-edit-btn - so an admin can add a cover photo to a post
+            // that doesn't have one yet, not just change an existing one.
+            const editBtnHTML = `
+      <label class="card-edit-btn journal-post-cover-edit" for="journalPostCoverUpload" aria-label="Change cover image" title="Change cover image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <input type="file" accept="image/*" id="journalPostCoverUpload" onchange="handleJournalPostCoverUpload(this)" style="display:none;">
+      </label>`;
             if (post.cover_image) {
                 coverEl.style.display = '';
-                coverEl.innerHTML = `<img src="${escapeHtml(post.cover_image)}" alt="${escapeHtml(post.title)}" loading="eager" fetchpriority="high" decoding="async">`;
+                coverEl.innerHTML = `<img src="${escapeHtml(post.cover_image)}" alt="${escapeHtml(post.title)}" loading="eager" fetchpriority="high" decoding="async">` + editBtnHTML;
+            } else if (currentIsAdmin && editModeOn) {
+                coverEl.style.display = '';
+                coverEl.innerHTML = editBtnHTML;
             } else {
                 coverEl.style.display = 'none';
                 coverEl.innerHTML = '';
@@ -19858,6 +19917,47 @@ The best part? There is room for personal preference. Every kitchen has its own 
                 relatedSection.style.display = 'none';
             }
         }
+        // Triggered from the pencil icon on the cover image itself (see
+        // renderJournalPostPage's editBtnHTML), not the admin list's own
+        // form - lets an admin change or add a specific article's cover
+        // image right from the article they're already reading.
+        async function handleJournalPostCoverUpload(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            if (!supabaseClient) { showToast('Image uploads need accounts connected first, this is preview mode right now.'); return; }
+            const post = journalPosts().find(p => p.slug === journalCurrentPostSlug);
+            if (!post) return;
+            showToast('Uploading cover image…');
+            const uploadFile = await compressImageFile(file, 1600, 0.85);
+            const ext = extensionForUpload(uploadFile, file);
+            const path = `journal/${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            // A fallback post (see JOURNAL_FALLBACK_POSTS) has no real
+            // blog_posts row to update yet - changing its image is exactly
+            // the kind of edit that should promote it into a real one, same
+            // as creating a brand new article through the admin form, just
+            // pre-filled from the fallback's own content so nothing else
+            // about it changes in the process.
+            if (String(post.id).startsWith('fallback::')) {
+                const row = { ...post, cover_image: publicUrl };
+                delete row.id;
+                const { data, error } = await supabaseClient.from('blog_posts').insert(row).select('*').single();
+                if (error) { showToast('Could not save that image: ' + error.message, 6000, 'error'); return; }
+                blogPosts.unshift(data);
+            } else {
+                const { error } = await supabaseClient.from('blog_posts').update({ cover_image: publicUrl, updated_at: new Date().toISOString() }).eq('id', post.id);
+                if (error) { showToast('Could not save that image: ' + error.message, 6000, 'error'); return; }
+                post.cover_image = publicUrl;
+            }
+            logAdminAction('blog_post_updated', 'blog_post', post.title, { imageUrl: publicUrl });
+            showToast('Cover image updated.', undefined, 'success');
+            renderJournalPostPage(journalCurrentPostSlug);
+            renderJournalAdminPanel();
+        }
+        window.handleJournalPostCoverUpload = handleJournalPostCoverUpload;
         function slugify(text) {
             return (text || '').toLowerCase().trim()
                 .replace(/[^a-z0-9\s-]/g, '')
@@ -19942,6 +20042,31 @@ The best part? There is room for personal preference. Every kitchen has its own 
             showToast('Cover image uploaded.', undefined, 'success');
         }
         window.handleJournalCoverUpload = handleJournalCoverUpload;
+        // The hero photo is sitewide, not per-article, so it's stored on
+        // the one pricing_settings row every other site-wide admin toggle
+        // already lives on (fx_rates, category_overrides, etc.) rather than
+        // needing a table of its own. Reachable straight from the pencil
+        // icon on the hero itself in edit mode, not just through a form.
+        async function handleJournalHeroUpload(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            if (!supabaseClient) { showToast('Image uploads need accounts connected first, this is preview mode right now.'); return; }
+            showToast('Uploading hero image…');
+            const uploadFile = await compressImageFile(file, 1920, 0.85);
+            const ext = extensionForUpload(uploadFile, file);
+            const path = `journal/hero-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const { error: saveError } = await supabaseClient.from('pricing_settings').update({ journal_hero_image: publicUrl, updated_at: new Date().toISOString() }).eq('id', true);
+            if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
+            journalHeroImage = publicUrl;
+            renderJournalPage();
+            logAdminAction('journal_hero_updated', 'pricing_settings', 'Journal hero image', { imageUrl: publicUrl });
+            showToast('Hero image updated.', undefined, 'success');
+        }
+        window.handleJournalHeroUpload = handleJournalHeroUpload;
         async function removeJournalPost(id) {
             if (!supabaseClient) return;
             const post = blogPosts.find(p => String(p.id) === String(id));
