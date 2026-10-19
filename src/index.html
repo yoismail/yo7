@@ -3821,8 +3821,24 @@
            separating the dish name from its ingredient list, and a rotated,
            stamped seal standing in for a plain discount badge. Nothing here
            is a stock UI pattern; it's built specifically for this card. */
-        .combos-scroll { padding-bottom: 6px; }
-        .combos-scroll .combo-card { flex: 0 0 280px; max-width: 280px; scroll-snap-align: start; }
+        /* Mandatory, not the sitewide .product-grid's soft "proximity"
+           snap - these cards are noticeably wider (280px) than most other
+           carousels', so a soft snap more often let a swipe coast to a
+           stop mid-card instead of settling cleanly on one, which reads
+           as an imprecise drag rather than a deliberate, premium
+           card-by-card motion. scroll-snap-stop:always backs that up: a
+           fast flick stops at the very next card instead of coasting
+           past several of them before deciding where to land. */
+        .combos-scroll {
+            padding-bottom: 6px;
+        }
+        /* Compound selector (not plain .combos-scroll), needed to actually
+           beat .product-grid's own "x proximity" rule further down this
+           stylesheet - same class count otherwise ties on specificity, and
+           .product-grid's rule, coming later in source order, would win
+           that tie and silently keep this section on proximity snap. */
+        .product-grid.combos-scroll { scroll-snap-type: x mandatory; }
+        .combos-scroll .combo-card { flex: 0 0 280px; max-width: 280px; scroll-snap-align: start; scroll-snap-stop: always; }
         .combo-card {
             /* Cream, not the sitewide --card-bg (white in light mode,
                near-black in dark mode) - scoped to just this card so it
@@ -18588,13 +18604,30 @@
                 let startX = 0;
                 let startScroll = 0;
                 let moved = false;
+                // For release momentum below: the pointer's position/time
+                // one frame back, so velocity is measured over the last
+                // movement only, not the drag's full (often much slower,
+                // since it includes the initial pause before moving)
+                // average speed.
+                let lastX = 0;
+                let lastT = 0;
+                let velocity = 0;
+                let momentumFrame = null;
+
+                function stopMomentum() {
+                    if (momentumFrame !== null) { cancelAnimationFrame(momentumFrame); momentumFrame = null; }
+                }
 
                 grid.addEventListener('pointerdown', (e) => {
                     if (e.pointerType !== 'mouse') return; // touch/pen already handled natively
+                    stopMomentum();
                     isDown = true;
                     moved = false;
                     startX = e.clientX;
                     startScroll = grid.scrollLeft;
+                    lastX = e.clientX;
+                    lastT = performance.now();
+                    velocity = 0;
                     grid.classList.add('dragging');
                     // Deliberately NOT calling setPointerCapture here — capturing
                     // on every pointerdown (even a simple click with no movement)
@@ -18613,6 +18646,15 @@
                         }
                     }
                     grid.scrollLeft = startScroll - dx;
+                    const now = performance.now();
+                    const dt = now - lastT;
+                    // Guards against a div-by-near-zero spike from two
+                    // pointermove events landing on the same animation
+                    // frame, which would otherwise read as an enormous,
+                    // physically-impossible velocity.
+                    if (dt > 4) velocity = (e.clientX - lastX) / dt;
+                    lastX = e.clientX;
+                    lastT = now;
                 });
 
                 function endDrag(e) {
@@ -18621,6 +18663,24 @@
                     grid.classList.remove('dragging');
                     if (e && e.pointerId !== undefined) {
                         try { grid.releasePointerCapture(e.pointerId); } catch (err) {}
+                    }
+                    // A released drag used to stop scrolling dead on the
+                    // exact pixel the mouse let go, unlike every touch
+                    // swipe on the same carousel, which already glides to
+                    // a natural stop via the OS's own momentum scrolling.
+                    // Decaying the drag's own last-measured velocity here
+                    // gives mouse/trackpad users that same glide-then-
+                    // settle feel, rather than a scroll that merely
+                    // follows the cursor 1:1 and halts the instant it's
+                    // released.
+                    if (moved && Math.abs(velocity) > 0.05) {
+                        let v = velocity * 16; // px/ms -> approx px/frame at 60fps
+                        const step = () => {
+                            v *= 0.94;
+                            grid.scrollLeft -= v;
+                            momentumFrame = Math.abs(v) > 0.5 ? requestAnimationFrame(step) : null;
+                        };
+                        momentumFrame = requestAnimationFrame(step);
                     }
                 }
                 grid.addEventListener('pointerup', endDrag);
