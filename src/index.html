@@ -3539,6 +3539,28 @@
             background: var(--page-bg);
             padding: 80px 0 88px;
         }
+        /* Same admin-editable-photo mechanism as the Blog hero and the
+           Shop/About/Contact/Careers headers (page_header_images keyed by
+           "combo-deals", see handlePageHeaderImageUpload), but unlike
+           those four this section is always photo-backed from the start
+           via this hardcoded default rather than defaulting to the plain
+           page background - the same relationship .journal-hero's own
+           hardcoded default has to journalHeroImage. An admin's own
+           upload overrides this via inline style exactly as it does
+           there, so .has-photo is never needed here. */
+        .bundles-section.page-header-editable {
+            position: relative;
+            background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('/images/combo-deals/combo-deals-hero.jpg');
+            background-size: cover;
+            background-position: center;
+            color: var(--cream);
+        }
+        .bundles-section.page-header-editable .section-eyebrow { color: var(--chartreuse-soft); }
+        .bundles-section.page-header-editable .new-section-head h2 { color: var(--cream); }
+        .bundles-section.page-header-editable .new-section-head p { color: rgba(250, 249, 242, 0.84); }
+        .bundles-section.page-header-editable .view-all-btn { color: var(--cream); background: rgba(250, 249, 242, 0.12); }
+        .bundles-section.page-header-editable .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
+        .bundles-section.page-header-editable .swipe-hint { color: rgba(250, 249, 242, 0.55); }
         .bundles-grid {
             display: grid;
             /* A capped max here (not 1fr) reads as a definite track size,
@@ -11492,12 +11514,16 @@
             </div>
         </section>
 
-        <section class="bundles-section">
+        <section class="bundles-section page-header-editable" data-page-header="combo-deals">
+            <label class="card-edit-btn" for="pageHeaderUpload-combo-deals" aria-label="Change Combo deals background image" title="Change background image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <input type="file" accept="image/*" id="pageHeaderUpload-combo-deals" data-page-header-key="combo-deals" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
+            </label>
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
                         <div class="section-eyebrow">Combo deals</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">
                             Cooking something specific?</h2>
                         <p>Find the ingredients for popular Nigerian and West African dishes, grouped by meal. Add the whole set in one tap.</p>
                     </div>
