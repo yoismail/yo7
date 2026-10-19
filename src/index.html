@@ -3816,8 +3816,17 @@
         .combos-scroll { padding-bottom: 6px; }
         .combos-scroll .combo-card { flex: 0 0 280px; max-width: 280px; scroll-snap-align: start; }
         .combo-card {
+            /* Cream, not the sitewide --card-bg (white in light mode,
+               near-black in dark mode) - scoped to just this card so it
+               reads as its own consistent warm surface in both themes
+               rather than flipping between white and (formerly) a bright
+               yellow depending on theme, with sharp square corners
+               instead of the rounded ones every other card on the site
+               uses, a deliberate one-off "ticket stub" look for this
+               component specifically. */
+            --card-bg: var(--cream);
             background: var(--card-bg); border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-top: 4px solid var(--combo-accent, var(--chartreuse-rich)); border-radius: 20px;
+            border-top: 4px solid var(--combo-accent, var(--chartreuse-rich)); border-radius: 0;
             padding: 0; position: relative; display: flex; flex-direction: column;
             overflow: hidden; isolation: isolate;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
@@ -3840,19 +3849,17 @@
             transform: translateY(-8px);
             box-shadow: 0 6px 14px rgba(var(--border-rgb), 0.08), 0 30px 54px color-mix(in srgb, var(--combo-accent, var(--chartreuse-rich)) 20%, transparent);
         }
-        /* Dark mode only: now that the Combo deals section itself has a
-           dark photo background, the card's own near-black --card-bg (same
-           colour family as the photo's own gradient overlay) stopped
-           standing out against it. Re-pointing the card's own custom
-           properties at the light-mode palette (a bright, brand-existing
-           yellow for the surface, the same dark-on-light text colours
-           light mode already uses everywhere) makes every var(--heading)/
-           var(--text-muted)/var(--text-body)/var(--card-bg) reference this
-           card's whole subtree already uses cascade to the right values
-           for a light card automatically, with no need to touch each of
-           those rules individually. */
+        /* Dark mode only: the card's own cream surface above (set
+           unconditionally, so it is one single colour in both themes) is
+           still a light background, so it needs the same dark-on-light
+           text treatment light mode already uses, not dark mode's own
+           default light-on-dark palette (tuned for the near-black card
+           dark mode otherwise uses everywhere else on the site). Every
+           var(--heading)/var(--text-muted)/var(--text-body) reference
+           this card's whole subtree already uses cascades to the right
+           values automatically, with no need to touch each of those
+           rules individually. */
         [data-theme="dark"] .combo-card {
-            --card-bg: var(--orange);
             --ink: var(--aubergine);
             --heading: var(--aubergine);
             --text-muted: #6b5f58;
