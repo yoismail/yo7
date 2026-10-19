@@ -3558,7 +3558,15 @@
         .bundles-section.page-header-editable .section-eyebrow { color: var(--chartreuse-soft); }
         .bundles-section.page-header-editable .new-section-head h2 { color: var(--cream); }
         .bundles-section.page-header-editable .new-section-head p { color: rgba(250, 249, 242, 0.84); }
-        .bundles-section.page-header-editable .view-all-btn { color: var(--cream); background: rgba(250, 249, 242, 0.12); }
+        /* A near-transparent pill (the same treatment Best Sellers' own
+           view-all button uses, fine there against a flat colour) nearly
+           disappeared here: a busy photo's brightness varies constantly
+           behind it, so a translucent fill reads as legible in some
+           spots and invisible in others depending what part of the image
+           sits behind it. A fully opaque cream fill, the same colour the
+           combo cards themselves use, stays visible everywhere on the
+           photo and ties the button to the cards it leads to. */
+        .bundles-section.page-header-editable .view-all-btn { color: var(--aubergine-deep); background: var(--cream); }
         .bundles-section.page-header-editable .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
         .bundles-section.page-header-editable .swipe-hint { color: rgba(250, 249, 242, 0.55); }
         .bundles-grid {
