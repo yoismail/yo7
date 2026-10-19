@@ -19657,7 +19657,18 @@
                 breadcrumbEl.innerHTML = `<a href="#/">Home</a> &rsaquo; <span id="crumbLabel">Not found</span>`;
                 backLink.style.display = 'none';
             }
-            document.getElementById('shopHeaderEmoji').innerHTML = cat ? cat.emoji : ICON_SEARCH;
+            // No emoji/icon next to the category name here (there used to
+            // be one) - per feedback it read as clutter beside a heading
+            // that's already unambiguous on its own. display:none, not
+            // just an empty innerHTML, so the h1's own flex gap doesn't
+            // leave a dangling blank space in front of the title where
+            // the icon used to sit. Reset explicitly (not just left over
+            // from a previous category visit) since this same header
+            // element is reused by the Search page below, which still
+            // shows its own icon.
+            const shopHeaderEmojiEl = document.getElementById('shopHeaderEmoji');
+            shopHeaderEmojiEl.innerHTML = '';
+            shopHeaderEmojiEl.style.display = 'none';
             document.getElementById('shopHeaderTitle').textContent = cat ? cat.name.replace(/&amp;/g, '&') : 'Category not found';
             document.getElementById('shopHeaderDesc').textContent = cat ? cat.tagline : '';
             renderCatStrip(slug);
@@ -19831,7 +19842,14 @@
             document.getElementById('crumbLabel').textContent = 'Search';
             document.getElementById('shopBreadcrumb').innerHTML = `<a href="#/">Home</a> &rsaquo; <span id="crumbLabel">Search</span>`;
             document.getElementById('backToGroupLink').style.display = 'none';
-            document.getElementById('shopHeaderEmoji').innerHTML = ICON_SEARCH;
+            // Explicitly reset display here - renderCategoryPage() hides
+            // this element entirely (see its own comment), and it's the
+            // same shared header element, so a visit to a category page
+            // right before searching would otherwise leave this icon
+            // hidden too.
+            const searchHeaderEmojiEl = document.getElementById('shopHeaderEmoji');
+            searchHeaderEmojiEl.innerHTML = ICON_SEARCH;
+            searchHeaderEmojiEl.style.display = '';
             document.getElementById('shopHeaderTitle').textContent = `"${query}"`;
             document.getElementById('shopHeaderDesc').textContent = 'Results from every aisle in the store.';
             renderCatStrip(null);
