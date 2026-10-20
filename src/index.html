@@ -2910,16 +2910,16 @@
             position: relative;
             padding: 100px 0;
             /* Same treatment language as the hero above it — a corner
-               glow in var(--chartreuse-rich) over the section's own fixed
-               sand background (no dark-mode variant, same as the
-               footer/newsletter card use the same fixed-light-surface
-               convention). Bottom-left corner again on purpose: a
-               repeating motif reads as one deliberate system rather than
-               a one-off flourish. (Used to also carry a dot-grain texture
-               like the hero; removed for now alongside it.) */
+               glow in var(--chartreuse-rich) over the same fixed cream
+               surface the hero/footer/newsletter card already share (no
+               dark-mode variant, var(--cream) itself never flips).
+               Bottom-left corner again on purpose: a repeating motif
+               reads as one deliberate system rather than a one-off
+               flourish. (Used to also carry a dot-grain texture like the
+               hero; removed for now alongside it.) */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                #FAF2E3;
+                var(--cream);
             overflow: hidden;
             text-align: center;
         }
@@ -3512,9 +3512,9 @@
             /* No corner glow here, since #shopByGroup below already has
                its own bespoke one (see its ::before) and a second glow
                layered under it would be redundant rather than
-               complementary. Just the section's own fixed sand
-               background. */
-            background: #FAF2E3;
+               complementary. The same fixed cream surface the hero/story
+               above share (var(--cream) never flips with theme). */
+            background: var(--cream);
             color: #2C1C10;
             padding: 88px 0 96px;
         }
@@ -3744,7 +3744,7 @@
             padding: 11px; font-family: var(--display); font-weight: 700; font-size: 13.5px; cursor: pointer;
         }
 
-        .build-bundle-promo { position: relative; background: #FAF2E3; padding: 48px 0; overflow: hidden; }
+        .build-bundle-promo { position: relative; background: var(--cream); padding: 48px 0; overflow: hidden; }
         /* Same oversized-glyph-behind-the-content language as
            .combo-ticket-watermark and the footer newsletter cards, reusing
            the checklist icon from the Build a Bundle page's own empty
@@ -5166,18 +5166,21 @@
 
         .order {
             /* Same corner-glow language as the hero/story/delivery
-               sections above it, layered over var(--page-bg). Also
-               theme-flipping, so it gets its own dark-mode glow colour
-               like .delivery did. */
+               sections above it, layered over var(--section-alt-bg) - the
+               same base .delivery (right above) and .why-choose-section
+               (right below) already use, so this doesn't sit as an odd
+               cream break sandwiched between two matching neighbours.
+               Also theme-flipping, so it gets its own dark-mode glow
+               colour like .delivery did. */
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                var(--page-bg);
+                var(--section-alt-bg);
             padding: 0 0 96px;
         }
         [data-theme="dark"] .order {
             background:
                 radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                var(--page-bg);
+                var(--section-alt-bg);
         }
 
         .why-choose-section {
