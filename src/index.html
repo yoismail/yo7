@@ -164,7 +164,6 @@
             --text-body: #4a3d3a;
             --thumb-grad-1: #f3f8ea;
             --thumb-grad-2: #e8f0d8;
-            --thumb-gloss: rgba(255, 255, 255, 0.6);
             --neutral-track: #e3ddc9;
             --section-alt-bg: #F1F5EA;
             --page-bg: var(--cream);
@@ -198,7 +197,6 @@
             --text-body: #E3DDD2;
             --thumb-grad-1: #223016;
             --thumb-grad-2: #1a2410;
-            --thumb-gloss: rgba(255, 255, 255, 0.16);
             --section-alt-bg: #14210D;
             --border-rgb: 250, 249, 242;
             --warn-text: #E8B98A;
@@ -873,7 +871,7 @@
                the card (masked by the site's overflow-x:hidden, so it just
                looked clipped/cut off rather than scrolling). */
             width: 140px; max-width: 100%; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; flex-shrink: 0;
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex; align-items: center; justify-content: center; font-size: 52px;
         }
         .ep-photo-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -1125,7 +1123,7 @@
         .search-result-item:hover, .search-result-item.active-result { background: rgba(144,184,0,0.1); }
         .search-result-thumb {
             width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
+            background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
             display:flex; align-items:center; justify-content:center;
             font-size: 10px; font-weight: 700; color: var(--text-faint); text-align:center;
             position: relative; overflow: hidden;
@@ -3678,7 +3676,7 @@
            rather than a full product card. */
         .bundle-item-thumb {
             width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
+            background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
             display: flex; align-items: center; justify-content: center;
             color: var(--text-faint); position: relative; overflow: hidden;
         }
@@ -3908,7 +3906,6 @@
             --text-body: #4a3d3a;
             --thumb-grad-1: #f3f8ea;
             --thumb-grad-2: #e8f0d8;
-            --thumb-gloss: rgba(255, 255, 255, 0.6);
             --border-rgb: 6, 59, 0;
         }
         .combo-card > * { position: relative; z-index: 1; }
@@ -4624,7 +4621,7 @@
             align-items: center; justify-content: center; gap: 6px;
             /* Same flat neutral swatch as .product-thumb (the shop grid
                card), applied here too so the carousel cards match it. */
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
         /* Chartreuse, not the brighter var(--orange): a rank badge sits on
            every single card in this carousel at once, so it reads as
@@ -4715,7 +4712,7 @@
         /* transform only, no box-shadow transition — see the comment on
            a.best-seller-card:hover for why. */
         .new-card:hover { transform: translateY(-8px); }
-        .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2)); }
+        .new-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2)); }
         .new-card .thumb .thumb-placeholder-icon { width: 24px; height: 24px; color: #b3a998; }
         .new-card .thumb .thumb-placeholder-label { font-family: var(--display); font-weight: 600; font-size: 9px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
         /* Chartreuse, not var(--orange), same reasoning as .best-seller-rank
@@ -4984,7 +4981,7 @@
         /* transform only, no box-shadow transition — see the comment on
            a.best-seller-card:hover for why. */
         a.offer-card:hover { transform: translateY(-8px); }
-        .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2)); }
+        .offer-card .thumb { aspect-ratio: 1/1; position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2)); }
         /* Edit-mode-only "take this product off special offers" control —
            same on/off mechanism as every other admin-only button on the
            site (body.edit-mode-on toggles display), and functionally just
@@ -6618,7 +6615,7 @@
         }
         .cat-flat-card .thumb {
             position: absolute; inset: 0; overflow: hidden;
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
         }
         .cat-flat-photo {
             display: block; width: 100%; height: 100%;
@@ -7178,7 +7175,7 @@
                as a visible colour seam rather than a backdrop. Flat and
                neutral lets a photo's own background blend in instead of
                competing with it. */
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             position: relative;
             overflow: hidden;
         }
@@ -7680,7 +7677,7 @@
             /* Same flat neutral swatch as .product-thumb (the shop grid
                card), applied here too so the product detail page's hero
                image matches. */
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -8382,7 +8379,7 @@
             /* Same flat neutral swatch as .product-thumb/the homepage
                carousels/the PD page hero, applied here too so the
                checkout upsell cards match the rest of the site. */
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -8460,7 +8457,7 @@
             width: 52px;
             height: 52px;
             border-radius: 12px;
-            background: radial-gradient(ellipse 60% 42% at 30% 16%, var(--thumb-gloss), transparent 62%), linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
+            background: linear-gradient(160deg, var(--thumb-grad-1), var(--thumb-grad-2));
             display: flex;
             align-items: center;
             justify-content: center;
