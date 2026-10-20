@@ -4858,8 +4858,15 @@
                already light and warm, and the centered eyebrow/h2 sit in
                its own naturally empty, plain midsection, so it reads fine
                with the section's own existing dark-on-light heading
-               colour underneath, no extra darkening needed for contrast. */
-            background:
+               colour underneath, no extra darkening needed for contrast.
+               Same admin-editable-photo mechanism as the Blog hero and
+               the Shop/About/Contact/Careers headers (page_header_images
+               keyed by "shop-by-department", see
+               handlePageHeaderImageUpload) - background-image (not the
+               background shorthand) so an admin's own upload can replace
+               just that layer via inline style, same as those headers. */
+            position: relative;
+            background-image:
                 linear-gradient(180deg, rgba(250, 249, 242, 0.32), rgba(250, 249, 242, 0.5)),
                 url('/images/shop-by-department/shop-by-department-bg.jpg');
             background-size: cover;
@@ -4877,13 +4884,22 @@
            already flips to the dark-mode cream value, staying legible on
            top of it. */
         [data-theme="dark"] .hero-glimpse-strip {
-            background:
+            background-image:
                 linear-gradient(180deg, rgba(4,37,0,0.82), rgba(4,37,0,0.78) 55%, rgba(4,37,0,0.88)),
                 url('/images/shop-by-department/shop-by-department-bg.jpg');
             background-size: cover;
             background-position: center;
         }
         .hero-glimpse-head { text-align: center; margin-bottom: 26px; }
+        .hero-glimpse-head h2 { color: var(--heading); }
+        /* Once an admin uploads their own photo (.has-photo, same generic
+           page-header-editable mechanism as the other 5 headers), the
+           default theme-adaptive heading colour above would go dark-on-
+           dark in light theme against that upload's always-dark scrim
+           (see .page-header-editable.has-photo below) - this wins on
+           specificity regardless of source order to force the same
+           cream reserved for every other photo-backed header. */
+        .hero-glimpse-strip.has-photo .hero-glimpse-head h2 { color: var(--cream); }
         .hero-glimpse-row {
             display: flex;
             justify-content: center;
@@ -11515,11 +11531,15 @@
             </div>
         </section>
 
-        <div class="hero-glimpse-strip">
+        <div class="hero-glimpse-strip page-header-editable" data-page-header="shop-by-department">
+            <label class="card-edit-btn" for="pageHeaderUpload-shop-by-department" aria-label="Change Shop by department background image" title="Change background image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <input type="file" accept="image/*" id="pageHeaderUpload-shop-by-department" data-page-header-key="shop-by-department" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
+            </label>
             <div class="wrap">
                 <div class="hero-glimpse-head">
                     <div class="section-eyebrow">Departments</div>
-                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); color: var(--heading); letter-spacing:-0.01em;">Shop by department</h2>
+                    <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">Shop by department</h2>
                 </div>
                 <div class="hero-glimpse-row" id="heroGlimpseRow"></div>
             </div>
@@ -28436,7 +28456,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // render above exists.
             else if (currentHash === '#/blog') renderJournalPage();
             // page_header_images lives on this same settings row. Unlike
-            // the group/category/blog cases above, these 4 headers are
+            // the group/category/blog cases above, these 6 headers are
             // static markup always present in the DOM regardless of the
             // current route, so this doesn't need a hash check, it just
             // needs to run once this data actually exists.
