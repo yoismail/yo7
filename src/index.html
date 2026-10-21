@@ -9897,13 +9897,15 @@
             line-height: 1.2;
             animation: hoursTodayPulse 2.6s ease-in-out infinite;
         }
-        /* Same slow colour breathe as before, now between the deep red and
-           a brighter red rather than background orange/yellow - not an
-           on/off blink (a hard blink reads as dated and is a real
-           accessibility concern, WCAG flags blinking content). */
+        /* A fixed two-tone colour swing between adjacent reds read as
+           almost no movement at all on thin bold text (fine on the old
+           solid background bar, which had far more surface area for the
+           same colour shift to read against) - animating opacity instead
+           gives the same slow "breathe", clearly visible here, still a
+           single red throughout rather than a colour-to-colour blink. */
         @keyframes hoursTodayPulse {
-            0%, 100% { color: #C0392B; }
-            50% { color: #E74C3C; }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
         }
         @media (prefers-reduced-motion: reduce) {
             .hours-table tr.today td { animation: none; }
