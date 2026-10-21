@@ -19808,7 +19808,9 @@
         function renderGroupPage(groupSlug) {
             const group = findGroup(groupSlug);
             document.getElementById('groupCrumbLabel').textContent = group ? group.name.replace(/&amp;/g, '&') : 'Not found';
-            document.getElementById('groupHeaderIcon').innerHTML = group ? group.icon : ICON_SEARCH;
+            const groupHeaderIconEl = document.getElementById('groupHeaderIcon');
+            groupHeaderIconEl.innerHTML = '';
+            groupHeaderIconEl.style.display = 'none';
             document.getElementById('groupHeaderTitle').textContent = group ? group.name.replace(/&amp;/g, '&') : 'Group not found';
             document.getElementById('groupHeaderDesc').textContent = group ? group.tagline : '';
             const cats = group ? group.categories.map(s => findCategory(s)).filter(Boolean) : [];
