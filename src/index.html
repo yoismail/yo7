@@ -9889,20 +9889,24 @@
             color: var(--heading);
         }
 
-        /* Red text only, no background bar - the day/time cells just pulse
-           colour in place like every other row's plain cells. */
+        /* No background bar - just coloured, breathing text in place like
+           every other row's plain cells. Red while closed (matching
+           .open-badge.closed's own "closed" signal), amber/gold while
+           open, same shared weight/animation either way. */
         .hours-table tr.today td {
             font-weight: 700;
-            color: #C0392B;
             line-height: 1.2;
             animation: hoursTodayPulse 2.6s ease-in-out infinite;
         }
-        /* A fixed two-tone colour swing between adjacent reds read as
+        .hours-table tr.today.is-closed td { color: #C0392B; }
+        .hours-table tr.today.is-open td { color: #A3770C; }
+        [data-theme="dark"] .hours-table tr.today.is-open td { color: #E8C547; }
+        /* A fixed two-tone colour swing between adjacent shades read as
            almost no movement at all on thin bold text (fine on the old
            solid background bar, which had far more surface area for the
            same colour shift to read against) - animating opacity instead
            gives the same slow "breathe", clearly visible here, still a
-           single red throughout rather than a colour-to-colour blink. */
+           single colour throughout rather than a colour-to-colour blink. */
         @keyframes hoursTodayPulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.45; }
@@ -27426,11 +27430,11 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const idx = jsDay === 0 ? 6 : jsDay - 1; // align to Monday-first OPENING_HOURS array
             const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-            document.getElementById('hoursTable').innerHTML = OPENING_HOURS.map((h, i) => `
-    <tr class="${i === idx ? 'today' : ''}"><td><span>${h.day}</span></td><td><span>${h.open} &ndash; ${h.close}</span></td></tr>`).join('');
-
             const today = OPENING_HOURS[idx];
             const isOpen = nowMinutes >= timeToMinutes(today.open) && nowMinutes < timeToMinutes(today.close);
+
+            document.getElementById('hoursTable').innerHTML = OPENING_HOURS.map((h, i) => `
+    <tr class="${i === idx ? `today ${isOpen ? 'is-open' : 'is-closed'}` : ''}"><td><span>${h.day}</span></td><td><span>${h.open} &ndash; ${h.close}</span></td></tr>`).join('');
             const badge = document.getElementById('openStatusBadge');
             const text = document.getElementById('openStatusText');
             badge.classList.toggle('closed', !isOpen);
