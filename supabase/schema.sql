@@ -94,7 +94,8 @@ CREATE OR REPLACE FUNCTION "public"."add_custom_product"(
     "p_description" "text" DEFAULT NULL::"text",
     "p_image_url" "text" DEFAULT NULL::"text",
     "p_is_new" boolean DEFAULT false,
-    "p_is_best_seller" boolean DEFAULT false
+    "p_is_best_seller" boolean DEFAULT false,
+    "p_image_thumb_url" "text" DEFAULT NULL::"text"
 ) RETURNS "public"."custom_products"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -115,10 +116,10 @@ BEGIN
 
   INSERT INTO public.custom_products (
     cat_slug, idx, name, unit, price, sale_price, weight, stock, stock_quantity,
-    description, image_url, is_new, is_best_seller
+    description, image_url, is_new, is_best_seller, image_thumb_url
   ) VALUES (
     p_cat_slug, v_idx, p_name, p_unit, p_price, p_sale_price, p_weight, p_stock, p_stock_quantity,
-    p_description, p_image_url, p_is_new, p_is_best_seller
+    p_description, p_image_url, p_is_new, p_is_best_seller, p_image_thumb_url
   )
   RETURNING * INTO v_row;
 
@@ -127,7 +128,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) OWNER TO "postgres";
+ALTER FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean, "p_image_thumb_url" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."assign_order_number"() RETURNS "trigger"
@@ -1748,7 +1749,8 @@ CREATE TABLE IF NOT EXISTS "public"."custom_products" (
     "is_new" boolean DEFAULT false NOT NULL,
     "is_best_seller" boolean DEFAULT false NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "stock_quantity" integer
+    "stock_quantity" integer,
+    "image_thumb_url" "text"
 );
 
 
@@ -2098,7 +2100,8 @@ CREATE TABLE IF NOT EXISTS "public"."product_overrides" (
     "nutrition" "text",
     "cooking_tip" "text",
     "stock_quantity" integer,
-    "deleted" boolean
+    "deleted" boolean,
+    "image_thumb_url" "text"
 );
 
 
@@ -3253,9 +3256,9 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) TO "anon";
-GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean) TO "service_role";
+GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean, "p_image_thumb_url" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean, "p_image_thumb_url" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."add_custom_product"("p_cat_slug" "text", "p_seed_count" integer, "p_name" "text", "p_unit" "text", "p_price" numeric, "p_sale_price" numeric, "p_weight" numeric, "p_stock" "text", "p_stock_quantity" integer, "p_description" "text", "p_image_url" "text", "p_is_new" boolean, "p_is_best_seller" boolean, "p_image_thumb_url" "text") TO "service_role";
 
 
 

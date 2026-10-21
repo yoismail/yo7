@@ -791,11 +791,16 @@
             background: rgba(var(--border-rgb), 0.05); border-radius: 12px;
         }
         .share-sheet-thumb {
+            position: relative;
             width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;
             background: rgba(var(--border-rgb), 0.08);
             display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-        .share-sheet-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        /* Not the shared .product-photo-img fade-in here - every call site
+           using that elsewhere is a flex box that needs position:relative,
+           already true of .share-sheet-thumb above, so .product-photo-img's
+           own absolute inset:0/opacity treatment (see its own definition)
+           works here unchanged, no separate rule needed. */
         .share-sheet-name { font-family: var(--display); font-weight: 600; font-size: 14px; color: var(--heading); }
         .share-sheet-row { display: flex; flex-wrap: wrap; gap: 10px; }
         .share-sheet-btn {
@@ -1128,7 +1133,14 @@
             font-size: 10px; font-weight: 700; color: var(--text-faint); text-align:center;
             position: relative; overflow: hidden;
         }
-        .search-result-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .search-result-thumb img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .search-result-thumb img.is-loaded { opacity: 1; }
+        @media (prefers-reduced-motion: reduce) {
+            .search-result-thumb img { transition: none; }
+        }
         .search-result-info { flex: 1; min-width: 0; }
         .search-result-info .name { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .search-result-info .cat { font-size: 11.5px; color: var(--text-muted); }
@@ -3680,7 +3692,18 @@
             display: flex; align-items: center; justify-content: center;
             color: var(--text-faint); position: relative; overflow: hidden;
         }
-        .bundle-item-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .bundle-item-thumb img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+            /* Same fade-in-on-load treatment as .product-photo-img (see its
+               own comment) - a different container shape (small, cover
+               not contain) so this gets its own short rule rather than
+               reusing that class outright, same idea either way. */
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .bundle-item-thumb img.is-loaded { opacity: 1; }
+        @media (prefers-reduced-motion: reduce) {
+            .bundle-item-thumb img { transition: none; }
+        }
         /* A bolder, heading-toned name and a bolder price give each row two
            distinct visual weights (name > price/weight), on top of the
            thumbnail now doing the job the old colour-coded bullet used to.
@@ -17208,7 +17231,7 @@
             document.getElementById('shareSheetName').textContent = p.name;
             const thumb = document.getElementById('shareSheetThumb');
             thumb.innerHTML = p.image
-                ? `<img src="${escapeHtml(p.image)}" alt="" loading="lazy" decoding="async">`
+                ? `<img src="${escapeHtml(p.imageThumb || p.image)}" alt="" loading="lazy" decoding="async" class="product-photo-img" onload="this.classList.add('is-loaded')">`
                 : `<span class="thumb-placeholder-emoji">${p.emoji || DEFAULT_ITEM_ICON_SVG}</span>`;
             // navigator.share opens the device's own native share sheet
             // (every app actually installed - WhatsApp, Messages, Mail,
@@ -17449,7 +17472,7 @@
         const BUNDLE_ITEM_PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
         function bundleItemThumbHTML(p) {
             if (!p.image) return BUNDLE_ITEM_PLACEHOLDER_SVG;
-            return `<img src="${escapeHtml(p.image)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            return `<img src="${escapeHtml(p.imageThumb || p.image)}" alt="" loading="lazy" decoding="async" onload="this.classList.add('is-loaded')" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <span style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${BUNDLE_ITEM_PLACEHOLDER_SVG}</span>`;
         }
         function bundleItemRowHTML(p, outOfStock) {
@@ -19495,6 +19518,20 @@
             }, 6500);
         })();
 
+        // The Network Information API (Chrome/Android; not Safari/iOS -
+        // navigator.connection is simply undefined there, so this always
+        // resolves false and those visitors just get the normal full-size
+        // behaviour, never a worse one). Used to downgrade the one place
+        // that still shows the full ~1000px product photo (the PD page
+        // hero, see renderProductPage) to the same small thumbnail variant
+        // every other product image context already uses, rather than
+        // forcing a slow connection to pull the biggest image on the page.
+        function isSlowConnection() {
+            const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (!c) return false;
+            if (c.saveData) return true;
+            return c.effectiveType === 'slow-2g' || c.effectiveType === '2g';
+        }
         function stockLabel(s) {
             if (s === 'low') return 'Low stock';
             if (s === 'out') return 'Out of stock';
@@ -19520,7 +19557,16 @@
         // shopper looking right at it needs.
         function productPhotoHTML(p, altText, eager) {
             if (p.image) {
-                return `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(altText)}" ${eager ? `loading="eager" fetchpriority="high"` : `loading="lazy"`} decoding="async" class="product-photo-img"
+                // Every context this renders into (grid cards, carousels,
+                // cart, checkout upsells, combo ingredients) shows the
+                // photo at well under 300px, so the small thumb variant
+                // (see handleEditPhotoUpload) covers it - the full ~1000px
+                // p.image is reserved for the product detail page's own
+                // hero image, the one spot that's actually large enough to
+                // need it. Falls back to the full image for any product
+                // whose photo predates the thumbnail system.
+                const src = p.imageThumb || p.image;
+                return `<img src="${escapeHtml(src)}" alt="${escapeHtml(altText)}" ${eager ? `loading="eager" fetchpriority="high"` : `loading="lazy"`} decoding="async" class="product-photo-img"
                     onload="this.classList.add('is-loaded')"
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="thumb-placeholder" style="display:none;">${comingSoonThumbHTML(p)}</div>`;
@@ -20858,7 +20904,15 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 // finishes. fetchPriority nudges it ahead of the pack too.
                 img.loading = 'eager';
                 img.fetchPriority = 'high';
-                img.src = p.image;
+                // The one spot sitewide that still shows the full-size
+                // photo rather than the thumbnail (see productPhotoHTML) -
+                // deliberately, this is the one image that's actually
+                // worth the extra quality. A visitor on a detected slow
+                // connection gets the thumb here too rather than being
+                // made to wait on the biggest image on the page for a
+                // quality bump they likely won't even notice on that
+                // connection.
+                img.src = (isSlowConnection() && p.imageThumb) ? p.imageThumb : p.image;
                 img.alt = p.name;
                 img.decoding = 'async';
                 img.className = 'product-photo-img';
@@ -26315,26 +26369,51 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const preview = document.getElementById(`ep-photo-preview-${catSlug}-${idx}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const uploadFile = await compressImageFile(file, 1000, 0.82);
+            // Two sizes from the one upload: the existing ~1000px version
+            // (still used for the product detail page's hero image, where
+            // it's the one thing on the page that deserves full quality)
+            // and a small ~300px thumbnail for every other place this
+            // photo appears (grid cards, carousels, cart, search, combo
+            // ingredients) - those were all downloading and decoding this
+            // same ~1000px file for a slot often under 100px on screen,
+            // which is the real cause of image-heavy pages feeling laggy.
+            // See productPhotoHTML() below for where the thumb gets used.
+            const [uploadFile, thumbFile] = await Promise.all([
+                compressImageFile(file, 1000, 0.82),
+                compressImageFile(file, 300, 0.78),
+            ]);
             const ext = extensionForUpload(uploadFile, file);
+            const thumbExt = extensionForUpload(thumbFile, file);
             const path = `${catSlug}-${idx}-${Date.now()}.${ext}`;
+            const thumbPath = `${catSlug}-${idx}-${Date.now()}-thumb.${thumbExt}`;
             // A year-long cache: once a product photo's uploaded it almost
             // never changes in place (a new photo gets a new timestamped
             // path instead, see above), so there's nothing to gain from
             // revisitors re-fetching it.
-            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            const [{ error: uploadError }, { error: thumbUploadError }] = await Promise.all([
+                supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type }),
+                supabaseClient.storage.from('product-photos').upload(thumbPath, thumbFile, { upsert: true, cacheControl: '31536000', contentType: thumbFile.type || file.type }),
+            ]);
             if (uploadError) {
                 showToast('Could not upload that photo: ' + uploadError.message, 6000, 'error');
                 if (preview) preview.innerHTML = `<span>${(findCategory(catSlug).products[idx].emoji) || DEFAULT_ITEM_ICON_SVG}</span>`;
                 return;
             }
             const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            // A failed thumb upload (rare - the full photo above already
+            // succeeded) shouldn't block the photo update itself; every
+            // thumb consumer already falls back to the full image when
+            // imageThumb is unset, same as it does for a product that
+            // predates this thumbnail system entirely.
+            const publicThumbUrl = thumbUploadError ? null : supabaseClient.storage.from('product-photos').getPublicUrl(thumbPath).data.publicUrl;
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             product.image = publicUrl;
+            if (publicThumbUrl) product.imageThumb = publicThumbUrl;
             const { error: saveError } = await supabaseClient.from('product_overrides').upsert({
                 product_key: productKey(catSlug, idx),
                 image_url: publicUrl,
+                image_thumb_url: publicThumbUrl,
                 updated_at: new Date().toISOString(),
             });
             if (saveError) showToast('Photo uploaded, but couldn\'t sync to the live site: ' + saveError.message, 6000, 'error');
@@ -26358,10 +26437,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             delete product.image;
+            delete product.imageThumb;
             if (supabaseClient) {
                 const { error } = await supabaseClient.from('product_overrides').upsert({
                     product_key: productKey(catSlug, idx),
                     image_url: null,
+                    image_thumb_url: null,
                     updated_at: new Date().toISOString(),
                 });
                 if (error) showToast('Could not remove that photo from the live site: ' + error.message, 6000, 'error');
@@ -26428,6 +26509,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         window.openAddProductForm = openAddProductForm;
 
         const newProductPhotoData = {};
+        const newProductPhotoThumbData = {};
         // Same compress-then-upload-to-Storage path as handleEditPhotoUpload,
         // not a raw base64 data URI, this product record may only live in
         // this tab for now ("Add product (this tab only)"), but the photo
@@ -26442,10 +26524,20 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const preview = document.getElementById(`apf-photo-preview-${uid}`);
             if (!supabaseClient) { showToast('Photo uploads need accounts connected first, this is preview mode right now.'); return; }
             if (preview) preview.innerHTML = '<span>Uploading…</span>';
-            const uploadFile = await compressImageFile(file, 1000, 0.82);
+            // Same two-size upload as handleEditPhotoUpload - see its own
+            // comment for why.
+            const [uploadFile, thumbFile] = await Promise.all([
+                compressImageFile(file, 1000, 0.82),
+                compressImageFile(file, 300, 0.78),
+            ]);
             const ext = extensionForUpload(uploadFile, file);
+            const thumbExt = extensionForUpload(thumbFile, file);
             const path = `new-${uid}-${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            const thumbPath = `new-${uid}-${Date.now()}-thumb.${thumbExt}`;
+            const [{ error: uploadError }, { error: thumbUploadError }] = await Promise.all([
+                supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type }),
+                supabaseClient.storage.from('product-photos').upload(thumbPath, thumbFile, { upsert: true, cacheControl: '31536000', contentType: thumbFile.type || file.type }),
+            ]);
             if (uploadError) {
                 showToast('Could not upload that photo: ' + uploadError.message, 6000, 'error');
                 if (preview) preview.innerHTML = `<span>${DEFAULT_ITEM_ICON_SVG}</span>`;
@@ -26453,6 +26545,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             }
             const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
             newProductPhotoData[uid] = publicUrl;
+            if (!thumbUploadError) newProductPhotoThumbData[uid] = supabaseClient.storage.from('product-photos').getPublicUrl(thumbPath).data.publicUrl;
             if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="">`;
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
@@ -26503,6 +26596,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (isBestSellerChecked) newProduct.isBestSeller = true;
             if (descVal) newProduct.description = descVal;
             if (newProductPhotoData[uid]) { newProduct.image = newProductPhotoData[uid]; delete newProductPhotoData[uid]; }
+            if (newProductPhotoThumbData[uid]) { newProduct.imageThumb = newProductPhotoThumbData[uid]; delete newProductPhotoThumbData[uid]; }
 
             if (!supabaseClient) {
                 // Preview-mode fallback: nothing to persist and no other
@@ -26539,6 +26633,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 p_description: descVal || null,
                 p_image_url: newProduct.image || null,
                 p_is_new: isNewChecked, p_is_best_seller: isBestSellerChecked,
+                p_image_thumb_url: newProduct.imageThumb || null,
             });
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add product'; }
             if (error || !row) {
@@ -26840,6 +26935,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (row.weight != null) product.weight = row.weight;
                 if (row.description) product.description = row.description;
                 if (row.image_url) product.image = row.image_url;
+                if (row.image_thumb_url) product.imageThumb = row.image_thumb_url;
                 if (row.is_new) product.isNew = true;
                 if (row.is_best_seller) product.isBestSeller = true;
                 cat.products[row.idx] = product;
@@ -26878,6 +26974,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (!product) return;
                 if (row.name) product.name = row.name;
                 if (row.image_url) product.image = row.image_url;
+                if (row.image_thumb_url) product.imageThumb = row.image_thumb_url;
                 if (row.price != null) product.price = row.price;
                 if (row.sale_price != null) product.salePrice = row.sale_price; else delete product.salePrice;
                 if (row.stock) product.stock = row.stock;
@@ -27064,7 +27161,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 // label fallback (built for a card-sized thumb) would
                 // overflow this row's small 34px thumbnail.
                 const thumbHTML = p.image
-                    ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    ? `<img src="${escapeHtml(p.imageThumb || p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onload="this.classList.add('is-loaded')" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                        <span style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${placeholderSvg}</span>`
                     : placeholderSvg;
                 return `
