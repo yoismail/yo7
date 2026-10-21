@@ -9889,49 +9889,24 @@
             color: var(--heading);
         }
 
-        /* One continuous highlight bar across the whole row (day cell +
-           time cell share the same background, rounded only at the two
-           outer corners) rather than two separate text-highlighter
-           patches with a gap between them - reads as "this whole row is
-           today" at a glance instead of two disconnected marks. */
-        .hours-table tr.today {
-            border-bottom: none;
-        }
-
+        /* Red text only, no background bar - the day/time cells just pulse
+           colour in place like every other row's plain cells. */
         .hours-table tr.today td {
             font-weight: 700;
-            background: var(--orange);
-            color: var(--aubergine-deep);
-            padding-top: 7px;
-            padding-bottom: 7px;
+            color: #C0392B;
             line-height: 1.2;
             animation: hoursTodayPulse 2.6s ease-in-out infinite;
         }
-        /* A slow colour breathe between the brand orange and the same hue
-           lightened toward pure yellow, not an on/off blink - a hard blink
-           reads as dated and is a real accessibility concern (WCAG flags
-           blinking content). Animating background-color directly (rather
-           than a brightness() filter) keeps the shift clearly visible even
-           though --orange's channels already sit close to their max, where
-           a brightness multiplier has little room left to move and reads
-           as no animation at all. */
+        /* Same slow colour breathe as before, now between the deep red and
+           a brighter red rather than background orange/yellow - not an
+           on/off blink (a hard blink reads as dated and is a real
+           accessibility concern, WCAG flags blinking content). */
         @keyframes hoursTodayPulse {
-            0%, 100% { background-color: var(--orange); }
-            50% { background-color: #FFFF00; }
+            0%, 100% { color: #C0392B; }
+            50% { color: #E74C3C; }
         }
         @media (prefers-reduced-motion: reduce) {
             .hours-table tr.today td { animation: none; }
-        }
-
-        .hours-table tr.today td:first-child {
-            padding-left: 12px;
-            border-radius: 8px 0 0 8px;
-        }
-
-        .hours-table tr.today td:last-child {
-            padding-right: 12px;
-            border-radius: 0 8px 8px 0;
-            color: var(--aubergine-deep);
         }
 
         .open-badge {
