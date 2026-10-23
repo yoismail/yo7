@@ -4876,27 +4876,42 @@
            section right after this one, hence green here for contrast
            going down the page. */
         .hero-glimpse-strip {
-            /* A light, mostly-uncovered scrim (not the dark gradient the
-               Blog hero/Combo deals photo both use) - this photo is
-               already light and warm, and the centered eyebrow/h2 sit in
-               its own naturally empty, plain midsection, so it reads fine
-               with the section's own existing dark-on-light heading
-               colour underneath, no extra darkening needed for contrast.
-               Same admin-editable-photo mechanism as the Blog hero and
-               the Shop/About/Contact/Careers headers (page_header_images
-               keyed by "shop-by-department", see
-               handlePageHeaderImageUpload) - background-image (not the
-               background shorthand) so an admin's own upload can replace
-               just that layer via inline style, same as those headers. */
+            /* The photo (.hero-glimpse-bg) and its scrim (.hero-glimpse-scrim)
+               are their own absolutely-positioned layers behind .wrap now,
+               not this element's own CSS background-image - see the <img>
+               itself in the markup for why. Same admin-editable-photo
+               mechanism as the Blog hero and the Shop/About/Contact/Careers
+               headers (page_header_images keyed by "shop-by-department",
+               see handlePageHeaderImageUpload), renderPageHeaderImages()
+               updates .hero-glimpse-bg's src directly for this one header
+               instead of the generic style.backgroundImage it sets on
+               those other five. */
             position: relative;
-            background-image:
-                linear-gradient(180deg, rgba(250, 249, 242, 0.32), rgba(250, 249, 242, 0.5)),
-                url('/images/shop-by-department/shop-by-department-bg.jpg');
-            background-size: cover;
-            background-position: center;
+            overflow: hidden;
             padding: 44px 0 40px;
             border-top: 1px solid rgba(var(--border-rgb), 0.08);
             border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+        }
+        .hero-glimpse-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            z-index: 0;
+        }
+        /* A light, mostly-uncovered scrim (not the dark gradient the Blog
+           hero/Combo deals photo both use) - this photo is already light
+           and warm, and the centered eyebrow/h2 sit in its own naturally
+           empty, plain midsection, so it reads fine with the section's
+           own existing dark-on-light heading colour underneath, no extra
+           darkening needed for contrast. */
+        .hero-glimpse-scrim {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(180deg, rgba(250, 249, 242, 0.32), rgba(250, 249, 242, 0.5));
         }
         /* Dark mode: the photo's own palette is warm and light, which would
            sit as a jarring light patch torn out of an otherwise all-dark
@@ -4906,12 +4921,13 @@
            against it - and with .hero-glimpse-head's heading colour, which
            already flips to the dark-mode cream value, staying legible on
            top of it. */
-        [data-theme="dark"] .hero-glimpse-strip {
-            background-image:
-                linear-gradient(180deg, rgba(4,37,0,0.82), rgba(4,37,0,0.78) 55%, rgba(4,37,0,0.88)),
-                url('/images/shop-by-department/shop-by-department-bg.jpg');
-            background-size: cover;
-            background-position: center;
+        [data-theme="dark"] .hero-glimpse-scrim {
+            background: linear-gradient(180deg, rgba(4,37,0,0.82), rgba(4,37,0,0.78) 55%, rgba(4,37,0,0.88));
+        }
+        .hero-glimpse-strip > .wrap,
+        .hero-glimpse-strip > .card-edit-btn {
+            position: relative;
+            z-index: 2;
         }
         .hero-glimpse-head { text-align: center; margin-bottom: 26px; }
         .hero-glimpse-head h2 { color: var(--heading); }
@@ -11177,12 +11193,19 @@
         // Contact, Careers). These don't share one CSS class with a
         // hardcoded default background-image the way .journal-hero does,
         // so each key gets its own selector rule instead of one shared one.
+        // "shop-by-department" is skipped here on purpose - its photo is a
+        // real <img> (see its own markup comment for why), not this
+        // element's own background-image, and there's no equally reliable
+        // CSS-only way to pre-paint a real <img>'s src before JS runs. An
+        // admin-set custom photo there briefly shows the hardcoded default
+        // until renderPageHeaderImages() swaps it in, same as a page
+        // header with no admin photo set at all looks today.
         (function () {
             try {
                 var images = JSON.parse(localStorage.getItem('yo7-page-header-images') || '{}');
                 var css = '';
                 Object.keys(images).forEach(function (key) {
-                    if (!images[key]) return;
+                    if (!images[key] || key === 'shop-by-department') return;
                     css += '[data-page-header="' + key + '"]{background-image:linear-gradient(180deg,rgba(4,37,0,0.78),rgba(4,37,0,0.55) 55%,rgba(4,37,0,0.88)),url(' + JSON.stringify(images[key]) + ');background-size:cover;background-position:center}';
                 });
                 if (css) {
@@ -11539,6 +11562,15 @@
         </section>
 
         <div class="hero-glimpse-strip page-header-editable" data-page-header="shop-by-department">
+            <!-- A real img, not a CSS background-image, so the photo still
+                 loads under iOS Safari's Low Data Mode, which skips CSS
+                 background-images but not real img content (see the
+                 department photo circles just below, already img tags and
+                 already unaffected). The scrim is its own layer since it's
+                 a plain gradient, not a network-fetched image, so it was
+                 never actually the part Low Data Mode was dropping. -->
+            <img class="hero-glimpse-bg" src="/images/shop-by-department/shop-by-department-bg.jpg" alt="" loading="lazy" decoding="async">
+            <div class="hero-glimpse-scrim"></div>
             <label class="card-edit-btn" for="pageHeaderUpload-shop-by-department" aria-label="Change Shop by department background image" title="Change background image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="pageHeaderUpload-shop-by-department" data-page-header-key="shop-by-department" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
@@ -15546,12 +15578,20 @@
         function renderPageHeaderImages() {
             document.querySelectorAll('[data-page-header]').forEach(header => {
                 const url = pageHeaderImages[header.dataset.pageHeader];
+                // .hero-glimpse-strip's photo is a real <img> child (see its
+                // own markup comment for why), not this element's own CSS
+                // background-image like the other five headers - updates
+                // that img's src directly instead when present, same
+                // has-photo toggle either way for the shared text-colour
+                // CSS.
+                const bgImg = header.querySelector(':scope > .hero-glimpse-bg');
                 if (url) {
                     header.classList.add('has-photo');
-                    header.style.backgroundImage = pageHeaderBackgroundCss(url);
+                    if (bgImg) bgImg.src = url;
+                    else header.style.backgroundImage = pageHeaderBackgroundCss(url);
                 } else {
                     header.classList.remove('has-photo');
-                    header.style.backgroundImage = '';
+                    if (!bgImg) header.style.backgroundImage = '';
                 }
             });
         }
