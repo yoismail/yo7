@@ -8605,11 +8605,14 @@
         .cart-rating-badge a { color: var(--heading-mid); font-weight: 600; text-decoration: underline; cursor: pointer; }
         .cart-rating-badge .crb-sep { color: rgba(var(--border-rgb), 0.4); }
 
+        /* Full pill, matching the site's CTA buttons and the PD page's own
+           .qty-stepper (see its comment) - this is the same control, just
+           smaller, in the cart/checkout rows. */
         .cart-qty {
             display: flex;
             align-items: center;
             border: 1px solid rgba(var(--border-rgb), 0.16);
-            border-radius: 10px;
+            border-radius: 999px;
             overflow: hidden;
         }
 
@@ -8624,7 +8627,7 @@
         }
         .cart-qty-locked {
             font-size: 11.5px; font-weight: 600; color: var(--text-muted);
-            padding: 6px 10px; border: 1px solid rgba(var(--border-rgb), 0.14); border-radius: 10px;
+            padding: 6px 10px; border: 1px solid rgba(var(--border-rgb), 0.14); border-radius: 999px;
             cursor: help;
         }
 
