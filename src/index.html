@@ -4677,20 +4677,22 @@
            absolutely positioned against .best-seller-card itself (which
            carries the hover transform), so photo and text move together. */
         /* Solid panel below the photo box now, not a scrim overlaid on it. */
+        /* White/cream panel, not the dark aubergine fill this used to be -
+           matching .product-body's own switch, same reasoning: the mockup's
+           light card look, with .price-now/.price-was/.price-off's own
+           global colours (already tuned for a light surface) now applying
+           correctly instead of needing their own dark-panel overrides. */
         .best-seller-card .body {
             padding: 12px 14px 14px;
-            background: var(--aubergine-deep);
+            background: var(--card-bg);
         }
         .best-seller-card h4 {
-            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2;
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             margin-bottom: 3px; line-height: 1.25; min-height: 2.5em;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .best-seller-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
-        .best-seller-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
-        .best-seller-card .price-now.sale { color: var(--chartreuse-soft); }
-        .best-seller-card .price-was { color: rgba(250, 249, 242, 0.65); }
-        .best-seller-card .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
+        .best-seller-card .cat { font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
+        .best-seller-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); }
         @media (max-width: 900px) {
             .best-seller-card { flex-basis: 168px; max-width: 168px; }
         }
@@ -4784,21 +4786,19 @@
         }
         .new-remove-btn svg { width: 13px; height: 13px; }
         body.edit-mode-on .new-remove-btn { display: flex; }
-        /* Solid panel below the photo box now, not a scrim overlaid on it. */
+        /* White/cream panel, not the dark aubergine fill this used to be -
+           same reasoning as .best-seller-card .body's own comment above. */
         .new-card .body {
             padding: 12px 14px 14px;
-            background: var(--aubergine-deep);
+            background: var(--card-bg);
         }
         .new-card h4 {
-            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2;
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             margin-bottom: 3px; line-height: 1.25; min-height: 2.5em;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .new-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
-        .new-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
-        .new-card .price .price-now.sale { color: var(--chartreuse-soft); }
-        .new-card .price .price-was { color: rgba(250, 249, 242, 0.65); }
-        .new-card .price .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
+        .new-card .cat { font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
+        .new-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); }
 
         @media (max-width: 900px) {
             .new-card { flex-basis: 168px; max-width: 168px; }
@@ -5113,21 +5113,19 @@
                 opacity: 1;
             }
         }
-        /* Solid panel below the photo box now, not a scrim overlaid on it. */
+        /* White/cream panel, not the dark aubergine fill this used to be -
+           same reasoning as .best-seller-card .body's own comment above. */
         .offer-card .body {
             padding: 12px 14px 14px;
-            background: var(--aubergine-deep);
+            background: var(--card-bg);
         }
         .offer-card h4 {
-            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2;
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             margin-bottom: 3px; line-height: 1.25; min-height: 2.5em;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .offer-card .cat { font-size: 10.5px; color: rgba(250, 249, 242, 0.72); margin-bottom: 6px; }
-        .offer-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: #FAF9F2; }
-        .offer-card .price-now.sale { color: var(--chartreuse-soft); }
-        .offer-card .price-was { color: rgba(250, 249, 242, 0.65); }
-        .offer-card .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
+        .offer-card .cat { font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px; }
+        .offer-card .price { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); }
         @media (max-width: 900px) {
             .offer-card { flex-basis: 168px; max-width: 168px; }
         }
@@ -7407,17 +7405,23 @@
 
         /* Solid info panel below the photo box — not overlaid on it — so
            the photo gets its own section at the top instead of the whole
-           card being one full-bleed image with text floating over it. */
+           card being one full-bleed image with text floating over it.
+           White/cream (var(--card-bg)), not the dark aubergine fill this
+           used to be - the mockup's light-card look, with the global
+           .price-now/.price-was/.price-off colours (already tuned for a
+           light surface, see their own comment below) now applying
+           directly instead of needing dark-panel-specific overrides. */
         .product-body {
             padding: 14px 14px 14px;
-            background: var(--aubergine-deep);
-            color: #FAF9F2;
+            background: var(--card-bg);
+            color: var(--ink);
         }
 
         .product-body h4 {
             font-family: var(--display);
             font-weight: 700;
             font-size: 14px;
+            color: var(--heading);
             margin-bottom: 2px;
             line-height: 1.25;
             min-height: 2.5em;
@@ -7426,7 +7430,7 @@
 
         .product-unit {
             font-size: 11.5px;
-            color: rgba(250, 249, 242, 0.75);
+            color: var(--text-muted);
             margin-bottom: 7px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
@@ -7436,7 +7440,7 @@
            would mean visible dead space on every one of those. */
         .product-card-rating {
             display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
-            font-size: 10.5px; color: rgba(250, 249, 242, 0.75); margin-bottom: 6px;
+            font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px;
         }
         .product-card-rating .pcr-stars { display: inline-flex; align-items: center; gap: 1px; color: var(--orange); }
         .product-card-rating .pcr-stars svg { width: 10px; height: 10px; }
@@ -7453,7 +7457,7 @@
             font-weight: 700;
             font-size: 16px;
             letter-spacing: -0.01em;
-            color: #FAF9F2;
+            color: var(--heading);
             /* A flex item's default min-width is "auto", not 0 — it won't
                shrink below its content's unwrapped natural width no matter
                how little room .product-row actually has, so a sale price
@@ -7483,12 +7487,8 @@
         }
         /* .price-now/.price-was/.price-off are shared, global price
            classes (product detail page, cart, checkout upsell, admin...)
-           tuned for a light background — this scrim is always dark
-           regardless of site theme, so it needs its own fixed-light
-           overrides rather than inheriting those. */
-        .product-body .price-now.sale { color: var(--chartreuse-soft); }
-        .product-body .price-was { color: rgba(250, 249, 242, 0.65); }
-        .product-body .price-off { background: rgba(250, 249, 242, 0.18); color: #FAF9F2; }
+           already tuned for a light background - .product-body is one
+           now too, so no card-specific override is needed here any more. */
 
         .price-now { font-family: var(--display); font-weight: 700; }
         .price-now.sale { color: var(--heading-mid); }
@@ -8495,22 +8495,23 @@
             background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
         }
         .checkout-upsell-thumb img { width: 100%; height: 100%; object-fit: contain; }
+        /* White/cream panel, not the dark aubergine fill this used to be -
+           same reasoning as .product-body's own comment above. */
         .checkout-upsell-body {
             padding: 8px 8px 8px;
-            background: var(--aubergine-deep);
+            background: var(--card-bg);
         }
         .checkout-upsell-name {
             font-family: var(--display);
             font-weight: 600;
             font-size: 11px;
             line-height: 1.25;
-            color: #FAF9F2;
+            color: var(--heading);
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             margin-bottom: 4px;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .checkout-upsell-row {
             display: flex;
@@ -8522,7 +8523,7 @@
             font-family: var(--display);
             font-weight: 700;
             font-size: 12px;
-            color: #FAF9F2;
+            color: var(--heading);
         }
         .checkout-upsell-add {
             width: 22px;
