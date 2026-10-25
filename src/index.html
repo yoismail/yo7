@@ -14986,9 +14986,11 @@
             // does, not swiped like Best Sellers/New/Offers, so it doesn't
             // carry their jank-on-drag risk (see that same comment for why
             // those three stay static instead). Same staggered per-pill
-            // delay the category grid uses too.
+            // delay the category grid uses too, including the same i % 6
+            // cycling - see that comment for why the raw index on its own
+            // isn't safe here either.
             row.innerHTML = GROUPS.map((g, i) => `
-      <a class="hero-glimpse-pill cat-tile-reveal" style="transition-delay:${(i * 0.05).toFixed(2)}s" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+      <a class="hero-glimpse-pill cat-tile-reveal" style="transition-delay:${((i % 6) * 0.05).toFixed(2)}s" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
             observeContainerReveals(row, '.cat-tile-reveal');
         }
 
@@ -17463,8 +17465,19 @@
                 // an old catSlug::idx position stable - a shopper doesn't
                 // see them, so they shouldn't count toward "N items" either.
                 const itemCount = c.products.filter(p => !p.deleted).length;
+                // i % 6, not the raw index - this grid is long enough (the
+                // full catalogue) that most cards only enter the viewport
+                // by scrolling, well after boot. A raw per-card delay grows
+                // with every item regardless of when it's actually seen, so
+                // a card near the end wasn't just staggered, it sat fully
+                // invisible for over a second after scrolling to it before
+                // doing anything, reported directly as this section feeling
+                // laggy rather than smooth. Cycling the delay keeps the
+                // cascading feel within whatever row/batch is actually
+                // revealing at once, instead of accumulating across the
+                // entire list.
                 return `
-    <a class="cat-flat-card cat-tile-reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.05).toFixed(2)}s">
+    <a class="cat-flat-card cat-tile-reveal" href="#/category/${c.slug}" style="transition-delay:${((i % 6) * 0.05).toFixed(2)}s">
       <div class="thumb">
         ${thumbBlock}
         <button class="cat-edit-btn" type="button" aria-label="Edit category" onclick="event.preventDefault(); event.stopPropagation(); openCategoryEdit('${c.slug}');">
