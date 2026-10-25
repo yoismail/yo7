@@ -199,6 +199,22 @@
         // inline styles always win over a stylesheet rule that isn't
         // !important) still corrects it painlessly if the real fetched
         // value turns out to differ from this cached guess.
+        // This is the last of these flash-prevention blocks now - the
+        // equivalent trick for the other admin-editable page headers (Shop
+        // Everything, About, Contact, Careers, Combo deals) no longer
+        // applies, since their photo is a real <img> now too (see
+        // .page-header-bg's own CSS comment, same iOS Safari Low Data Mode
+        // fix Shop by department's own .hero-glimpse-bg already got), and
+        // there's no equally reliable CSS-only way to pre-paint a real
+        // <img>'s src before JS runs. An admin-set custom photo on any of
+        // them briefly shows the hardcoded default (or, for the four with
+        // no default, nothing at all) until renderPageHeaderImages() swaps
+        // it in, same tradeoff Shop by department already accepted. Keep
+        // this block last, its own closing "})();" immediately before
+        // </script> - scripts/generate-static-pages.py's inject_route_seed()
+        // matches that exact marker to seed a page's hash route, and raises
+        // a loud error rather than silently generating broken pages if it
+        // ever goes missing (see that function's own comment).
         (function () {
             var heroImg = localStorage.getItem('yo7-journal-hero-image');
             if (heroImg) {
@@ -207,16 +223,6 @@
                 document.head.appendChild(style);
             }
         })();
-        // The equivalent flash-prevention trick for the other admin-editable
-        // page headers (Shop Everything, About, Contact, Careers, Combo
-        // deals) no longer applies - their photo is a real <img> now too
-        // (see .page-header-bg's own CSS comment, same iOS Safari Low Data
-        // Mode fix Shop by department's own .hero-glimpse-bg already got),
-        // and there's no equally reliable CSS-only way to pre-paint a real
-        // <img>'s src before JS runs. An admin-set custom photo on any of
-        // them briefly shows the hardcoded default (or, for the four with
-        // no default, nothing at all) until renderPageHeaderImages() swaps
-        // it in, same tradeoff Shop by department already accepted.
     </script>
 </head>
 
