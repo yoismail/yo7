@@ -7112,7 +7112,7 @@
                secondary-page header (Shop, About, Contact, Careers)
                instead of standing out as taller. */
             padding: 52px 0 48px;
-            background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('/images/journal/journal-hero-ingredients.jpg');
+            background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('/images/journal/journal-hero-ingredients.webp');
             background-size: cover;
             background-position: center;
             color: var(--cream);
@@ -11648,7 +11648,7 @@
                  already unaffected). The scrim is its own layer since it's
                  a plain gradient, not a network-fetched image, so it was
                  never actually the part Low Data Mode was dropping. -->
-            <img class="hero-glimpse-bg" src="/images/shop-by-department/shop-by-department-bg.jpg" alt="" loading="lazy" decoding="async">
+            <img class="hero-glimpse-bg" src="/images/shop-by-department/shop-by-department-bg.webp" alt="" loading="lazy" decoding="async">
             <div class="hero-glimpse-scrim"></div>
             <label class="card-edit-btn" for="pageHeaderUpload-shop-by-department" aria-label="Change Shop by department background image" title="Change background image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -11757,7 +11757,7 @@
         </section>
 
         <section class="bundles-section page-header-editable" data-page-header="combo-deals">
-            <img class="page-header-bg" src="/images/combo-deals/combo-deals-hero.jpg" alt="" loading="lazy" decoding="async">
+            <img class="page-header-bg" src="/images/combo-deals/combo-deals-hero.webp" alt="" loading="lazy" decoding="async">
             <div class="page-header-scrim"></div>
             <label class="card-edit-btn" for="pageHeaderUpload-combo-deals" aria-label="Change Combo deals background image" title="Change background image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -14932,20 +14932,20 @@
         // to exactly one group — see the categories arrays below, which
         // together cover all 26 exactly once.
         const GROUPS = [
-            { slug: 'rice', name: 'Rice', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>', photo: '/images/categories/cat-rice.jpg', tagline: 'Ofada, long grain, basmati, whatever your jollof calls for.', categories: ['rice'] },
-            { slug: 'beans', name: 'Beans', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15c-2-3-1.5-8 2-11 3.5 3 8 3 11-1-1 5-1 10-4.5 13.5S9 18 6 15Z"/><ellipse cx="9.3" cy="12.5" rx="1.1" ry="1.7" transform="rotate(35 9.3 12.5)"/><ellipse cx="12.7" cy="9.3" rx="1.1" ry="1.7" transform="rotate(35 12.7 9.3)"/></svg>', photo: '/images/categories/cat-beans.jpg', tagline: 'Honey beans, black-eyed, the base of a proper moi moi.', categories: ['beans'] },
+            { slug: 'rice', name: 'Rice', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>', photo: '/images/categories/cat-rice.webp', tagline: 'Ofada, long grain, basmati, whatever your jollof calls for.', categories: ['rice'] },
+            { slug: 'beans', name: 'Beans', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15c-2-3-1.5-8 2-11 3.5 3 8 3 11-1-1 5-1 10-4.5 13.5S9 18 6 15Z"/><ellipse cx="9.3" cy="12.5" rx="1.1" ry="1.7" transform="rotate(35 9.3 12.5)"/><ellipse cx="12.7" cy="9.3" rx="1.1" ry="1.7" transform="rotate(35 12.7 9.3)"/></svg>', photo: '/images/categories/cat-beans.webp', tagline: 'Honey beans, black-eyed, the base of a proper moi moi.', categories: ['beans'] },
             { slug: 'noodles', name: 'Noodles', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><path d="M8 11c0-2 1.2-3 1-5M12 11c0-2 1-3.2 1-5.2M16 11c0-2-1.2-3-1-5"/></svg>', photo: '/images/categories/cat-noodles.jpg', tagline: 'Indomie and the quick plate that never lets you down.', categories: ['noodles'] },
-            { slug: 'breakfast-cereals', name: 'Breakfast &amp; Cereals', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><path d="M17 4.5 20 2M18.3 5.7c-1 1-1 2.2 0 3.2"/><ellipse cx="18.6" cy="4" rx="1.4" ry="1" transform="rotate(-40 18.6 4)"/></svg>', photo: '/images/categories/cat-breakfast-cereals.jpg', tagline: 'Cerelac, Golden Morn, Ogi and Pap, the first meal of the day sorted.', categories: ['breakfast-cereals'] },
-            { slug: 'garri-flours', name: 'Garri &amp; Flours', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l.8 4H8.2L9 3.5Z"/><path d="M8.2 7.5 6.5 19a1.5 1.5 0 0 0 1.5 1.7h8a1.5 1.5 0 0 0 1.5-1.7L15.8 7.5"/></svg>', photo: '/images/categories/cat-flour.jpg', tagline: 'Garri, semo, elubo, and the flours and bakes behind every good swallow.', categories: ['flour', 'baking-essentials', 'bakery'] },
-            { slug: 'meat-poultry', name: 'Meat &amp; Poultry', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.8 3.2c2.8-.5 5 1.7 4.5 4.5-.6 3.4-3.8 5.4-5.6 7.2-1.6 1.6-2.6 3-4.3 3.8a3 3 0 1 1-3.1-3.1c.8-1.7 2.2-2.7 3.8-4.3 1.8-1.8 3.8-5 4.7-8.1Z"/><circle cx="7.3" cy="16.7" r="1.1"/></svg>', photo: '/images/categories/cat-meat.jpg', tagline: 'Goat, beef, chicken, and turkey, cut and packed for your pot.', categories: ['meat', 'poultry'] },
+            { slug: 'breakfast-cereals', name: 'Breakfast &amp; Cereals', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><path d="M17 4.5 20 2M18.3 5.7c-1 1-1 2.2 0 3.2"/><ellipse cx="18.6" cy="4" rx="1.4" ry="1" transform="rotate(-40 18.6 4)"/></svg>', photo: '/images/categories/cat-breakfast-cereals.webp', tagline: 'Cerelac, Golden Morn, Ogi and Pap, the first meal of the day sorted.', categories: ['breakfast-cereals'] },
+            { slug: 'garri-flours', name: 'Garri &amp; Flours', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6l.8 4H8.2L9 3.5Z"/><path d="M8.2 7.5 6.5 19a1.5 1.5 0 0 0 1.5 1.7h8a1.5 1.5 0 0 0 1.5-1.7L15.8 7.5"/></svg>', photo: '/images/categories/cat-flour.webp', tagline: 'Garri, semo, elubo, and the flours and bakes behind every good swallow.', categories: ['flour', 'baking-essentials', 'bakery'] },
+            { slug: 'meat-poultry', name: 'Meat &amp; Poultry', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.8 3.2c2.8-.5 5 1.7 4.5 4.5-.6 3.4-3.8 5.4-5.6 7.2-1.6 1.6-2.6 3-4.3 3.8a3 3 0 1 1-3.1-3.1c.8-1.7 2.2-2.7 3.8-4.3 1.8-1.8 3.8-5 4.7-8.1Z"/><circle cx="7.3" cy="16.7" r="1.1"/></svg>', photo: '/images/categories/cat-meat.webp', tagline: 'Goat, beef, chicken, and turkey, cut and packed for your pot.', categories: ['meat', 'poultry'] },
             { slug: 'fish-seafood', name: 'Fish &amp; Seafood', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12s3.2-4.5 9.5-4.5 8.5 4.5 8.5 4.5-2.2 4.5-8.5 4.5S2.5 12 2.5 12Z"/><path d="M16.5 9v6M20.5 12l2-2.5M20.5 12l2 2.5"/><circle cx="7.5" cy="11" r=".6"/></svg>', photo: '/images/categories/cat-sea-foods.jpg', tagline: 'Dried fish, prawns, crayfish, the depth every pot of soup needs.', categories: ['sea-foods'] },
-            { slug: 'vegetables', name: 'Vegetables', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c8-.5 13-5.5 13.5-13.5C9.5 7 4.5 12 4 20Z"/><path d="M8.5 15.5c2-2 4-4 7-7.3"/></svg>', photo: '/images/categories/cat-fruits-vegetables.jpg', tagline: 'Ugu, plantain, yam, and the fresh, root, and tropical produce every pot needs.', categories: ['root-vegetables', 'peppers-chillies', 'tropical-foods', 'fruits-vegetables', 'other-vegetables'] },
+            { slug: 'vegetables', name: 'Vegetables', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c8-.5 13-5.5 13.5-13.5C9.5 7 4.5 12 4 20Z"/><path d="M8.5 15.5c2-2 4-4 7-7.3"/></svg>', photo: '/images/categories/cat-fruits-vegetables.webp', tagline: 'Ugu, plantain, yam, and the fresh, root, and tropical produce every pot needs.', categories: ['root-vegetables', 'peppers-chillies', 'tropical-foods', 'fruits-vegetables', 'other-vegetables'] },
             { slug: 'seasoning', name: 'Seasoning', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h5V6h-5z"/><path d="M8.3 6h7.4l1 13.2a1.5 1.5 0 0 1-1.5 1.6H8.8a1.5 1.5 0 0 1-1.5-1.6L8.3 6Z"/><circle cx="10.7" cy="9.5" r=".55"/><circle cx="13.3" cy="9.5" r=".55"/><circle cx="12" cy="11.6" r=".55"/></svg>', photo: '/images/categories/cat-seasoning.jpg', tagline: 'Maggi, curry, thyme, the cubes and blends that build real flavour.', categories: ['seasoning'] },
-            { slug: 'condiments', name: 'Sauces &amp; Pastes', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5h12l-1.1 9.3a2 2 0 0 1-2 1.7H9.1a2 2 0 0 1-2-1.7L6 9.5Z"/><path d="M8 9.5V7a4 4 0 0 1 8 0v2.5"/><path d="M12 3v3"/></svg>', photo: '/images/categories/cat-condiments.jpg', tagline: 'Sauces, pastes, and pepper mixes that finish a dish properly.', categories: ['condiments'] },
-            { slug: 'oils', name: 'Oils', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h4V6l1.5 2v12a1.5 1.5 0 0 1-1.5 1.5H10A1.5 1.5 0 0 1 8.5 20V8L10 6V2.5Z"/><path d="M8.5 12.5h7"/></svg>', photo: '/images/categories/cat-oils.jpg', tagline: 'Red oil, groundnut oil, the good stuff your stew can\'t do without.', categories: ['oils'] },
-            { slug: 'drinks', name: 'Drinks &amp; Beverages', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="16" rx="4"/><path d="M7 8h10M7 16h10"/></svg>', photo: '/images/categories/cat-beverages.jpg', tagline: 'Milo, zobo, malt, and the milk and tea that round off a meal.', categories: ['beverages', 'drinks', 'herbal-teas', 'dairy'] },
-            { slug: 'household', name: 'Household', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 8h7v11.5a1.5 1.5 0 0 1-1.5 1.5h-4a1.5 1.5 0 0 1-1.5-1.5V8Z"/><path d="M9.5 8V5.5h5V8"/><path d="M12 2.5v3"/><path d="M15.5 5.5h2.3"/></svg>', photo: '/images/categories/cat-body-oral-products.jpg', tagline: 'Shea butter, black soap, hair care, and the everyday household essentials.', categories: ['hair-products', 'body-oral-products', 'miscellaneous'] },
-            { slug: 'snacks-confectionary', name: 'Snacks &amp; Confectionary', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="9.5" r=".8"/><circle cx="14.5" cy="8.5" r=".8"/><circle cx="15.5" cy="13.5" r=".8"/><circle cx="10" cy="15" r=".8"/><circle cx="13" cy="16.5" r=".7"/></svg>', photo: '/images/categories/cat-snacks-confectionary.jpg', tagline: 'Chin chin, plantain chips, the small joys between meals.', categories: ['snacks-confectionary'] },
+            { slug: 'condiments', name: 'Sauces &amp; Pastes', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5h12l-1.1 9.3a2 2 0 0 1-2 1.7H9.1a2 2 0 0 1-2-1.7L6 9.5Z"/><path d="M8 9.5V7a4 4 0 0 1 8 0v2.5"/><path d="M12 3v3"/></svg>', photo: '/images/categories/cat-condiments.webp', tagline: 'Sauces, pastes, and pepper mixes that finish a dish properly.', categories: ['condiments'] },
+            { slug: 'oils', name: 'Oils', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h4V6l1.5 2v12a1.5 1.5 0 0 1-1.5 1.5H10A1.5 1.5 0 0 1 8.5 20V8L10 6V2.5Z"/><path d="M8.5 12.5h7"/></svg>', photo: '/images/categories/cat-oils.webp', tagline: 'Red oil, groundnut oil, the good stuff your stew can\'t do without.', categories: ['oils'] },
+            { slug: 'drinks', name: 'Drinks &amp; Beverages', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="16" rx="4"/><path d="M7 8h10M7 16h10"/></svg>', photo: '/images/categories/cat-beverages.webp', tagline: 'Milo, zobo, malt, and the milk and tea that round off a meal.', categories: ['beverages', 'drinks', 'herbal-teas', 'dairy'] },
+            { slug: 'household', name: 'Household', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 8h7v11.5a1.5 1.5 0 0 1-1.5 1.5h-4a1.5 1.5 0 0 1-1.5-1.5V8Z"/><path d="M9.5 8V5.5h5V8"/><path d="M12 2.5v3"/><path d="M15.5 5.5h2.3"/></svg>', photo: '/images/categories/cat-body-oral-products.webp', tagline: 'Shea butter, black soap, hair care, and the everyday household essentials.', categories: ['hair-products', 'body-oral-products', 'miscellaneous'] },
+            { slug: 'snacks-confectionary', name: 'Snacks &amp; Confectionary', icon: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="9.5" r=".8"/><circle cx="14.5" cy="8.5" r=".8"/><circle cx="15.5" cy="13.5" r=".8"/><circle cx="10" cy="15" r=".8"/><circle cx="13" cy="16.5" r=".7"/></svg>', photo: '/images/categories/cat-snacks-confectionary.webp', tagline: 'Chin chin, plantain chips, the small joys between meals.', categories: ['snacks-confectionary'] },
         ];
         const ICON_SEARCH = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>';
         function findGroup(slug) { return GROUPS.find(g => g.slug === slug); }
@@ -20173,7 +20173,7 @@
                 meta_description: 'Five practical tips for a better pot of jollof rice, from building the flavour base to choosing the right rice. A recipe guide from Yo7 Foods.',
                 category: 'recipes',
                 linked_category: 'rice',
-                cover_image: '/images/journal/jollof-rice-stew-feature.jpg',
+                cover_image: '/images/journal/jollof-rice-stew-feature.webp',
                 author: 'Yo7 Foods Team',
                 published: true,
                 published_at: '2026-10-01T09:00:00.000Z',
@@ -20201,7 +20201,7 @@ The best part? There is room for personal preference. Every kitchen has its own 
                 meta_description: 'How to grill chicken and fry plantain properly to go with jollof rice, including tips on picking the right ripeness. A recipe guide from Yo7 Foods.',
                 category: 'recipes',
                 linked_category: 'poultry',
-                cover_image: '/images/journal/jollof-rice-grilled-chicken-plantain.jpg',
+                cover_image: '/images/journal/jollof-rice-grilled-chicken-plantain.webp',
                 author: 'Yo7 Foods Team',
                 published: true,
                 published_at: '2026-10-08T09:00:00.000Z',
@@ -29207,28 +29207,28 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
            page paint fast regardless of how many photos the catalog eventually has. */
         function loadDeferredImageStyles() {
             const style = document.createElement('style');
-            style.textContent = `.group-photo-staples { background-image: url('/images/categories/group-staples.jpg'); }
-.group-photo-seasoning-oils-flavours { background-image: url('/images/categories/group-seasoning-oils-flavours.jpg'); }
-.group-photo-proteins-produce { background-image: url('/images/categories/group-proteins-produce.jpg'); }
+            style.textContent = `.group-photo-staples { background-image: url('/images/categories/group-staples.webp'); }
+.group-photo-seasoning-oils-flavours { background-image: url('/images/categories/group-seasoning-oils-flavours.webp'); }
+.group-photo-proteins-produce { background-image: url('/images/categories/group-proteins-produce.webp'); }
 .group-photo-drinks-treats { background-image: url('/images/categories/group-drinks-treats.jpg'); }
 .group-photo-home-personal-care { background-image: url('/images/categories/group-home-personal-care.jpg'); }
-.cat-photo-flour { background-image: url('/images/categories/cat-flour.jpg'); }
-.cat-photo-rice { background-image: url('/images/categories/cat-rice.jpg'); }
-.cat-photo-root-vegetables { background-image: url('/images/categories/cat-root-vegetables.jpg'); }
-.cat-photo-beans { background-image: url('/images/categories/cat-beans.jpg'); }
+.cat-photo-flour { background-image: url('/images/categories/cat-flour.webp'); }
+.cat-photo-rice { background-image: url('/images/categories/cat-rice.webp'); }
+.cat-photo-root-vegetables { background-image: url('/images/categories/cat-root-vegetables.webp'); }
+.cat-photo-beans { background-image: url('/images/categories/cat-beans.webp'); }
 .cat-photo-noodles { background-image: url('/images/categories/cat-noodles.jpg'); }
-.cat-photo-oils { background-image: url('/images/categories/cat-oils.jpg'); }
+.cat-photo-oils { background-image: url('/images/categories/cat-oils.webp'); }
 .cat-photo-seasoning { background-image: url('/images/categories/cat-seasoning.jpg'); }
-.cat-photo-condiments { background-image: url('/images/categories/cat-condiments.jpg'); }
-.cat-photo-poultry { background-image: url('/images/categories/cat-poultry.jpg'); }
-.cat-photo-meat { background-image: url('/images/categories/cat-meat.jpg'); }
+.cat-photo-condiments { background-image: url('/images/categories/cat-condiments.webp'); }
+.cat-photo-poultry { background-image: url('/images/categories/cat-poultry.webp'); }
+.cat-photo-meat { background-image: url('/images/categories/cat-meat.webp'); }
 .cat-photo-sea-foods { background-image: url('/images/categories/cat-sea-foods.jpg'); }
-.cat-photo-snacks-confectionary { background-image: url('/images/categories/cat-snacks-confectionary.jpg'); }
-.cat-photo-beverages { background-image: url('/images/categories/cat-beverages.jpg'); }
-.cat-photo-fruits-vegetables { background-image: url('/images/categories/cat-fruits-vegetables.jpg'); }
+.cat-photo-snacks-confectionary { background-image: url('/images/categories/cat-snacks-confectionary.webp'); }
+.cat-photo-beverages { background-image: url('/images/categories/cat-beverages.webp'); }
+.cat-photo-fruits-vegetables { background-image: url('/images/categories/cat-fruits-vegetables.webp'); }
 .cat-photo-hair-products { background-image: url('/images/categories/cat-hair-products.jpg'); }
-.cat-photo-body-oral-products { background-image: url('/images/categories/cat-body-oral-products.jpg'); }
-.cat-photo-tropical-foods { background-image: url('/images/categories/cat-tropical-foods.jpg'); }`;
+.cat-photo-body-oral-products { background-image: url('/images/categories/cat-body-oral-products.webp'); }
+.cat-photo-tropical-foods { background-image: url('/images/categories/cat-tropical-foods.webp'); }`;
             document.head.appendChild(style);
             syncNavSpacer(); // card heights can change once photos are in
         }
