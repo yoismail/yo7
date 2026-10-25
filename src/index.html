@@ -14961,8 +14961,16 @@
         function renderHeroGlimpse() {
             const row = document.getElementById('heroGlimpseRow');
             if (!row) return;
-            row.innerHTML = GROUPS.map(g => `
-      <a class="hero-glimpse-pill" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+            // cat-tile-reveal (the Shop by category grid's own fade+rise+scale
+            // entrance, see its CSS comment) reused here rather than a new
+            // near-duplicate class - this row wraps on scroll like that grid
+            // does, not swiped like Best Sellers/New/Offers, so it doesn't
+            // carry their jank-on-drag risk (see that same comment for why
+            // those three stay static instead). Same staggered per-pill
+            // delay the category grid uses too.
+            row.innerHTML = GROUPS.map((g, i) => `
+      <a class="hero-glimpse-pill cat-tile-reveal" style="transition-delay:${(i * 0.05).toFixed(2)}s" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+            observeContainerReveals(row, '.cat-tile-reveal');
         }
 
         /* ================= DELIVERY FEE (weight-based) =================
