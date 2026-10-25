@@ -4985,7 +4985,10 @@
             font-size: 13.5px;
             color: var(--heading);
             text-decoration: none;
-            transition: transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease;
+            /* opacity included here, not just transform/box-shadow/border-
+               color - see .cat-tile-reveal's own comment for why it has to
+               live on this rule directly rather than that shared class. */
+            transition: opacity 0.25s cubic-bezier(.16,.84,.44,1), transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease;
         }
         .hero-glimpse-pill span.emoji {
             display: flex; align-items: center; justify-content: center;
@@ -6062,10 +6065,23 @@
            reveal. Re-observed per render via observeContainerReveals()
            rather than the global one-shot observeReveals() — see the
            comment on that function. */
+        /* No transition declared here on purpose - this class is shared by
+           .cat-flat-card and .hero-glimpse-pill, each of which already
+           carries its own `transition` shorthand for its own hover
+           properties (box-shadow, border-color, ...). `transition` doesn't
+           merge across rules of equal specificity - whichever one comes
+           later in the stylesheet wins outright, silently dropping
+           whichever properties the other rule listed. That's exactly what
+           was happening here: .cat-flat-card's own transition (declared
+           after this one) was winning, so its entrance just snapped to
+           opacity:1 instead of fading - only the transform half of
+           "fade+rise" was ever actually animating. Each consumer's own
+           transition (below, on .cat-flat-card and .hero-glimpse-pill
+           themselves) now explicitly includes opacity alongside its own
+           properties instead, so there's nothing left to clobber. */
         .cat-tile-reveal {
             opacity: 0;
             transform: translateY(24px) scale(0.94);
-            transition: opacity 0.6s cubic-bezier(.16,.84,.44,1), transform 0.6s cubic-bezier(.16,.84,.44,1);
         }
         .cat-tile-reveal.is-visible {
             opacity: 1;
@@ -6729,7 +6745,10 @@
             text-decoration: none;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
             border-bottom: 4px solid var(--chartreuse);
-            transition: transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
+            /* opacity included here, not just transform/box-shadow - see
+               .cat-tile-reveal's own comment for why it has to live on this
+               rule directly rather than that shared class. */
+            transition: opacity 0.4s cubic-bezier(.16,.84,.44,1), transform 0.4s cubic-bezier(.16,.84,.44,1), box-shadow 0.4s cubic-bezier(.16,.84,.44,1);
         }
         /* Tag-qualified — see the comment on a.best-seller-card:hover.
            This one happens to already win by source order alone (it's
