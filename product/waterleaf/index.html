@@ -210,11 +210,16 @@
         // them briefly shows the hardcoded default (or, for the four with
         // no default, nothing at all) until renderPageHeaderImages() swaps
         // it in, same tradeoff Shop by department already accepted. Keep
-        // this block last, its own closing "})();" immediately before
-        // </script> - scripts/generate-static-pages.py's inject_route_seed()
-        // matches that exact marker to seed a page's hash route, and raises
-        // a loud error rather than silently generating broken pages if it
-        // ever goes missing (see that function's own comment).
+        // this block last, its own closing "})();" immediately before this
+        // script tag ends - scripts/generate-static-pages.py's own
+        // inject_route_seed() matches that exact marker to seed a page's
+        // hash route, and raises a loud error rather than silently
+        // generating broken pages if it ever goes missing (see that
+        // function's own comment). Never write the literal closing script
+        // tag itself in this comment even to explain that - the HTML
+        // parser ends the real tag the instant it sees that exact text
+        // anywhere in here, comment or not, which is exactly the live bug
+        // this sentence itself caused the one time it said it outright.
         (function () {
             var heroImg = localStorage.getItem('yo7-journal-hero-image');
             if (heroImg) {
