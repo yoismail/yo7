@@ -4632,7 +4632,11 @@
             border-bottom: 4px solid var(--chartreuse);
             overflow: hidden; text-decoration: none; color: #2C1C10;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
+            /* opacity added for the section-level entrance reveal below -
+               cheap/compositor-only like transform, not the box-shadow
+               repaint cost the comment on a.best-seller-card:hover warns
+               about, so it's safe alongside swipe/auto-advance. */
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1), opacity 0.3s cubic-bezier(.16,.84,.44,1);
         }
         /* transform only, no box-shadow transition — animating box-shadow
            forces a repaint every frame (it isn't compositor-only like
@@ -4735,7 +4739,9 @@
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
+            /* opacity added for the section-level entrance reveal, same
+               reasoning as .best-seller-card's own transition comment. */
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1), opacity 0.3s cubic-bezier(.16,.84,.44,1);
         }
         /* transform only, no box-shadow transition — see the comment on
            a.best-seller-card:hover for why. */
@@ -5068,7 +5074,9 @@
             scroll-snap-align: start;
             overflow: hidden; text-decoration: none; color: var(--ink);
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 10px 22px rgba(var(--border-rgb), 0.06);
-            transition: transform 0.25s cubic-bezier(.16,.84,.44,1);
+            /* opacity added for the section-level entrance reveal, same
+               reasoning as .best-seller-card's own transition comment. */
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1), opacity 0.3s cubic-bezier(.16,.84,.44,1);
         }
         /* transform only, no box-shadow transition — see the comment on
            a.best-seller-card:hover for why. */
@@ -5098,8 +5106,9 @@
         /* Same bright yellow pill shape/colour as the Best Sellers rank
            badge (.best-seller-rank) — matched on purpose, not each section
            having its own badge language. Same pop-in entrance too: no
-           continuous animation, it settles once when .offer-card-reveal
-           comes into view and stays still after that. */
+           continuous animation, it settles once when .offer-card gets its
+           own .is-visible (see observeSectionReveal()) and stays still
+           after that. */
         .offer-tag {
             position: absolute; top: 10px; left: 10px; z-index: 3;
             display: flex; align-items: center; gap: 4px;
@@ -5111,7 +5120,7 @@
             opacity: 0;
             transition: transform 0.55s cubic-bezier(.34, 1.56, .64, 1) 0.25s, opacity 0.4s ease 0.25s;
         }
-        .offer-card-reveal.is-visible .offer-tag {
+        .offer-card.is-visible .offer-tag {
             transform: scale(1);
             opacity: 1;
         }
@@ -6060,31 +6069,39 @@
         }
 
         /* Shop by category tile entrance — fade+rise+scale as tiles scroll
-           into view. Best Sellers and Special Offers used to get the same
-           treatment (bs-card-reveal / offer-card-reveal), but a per-card
-           scroll-triggered animation on a horizontally-scrolling carousel
-           meant every swipe fired a fresh batch of opacity/transform
-           transitions mid-drag — exactly the kind of scroll-time work that
-           reads as jank/hang on a slower device, so those two carousels
-           now render fully visible immediately instead; only this one
-           (a normal vertically-scrolled grid, not swiped) keeps the
-           reveal. Re-observed per render via observeContainerReveals()
-           rather than the global one-shot observeReveals() — see the
-           comment on that function. */
+           into view. Best Sellers, New Arrivals and Special Offers used to
+           get the same treatment per-card (bs-card-reveal /
+           offer-card-reveal), but a per-card scroll-triggered animation on
+           a horizontally-scrolling, auto-advancing carousel meant every
+           swipe (and every periodic auto-advance tick) fired a fresh batch
+           of opacity/transform transitions mid-drag, exactly the kind of
+           scroll-time work that reads as jank/hang on a slower device, so
+           those carousels rendered fully visible immediately instead for a
+           while. They're back on this same class now, but observed at the
+           SECTION level (observeSectionReveal(), see its own comment):
+           one one-shot observer on the whole section fires once when it
+           first scrolls into view and reveals every card in it together,
+           instead of a separate observer per card. Swiping or the periodic
+           auto-advance afterward never triggers it again, since nothing is
+           still watching by then. Shop by category (a normal
+           vertically-scrolled grid, not swiped) keeps the original
+           per-card observeContainerReveals(), see the comment on that
+           function. */
         /* No transition declared here on purpose - this class is shared by
-           .cat-flat-card and .hero-glimpse-pill, each of which already
-           carries its own `transition` shorthand for its own hover
-           properties (box-shadow, border-color, ...). `transition` doesn't
+           .cat-flat-card, .hero-glimpse-pill, .best-seller-card, .new-card
+           and .offer-card, each of which already carries its own
+           `transition` shorthand for its own hover/entrance properties
+           (box-shadow, border-color, opacity, ...). `transition` doesn't
            merge across rules of equal specificity - whichever one comes
            later in the stylesheet wins outright, silently dropping
            whichever properties the other rule listed. That's exactly what
-           was happening here: .cat-flat-card's own transition (declared
-           after this one) was winning, so its entrance just snapped to
-           opacity:1 instead of fading - only the transform half of
-           "fade+rise" was ever actually animating. Each consumer's own
-           transition (below, on .cat-flat-card and .hero-glimpse-pill
-           themselves) now explicitly includes opacity alongside its own
-           properties instead, so there's nothing left to clobber. */
+           was happening here originally: .cat-flat-card's own transition
+           (declared after this one) was winning, so its entrance just
+           snapped to opacity:1 instead of fading - only the transform half
+           of "fade+rise" was ever actually animating. Each consumer's own
+           transition (on the card class itself) now explicitly includes
+           opacity alongside its own properties instead, so there's nothing
+           left to clobber. */
         .cat-tile-reveal {
             opacity: 0;
             transform: translateY(24px) scale(0.94);
@@ -19223,7 +19240,7 @@
             const cardHTML = items.map((p, i) => {
                 const pct = Math.round((1 - p.salePrice / p.price) * 100);
                 return `
-    <a class="offer-card" href="#/product/${p.catSlug}/${p.idx}">
+    <a class="offer-card cat-tile-reveal" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="offer-tag">${pct}% off</span>
         <button type="button" class="offer-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromOffer('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from special offers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -19242,6 +19259,7 @@
     </a>`;
             }).join('');
             strip.innerHTML = cardHTML;
+            observeSectionReveal(offerSection, '.offer-card');
         }
         function renderNewCarousel() {
             // Shuffled for the same reason as renderOfferCarousel() above.
@@ -19260,7 +19278,7 @@
             }
             if (newSection) newSection.style.display = '';
             const cardHTML = items.map(p => `
-    <a class="new-card" href="#/product/${p.catSlug}/${p.idx}">
+    <a class="new-card cat-tile-reveal" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="new-tag">New</span>
         <button type="button" class="new-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromNewArrivals('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from New Arrivals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -19278,6 +19296,7 @@
       </div>
     </a>`).join('');
             strip.innerHTML = cardHTML;
+            observeSectionReveal(newSection, '.new-card');
         }
         /* ================= CAROUSEL AUTO-ADVANCE =================
            Best sellers and Shop by category used to also have a continuous
@@ -19354,7 +19373,7 @@
             }
             if (bestSellersSection) bestSellersSection.style.display = '';
             strip.innerHTML = items.map((p, i) => `
-    <a class="best-seller-card" href="#/product/${p.catSlug}/${p.idx}">
+    <a class="best-seller-card cat-tile-reveal" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="best-seller-rank">${BEST_SELLER_STAR_SVG}#${i + 1}</span>
         ${productPhotoHTML(p, p.name)}
@@ -19370,6 +19389,7 @@
         </div>
       </div>
     </a>`).join('');
+            observeSectionReveal(bestSellersSection, '.best-seller-card');
         }
         function renderNewArrivalsPage() {
             const items = newArrivalsItems();
@@ -28426,6 +28446,40 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 });
             }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
             container.querySelectorAll(selector).forEach(el => io.observe(el));
+        }
+        // For a horizontally-swiped, auto-advancing carousel (Best Sellers,
+        // New Arrivals, Special Offers) - NOT a per-card observer like
+        // observeContainerReveals() above, which is exactly what used to
+        // make these three carousels jank mid-swipe (see the comment on
+        // .cat-tile-reveal). One observer on the whole SECTION fires once
+        // when it first scrolls into view and reveals every card already
+        // in it together; nothing is still watching after that, so neither
+        // swiping nor the periodic auto-advance can retrigger it.
+        // Re-callable on every render: a strip that re-populates after its
+        // section was already revealed (real order/catalogue data loading
+        // in after boot) just gets its fresh cards marked visible
+        // immediately, no animation and no dangling observer left waiting
+        // on cards that no longer exist.
+        function observeSectionReveal(section, cardSelector) {
+            if (!section) return;
+            const cards = section.querySelectorAll(cardSelector);
+            if (section.dataset.revealed === '1') {
+                cards.forEach(el => el.classList.add('is-visible'));
+                return;
+            }
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        section.dataset.revealed = '1';
+                        section.querySelectorAll(cardSelector).forEach((el, i) => {
+                            el.style.transitionDelay = `${(i % 6) * 0.05}s`;
+                            el.classList.add('is-visible');
+                        });
+                        io.unobserve(section);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+            io.observe(section);
         }
 
         /* ================= POSTCODE CHECKER =================
