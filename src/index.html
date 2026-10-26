@@ -9557,12 +9557,45 @@
         .confirm-section .wrap { position: relative; z-index: 2; }
 
         .confirm-head {
+            position: relative;
             text-align: center;
             max-width: 480px;
             margin: 0 auto 40px;
         }
 
+        /* Confetti burst, played once right after a fresh purchase
+           finishes (see justCompletedOrder / triggerOrderCelebration()) -
+           absolutely positioned over the whole head so pieces can fly out
+           past the checkmark without disturbing the h1/p layout below,
+           which stays in normal flow. Pieces are plain positioned divs
+           added/removed by JS, not a canvas or an external library -
+           cheap enough for a one-shot dozen-or-so elements and keeps this
+           dependency-free like the rest of the site's hand-rolled effects. */
+        .confetti-layer {
+            position: absolute;
+            inset: 0;
+            overflow: visible;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .confetti-piece {
+            position: absolute;
+            top: 32px;
+            left: 50%;
+            width: 7px;
+            height: 7px;
+            opacity: 0;
+            animation: confettiBurst 0.9s cubic-bezier(.16,.84,.44,1) forwards;
+            animation-delay: var(--confetti-delay, 0s);
+        }
+        @keyframes confettiBurst {
+            0% { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--confetti-x)), calc(-50% + var(--confetti-y))) rotate(var(--confetti-rot)); }
+        }
+
         .confirm-check {
+            position: relative;
+            z-index: 2;
             width: 64px;
             height: 64px;
             border-radius: 50%;
@@ -9571,6 +9604,19 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
+        }
+        /* Pop-in on a genuinely fresh order only (see triggerOrderCelebration()),
+           same overshoot curve as .offer-tag's own pop-in for a consistent
+           "settles into place" feel across the site. */
+        .confirm-check.pop-in {
+            animation: confirmCheckPop 0.5s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        @keyframes confirmCheckPop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .confirm-check.pop-in { animation: none; }
         }
 
         .confirm-check svg {
@@ -12571,7 +12617,8 @@
             <svg class="confirm-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             <div class="wrap">
                 <div class="confirm-head">
-                    <div class="confirm-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+                    <div class="confirm-check" id="confirmCheck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 6 9 17l-5-5" />
                         </svg></div>
@@ -16671,6 +16718,15 @@
         function variantSummary(variants) { return variants.map(v => `${v.label} ${gbp(v.price)}`).join(', '); }
         let deliveryInfo = null;
         let lastOrder = null;
+        // Set true the instant a payment actually finishes (see
+        // finishOrderAfterPayment), consumed and cleared by the very next
+        // renderConfirmation() call. Needed because lastOrder itself stays
+        // populated for the rest of the SPA session, so navigating away
+        // from #/order-confirmation and back (View your orders, then
+        // back) re-runs renderConfirmation() against the same lastOrder
+        // without a fresh purchase behind it, this flag is what stops the
+        // celebration (confetti + checkmark pop-in) from replaying then.
+        let justCompletedOrder = false;
         let adminOrdersChannel = null; // realtime subscription for "new order placed" notifications, admins only
         let postLoginRedirect = null; // where to send a customer after login when they were bounced here from checkout
 
@@ -22993,6 +23049,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             cart = [];
             appliedDiscount = null;
             updateCartBadge();
+            justCompletedOrder = true;
             window.location.hash = '#/order-confirmation';
             return { ok: true };
         }
@@ -24932,6 +24989,49 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // fails too. Reported directly: a real card-paid order that hit
         // this exact path.
         const INVOICE_BOX_TEMPLATE = document.getElementById('invoiceBox').innerHTML;
+        // Plain positioned <span> elements, not a canvas or a library -
+        // cheap enough for a one-shot dozen-and-a-half pieces, keeps this
+        // dependency-free, and the brand palette (no --cream, invisible
+        // against the cream page background in light mode; no
+        // --aubergine-deep, nearly black and reads as a dead pixel rather
+        // than a confetti piece) keeps it feeling on-brand instead of
+        // generic rainbow confetti.
+        function triggerOrderCelebration() {
+            const checkEl = document.getElementById('confirmCheck');
+            if (checkEl) {
+                checkEl.classList.remove('pop-in');
+                void checkEl.offsetWidth; // restart the animation if this is somehow called twice in a row
+                checkEl.classList.add('pop-in');
+            }
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const layer = document.getElementById('confettiLayer');
+            if (!layer) return;
+            layer.innerHTML = '';
+            const colors = ['var(--chartreuse)', 'var(--chartreuse-soft)', 'var(--chartreuse-rich)', 'var(--orange)', 'var(--aubergine-mid)'];
+            const pieceCount = 22;
+            for (let i = 0; i < pieceCount; i++) {
+                const piece = document.createElement('span');
+                piece.className = 'confetti-piece';
+                // Evenly spread around a full circle, each with a little
+                // randomness, rather than fully random angles - keeps the
+                // burst looking like it actually radiates out from the
+                // checkmark instead of a lopsided random clump.
+                const angle = (Math.PI * 2 * i) / pieceCount + (Math.random() - 0.5) * 0.6;
+                const distance = 70 + Math.random() * 60;
+                piece.style.setProperty('--confetti-x', `${(Math.cos(angle) * distance).toFixed(1)}px`);
+                piece.style.setProperty('--confetti-y', `${(Math.sin(angle) * distance - 20).toFixed(1)}px`);
+                piece.style.setProperty('--confetti-rot', `${(Math.random() * 540 - 270).toFixed(0)}deg`);
+                piece.style.setProperty('--confetti-delay', `${(Math.random() * 0.1).toFixed(2)}s`);
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.borderRadius = Math.random() < 0.5 ? '50%' : '2px';
+                layer.appendChild(piece);
+            }
+            // One-shot: the pieces are position:absolute and fade to
+            // opacity:0 on their own, but without this they'd sit in the
+            // DOM forever after that, needless nodes left behind on every
+            // single order placed.
+            setTimeout(() => { layer.innerHTML = ''; }, 1100);
+        }
         async function renderConfirmation() {
             if (!lastOrder && supabaseClient && currentSupabaseUser) {
                 document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">Loading your order…</p>';
@@ -24974,6 +25074,16 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (!lastOrder) {
                 document.getElementById('invoiceBox').innerHTML = '<p style="text-align:center; padding:40px 0; color:var(--text-muted);">No recent order found. <a href="#/orders">View your orders</a>.</p>';
                 return;
+            }
+            // Consumed once: a genuinely fresh purchase set this flag right
+            // before navigating here (see finishOrderAfterPayment), but
+            // lastOrder itself stays populated all session, so without
+            // clearing the flag here a later revisit of this same view
+            // (View your orders, then back) would replay the celebration
+            // against an order that was placed minutes/hours ago.
+            if (justCompletedOrder) {
+                justCompletedOrder = false;
+                triggerOrderCelebration();
             }
             // Puts the real template's fields (#invNumber, #invItems, every
             // other id this function populates below) back - the loading
