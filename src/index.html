@@ -26599,17 +26599,22 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     // channel survives this resize/re-encode step, as long
                     // as the chosen output format actually supports alpha.
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    // JPEG has no alpha channel at all — re-encoding a photo
-                    // that's already had its background removed (a PNG/WebP
-                    // with real transparency) through JPEG silently flattens
-                    // every transparent pixel to a solid colour (black, in
-                    // most browsers) instead of leaving it see-through. Only
-                    // default to JPEG for formats that could never carry
-                    // transparency in the first place; anything that could
-                    // re-encodes to WebP instead, which keeps the alpha
-                    // channel and still compresses well.
-                    const sourceCanHaveAlpha = file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/gif';
-                    const resolvedOutputType = outputType || (sourceCanHaveAlpha ? 'image/webp' : 'image/jpeg');
+                    // WebP by default regardless of the source format - it
+                    // keeps an alpha channel just as well as PNG does (JPEG
+                    // has none at all, and re-encoding a photo that's
+                    // already had its background removed through JPEG
+                    // would silently flatten every transparent pixel to a
+                    // solid colour instead of leaving it see-through), and
+                    // it compresses better than JPEG at the same visual
+                    // quality for ordinary opaque photos too, so there's no
+                    // real case left for defaulting to JPEG output here.
+                    // Every admin upload path funnels through this one
+                    // function (product photos, category/group photos,
+                    // page headers, journal covers, advert banners), so
+                    // this one default is what actually closes the loop on
+                    // WebP adoption for anything an admin uploads from now
+                    // on, not just the static asset library.
+                    const resolvedOutputType = outputType || 'image/webp';
                     canvas.toBlob((blob) => resolve(blob || file), resolvedOutputType, quality);
                 };
                 // If it fails to decode as an image for any reason, fall
