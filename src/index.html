@@ -4988,8 +4988,14 @@
             /* opacity included here, not just transform/box-shadow/border-
                color - see .cat-tile-reveal's own comment for why it has to
                live on this rule directly rather than that shared class. */
-            transition: opacity 0.25s cubic-bezier(.16,.84,.44,1), transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease;
+            transition: opacity 0.25s cubic-bezier(.16,.84,.44,1), transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease, filter 0.25s cubic-bezier(.16,.84,.44,1);
         }
+        /* Department pills get a blur-to-focus layer on top of the shared
+           fade+rise+scale entrance, scoped here (not on .cat-tile-reveal
+           itself) so the Shop by category grid, which reuses that same
+           class, isn't affected. */
+        .hero-glimpse-pill.cat-tile-reveal { filter: blur(6px); }
+        .hero-glimpse-pill.cat-tile-reveal.is-visible { filter: blur(0); }
         .hero-glimpse-pill span.emoji {
             display: flex; align-items: center; justify-content: center;
             width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px;
@@ -6091,6 +6097,7 @@
             .cat-tile-reveal {
                 opacity: 1;
                 transform: none;
+                filter: none;
                 transition: none;
             }
         }
