@@ -17256,6 +17256,16 @@
             }
             lastKnownCartCount = n;
         }
+        // navigator.vibrate() is Android-only in practice - Safari has
+        // never implemented the Vibration API on iOS, in-browser or as an
+        // installed PWA, so this is a silent no-op there rather than
+        // anything that throws. Still worth calling: free where it works,
+        // harmless where it doesn't, and wrapped here so a touch moment
+        // only needs one call, not navigator.vibrate existence-checked at
+        // every call site.
+        function hapticTap(ms = 16) {
+            try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* some embedders (e.g. an in-app browser) throw instead of just returning false */ }
+        }
         function addToCart(product, qty) {
             const existing = cart.find(i => i.id === product.id);
             const price = effectivePrice(product);
@@ -17268,6 +17278,7 @@
                 if (product.isSubscription) { entry.isSubscription = true; entry.subscriptionFrequency = product.subscriptionFrequency; }
                 cart.push(entry);
             }
+            hapticTap();
             updateCartBadge();
         }
 
