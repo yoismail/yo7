@@ -126,17 +126,15 @@
          that doesn't need to be in the critical path. preload+onload fetches
          it with the same high priority but doesn't hold up rendering: text
          paints immediately in the fallback font from the CSS var() stack
-         (--display/--body/--headline) and swaps to the real fonts the
-         moment they arrive, which is what display=swap already does even
-         when render-blocking, so this changes nothing about the visual
-         result, only removes the wait beforehand. <noscript> covers the
-         no-JS case. Montserrat Alternates is the --headline font (h1-h6
-         headings); Poppins is --display/--body (everything else: buttons,
-         labels, prices, nav). Lato and plain Montserrat are loaded
-         alongside for possible future use, nothing references them yet,
-         so there's no visual change from keeping them loaded, only extra
-         font weight on every page load until something actually uses
-         one. -->
+         (--display/--body) and swaps to Poppins the moment it arrives,
+         which is what display=swap already does even when render-blocking,
+         so this changes nothing about the visual result, only removes the
+         wait beforehand. <noscript> covers the no-JS case. Lato, plain
+         Montserrat, and Montserrat Alternates (the site's previous
+         typeface) are loaded alongside Poppins for possible future use -
+         nothing in --display/--body references them, so there's no visual
+         change from keeping them loaded, only extra font weight on every
+         page load until something actually uses one. -->
     <link rel="preload" as="style"
         href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat+Alternates:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
         onload="this.onload=null;this.rel='stylesheet'">
@@ -178,7 +176,6 @@
             --warn-text: #7a4a26;
             --display: 'Poppins', sans-serif;
             --body: 'Poppins', sans-serif;
-            --headline: 'Montserrat Alternates', sans-serif;
             /* The hero's logo watermark is a translucent colour overlay at a
                fixed opacity, tuned against a near-black canvas in dark mode
                where it reads as a clear glow. Against white in light mode
@@ -560,7 +557,7 @@
         .launch-banner-badge svg { width: 19px; height: 19px; }
         .launch-banner-text { flex: 1; min-width: 0; }
         .launch-banner-text h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 15.5px;
             letter-spacing: -0.005em;
@@ -956,7 +953,7 @@
             background: var(--card-bg); border: 1.5px dashed var(--chartreuse); border-radius: 18px;
             padding: 22px 24px; margin-bottom: 26px;
         }
-        .add-product-form h3 { font-family: var(--headline); font-weight: 700; font-size: 16px; color: var(--heading); margin-bottom: 16px; }
+        .add-product-form h3 { font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--heading); margin-bottom: 16px; }
         .add-product-form .apf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         .add-product-form label {
             display: block; font-family: var(--display); font-weight: 600; font-size: 10.5px;
@@ -2710,7 +2707,7 @@
         }
 
         .hero h1 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: clamp(34px, 6vw, 64px);
             letter-spacing: -0.02em;
@@ -3015,7 +3012,7 @@
         }
 
         .story h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: clamp(28px, 4.4vw, 44px);
             letter-spacing: -0.01em;
@@ -3066,7 +3063,7 @@
         }
         .legal-content { max-width: 68ch; margin: 0 auto; }
         .legal-content h2 {
-            font-family: var(--headline); font-weight: 700; font-size: 20px; color: var(--heading);
+            font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--heading);
             margin: 32px 0 12px;
         }
         .legal-content h2:first-child { margin-top: 0; }
@@ -3098,7 +3095,7 @@
         }
         .about-seal { width: clamp(120px, 9vw, 160px); height: clamp(120px, 9vw, 160px); flex-shrink: 0; animation: logoMarkBreathe 6s ease-in-out infinite; animation-delay: -2s; }
         .about-story-grid h2 {
-            font-family: var(--headline); font-weight: 700; font-size: clamp(26px, 3.6vw, 36px);
+            font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.6vw, 36px);
             letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 20px; color: var(--heading);
         }
         .about-story-grid p { font-size: 16px; color: var(--text-body); max-width: 60ch; margin-left: auto; margin-right: auto; }
@@ -3110,7 +3107,7 @@
             margin: 0 auto 56px;
         }
         .about-mission h2 {
-            font-family: var(--headline); font-weight: 700; font-size: clamp(24px, 3.2vw, 32px);
+            font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.2vw, 32px);
             letter-spacing: -0.01em; line-height: 1.3; color: var(--heading); margin-top: 10px;
         }
 
@@ -3162,7 +3159,7 @@
         .about-value-card:nth-child(5n+4) svg, .about-value-card:nth-child(5n+4) .pound-icon { --value-accent: #C1552C; --value-accent-tint: rgba(193, 85, 44, 0.12); }
         .about-value-card:nth-child(5n+5) svg, .about-value-card:nth-child(5n+5) .pound-icon { --value-accent: #9D6B11; --value-accent-tint: rgba(157, 107, 17, 0.14); }
         .about-value-card h3 {
-            font-family: var(--headline); font-weight: 700; font-size: 15.5px; color: var(--heading); margin-bottom: 8px;
+            font-family: var(--display); font-weight: 700; font-size: 15.5px; color: var(--heading); margin-bottom: 8px;
         }
         .about-value-card p { font-size: 13.5px; color: var(--text-body); line-height: 1.55; }
 
@@ -3220,7 +3217,7 @@
             text-align: center;
         }
         .about-prose h2 {
-            font-family: var(--headline); font-weight: 700; font-size: clamp(24px, 3.2vw, 32px);
+            font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.2vw, 32px);
             letter-spacing: -0.01em; line-height: 1.25; color: var(--heading); margin-bottom: 20px;
         }
         .about-prose p {
@@ -3324,7 +3321,7 @@
         }
         .about-thanks > * { position: relative; z-index: 1; }
         .about-thanks h2 {
-            font-family: var(--headline); font-weight: 700; font-size: clamp(26px, 3.4vw, 34px);
+            font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.4vw, 34px);
             letter-spacing: -0.01em; color: var(--cream); margin: 10px 0 18px;
         }
         .about-thanks p { font-size: 15.5px; color: rgba(250, 249, 242, 0.82); line-height: 1.7; }
@@ -3670,7 +3667,7 @@
         .bundle-remove-btn svg { width: 13px; height: 13px; }
         body.edit-mode-on .bundle-remove-btn { display: flex; }
         .bundle-card h3 {
-            font-family: var(--headline); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px;
+            font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 4px;
         }
         /* Unscoped (not ".bundle-card .bundle-tagline") because this same
            div is reused by comboCardHTML on .combo-card — scoping it to
@@ -3819,7 +3816,7 @@
         }
         .build-bundle-promo-icon svg { width: 23px; height: 23px; }
         .build-bundle-promo-inner h2 {
-            font-family: var(--headline); font-weight: 700; font-size: clamp(22px, 3vw, 28px);
+            font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px);
             color: #2C1C10; letter-spacing: -0.01em; margin: 4px 0 8px;
         }
         .build-bundle-promo-inner p { color: #6b5c4f; font-size: 14px; max-width: 46ch; }
@@ -3855,7 +3852,7 @@
         .whatsapp-list-icon svg { width: 26px; height: 26px; }
         .whatsapp-list-text { flex: 1 1 280px; min-width: 240px; }
         .whatsapp-list-text h2 {
-            font-family: var(--headline); font-weight: 700; font-size: clamp(20px, 2.6vw, 25px);
+            font-family: var(--display); font-weight: 700; font-size: clamp(20px, 2.6vw, 25px);
             color: var(--heading); letter-spacing: -0.01em; margin: 4px 0 8px;
         }
         .whatsapp-list-text p { color: var(--text-muted); font-size: 14px; max-width: 46ch; }
@@ -3960,7 +3957,7 @@
             --border-rgb: 6, 59, 0;
         }
         .combo-card > * { position: relative; z-index: 1; }
-        .combo-card h3 { font-family: var(--headline); font-weight: 700; font-size: 18.5px; color: var(--heading); letter-spacing: -0.01em; line-height: 1.25; }
+        .combo-card h3 { font-family: var(--display); font-weight: 700; font-size: 18.5px; color: var(--heading); letter-spacing: -0.01em; line-height: 1.25; }
         .combo-card .btn { width: 100%; text-align: center; }
         .combo-ticket-head { padding: 18px 20px 10px; }
         .combo-has-stamp h3 { padding-right: 36px; } /* clears the stamp badge overlapping this corner, only present when there's a discount to stamp */
@@ -4177,7 +4174,7 @@
             background: var(--chartreuse); color: var(--aubergine-deep); font-size: 20px;
         }
         .dish-builder-header .emoji svg { width: 21px; height: 21px; }
-        .dish-builder-header h3 { font-family: var(--headline); font-weight: 700; font-size: 17px; color: var(--heading); }
+        .dish-builder-header h3 { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); }
         .dish-builder-header span { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
         .dish-builder-list { display: flex; flex-direction: column; padding: 8px 28px; margin-bottom: 0; }
         .dish-builder-row {
@@ -4278,7 +4275,7 @@
         }
 
         .shop-section .section-head h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: clamp(28px, 4vw, 38px);
             letter-spacing: -0.01em;
@@ -4374,7 +4371,7 @@
         }
         .group-card-body h3 {
             color: var(--heading);
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 16px;
             letter-spacing: -0.01em;
@@ -4719,7 +4716,7 @@
             background: var(--card-bg);
         }
         .best-seller-card h4 {
-            font-family: var(--headline); font-weight: 700; font-size: 13.5px; color: var(--heading);
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             margin-bottom: 3px; line-height: 1.25; min-height: 2.5em;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
@@ -4827,7 +4824,7 @@
             background: var(--card-bg);
         }
         .new-card h4 {
-            font-family: var(--headline); font-weight: 700; font-size: 13.5px; color: var(--heading);
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             margin-bottom: 3px; line-height: 1.25; min-height: 2.5em;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
@@ -4968,9 +4965,17 @@
         .hero-glimpse-strip.has-photo .hero-glimpse-scrim {
             background: linear-gradient(180deg, rgba(4,37,0,0.82), rgba(4,37,0,0.78) 55%, rgba(4,37,0,0.88));
         }
-        .hero-glimpse-strip > .wrap,
-        .hero-glimpse-strip > .card-edit-btn,
-        .hero-glimpse-strip > .page-header-remove-btn {
+        /* .wrap only, not .card-edit-btn/.page-header-remove-btn - both of
+           those already carry their own position: absolute (see
+           .card-edit-btn/.page-header-remove-btn's own rules), and a
+           two-class selector here (.hero-glimpse-strip > .card-edit-btn)
+           outranks their one-class position: absolute rule, silently
+           flipping them to position: relative and knocking them dozens of
+           pixels off-screen to the left (top/right then offset from their
+           own in-flow static position instead of the header's corner).
+           Reported directly: the remove button on these headers was
+           invisible/unclickable in edit mode because of exactly this. */
+        .hero-glimpse-strip > .wrap {
             position: relative;
             z-index: 2;
         }
@@ -5158,7 +5163,7 @@
             background: var(--card-bg);
         }
         .offer-card h4 {
-            font-family: var(--headline); font-weight: 700; font-size: 13.5px; color: var(--heading);
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             margin-bottom: 3px; line-height: 1.25; min-height: 2.5em;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
@@ -5192,7 +5197,7 @@
         }
 
         .delivery h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: clamp(26px, 3.6vw, 36px);
             color: var(--heading);
@@ -5466,7 +5471,7 @@
         [data-theme="dark"] .step:nth-child(3) .step-num { --step-accent: #E8C34A; --step-accent-tint: rgba(154, 127, 0, 0.2); }
 
         .step h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 20px;
             color: var(--heading);
@@ -5708,7 +5713,7 @@
         }
         .footer-newsletter-icon svg { width: 19px; height: 19px; }
         .footer-newsletter h4 {
-            font-family: var(--headline); font-weight: 700; font-size: 16px; color: #2C1C10; margin-bottom: 4px;
+            font-family: var(--display); font-weight: 700; font-size: 16px; color: #2C1C10; margin-bottom: 4px;
         }
         [data-theme="dark"] .footer-newsletter h4 { color: var(--heading); }
         .footer-newsletter p { font-size: 13px; color: #6b5c4f; }
@@ -5992,7 +5997,7 @@
         }
 
         .footer-col h4 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-size: 13px;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -6607,9 +6612,10 @@
         .bundles-section.page-header-editable .page-header-scrim {
             display: block;
         }
-        .page-header-editable > .wrap,
-        .page-header-editable > .card-edit-btn,
-        .page-header-editable > .page-header-remove-btn {
+        /* .wrap only - see the matching comment on .hero-glimpse-strip's
+           own version of this rule for why .card-edit-btn/
+           .page-header-remove-btn must never be added here. */
+        .page-header-editable > .wrap {
             position: relative;
             z-index: 2;
         }
@@ -6653,7 +6659,7 @@
         }
 
         .shop-header h1 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: clamp(28px, 5vw, 44px);
             letter-spacing: -0.01em;
@@ -6825,7 +6831,7 @@
             color: #FAF9F2;
         }
         .cat-flat-card h3 {
-            font-family: var(--headline); font-weight: 700; font-size: 16px; line-height: 1.25;
+            font-family: var(--display); font-weight: 700; font-size: 16px; line-height: 1.25;
             letter-spacing: -0.01em; margin-bottom: 6px;
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
@@ -6943,7 +6949,7 @@
         /* ================= SHOP EVERYTHING (flat catalogue) ================= */
         .shop-all-hero { padding: 56px 0 44px; }
         .shop-all-hero h1 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: clamp(30px, 5vw, 46px);
             letter-spacing: -0.01em;
@@ -7166,7 +7172,7 @@
             color: var(--chartreuse-soft);
         }
         .journal-hero h1 {
-            font-family: var(--headline); font-weight: 700;
+            font-family: var(--display); font-weight: 700;
             font-size: clamp(30px, 5vw, 46px);
             letter-spacing: -0.01em;
             margin-top: 6px;
@@ -7214,7 +7220,7 @@
         }
         .journal-card-body { padding: 16px 18px 20px; }
         .journal-card-body h4 {
-            font-family: var(--headline); font-weight: 700; font-size: 15.5px;
+            font-family: var(--display); font-weight: 700; font-size: 15.5px;
             color: var(--heading); line-height: 1.3; margin-bottom: 6px;
         }
         .journal-card-excerpt {
@@ -7243,7 +7249,7 @@
             background: rgba(144, 184, 0, 0.14); color: var(--chartreuse-rich);
         }
         .journal-post-header h1 {
-            font-family: var(--headline); font-weight: 700;
+            font-family: var(--display); font-weight: 700;
             font-size: clamp(26px, 4.4vw, 40px);
             letter-spacing: -0.01em; margin-top: 12px;
             color: var(--heading);
@@ -7268,7 +7274,7 @@
         }
         .journal-post-body p { margin-bottom: 20px; }
         .journal-post-body h2 {
-            font-family: var(--headline); font-weight: 700; font-size: 21px;
+            font-family: var(--display); font-weight: 700; font-size: 21px;
             color: var(--heading); margin: 32px 0 14px;
         }
         .journal-post-body ol, .journal-post-body ul { margin: 0 0 20px 22px; }
@@ -7524,7 +7530,7 @@
         }
 
         .product-body h4 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 14px;
             color: var(--heading);
@@ -7682,7 +7688,7 @@
         }
 
         .empty-state h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             color: var(--heading);
             font-size: 20px;
             margin-bottom: 8px;
@@ -7946,7 +7952,7 @@
         }
 
         .pd-grid h1 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: clamp(26px, 4vw, 36px);
             color: var(--heading);
@@ -8171,7 +8177,7 @@
         }
 
         .related-strip h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 19px;
             color: var(--heading);
@@ -8300,7 +8306,7 @@
             border-radius: 16px;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.05);
         }
-        .pd-review-form h3 { font-family: var(--headline); font-size: 15px; margin: 0 0 12px; }
+        .pd-review-form h3 { font-family: var(--display); font-size: 15px; margin: 0 0 12px; }
         .star-input { display: inline-flex; gap: 3px; }
         .star-input button {
             background: none; border: none; padding: 2px; cursor: pointer;
@@ -8532,7 +8538,7 @@
         }
 
         .panel h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 20px;
             color: var(--heading);
@@ -8549,7 +8555,7 @@
             border-top: 1px dashed rgba(var(--border-rgb), 0.14);
         }
         .checkout-upsell h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 13.5px;
             color: var(--heading);
@@ -8687,7 +8693,7 @@
         }
 
         .cart-info h4 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 14.5px;
             color: var(--heading);
@@ -9117,7 +9123,7 @@
         }
         .referral-card-icon svg { width: 16px; height: 16px; }
         .referral-card h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-size: 15px;
             color: var(--heading);
             margin: 0;
@@ -9165,7 +9171,7 @@
             margin: 0 auto 32px;
         }
         .referral-info-section h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-size: 18px;
             color: var(--heading);
             margin: 0 0 14px;
@@ -9191,7 +9197,7 @@
         }
         [data-theme="dark"] .referral-step-num { background: rgba(166, 204, 46, 0.18); color: var(--chartreuse-soft); }
         .referral-step h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 14.5px;
             color: var(--heading);
@@ -9549,7 +9555,7 @@
         }
 
         .empty-cart h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             color: var(--heading);
             font-size: 19px;
             margin-bottom: 8px;
@@ -9647,7 +9653,7 @@
         }
 
         .confirm-head h1 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 28px;
             color: var(--heading);
@@ -9970,7 +9976,7 @@
         }
 
         .contact-panel h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 20px;
             color: var(--heading);
@@ -10179,7 +10185,7 @@
             align-items: center;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.05), 0 14px 30px rgba(var(--border-rgb), 0.07);
         }
-        .pc-left h2 { font-family: var(--headline); font-weight: 700; font-size: 22px; color: var(--heading); margin-bottom: 6px; }
+        .pc-left h2 { font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--heading); margin-bottom: 6px; }
         .pc-left p { font-size: 14px; color: var(--text-muted); margin-bottom: 18px; }
         .pc-input-row { display: flex; gap: 10px; }
         .pc-input-row input {
@@ -10237,7 +10243,7 @@
         }
         body.edit-mode-on .delivery-admin-panel { display: block; }
         .delivery-admin-panel h3 {
-            font-family: var(--headline); font-weight: 700; font-size: 17px; color: var(--heading);
+            font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading);
             display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
         }
         .admin-only-tag {
@@ -10248,7 +10254,7 @@
         .delivery-admin-block { margin-bottom: 22px; }
         .delivery-admin-block:last-child { margin-bottom: 0; }
         .delivery-admin-block h4 {
-            font-family: var(--headline); font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 10px;
+            font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 10px;
         }
         .delivery-rule-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
         .delivery-rule-row {
@@ -10342,7 +10348,7 @@
         .dinfo-card:nth-child(5n+5) svg, .dinfo-card:nth-child(5n+5) .pound-icon { --value-accent: #9D6B11; --value-accent-tint: rgba(157, 107, 17, 0.14); }
 
         .dinfo-card h4 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 14.5px;
             color: var(--heading);
@@ -10364,7 +10370,7 @@
         }
 
         .dinfo-list h2 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 20px;
             color: var(--heading);
@@ -10435,7 +10441,7 @@
             display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 700;
             font-size: 15px; margin-bottom: 14px;
         }
-        .guide-step h3 { font-family: var(--headline); font-weight: 700; font-size: 16.5px; color: var(--heading); margin-bottom: 6px; }
+        .guide-step h3 { font-family: var(--display); font-weight: 700; font-size: 16.5px; color: var(--heading); margin-bottom: 6px; }
         .guide-step p { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
 
         .faq-title { font-family: var(--display); font-weight: 700; font-size: 24px; color: var(--heading); margin-bottom: 22px; }
@@ -10506,7 +10512,7 @@
         }
 
         .auth-box h1 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-weight: 700;
             font-size: 24px;
             color: var(--heading);
@@ -10822,7 +10828,7 @@
             margin-bottom: 28px;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 26px rgba(var(--border-rgb), 0.06);
         }
-        .admin-panel-section h2 { font-family: var(--headline); font-size: 19px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+        .admin-panel-section h2 { font-family: var(--display); font-size: 19px; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
         .admin-panel-section .sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
         .admin-panel-icon {
             width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
@@ -10978,7 +10984,7 @@
         .analytics-stat-value { font-family: var(--display); font-weight: 700; font-size: 21px; color: var(--heading); }
         .analytics-stat-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
         .analytics-subsection { margin-bottom: 20px; }
-        .analytics-subsection h4 { font-family: var(--headline); font-size: 14px; margin: 0 0 10px; }
+        .analytics-subsection h4 { font-family: var(--display); font-size: 14px; margin: 0 0 10px; }
         .analytics-bar-row {
             display: flex;
             align-items: center;
@@ -11030,7 +11036,7 @@
             width: 100%;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
         }
-        .modal-box h3 { font-family: var(--headline); font-size: 19px; margin: 0 0 6px; }
+        .modal-box h3 { font-family: var(--display); font-size: 19px; margin: 0 0 6px; }
         .modal-box .sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
         .modal-box label { display: block; font-family: var(--display); font-weight: 600; font-size: 11.5px; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 6px; }
         .modal-box textarea {
@@ -11171,7 +11177,7 @@
             margin-bottom: 20px;
         }
         .admin-order-detail-card h3 {
-            font-family: var(--headline);
+            font-family: var(--display);
             font-size: 14.5px;
             font-weight: 700;
             color: var(--heading);
@@ -12173,6 +12179,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="journalHeroUpload" onchange="handleJournalHeroUpload(this)" style="display:none;">
             </label>
+            <button type="button" class="page-header-remove-btn" aria-label="Remove Blog hero image" title="Remove image" onclick="removeJournalHeroImage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <div class="wrap">
                 <div class="section-eyebrow">The YO7 Foods Blog</div>
                 <h1>Recipes &amp; Stories</h1>
@@ -20469,9 +20476,18 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             });
         }
         function renderJournalPage() {
-            if (journalHeroImage) {
-                const hero = document.querySelector('.journal-hero');
-                if (hero) hero.style.backgroundImage = `linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('${journalHeroImage}')`;
+            const hero = document.querySelector('.journal-hero');
+            if (hero) {
+                if (journalHeroImage) {
+                    hero.style.backgroundImage = `linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('${journalHeroImage}')`;
+                } else {
+                    // Clears a previous call's inline override so a removed
+                    // image actually falls back to .journal-hero's own CSS
+                    // default background-image, not just stays stuck on
+                    // whatever was last set here.
+                    hero.style.removeProperty('background-image');
+                }
+                hero.classList.toggle('has-header-override', !!journalHeroImage);
             }
             renderJournalCatPills();
             const posts = journalPosts().filter(p => journalActiveCat === 'all' || p.category === journalActiveCat);
@@ -20780,6 +20796,24 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             showToast('Hero image updated.', undefined, 'success');
         }
         window.handleJournalHeroUpload = handleJournalHeroUpload;
+        // Clears an admin-set hero override, same reasoning as
+        // removePageHeaderImage (the other 6 headers' own version of this)
+        // - easily re-added by uploading again, nothing unique or
+        // cascading lost. Falls back to .journal-hero's own shipped
+        // default photo via renderJournalPage()'s own handling, not to no
+        // photo at all.
+        async function removeJournalHeroImage() {
+            if (!journalHeroImage) return;
+            if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
+            const { error: saveError } = await supabaseClient.from('pricing_settings').update({ journal_hero_image: null, updated_at: new Date().toISOString() }).eq('id', true);
+            if (saveError) { showToast('Could not remove that image: ' + saveError.message, 6000, 'error'); return; }
+            journalHeroImage = null;
+            cacheJournalHeroImage(null);
+            renderJournalPage();
+            logAdminAction('journal_hero_image_removed', 'pricing_settings', 'Blog hero image', null);
+            showToast('Header image removed.', undefined, 'success');
+        }
+        window.removeJournalHeroImage = removeJournalHeroImage;
         async function removeJournalPost(id) {
             if (!supabaseClient) return;
             const post = blogPosts.find(p => String(p.id) === String(id));
