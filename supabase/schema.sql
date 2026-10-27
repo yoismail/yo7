@@ -814,13 +814,13 @@ begin
         'Content-Type', 'application/json'
       ),
       body := jsonb_build_object(
-        'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+        'from', 'YO7 Foods <orders@yo7foods.co.uk>',
         'reply_to', new.email,
         'to', v_admin.email,
         'subject', 'New application for ' || coalesce(v_vacancy_title, 'a role') || ' from ' || new.name,
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">New job application</h2>' ||
           '<p>' || v_name_html || ' just applied for <strong>' || coalesce(v_vacancy_title, 'a role') || '</strong>.</p>' ||
           '<p style="color:#333;font-size:14px;"><a href="mailto:' || v_email_html || '">' || v_email_html || '</a>' ||
@@ -829,7 +829,7 @@ begin
           (case when v_message_html is not null then '<p style="color:#333;font-size:14px;">' || v_message_html || '</p>' else '' end) ||
           (case when new.cv_path is not null then '<p style="color:#666;font-size:13px;">A CV is attached to this application.</p>' else '' end) ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/careers" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Review on the Careers page</a></p>' ||
-          '<p style="color:#999;font-size:12px;">Yo7 Foods admin notifications</p>' ||
+          '<p style="color:#999;font-size:12px;">YO7 Foods admin notifications</p>' ||
           '</div>',
         'text',
           'New job application' || E'\n\n' ||
@@ -892,26 +892,26 @@ begin
         'Content-Type', 'application/json'
       ),
       body := jsonb_build_object(
-        'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+        'from', 'YO7 Foods <orders@yo7foods.co.uk>',
         'reply_to', 'hello@yo7foods.co.uk',
         'to', v_email,
         'subject', v_copy.subject || ' — ' || coalesce(new.order_number, new.id::text),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
           '<p>' || v_copy.body || '</p>' ||
           '<p style="color:#666;font-size:13px;">Order ' || coalesce(new.order_number, new.id::text) || ' &middot; Total ' || public.format_charged_amount(new.charged_currency, coalesce(new.charged_amount, new.total)) || '</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View your orders</a></p>' ||
           '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
-          '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
+          '<p style="color:#999;font-size:12px;">YO7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
           '</div>',
         'text',
           v_copy.headline || E'\n\n' || v_copy.body || E'\n\n' ||
           'Order ' || coalesce(new.order_number, new.id::text) || ' · Total ' || public.format_charged_amount(new.charged_currency, coalesce(new.charged_amount, new.total)) || E'\n' ||
           'View your orders: https://yo7foods.co.uk/#/orders' || E'\n\n' ||
           'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
-          'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
+          'YO7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
       )
     );
   end if;
@@ -928,7 +928,7 @@ begin
         'Content-Type', 'application/json'
       ),
       body := jsonb_build_object(
-        'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+        'from', 'YO7 Foods <orders@yo7foods.co.uk>',
         'to', v_admin.email,
         -- Deliberately always £ and new.total (the business's own GBP
         -- books), never charged_currency/charged_amount - same
@@ -937,7 +937,7 @@ begin
         'subject', 'New order ' || coalesce(new.order_number, new.id::text) || ' — ' || to_char(new.total, 'FM£999,999,990.00'),
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">New order received</h2>' ||
           '<p>' || coalesce(v_customer_name, 'A customer') || ' just placed order ' || coalesce(new.order_number, new.id::text) || '.</p>' ||
           '<p style="color:#333;font-size:14px;">' ||
@@ -946,7 +946,7 @@ begin
             'Total ' || to_char(new.total, 'FM£999,999,990.00') ||
           '</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/admin/order/' || new.id::text || '" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View order</a></p>' ||
-          '<p style="color:#999;font-size:12px;">Yo7 Foods admin notifications</p>' ||
+          '<p style="color:#999;font-size:12px;">YO7 Foods admin notifications</p>' ||
           '</div>',
         'text',
           'New order received' || E'\n\n' ||
@@ -1208,22 +1208,22 @@ begin
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
-      'from', 'Yo7 Foods <hello@yo7foods.co.uk>',
+      'from', 'YO7 Foods <hello@yo7foods.co.uk>',
       'to', v_email,
-      'subject', 'You''re on the list for Yo7 Foods',
+      'subject', 'You''re on the list for YO7 Foods',
       'html',
         '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
         '<h2 style="color:#063B00;">You''re on the list</h2>' ||
-        '<p>Thanks for your interest in Yo7 Foods. We''re officially launching in Suffolk &amp; Essex in January 2027, bringing the premium African and Caribbean staples you love directly to East Anglia.</p>' ||
+        '<p>Thanks for your interest in YO7 Foods. We''re officially launching in Suffolk &amp; Essex in January 2027, bringing the premium African and Caribbean staples you love directly to East Anglia.</p>' ||
         '<p>We''ll email you the moment we launch, along with your 10% off code for your first order.</p>' ||
-        '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
+        '<p style="color:#999;font-size:12px;">YO7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
         '</div>',
       'text',
         'You''re on the list' || E'\n\n' ||
-        'Thanks for your interest in Yo7 Foods. We''re officially launching in Suffolk & Essex in January 2027, bringing the premium African and Caribbean staples you love directly to East Anglia.' || E'\n\n' ||
+        'Thanks for your interest in YO7 Foods. We''re officially launching in Suffolk & Essex in January 2027, bringing the premium African and Caribbean staples you love directly to East Anglia.' || E'\n\n' ||
         'We''ll email you the moment we launch, along with your 10% off code for your first order.' || E'\n\n' ||
-        'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
+        'YO7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
     )
   );
   return true;
@@ -1287,19 +1287,19 @@ begin
         'Content-Type', 'application/json'
       ),
       body := jsonb_build_object(
-        'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+        'from', 'YO7 Foods <orders@yo7foods.co.uk>',
         'reply_to', 'hello@yo7foods.co.uk',
         'to', v_row.customer_email,
         'subject', 'You left something in your basket',
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">Still there?</h2>' ||
           '<p>You started an order with us but didn''t quite finish checking out. No rush, your basket''s still saved and waiting whenever you''re ready to come back.</p>' ||
           '<p style="color:#666;font-size:13px;">' || v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' &middot; Total ' || public.format_charged_amount(v_row.charged_currency, coalesce(v_row.charged_amount, v_row.total)) || '</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/checkout" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Complete your order</a></p>' ||
           '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
-          '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
+          '<p style="color:#999;font-size:12px;">YO7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
           '</div>',
         'text',
           'Still there?' || E'\n\n' ||
@@ -1307,7 +1307,7 @@ begin
           v_item_count || ' item' || (case when v_item_count = 1 then '' else 's' end) || ': ' || coalesce(v_preview, '') || (case when v_item_count > 3 then ', and more' else '' end) || ' · Total ' || public.format_charged_amount(v_row.charged_currency, coalesce(v_row.charged_amount, v_row.total)) || E'\n' ||
           'Complete your order: https://yo7foods.co.uk/#/checkout' || E'\n\n' ||
           'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
-          'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
+          'YO7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
       )
     );
 
@@ -1361,18 +1361,18 @@ begin
         'Content-Type', 'application/json'
       ),
       body := jsonb_build_object(
-        'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+        'from', 'YO7 Foods <orders@yo7foods.co.uk>',
         'reply_to', 'hello@yo7foods.co.uk',
         'to', v_row.customer_email,
         'subject', 'Time to reorder your ' || v_row.product_name || '?',
         'html',
           '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+          '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
           '<h2 style="color:#063B00;">Running low on ' || v_row.product_name || '?</h2>' ||
-          '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then '' else 's' end) || ', and that time has come round again. Head back to Yo7 Foods whenever you''re ready — this is just a reminder, nothing''s been charged.</p>' ||
+          '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then '' else 's' end) || ', and that time has come round again. Head back to YO7 Foods whenever you''re ready, this is just a reminder, nothing''s been charged.</p>' ||
           '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Reorder now</a></p>' ||
           '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
-          '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
+          '<p style="color:#999;font-size:12px;">YO7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
           '<a href="https://yo7foods.co.uk/#/unsubscribe-reminder/' || v_row.unsubscribe_token || '" style="color:#999;">Stop these reminders for this item</a></p>' ||
           '</div>',
         'text',
@@ -1381,7 +1381,7 @@ begin
           'Reorder now: https://yo7foods.co.uk/#/orders' || E'\n\n' ||
           'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
           'Stop these reminders: https://yo7foods.co.uk/#/unsubscribe-reminder/' || v_row.unsubscribe_token || E'\n\n' ||
-          'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
+          'YO7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
       )
     );
     
@@ -1459,20 +1459,20 @@ begin
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
-      'from', 'Yo7 Foods <orders@yo7foods.co.uk>',
+      'from', 'YO7 Foods <orders@yo7foods.co.uk>',
       'reply_to', 'hello@yo7foods.co.uk',
       'to', v_email,
       'subject', v_copy.subject || ' — ' || coalesce(v_order.order_number, v_order.id::text),
       'html',
         '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
         '<h2 style="color:#063B00;">' || v_copy.headline || '</h2>' ||
         '<p>' || v_copy.body || '</p>' ||
         v_note_html ||
         '<p style="color:#666;font-size:13px;">Order ' || coalesce(v_order.order_number, v_order.id::text) || ' &middot; Total ' || public.format_charged_amount(v_order.charged_currency, coalesce(v_order.charged_amount, v_order.total)) || '</p>' ||
         '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">View your orders</a></p>' ||
         '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
-        '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
+        '<p style="color:#999;font-size:12px;">YO7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY</p>' ||
         '</div>',
       'text',
         v_copy.headline || E'\n\n' || v_copy.body || E'\n\n' ||
@@ -1480,7 +1480,7 @@ begin
         'Order ' || coalesce(v_order.order_number, v_order.id::text) || ' · Total ' || public.format_charged_amount(v_order.charged_currency, coalesce(v_order.charged_amount, v_order.total)) || E'\n' ||
         'View your orders: https://yo7foods.co.uk/#/orders' || E'\n\n' ||
         'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
-        'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
+        'YO7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'
     )
   );
 end;
@@ -1543,23 +1543,23 @@ begin
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
-      'from', 'Yo7 Foods <hello@yo7foods.co.uk>',
+      'from', 'YO7 Foods <hello@yo7foods.co.uk>',
       'to', lower(trim(p_email)),
       'subject', 'Welcome to the Yo7 Family',
       'html',
         '<div style="font-family:''Montserrat Alternates'',Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">' ||
-        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="Yo7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
+        '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:12px;"></div>' ||
         '<h2 style="color:#063B00;">You''re on the list</h2>' ||
         '<p>Thanks for joining the Yo7 Family. Expect new arrivals, offers, and the occasional recipe, no spam.</p>' ||
         '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/shop" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Start shopping</a></p>' ||
-        '<p style="color:#999;font-size:12px;">Yo7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
+        '<p style="color:#999;font-size:12px;">YO7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
         '<a href="https://yo7foods.co.uk/#/unsubscribe-newsletter/' || v_token || '" style="color:#999;">Unsubscribe</a></p>' ||
         '</div>',
       'text',
         'You''re on the list' || E'\n\n' ||
         'Thanks for joining the Yo7 Family. Expect new arrivals, offers, and the occasional recipe, no spam.' || E'\n\n' ||
         'Start shopping: https://yo7foods.co.uk/#/shop' || E'\n\n' ||
-        'Yo7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY' || E'\n' ||
+        'YO7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY' || E'\n' ||
         'Unsubscribe: https://yo7foods.co.uk/#/unsubscribe-newsletter/' || v_token
     )
   );
@@ -1700,7 +1700,7 @@ CREATE TABLE IF NOT EXISTS "public"."blog_posts" (
     "cover_image" "text",
     "category" "text",
     "linked_category" "text",
-    "author" "text" DEFAULT 'Yo7 Foods Team'::"text" NOT NULL,
+    "author" "text" DEFAULT 'YO7 Foods Team'::"text" NOT NULL,
     "published" boolean DEFAULT false NOT NULL,
     "published_at" timestamp with time zone,
     "meta_description" "text",
@@ -2060,7 +2060,7 @@ CREATE TABLE IF NOT EXISTS "public"."pricing_settings" (
     -- from "an admin just changed something else" without re-fetching on
     -- every cron ping once a day's already done.
     "fx_rates_fetched_at" timestamp with time zone,
-    -- The Yo7 Foods Blog's own hero background photo (#/blog), admin-
+    -- The YO7 Foods Blog's own hero background photo (#/blog), admin-
     -- editable in place from the page itself rather than fixed in the
     -- page's own CSS. Null until an admin changes it, which falls back to
     -- that CSS default rather than this column needing to duplicate it.
