@@ -4996,17 +4996,8 @@
             font-size: 13.5px;
             color: var(--heading);
             text-decoration: none;
-            /* opacity included here, not just transform/box-shadow/border-
-               color - see .cat-tile-reveal's own comment for why it has to
-               live on this rule directly rather than that shared class. */
-            transition: opacity 0.25s cubic-bezier(.16,.84,.44,1), transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease, filter 0.25s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease;
         }
-        /* Department pills get a blur-to-focus layer on top of the shared
-           fade+rise+scale entrance, scoped here (not on .cat-tile-reveal
-           itself) so the Shop by category grid, which reuses that same
-           class, isn't affected. */
-        .hero-glimpse-pill.cat-tile-reveal { filter: blur(6px); }
-        .hero-glimpse-pill.cat-tile-reveal.is-visible { filter: blur(0); }
         .hero-glimpse-pill span.emoji {
             display: flex; align-items: center; justify-content: center;
             width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px;
@@ -6093,9 +6084,9 @@
            per-card observeContainerReveals(), see the comment on that
            function. */
         /* No transition declared here on purpose - this class is shared by
-           .cat-flat-card, .hero-glimpse-pill, .best-seller-card, .new-card
-           and .offer-card, each of which already carries its own
-           `transition` shorthand for its own hover/entrance properties
+           .cat-flat-card, .best-seller-card, .new-card and .offer-card,
+           each of which already carries its own `transition` shorthand
+           for its own hover/entrance properties
            (box-shadow, border-color, opacity, ...). `transition` doesn't
            merge across rules of equal specificity - whichever one comes
            later in the stylesheet wins outright, silently dropping
@@ -15056,18 +15047,8 @@
         function renderHeroGlimpse() {
             const row = document.getElementById('heroGlimpseRow');
             if (!row) return;
-            // cat-tile-reveal (the Shop by category grid's own fade+rise+scale
-            // entrance, see its CSS comment) reused here rather than a new
-            // near-duplicate class - this row wraps on scroll like that grid
-            // does, not swiped like Best Sellers/New/Offers, so it doesn't
-            // carry their jank-on-drag risk (see that same comment for why
-            // those three stay static instead). Same staggered per-pill
-            // delay the category grid uses too, including the same i % 6
-            // cycling - see that comment for why the raw index on its own
-            // isn't safe here either.
             row.innerHTML = GROUPS.map((g, i) => `
-      <a class="hero-glimpse-pill cat-tile-reveal" style="transition-delay:${((i % 6) * 0.05).toFixed(2)}s" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
-            observeContainerReveals(row, '.cat-tile-reveal');
+      <a class="hero-glimpse-pill" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
         }
 
         /* ================= DELIVERY FEE (weight-based) =================
