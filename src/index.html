@@ -126,14 +126,15 @@
          that doesn't need to be in the critical path. preload+onload fetches
          it with the same high priority but doesn't hold up rendering: text
          paints immediately in the fallback font from the CSS var() stack
-         (--display/--body) and swaps to Montserrat Alternates the moment it
-         arrives — which is what display=swap already does even when
-         render-blocking, so this changes nothing about the visual result,
-         only removes the wait beforehand. <noscript> covers the no-JS case.
-         Lato/Montserrat/Poppins are loaded alongside Montserrat Alternates
-         for future use - nothing in --display/--body references them yet,
-         so there's no visual change from adding them, only extra font
-         weight on every page load until something actually uses one. -->
+         (--display/--body) and swaps to Poppins the moment it arrives,
+         which is what display=swap already does even when render-blocking,
+         so this changes nothing about the visual result, only removes the
+         wait beforehand. <noscript> covers the no-JS case. Lato, plain
+         Montserrat, and Montserrat Alternates (the site's previous
+         typeface) are loaded alongside Poppins for possible future use -
+         nothing in --display/--body references them, so there's no visual
+         change from keeping them loaded, only extra font weight on every
+         page load until something actually uses one. -->
     <link rel="preload" as="style"
         href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat+Alternates:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
         onload="this.onload=null;this.rel='stylesheet'">
@@ -173,8 +174,8 @@
             --page-bg: var(--cream);
             --border-rgb: 6, 59, 0;
             --warn-text: #7a4a26;
-            --display: 'Montserrat Alternates', sans-serif;
-            --body: 'Montserrat Alternates', sans-serif;
+            --display: 'Poppins', sans-serif;
+            --body: 'Poppins', sans-serif;
             /* The hero's logo watermark is a translucent colour overlay at a
                fixed opacity, tuned against a near-black canvas in dark mode
                where it reads as a clear glow. Against white in light mode
@@ -22784,7 +22785,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                         colorBackground: isDark ? '#17240E' : '#FFFFFF',
                         colorText: isDark ? '#E9E6DA' : '#16210D',
                         colorDanger: '#C1552C',
-                        fontFamily: "'Montserrat Alternates', sans-serif",
+                        fontFamily: "'Poppins', sans-serif",
                         borderRadius: '10px',
                     },
                     // .AccordionItem--selected is Stripe's own documented
@@ -25248,9 +25249,9 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
 
         // jsPDF only ships Helvetica/Times/Courier built in — anything else
         // has to be embedded as real font bytes. Fetched from the site's own
-        // /fonts/ (same real Montserrat Alternates files the page itself
-        // loads from Google Fonts), converted to base64, and registered into
-        // jsPDF's virtual filesystem, once per session and cached, so the
+        // /fonts/ (same real Poppins files the page itself loads from
+        // Google Fonts), converted to base64, and registered into jsPDF's
+        // virtual filesystem, once per session and cached, so the
         // downloaded invoice actually reads as the same brand font as the
         // website instead of falling back to a generic PDF default.
         let invoiceFontsPromise = null;
@@ -25266,8 +25267,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         async function ensureInvoiceFontsLoaded(pdf) {
             if (!invoiceFontsPromise) {
                 invoiceFontsPromise = Promise.all([
-                    fetch('/fonts/MontserratAlternates-Regular.ttf').then(r => r.arrayBuffer()),
-                    fetch('/fonts/MontserratAlternates-Bold.ttf').then(r => r.arrayBuffer()),
+                    fetch('/fonts/Poppins-Regular.ttf').then(r => r.arrayBuffer()),
+                    fetch('/fonts/Poppins-Bold.ttf').then(r => r.arrayBuffer()),
                 ]).then(([regularBuf, boldBuf]) => ({
                     regular: arrayBufferToBase64(regularBuf),
                     bold: arrayBufferToBase64(boldBuf),
@@ -25275,10 +25276,10 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             }
             const fonts = await invoiceFontsPromise;
             if (!fonts) return false;
-            pdf.addFileToVFS('MontserratAlternates-Regular.ttf', fonts.regular);
-            pdf.addFont('MontserratAlternates-Regular.ttf', 'MontserratAlternates', 'normal');
-            pdf.addFileToVFS('MontserratAlternates-Bold.ttf', fonts.bold);
-            pdf.addFont('MontserratAlternates-Bold.ttf', 'MontserratAlternates', 'bold');
+            pdf.addFileToVFS('Poppins-Regular.ttf', fonts.regular);
+            pdf.addFont('Poppins-Regular.ttf', 'Poppins', 'normal');
+            pdf.addFileToVFS('Poppins-Bold.ttf', fonts.bold);
+            pdf.addFont('Poppins-Bold.ttf', 'Poppins', 'bold');
             return true;
         }
 
@@ -25332,7 +25333,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const rule = [230, 225, 210];
 
             const setText = (size, style, color) => {
-                pdf.setFont(brandFontLoaded ? 'MontserratAlternates' : 'helvetica', style);
+                pdf.setFont(brandFontLoaded ? 'Poppins' : 'helvetica', style);
                 pdf.setFontSize(size);
                 pdf.setTextColor(...color);
             };
