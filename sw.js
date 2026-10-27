@@ -1,4 +1,4 @@
-// Yo7 Foods — minimal service worker, added purely for PWA installability
+// YO7 Foods, minimal service worker, added purely for PWA installability
 // ("Add to Home Screen") plus a basic offline fallback. Deliberately
 // conservative: this site is a single actively-edited HTML file
 // (BUILD_VERSION bumped by hand on every change, and the product/* pages
@@ -110,7 +110,7 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
     let data = {};
     try { data = event.data ? event.data.json() : {}; } catch (err) { /* not JSON — show a generic fallback below */ }
-    const title = data.title || 'Yo7 Foods';
+    const title = data.title || 'YO7 Foods';
     const body = data.body || 'You have a new update.';
     const link = data.link || '#/notifications';
     event.waitUntil(

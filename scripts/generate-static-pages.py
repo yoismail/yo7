@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates real, separately-crawlable URLs for Yo7 Foods' informational
+"""Generates real, separately-crawlable URLs for YO7 Foods' informational
 pages (About Us, Delivery Information, FAQ/guide, Contact Us, Work with
 Us, Careers, and the 5 legal pages), which otherwise only exist as hash
 routes (#/about) that Google never indexes as distinct pages.
@@ -43,53 +43,53 @@ BASE_URL = 'https://yo7foods.co.uk'
 # same title/description below — no reason for them to diverge here. The
 # breadcrumb label is the plain-text second crumb ("Home > <label>") as
 # index.html's own route() actually renders it for this page — usually the
-# same as the <title> minus " | Yo7 Foods", but not always (e.g. guide's
+# same as the <title> minus " | YO7 Foods", but not always (e.g. guide's
 # <h1> reads "New Here?", not the fuller SEO title), so it's kept explicit
 # here rather than derived from the title.
 PAGES = [
     ('about', '#/about',
-     'About Us | Yo7 Foods',
-     "Yo7 Foods brings real African and Caribbean groceries to UK households. Read our story, our mission, and what we stand for.",
+     'About Us | YO7 Foods',
+     "YO7 Foods brings real African and Caribbean groceries to UK households. Read our story, our mission, and what we stand for.",
      'About Us'),
     ('delivery-info', '#/delivery-info',
-     'Delivery Information | Yo7 Foods',
+     'Delivery Information | YO7 Foods',
      "UK-wide delivery or pickup in Ipswich. Check your postcode, delivery fees by weight, and how long delivery takes.",
      'Delivery Information'),
     ('guide', '#/guide',
-     'FAQs &amp; New Here? | Yo7 Foods',
-     "New to Yo7 Foods? How ordering works, plus answers to common questions about delivery, payment, and stock.",
+     'FAQs &amp; New Here? | YO7 Foods',
+     "New to YO7 Foods? How ordering works, plus answers to common questions about delivery, payment, and stock.",
      'New Here?'),
     ('contact', '#/contact',
-     'Contact Us | Yo7 Foods',
-     "Get in touch with Yo7 Foods: WhatsApp, email, opening hours, and our Ipswich address for pickup.",
+     'Contact Us | YO7 Foods',
+     "Get in touch with YO7 Foods: WhatsApp, email, opening hours, and our Ipswich address for pickup.",
      'Contact Us'),
     ('privacy', '#/privacy',
-     'Privacy Policy | Yo7 Foods',
-     "How Yo7 Foods collects, uses, and protects your personal information.",
+     'Privacy Policy | YO7 Foods',
+     "How YO7 Foods collects, uses, and protects your personal information.",
      'Privacy Policy'),
     ('terms', '#/terms',
-     'Terms &amp; Conditions | Yo7 Foods',
-     "The terms and conditions for shopping with Yo7 Foods.",
+     'Terms &amp; Conditions | YO7 Foods',
+     "The terms and conditions for shopping with YO7 Foods.",
      'Terms & Conditions'),
     ('returns', '#/returns',
-     'Returns &amp; Refunds Policy | Yo7 Foods',
+     'Returns &amp; Refunds Policy | YO7 Foods',
      "Our policy on damaged, incorrect, or unsatisfactory orders, including replacements and refunds.",
      'Returns & Refunds Policy'),
     ('delivery-policy', '#/delivery-policy',
-     'Delivery Policy | Yo7 Foods',
-     "Delivery terms, timelines, and responsibilities for orders placed with Yo7 Foods.",
+     'Delivery Policy | YO7 Foods',
+     "Delivery terms, timelines, and responsibilities for orders placed with YO7 Foods.",
      'Delivery Policy'),
     ('cookie-policy', '#/cookie-policy',
-     'Cookie Policy | Yo7 Foods',
-     "How Yo7 Foods uses cookies, including the strictly-necessary ones used to process payments securely.",
+     'Cookie Policy | YO7 Foods',
+     "How YO7 Foods uses cookies, including the strictly-necessary ones used to process payments securely.",
      'Cookie Policy'),
     ('work-with-us', '#/work-with-us',
-     'Work with Us | Yo7 Foods',
-     "Interested in joining Yo7 Foods? Find out what it's like working with us, then see our current openings.",
+     'Work with Us | YO7 Foods',
+     "Interested in joining YO7 Foods? Find out what it's like working with us, then see our current openings.",
      'Work with Us'),
     ('careers', '#/careers',
-     'Careers | Yo7 Foods',
-     "Current job openings at Yo7 Foods in Ipswich, and how to apply.",
+     'Careers | YO7 Foods',
+     "Current job openings at YO7 Foods in Ipswich, and how to apply.",
      'Careers'),
 ]
 
@@ -97,7 +97,7 @@ PAGES = [
 # of these ever go missing, the <head> has changed shape since this script
 # was written and its line-index assumptions below need updating first —
 # replace_line() raises rather than silently writing a broken page.
-OLD_TITLE = 'Yo7 Foods | Fresh African &amp; Caribbean Groceries, Ipswich'
+OLD_TITLE = 'YO7 Foods | Fresh African &amp; Caribbean Groceries, Ipswich'
 OLD_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich. Sign up for 10% off your first order.'
 OLD_TWITTER_DESC = 'Fresh African and Caribbean groceries, delivered UK-wide or collected in Ipswich.'
 

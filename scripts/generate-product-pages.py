@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates real, separately-crawlable URLs for every product Yo7 Foods
+"""Generates real, separately-crawlable URLs for every product YO7 Foods
 sells — both the ~249 hardcoded ones (the CATEGORIES array in
 src/index.html) and anything added or edited since through the live admin
 panel (the `custom_products` and `product_overrides` Supabase tables).
@@ -602,8 +602,8 @@ def main():
                 description_html = html_escape(explicit_desc)
                 description_plain = explicit_desc
             else:
-                description_html = f"{name_html}, from Yo7 Foods' {cat_name_escaped} aisle."
-                description_plain = f"{name_plain}, from Yo7 Foods' {cat_name_plain} aisle."
+                description_html = f"{name_html}, from YO7 Foods' {cat_name_escaped} aisle."
+                description_plain = f"{name_plain}, from YO7 Foods' {cat_name_plain} aisle."
 
             stock = p.get('stock') or 'in'
             availability = 'https://schema.org/OutOfStock' if stock == 'out' else 'https://schema.org/InStock'
@@ -612,7 +612,7 @@ def main():
 
             on_sale = isinstance(sale_price, (int, float)) and sale_price < p['price']
 
-            title_html = f'{name_html} | Yo7 Foods'
+            title_html = f'{name_html} | YO7 Foods'
             json_ld_text = build_json_ld(name_plain, description_plain, p['code'], cat_name_plain, page_url, price, availability)
             breadcrumb_json_ld_text = build_breadcrumb_json_ld(cat_name_plain, cat_slug, name_plain, page_url)
 
