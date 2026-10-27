@@ -11430,7 +11430,7 @@
                     <use href="#seal-mark" />
                 </svg>
                 <span class="nav-mark-text">
-                    <span class="word">Yo<span class="accent">7</span></span>
+                    <span class="word">YO<span class="accent">7</span></span>
                     <span class="nav-foods">Foods</span>
                 </span>
             </a>
@@ -11676,7 +11676,7 @@
             <div class="hero-scroll-cue" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             </div>
-            <div class="text-watermark hero-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
+            <div class="text-watermark hero-text-watermark" aria-hidden="true">YO<span class="accent">7</span></div>
         </header>
 
         <!-- Signed-in returning customers only — hidden by default, shown by
@@ -11806,7 +11806,7 @@
         </section>
 
         <section class="best-sellers-section">
-            <div class="text-watermark best-sellers-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
+            <div class="text-watermark best-sellers-watermark" aria-hidden="true">YO<span class="accent">7</span></div>
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -12658,7 +12658,7 @@
                         <div>
                             <div class="invoice-mark"><svg viewBox="65 25 875 900">
                                     <use href="#seal-mark" />
-                                </svg> <span>Yo<span class="accent">7</span></span> Foods</div>
+                                </svg> <span>YO<span class="accent">7</span></span> Foods</div>
                             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">African Food Store, Ipswich</div>
                         </div>
                         <div class="invoice-meta">
@@ -14189,7 +14189,7 @@
         <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z"/></svg>
     </div>
     <footer>
-        <div class="text-watermark footer-text-watermark" aria-hidden="true">Yo<span class="accent">7</span></div>
+        <div class="text-watermark footer-text-watermark" aria-hidden="true">YO<span class="accent">7</span></div>
         <div class="wrap">
             <div class="footer-newsletter-grid">
             <a class="footer-newsletter journal-teaser-card" id="journalTeaserCard" href="#/blog">
@@ -14246,7 +14246,7 @@
                         <svg viewBox="65 25 875 900">
                             <use href="#seal-mark" />
                         </svg>
-                        <span class="footer-mark-text"><span class="word">Yo<span class="accent">7</span></span><span class="footer-foods">Foods</span></span>
+                        <span class="footer-mark-text"><span class="word">YO<span class="accent">7</span></span><span class="footer-foods">Foods</span></span>
                     </a>
                     <p class="footer-tag">Where culture meets convenience. Ipswich, and beyond.</p>
                     <div class="footer-social-row">
@@ -25422,12 +25422,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
 
             // Drawn as three separate runs (not one pdf.text('YO7 Foods',...))
             // so the "7" can carry the same chartreuse accent every other
-            // "Yo7" wordmark on the site uses (nav, footer, og-image) —
+            // "YO7" wordmark on the site uses (nav, footer, og-image),
             // jsPDF has no way to color part of a single text() call.
             setText(19, 'bold', accent);
             const wordmarkX = margin + sealR * 2 + 10, wordmarkY = y + 18;
-            pdf.text('Yo', wordmarkX, wordmarkY);
-            const yoWidth = pdf.getTextWidth('Yo');
+            pdf.text('YO', wordmarkX, wordmarkY);
+            const yoWidth = pdf.getTextWidth('YO');
             setText(19, 'bold', chartreuse);
             pdf.text('7', wordmarkX + yoWidth, wordmarkY);
             const sevenWidth = pdf.getTextWidth('7');
