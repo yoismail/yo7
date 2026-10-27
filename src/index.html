@@ -15832,8 +15832,13 @@
             if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
             const nextImages = { ...pageHeaderImages };
             delete nextImages[key];
-            const { error: saveError } = await supabaseClient.from('pricing_settings').update({ page_header_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true);
+            // .select() + the empty-array check below turns a silent no-op
+            // into a visible error - same reasoning as
+            // removeJournalHeroImage's own version of this, see its
+            // comment for why.
+            const { data: savedRows, error: saveError } = await supabaseClient.from('pricing_settings').update({ page_header_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true).select('page_header_images');
             if (saveError) { showToast('Could not remove that image: ' + saveError.message, 6000, 'error'); return; }
+            if (!savedRows || !savedRows.length) { showToast('Could not remove that image: the save didn\'t reach the database, please try again.', 6000, 'error'); return; }
             pageHeaderImages = nextImages;
             renderPageHeaderImages();
             logAdminAction('page_header_image_removed', 'pricing_settings', key, null);
@@ -20805,8 +20810,17 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         async function removeJournalHeroImage() {
             if (!journalHeroImage) return;
             if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
-            const { error: saveError } = await supabaseClient.from('pricing_settings').update({ journal_hero_image: null, updated_at: new Date().toISOString() }).eq('id', true);
+            // .select() here (and the empty-array check below) deliberately
+            // turns a silent no-op into a visible error - an .update() that
+            // matches zero rows is a success with an empty data array to
+            // PostgREST, not an error, so without this a mismatched filter
+            // or a revoked write permission would show "Header image
+            // removed" and flip the UI off locally while the database
+            // still has the old photo, then reappear exactly like that on
+            // the next real reload.
+            const { data: savedRows, error: saveError } = await supabaseClient.from('pricing_settings').update({ journal_hero_image: null, updated_at: new Date().toISOString() }).eq('id', true).select('journal_hero_image');
             if (saveError) { showToast('Could not remove that image: ' + saveError.message, 6000, 'error'); return; }
+            if (!savedRows || !savedRows.length) { showToast('Could not remove that image: the save didn\'t reach the database, please try again.', 6000, 'error'); return; }
             journalHeroImage = null;
             cacheJournalHeroImage(null);
             renderJournalPage();
