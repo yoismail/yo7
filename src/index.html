@@ -743,6 +743,26 @@
         .card-edit-btn svg { width: 14px; height: 14px; }
         body.edit-mode-on .card-edit-btn { display: flex; }
 
+        /* Sits to the left of .card-edit-btn's pencil (same 30px circle,
+           same spacing the product card's own remove/edit pair uses) -
+           only on a page header that actually has an admin-set override to
+           remove (.has-header-override, toggled by renderPageHeaderImages()),
+           not just whenever a photo happens to be showing - shop-by-
+           department and combo-deals always show SOME photo (their own
+           shipped default), and there's nothing admin-specific to remove
+           until an admin actually replaces that default with their own. */
+        .page-header-remove-btn {
+            display: none;
+            position: absolute; top: 10px; right: 48px; z-index: 4;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(179, 74, 74, 0.9); color: #fff;
+            align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+        }
+        .page-header-remove-btn svg { width: 14px; height: 14px; }
+        body.edit-mode-on .has-header-override .page-header-remove-btn { display: flex; }
+
         /* Bottom-right of the thumb, not top-right - .stock-badge already
            owns top-left and .card-edit-btn (admin-only) top-right, this is
            the one corner every card has free regardless of stock state or
@@ -4946,7 +4966,8 @@
             background: linear-gradient(180deg, rgba(4,37,0,0.82), rgba(4,37,0,0.78) 55%, rgba(4,37,0,0.88));
         }
         .hero-glimpse-strip > .wrap,
-        .hero-glimpse-strip > .card-edit-btn {
+        .hero-glimpse-strip > .card-edit-btn,
+        .hero-glimpse-strip > .page-header-remove-btn {
             position: relative;
             z-index: 2;
         }
@@ -6584,7 +6605,8 @@
             display: block;
         }
         .page-header-editable > .wrap,
-        .page-header-editable > .card-edit-btn {
+        .page-header-editable > .card-edit-btn,
+        .page-header-editable > .page-header-remove-btn {
             position: relative;
             z-index: 2;
         }
@@ -11720,6 +11742,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="pageHeaderUpload-shop-by-department" data-page-header-key="shop-by-department" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
             </label>
+            <button type="button" class="page-header-remove-btn" aria-label="Remove Shop by department background image" title="Remove image" onclick="removePageHeaderImage('shop-by-department')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <div class="wrap">
                 <div class="hero-glimpse-head">
                     <div class="section-eyebrow">Departments</div>
@@ -11829,6 +11852,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="pageHeaderUpload-combo-deals" data-page-header-key="combo-deals" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
             </label>
+            <button type="button" class="page-header-remove-btn" aria-label="Remove Combo deals background image" title="Remove image" onclick="removePageHeaderImage('combo-deals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <div class="wrap">
                 <div class="new-section-head reveal">
                     <div>
@@ -12101,6 +12125,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="pageHeaderUpload-shop-all" data-page-header-key="shop-all" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
             </label>
+            <button type="button" class="page-header-remove-btn" aria-label="Remove Shop Everything header image" title="Remove image" onclick="removePageHeaderImage('shop-all')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <div class="wrap">
                 <div class="section-eyebrow">The full shelf</div>
                 <h1>Shop every aisle</h1>
@@ -12717,6 +12742,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="pageHeaderUpload-contact" data-page-header-key="contact" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
             </label>
+            <button type="button" class="page-header-remove-btn" aria-label="Remove Contact header image" title="Remove image" onclick="removePageHeaderImage('contact')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Contact Us</div>
                 <h1>Contact Us</h1>
@@ -12790,6 +12816,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="pageHeaderUpload-about" data-page-header-key="about" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
             </label>
+            <button type="button" class="page-header-remove-btn" aria-label="Remove About header image" title="Remove image" onclick="removePageHeaderImage('about')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; About Us</div>
                 <h1>About Us</h1>
@@ -13445,6 +13472,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="pageHeaderUpload-careers" data-page-header-key="careers" onchange="handlePageHeaderImageUpload(this)" style="display:none;">
             </label>
+            <button type="button" class="page-header-remove-btn" aria-label="Remove Careers header image" title="Remove image" onclick="removePageHeaderImage('careers')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Careers</div>
                 <h1>Careers</h1>
@@ -15728,17 +15756,35 @@
         // the other five) rather than this element's own CSS
         // background-image, so Low Data Mode on iOS Safari loads it the
         // same as any other photo on the site (see .hero-glimpse-bg's own
-        // markup comment for the full story). Combo deals' <img> always
-        // carries a photo (its own hardcoded default, see that header's
-        // own CSS comment), so its src is only ever touched here once an
-        // admin actually sets one; .has-photo toggling there is harmless
-        // either way, since its text is already cream unconditionally.
+        // markup comment for the full story).
+        //
+        // Shop by department and Combo deals ship with their own hardcoded
+        // default photo already in that <img>'s src attribute (see each
+        // header's own markup); the other four start with no src at all.
+        // dataset.defaultSrc captures whichever of those two states a
+        // header started in, the first time this function ever touches
+        // it, so removePageHeaderImage() has something real to fall back
+        // to - without it, "remove" would have nothing to put back for
+        // Shop by department/Combo deals, and would need special-casing
+        // per header instead of this one shared function handling all six.
         function renderPageHeaderImages() {
             document.querySelectorAll('[data-page-header]').forEach(header => {
-                const url = pageHeaderImages[header.dataset.pageHeader];
+                const key = header.dataset.pageHeader;
+                const url = pageHeaderImages[key];
                 const bgImg = header.querySelector(':scope > .hero-glimpse-bg, :scope > .page-header-bg');
-                header.classList.toggle('has-photo', !!url);
-                if (url && bgImg) bgImg.src = url;
+                if (bgImg && bgImg.dataset.defaultSrc === undefined) {
+                    bgImg.dataset.defaultSrc = bgImg.getAttribute('src') || '';
+                }
+                const effectiveSrc = url || (bgImg ? bgImg.dataset.defaultSrc : '');
+                header.classList.toggle('has-photo', !!effectiveSrc);
+                header.classList.toggle('has-header-override', !!url);
+                if (bgImg) {
+                    // Not bgImg.src = '' - an empty string src is a known
+                    // footgun (some browsers resolve it to the page's own
+                    // URL and fire a spurious request for it).
+                    if (effectiveSrc) bgImg.src = effectiveSrc;
+                    else bgImg.removeAttribute('src');
+                }
             });
         }
         async function handlePageHeaderImageUpload(input) {
@@ -15764,6 +15810,26 @@
             showToast('Header image updated.', undefined, 'success');
         }
         window.handlePageHeaderImageUpload = handlePageHeaderImageUpload;
+        // Clears an admin-set header override, not a confirm()-gated
+        // delete - same reasoning as removeAdvertBanner just above: easily
+        // re-added by uploading again, nothing unique or cascading lost.
+        // For Shop by department/Combo deals this falls back to their own
+        // shipped default photo (dataset.defaultSrc, see
+        // renderPageHeaderImages()), not to no photo at all; the other
+        // four go back to their icon-badge state.
+        async function removePageHeaderImage(key) {
+            if (!pageHeaderImages[key]) return;
+            if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
+            const nextImages = { ...pageHeaderImages };
+            delete nextImages[key];
+            const { error: saveError } = await supabaseClient.from('pricing_settings').update({ page_header_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true);
+            if (saveError) { showToast('Could not remove that image: ' + saveError.message, 6000, 'error'); return; }
+            pageHeaderImages = nextImages;
+            renderPageHeaderImages();
+            logAdminAction('page_header_image_removed', 'pricing_settings', key, null);
+            showToast('Header image removed.', undefined, 'success');
+        }
+        window.removePageHeaderImage = removePageHeaderImage;
         let googlePlaceId = '';
         function renderPlatformBadges() {
             const row = document.getElementById('platformBadgesRow');
