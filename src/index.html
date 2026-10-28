@@ -5798,15 +5798,45 @@
         /* heroCaptureForm has two real, distinct fields (not one compound
            value), so it gets its own row instead of a pill — email and
            postcode side by side once there's room, the "Secure 10% Off"
-           button kept on its own full-width line underneath since it's a
-           different kind of action, not a third field in the row. */
+           button on its own line underneath since it's a different kind
+           of action, not a third field in the row. */
         @container (min-width: 320px) {
             #heroCaptureForm {
                 flex-direction: row;
                 flex-wrap: wrap;
             }
             #heroCaptureForm input { flex: 1 1 150px; width: auto; }
-            #heroCaptureForm button { flex: 1 1 100%; }
+            #heroCaptureForm button { flex: 0 0 auto; }
+        }
+        /* Reported directly: sitting right next to the Blog teaser card's
+           own small dark pill "Read the Blog" button, this one's old
+           full-width gold button read as a mismatched, heavier-weight
+           control in an otherwise matched pair of cards. Reuses
+           .view-all-btn as-is (same pill shape/colour/hover every "view
+           more" link sitewide already uses) rather than keeping its own
+           gold treatment - .newsletter-form button's gold style stays
+           exactly as it was for #newsletterForm elsewhere, this override
+           is scoped to #heroCaptureForm specifically so that's untouched.
+           border/cursor/width reset here since .view-all-btn was written
+           for an <a>, not a <button>, which carries its own UA defaults
+           for all three. */
+        #heroCaptureForm button.view-all-btn {
+            width: auto;
+            border: none;
+            cursor: pointer;
+            background: rgba(var(--border-rgb), 0.06);
+            color: var(--heading);
+            box-shadow: none;
+        }
+        #heroCaptureForm button.view-all-btn:hover {
+            background: var(--aubergine);
+            color: var(--cream);
+            transform: translateX(2px);
+            box-shadow: none;
+        }
+        #heroCaptureForm button.view-all-btn:active {
+            background: var(--aubergine-deep);
+            transform: translateX(2px);
         }
 
         /* Distinguishes the "10% off" card from the plain newsletter one
@@ -14185,7 +14215,7 @@
                 <form class="newsletter-form" id="heroCaptureForm">
                     <input type="email" id="heroCaptureEmail" placeholder="you@example.com" required autocomplete="email" aria-label="Email address for 10% off code">
                     <input type="text" id="heroCapturePostcode" placeholder="Postcode" required autocomplete="postal-code" aria-label="Postcode for 10% off code">
-                    <button type="submit">Secure 10% Off</button>
+                    <button type="submit" class="view-all-btn">Secure 10% Off</button>
                 </form>
                 <div class="field-hint hero-capture-hint" id="heroCapturePostcodeHint"></div>
                 <div class="hero-capture-thanks" id="heroCaptureThanks">
