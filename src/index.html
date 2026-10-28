@@ -7142,27 +7142,23 @@
                secondary-page header (Shop, About, Contact, Careers)
                instead of standing out as taller. */
             padding: 52px 0 48px;
-            background-image: linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('/images/journal/journal-hero-ingredients.webp');
-            background-size: cover;
-            background-position: center;
-            color: var(--cream);
-        }
-        .journal-hero .section-eyebrow {
-            color: var(--chartreuse-soft);
         }
         .journal-hero h1 {
             font-family: var(--display); font-weight: 700;
             font-size: clamp(30px, 5vw, 46px);
             letter-spacing: -0.01em;
             margin-top: 6px;
-            color: var(--cream);
         }
+        /* No explicit color here - inherits .page-header-editable.has-photo's
+           cream once there's a photo, or .shop-header's own default dark
+           text otherwise (same as .journal-hero h1 just above). */
         .journal-hero p {
             margin-top: 14px;
             max-width: 58ch;
             font-size: 15.5px;
-            color: rgba(250, 249, 242, 0.84);
+            color: #6b5c4f;
         }
+        [data-theme="dark"] .journal-hero p { color: var(--text-muted); }
         .journal-section { padding-top: 40px; }
         .journal-grid {
             display: grid;
@@ -11318,56 +11314,32 @@
         // default when nothing's been saved yet) - system mode follows
         // the OS-level prefers-color-scheme, see initThemeToggle for the
         // live-tracking part of that.
+        // This is the last of these flash-prevention blocks now - the
+        // Journal hero photo used to get its own equivalent trick here
+        // too (a cached localStorage photo pre-painted via a CSS
+        // background-image rule), but it's a real <img> now, same as
+        // every other admin-editable page header (see .page-header-bg's
+        // own CSS comment), and there's no equally reliable CSS-only way
+        // to pre-paint a real <img>'s src before JS runs. It briefly
+        // shows the CSS default (or nothing, once removed) until
+        // renderJournalPage() swaps it in, same tradeoff the other six
+        // headers already accepted. Keep this block last, its own closing
+        // "})();" immediately before this script tag ends -
+        // scripts/generate-static-pages.py's own inject_route_seed()
+        // matches that exact marker to seed a page's hash route, and
+        // raises a loud error rather than silently generating broken
+        // pages if it ever goes missing (see that function's own
+        // comment). Never write the literal closing script tag itself in
+        // this comment even to explain that - the HTML parser ends the
+        // real tag the instant it sees that exact text anywhere in here,
+        // comment or not, which is exactly the live bug this sentence
+        // itself caused the one time it said it outright.
         (function () {
             var saved = localStorage.getItem('yo7-theme');
             var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             var isDark = saved === 'dark' || (saved !== 'light' && prefersDark);
             if (isDark) {
                 document.documentElement.setAttribute('data-theme', 'dark');
-            }
-        })();
-        // Same reasoning as the theme IIFE just above, for the Journal
-        // hero photo instead - .journal-hero's own CSS rule (further down
-        // this same document) paints a real default background-image the
-        // instant it's parsed, before any of the app's own script has had
-        // a chance to run, let alone finish the Supabase fetch that would
-        // know about an admin-set replacement. Appending this rule here,
-        // after that default rule in source order, wins the cascade at
-        // equal specificity and paints the right photo on the very first
-        // frame for anyone whose browser already cached it from a previous
-        // visit (written by cacheJournalHeroImage, including right after
-        // an admin's own upload) - this is also why the rule carries no
-        // !important: the app's own later inline-style override (plain
-        // inline styles always win over a stylesheet rule that isn't
-        // !important) still corrects it painlessly if the real fetched
-        // value turns out to differ from this cached guess.
-        // This is the last of these flash-prevention blocks now - the
-        // equivalent trick for the other admin-editable page headers (Shop
-        // Everything, About, Contact, Careers, Combo deals) no longer
-        // applies, since their photo is a real <img> now too (see
-        // .page-header-bg's own CSS comment, same iOS Safari Low Data Mode
-        // fix Shop by department's own .hero-glimpse-bg already got), and
-        // there's no equally reliable CSS-only way to pre-paint a real
-        // <img>'s src before JS runs. An admin-set custom photo on any of
-        // them briefly shows the hardcoded default (or, for the four with
-        // no default, nothing at all) until renderPageHeaderImages() swaps
-        // it in, same tradeoff Shop by department already accepted. Keep
-        // this block last, its own closing "})();" immediately before this
-        // script tag ends - scripts/generate-static-pages.py's own
-        // inject_route_seed() matches that exact marker to seed a page's
-        // hash route, and raises a loud error rather than silently
-        // generating broken pages if it ever goes missing (see that
-        // function's own comment). Never write the literal closing script
-        // tag itself in this comment even to explain that - the HTML
-        // parser ends the real tag the instant it sees that exact text
-        // anywhere in here, comment or not, which is exactly the live bug
-        // this sentence itself caused the one time it said it outright.
-        (function () {
-            var heroImg = localStorage.getItem('yo7-journal-hero-image');
-            if (heroImg) {
-                var style = document.createElement('style');
-                style.textContent = '.journal-hero{background-image:linear-gradient(180deg,rgba(4,37,0,0.78),rgba(4,37,0,0.55) 55%,rgba(4,37,0,0.88)),url(' + JSON.stringify(heroImg) + ')}';
-                document.head.appendChild(style);
             }
         })();
     </script>
@@ -12149,7 +12121,9 @@
 
     <!-- ================= THE YO7 FOODS JOURNAL ================= -->
     <div id="view-journal" class="hidden-view">
-        <header class="shop-header journal-hero">
+        <header class="shop-header journal-hero page-header-editable">
+            <img class="page-header-bg" alt="" loading="lazy" decoding="async">
+            <div class="page-header-scrim"></div>
             <label class="card-edit-btn" for="journalHeroUpload" aria-label="Change Blog hero image" title="Change hero image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                 <input type="file" accept="image/*" id="journalHeroUpload" onchange="handleJournalHeroUpload(this)" style="display:none;">
@@ -15167,7 +15141,7 @@
             if (data.fx_rates && typeof data.fx_rates === 'object') fxRates = data.fx_rates;
             if (data.fx_rates_auto && typeof data.fx_rates_auto === 'object') fxRatesAuto = data.fx_rates_auto;
             if (data.fx_rates_fetched_at) fxRatesFetchedAt = new Date(data.fx_rates_fetched_at);
-            if (typeof data.journal_hero_image === 'string') { journalHeroImage = data.journal_hero_image; cacheJournalHeroImage(journalHeroImage); }
+            if (typeof data.journal_hero_image === 'string') { journalHeroImage = data.journal_hero_image; }
             if (data.page_header_images && typeof data.page_header_images === 'object') pageHeaderImages = data.page_header_images;
         }
         // Every admin edit (add/remove a tier or rule, change the
@@ -15709,19 +15683,6 @@
         // already has a real default background-image, this only needs to
         // override that inline once it's actually set to something else.
         let journalHeroImage = null;
-        // Cached so the early flash-prevention IIFE in <head> (see its own
-        // comment, same mechanism as the dark-theme one right next to it)
-        // can paint the real hero photo on the very first frame instead of
-        // the CSS default, rather than showing that default for however
-        // long loadPricingSettings()'s fetch takes and then visibly
-        // swapping. Written here and right after a successful upload (see
-        // handleJournalHeroUpload) - either one updates it.
-        function cacheJournalHeroImage(url) {
-            try {
-                if (url) localStorage.setItem('yo7-journal-hero-image', url);
-                else localStorage.removeItem('yo7-journal-hero-image');
-            } catch (e) { /* private browsing etc. - the flash just comes back, nothing worse */ }
-        }
         // Every other page whose header can carry an admin-set photo
         // (Shop Everything, About, Contact, Careers, Combo deals) instead
         // of a hardcoded one, keyed by the same id each header's own
@@ -20452,18 +20413,19 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             });
         }
         function renderJournalPage() {
+            // Same .page-header-bg/.page-header-scrim/.has-photo mechanism
+            // as the other six admin-editable headers (see
+            // renderPageHeaderImages()) - no default photo of its own
+            // here, so no photo set means no photo shown, same as those.
             const hero = document.querySelector('.journal-hero');
             if (hero) {
-                if (journalHeroImage) {
-                    hero.style.backgroundImage = `linear-gradient(180deg, rgba(4,37,0,0.78), rgba(4,37,0,0.55) 55%, rgba(4,37,0,0.88)), url('${journalHeroImage}')`;
-                } else {
-                    // Clears a previous call's inline override so a removed
-                    // image actually falls back to .journal-hero's own CSS
-                    // default background-image, not just stays stuck on
-                    // whatever was last set here.
-                    hero.style.removeProperty('background-image');
-                }
+                const bgImg = hero.querySelector(':scope > .page-header-bg');
+                hero.classList.toggle('has-photo', !!journalHeroImage);
                 hero.classList.toggle('has-header-override', !!journalHeroImage);
+                if (bgImg) {
+                    if (journalHeroImage) bgImg.src = journalHeroImage;
+                    else bgImg.removeAttribute('src');
+                }
             }
             renderJournalCatPills();
             const posts = journalPosts().filter(p => journalActiveCat === 'all' || p.category === journalActiveCat);
@@ -20766,7 +20728,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const { error: saveError } = await supabaseClient.from('pricing_settings').update({ journal_hero_image: publicUrl, updated_at: new Date().toISOString() }).eq('id', true);
             if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
             journalHeroImage = publicUrl;
-            cacheJournalHeroImage(publicUrl);
             renderJournalPage();
             logAdminAction('journal_hero_updated', 'pricing_settings', 'Blog hero image', { imageUrl: publicUrl });
             showToast('Hero image updated.', undefined, 'success');
@@ -20775,9 +20736,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // Clears an admin-set hero override, same reasoning as
         // removePageHeaderImage (the other 6 headers' own version of this)
         // - easily re-added by uploading again, nothing unique or
-        // cascading lost. Falls back to .journal-hero's own shipped
-        // default photo via renderJournalPage()'s own handling, not to no
-        // photo at all.
+        // cascading lost. Falls back to no photo at all (the plain
+        // .shop-header treatment), same as the four headers that never
+        // had a shipped default - .journal-hero used to always show its
+        // own hardcoded ingredients photo even with no admin override,
+        // but that read as "the remove button doesn't actually remove
+        // anything" since the default photo looks like a real uploaded
+        // one. See renderJournalPage()'s own handling.
         async function removeJournalHeroImage() {
             if (!journalHeroImage) return;
             if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
@@ -20793,7 +20758,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (saveError) { showToast('Could not remove that image: ' + saveError.message, 6000, 'error'); return; }
             if (!savedRows || !savedRows.length) { showToast('Could not remove that image: the save didn\'t reach the database, please try again.', 6000, 'error'); return; }
             journalHeroImage = null;
-            cacheJournalHeroImage(null);
             renderJournalPage();
             logAdminAction('journal_hero_image_removed', 'pricing_settings', 'Blog hero image', null);
             showToast('Header image removed.', undefined, 'success');
