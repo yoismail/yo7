@@ -2403,23 +2403,46 @@
         /* ================= HERO ================= */
         .hero {
             position: relative;
-            /* Warm parchment base rather than flat white — a soft glow in
-               var(--chartreuse-rich) (an existing brand tone, not a new
-               colour) grounded in the opposite corner from the watermark
-               (bottom-left vs. the mark's top-right). Used to also carry a
-               faint dot-grain texture across the section; removed for now,
-               it read as more noticeable than intended. */
-            background:
-                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
-                var(--cream);
-            color: #2C1C10;
             overflow: hidden;
-            padding: 56px 0 64px;
         }
-
-
-        .hero-accent {
-            color: var(--chartreuse-rich);
+        /* Split hero: a fixed-dark text panel and a photo carousel side
+           by side, edge to edge (no .hero padding around them, each
+           column carries its own). Stacks to a column on narrow screens
+           via .hero-split's own breakpoint below, text first in source
+           order so it's on top there without needing an explicit order
+           property. */
+        .hero-split {
+            display: flex;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+        .hero-text-col {
+            flex: 1 1 480px;
+            box-sizing: border-box;
+            /* Always dark, regardless of the site's light/dark theme
+               toggle, same reasoning .best-sellers-section/
+               .bundles-section.page-header-editable already use for
+               their own fixed-dark treatment. */
+            background: var(--aubergine);
+            color: var(--cream);
+            padding: 64px;
+            display: flex;
+            align-items: center;
+        }
+        .hero-media-col {
+            flex: 1 1 480px;
+            position: relative;
+            min-height: 420px;
+            overflow: hidden;
+        }
+        @media (max-width: 900px) {
+            .hero-split {
+                flex-direction: column;
+            }
+            .hero-media-col {
+                min-height: 260px;
+            }
         }
 
         /* Stretched Type Repeater: each word of the headline gently
@@ -2446,17 +2469,6 @@
             .stretch-word { animation: none; }
         }
 
-        .hero-scroll-cue {
-            position: absolute;
-            left: 50%;
-            bottom: 26px;
-            transform: translateX(-50%);
-            width: 28px; height: 28px;
-            color: rgba(44, 28, 16, 0.32);
-            z-index: 2;
-            pointer-events: none;
-            animation: heroScrollCue 2s ease-in-out infinite;
-        }
         /* Shared by every large background "Yo7" watermark across the site
            (Best sellers, footer), same family/weight/letter-spacing
            everywhere, so it always reads as one consistent brand mark.
@@ -2564,21 +2576,11 @@
             animation: heroTextWatermarkLive 7.5s ease-in-out infinite;
             animation-delay: -4.8s;
         }
-        .hero-scroll-cue svg { width: 100%; height: 100%; }
-        @keyframes heroScrollCue {
-            0%, 100% { transform: translate(-50%, 0); opacity: 0.5; }
-            50% { transform: translate(-50%, 8px); opacity: 1; }
-        }
-        @media (max-width: 640px) {
-            .hero-scroll-cue { display: none; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-scroll-cue { animation: none; }
-        }
 
-        /* Unused now the hero no longer carries a photo carousel behind it
-           (kept, harmless, in case a future redesign wants it back rather
-           than reintroducing it from scratch): */
+        /* Fills .hero-media-col (the split hero's own photo side), not
+           the whole .hero the way it did when this last had markup -
+           position: absolute; inset: 0 still just needs a positioned
+           ancestor, whichever one that happens to be. */
         .hero-carousel {
             position: absolute;
             inset: 0;
@@ -2616,6 +2618,26 @@
             }
         }
 
+        .hero-carousel-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            display: flex;
+            gap: 8px;
+        }
+        .hero-carousel-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(250, 249, 242, 0.45);
+            transition: background 0.3s ease;
+        }
+        .hero-carousel-dots span.active {
+            background: var(--cream);
+        }
+
         .hero-overlay {
             display: none;
         }
@@ -2635,34 +2657,41 @@
             z-index: 2;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
+            align-items: flex-start;
+            text-align: left;
+            width: 100%;
         }
 
+        /* Fixed cream/chartreuse, not theme-conditional - .hero-text-col
+           is always the dark panel regardless of the site's light/dark
+           toggle (same reasoning as its own background, see above). */
         .eyebrow {
             font-family: var(--display);
             font-weight: 500;
             font-size: 13px;
             letter-spacing: 0.24em;
             text-transform: uppercase;
-            color: var(--chartreuse-rich);
+            color: var(--chartreuse-soft);
             margin-bottom: 16px;
         }
 
         .hero h1 {
             font-family: var(--display);
             font-weight: 700;
-            font-size: clamp(34px, 6vw, 64px);
+            font-size: clamp(32px, 4.2vw, 48px);
             letter-spacing: -0.02em;
-            line-height: 1.1;
-            max-width: 760px;
-            margin: 6px auto 20px;
+            line-height: 1.12;
+            margin: 6px 0 20px;
+        }
+
+        .hero-accent {
+            color: var(--chartreuse);
         }
 
         .hero-sub {
-            max-width: 520px;
-            font-size: clamp(16px, 2.4vw, 19px);
-            color: #6b5c4f;
+            max-width: 460px;
+            font-size: clamp(15px, 1.6vw, 17px);
+            color: rgba(250, 249, 242, 0.82);
             margin-bottom: 22px;
         }
 
@@ -2774,7 +2803,7 @@
         .hero-cta-row {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 14px;
             flex-wrap: wrap;
             margin-bottom: 8px;
@@ -2825,50 +2854,15 @@
             font-family: var(--display);
             font-weight: 600;
             font-size: 12.5px;
-            color: rgba(44, 28, 16, 0.65);
-        }
-        .hero-social-link svg { width: 15px; height: 15px; }
-        .hero-social-link:hover { color: #2C1C10; }
-
-        /* The hero's colours (background, body text, scroll cue, social
-           link) were fixed light-theme values with no dark-mode variant at
-           all, so switching to dark left this one section stranded as a
-           bright white block directly under the dark nav bar. The seal
-           artwork and blobs already use theme-safe brand variables and
-           need no change; only the literal light-theme colours below do. */
-        [data-theme="dark"] .hero {
-            background:
-                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
-                var(--page-bg);
-            color: var(--ink);
-        }
-        [data-theme="dark"] .hero-sub {
-            color: var(--text-body);
-        }
-        [data-theme="dark"] .hero-scroll-cue {
-            color: rgba(233, 230, 218, 0.32);
-        }
-        [data-theme="dark"] .hero-social-link {
             color: rgba(233, 230, 218, 0.65);
         }
-        [data-theme="dark"] .hero-social-link:hover {
-            color: var(--ink);
-        }
+        .hero-social-link svg { width: 15px; height: 15px; }
+        .hero-social-link:hover { color: var(--cream); }
 
-        /* Desktop-only: below this the hero is the mobile-tuned centred
-           stack (unchanged). Above it, centering the same stack just left
-           a huge dead gap either side, this shifts the copy into a real
-           left column with its own max-width instead. */
-        @media (min-width: 901px) {
-            .hero-inner {
-                align-items: flex-start;
-                text-align: left;
-            }
-            .hero h1 {
-                max-width: 520px;
-                margin: 6px 0 20px;
-            }
-        }
+        /* No dark-theme overrides needed here any more - .hero-text-col's
+           own background/text colors are already fixed regardless of the
+           site's light/dark toggle (see its own comment), same as
+           .best-sellers-section's own always-dark treatment. */
 
         /* ================= STORY ================= */
         .story {
@@ -11566,25 +11560,36 @@
             <div class="advert-carousel" id="advertCarousel"></div>
         </section>
         <header class="hero">
-            <div class="wrap hero-inner">
-                <div class="eyebrow">African &amp; Caribbean grocery store, Ipswich.</div>
-                <h1><span class="hero-accent stretch-word" style="animation-delay:0s">African</span> <span class="stretch-word" style="animation-delay:0.10s">&amp;</span> <span class="stretch-word" style="animation-delay:0.20s">Caribbean</span> <span class="stretch-word" style="animation-delay:0.30s">Groceries,</span> <span class="stretch-word" style="animation-delay:0.40s">Delivered</span> <span class="stretch-word" style="animation-delay:0.50s">Across</span> <span class="stretch-word" style="animation-delay:0.60s">the</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">UK</span>.</h1>
-                <p class="hero-sub">African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing. Delivered UK-wide, with local collection in Ipswich.</p>
-                <div class="hero-cta-row">
-                    <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
-                    <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">Browse Categories</a>
+            <div class="hero-split">
+                <div class="hero-text-col">
+                    <div class="wrap hero-inner">
+                        <div class="eyebrow">African &amp; Caribbean grocery store, Ipswich.</div>
+                        <h1><span class="hero-accent stretch-word" style="animation-delay:0s">African</span> <span class="stretch-word" style="animation-delay:0.10s">&amp;</span> <span class="stretch-word" style="animation-delay:0.20s">Caribbean</span> <span class="stretch-word" style="animation-delay:0.30s">Groceries,</span> <span class="stretch-word" style="animation-delay:0.40s">Delivered</span> <span class="stretch-word" style="animation-delay:0.50s">Across</span> <span class="stretch-word" style="animation-delay:0.60s">the</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">UK</span>.</h1>
+                        <p class="hero-sub">African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing. Delivered UK-wide, with local collection in Ipswich.</p>
+                        <div class="hero-cta-row">
+                            <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
+                            <a class="btn btn-outline" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">Browse Categories</a>
+                        </div>
+                        <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <rect x="3" y="3" width="18" height="18" rx="5" />
+                                <circle cx="12" cy="12" r="4" />
+                                <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+                            </svg>
+                            Follow @yo7foods
+                        </a>
+                    </div>
                 </div>
-                <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <rect x="3" y="3" width="18" height="18" rx="5" />
-                        <circle cx="12" cy="12" r="4" />
-                        <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
-                    </svg>
-                    Follow @yo7foods
-                </a>
-            </div>
-            <div class="hero-scroll-cue" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                <div class="hero-media-col">
+                    <div class="hero-carousel">
+                        <div class="hero-slide active" style="background-image: url('/images/combo-deals/combo-deals-hero.webp')"></div>
+                        <div class="hero-slide" style="background-image: url('/images/journal/journal-hero-ingredients.webp')"></div>
+                    </div>
+                    <div class="hero-carousel-dots" aria-hidden="true">
+                        <span class="active"></span>
+                        <span></span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -28771,16 +28776,22 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         /* Hero background carousel: slow crossfade between slides, each
            slide also gets its own slow zoom (see .hero-slide.active
            animation). Only rotates if there's more than one slide, single
-           slide sites just sit still with the zoom. */
+           slide sites just sit still with the zoom. The dots (if any -
+           .hero-carousel-dots is optional, not every use of this
+           mechanism needs them) track the same index purely as a visual
+           indicator, nothing reads them back. */
         function startHeroCarousel() {
             const slides = document.querySelectorAll('.hero-carousel .hero-slide');
             if (slides.length < 2) return;
+            const dots = document.querySelectorAll('.hero-carousel-dots span');
             let current = 0;
             setInterval(() => {
                 if (document.hidden) return;
                 const next = (current + 1) % slides.length;
                 slides[current].classList.remove('active');
                 slides[next].classList.add('active');
+                if (dots[current]) dots[current].classList.remove('active');
+                if (dots[next]) dots[next].classList.add('active');
                 current = next;
             }, 7000);
         }
