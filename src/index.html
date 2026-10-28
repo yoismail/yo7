@@ -6963,23 +6963,6 @@
         }
         [data-theme="dark"] .shop-all-hero p { color: var(--text-muted); }
         .shop-all-section { padding-top: 40px; }
-        .shop-all-search-wrap { position: relative; margin-bottom: 20px; }
-        .shop-all-search-wrap svg {
-            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
-            width: 18px; height: 18px; color: var(--text-muted); pointer-events: none;
-        }
-        .shop-all-search-wrap input {
-            width: 100%; box-sizing: border-box; padding: 15px 20px 15px 48px;
-            border-radius: 999px; border: 1.5px solid var(--chartreuse);
-            font-family: var(--body); font-size: 16px;
-            background: var(--card-bg); color: var(--ink);
-            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-        .shop-all-search-wrap input:focus {
-            outline: none; border-color: var(--orange);
-            box-shadow: 0 2px 6px rgba(var(--border-rgb), 0.06), 0 14px 30px rgba(var(--border-rgb), 0.08);
-        }
         .admin-orders-search-wrap { position: relative; margin-bottom: 14px; }
         .admin-orders-search-wrap svg {
             position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
@@ -7024,11 +7007,7 @@
            and still swipeable on mobile as intended. */
         /* margin-top, not just margin-bottom - reported directly, this
            sat flush against .shop-header p (no bottom margin of its own)
-           on the category/search pages with nothing to breathe against.
-           Collapses harmlessly with .shop-all-search-wrap's own existing
-           20px margin-bottom above it on the shop-all page (whichever
-           margin is larger wins for two adjacent block margins, so this
-           doesn't double up a gap that already worked there). */
+           on the category/search pages with nothing to breathe against. */
         .shop-all-filter { display: none; position: relative; margin-top: 18px; margin-bottom: 10px; }
         @media (max-width: 640px) {
             .cat-pill-row, .cat-nav-wrap-cats { display: none; }
@@ -12143,10 +12122,6 @@
         </header>
         <section class="products-section shop-all-section">
             <div class="wrap">
-                <div class="shop-all-search-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    <input type="text" id="shopAllSearchInput" placeholder="Search: all products..." autocomplete="off" aria-label="Search all items">
-                </div>
                 <div class="cat-pill-row" id="shopAllPillRow"></div>
                 <div class="shop-all-filter" id="shopAllFilter">
                     <button type="button" class="shop-all-filter-btn" id="shopAllFilterBtn" aria-haspopup="true" aria-expanded="false">
@@ -20250,8 +20225,6 @@
         function renderShopAllPage() {
             renderShopAllPills();
             filterShopAll();
-            const input = document.getElementById('shopAllSearchInput');
-            input.oninput = debounce(filterShopAll, 120);
         }
         function renderShopAllPills() {
             const pills = [{ slug: 'all', name: 'All' }, ...CATEGORIES];
@@ -20289,10 +20262,8 @@
             document.getElementById('shopAllFilterBtn').setAttribute('aria-expanded', 'false');
         }
         function filterShopAll() {
-            const q = document.getElementById('shopAllSearchInput').value.trim().toLowerCase();
             let items = allProducts();
             if (shopAllActiveCat !== 'all') items = items.filter(p => p.catSlug === shopAllActiveCat);
-            if (q) items = items.filter(p => matchesQuery(p, q));
             items = items.map(p => ({ ...p, idx: Number(p.id.split('::')[1]) }));
             document.getElementById('shopAllResultCount').textContent = `${items.length} item${items.length === 1 ? '' : 's'}`;
             renderShopAllGridPaginated(items);
