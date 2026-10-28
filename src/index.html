@@ -2403,46 +2403,23 @@
         /* ================= HERO ================= */
         .hero {
             position: relative;
+            /* Warm parchment base rather than flat white — a soft glow in
+               var(--chartreuse-rich) (an existing brand tone, not a new
+               colour) grounded in the opposite corner from the watermark
+               (bottom-left vs. the mark's top-right). Used to also carry a
+               faint dot-grain texture across the section; removed for now,
+               it read as more noticeable than intended. */
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(114, 148, 0, 0.14) 0%, transparent 65%),
+                var(--cream);
+            color: #2C1C10;
             overflow: hidden;
+            padding: 56px 0 64px;
         }
-        /* Split hero: a fixed-dark text panel and a photo carousel side
-           by side, edge to edge (no .hero padding around them, each
-           column carries its own). Stacks to a column on narrow screens
-           via .hero-split's own breakpoint below, text first in source
-           order so it's on top there without needing an explicit order
-           property. */
-        .hero-split {
-            display: flex;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 2;
-        }
-        .hero-text-col {
-            flex: 1 1 480px;
-            box-sizing: border-box;
-            /* Always dark, regardless of the site's light/dark theme
-               toggle, same reasoning .best-sellers-section/
-               .bundles-section.page-header-editable already use for
-               their own fixed-dark treatment. */
-            background: var(--aubergine);
-            color: var(--cream);
-            padding: 64px;
-            display: flex;
-            align-items: center;
-        }
-        .hero-media-col {
-            flex: 1 1 480px;
-            position: relative;
-            min-height: 420px;
-            overflow: hidden;
-        }
-        @media (max-width: 900px) {
-            .hero-split {
-                flex-direction: column;
-            }
-            .hero-media-col {
-                min-height: 260px;
-            }
+
+
+        .hero-accent {
+            color: var(--chartreuse-rich);
         }
 
         /* Stretched Type Repeater: each word of the headline gently
@@ -2469,6 +2446,17 @@
             .stretch-word { animation: none; }
         }
 
+        .hero-scroll-cue {
+            position: absolute;
+            left: 50%;
+            bottom: 26px;
+            transform: translateX(-50%);
+            width: 28px; height: 28px;
+            color: rgba(44, 28, 16, 0.32);
+            z-index: 2;
+            pointer-events: none;
+            animation: heroScrollCue 2s ease-in-out infinite;
+        }
         /* Shared by every large background "Yo7" watermark across the site
            (Best sellers, footer), same family/weight/letter-spacing
            everywhere, so it always reads as one consistent brand mark.
@@ -2576,11 +2564,21 @@
             animation: heroTextWatermarkLive 7.5s ease-in-out infinite;
             animation-delay: -4.8s;
         }
+        .hero-scroll-cue svg { width: 100%; height: 100%; }
+        @keyframes heroScrollCue {
+            0%, 100% { transform: translate(-50%, 0); opacity: 0.5; }
+            50% { transform: translate(-50%, 8px); opacity: 1; }
+        }
+        @media (max-width: 640px) {
+            .hero-scroll-cue { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-scroll-cue { animation: none; }
+        }
 
-        /* Fills .hero-media-col (the split hero's own photo side), not
-           the whole .hero the way it did when this last had markup -
-           position: absolute; inset: 0 still just needs a positioned
-           ancestor, whichever one that happens to be. */
+        /* Unused now the hero no longer carries a photo carousel behind it
+           (kept, harmless, in case a future redesign wants it back rather
+           than reintroducing it from scratch): */
         .hero-carousel {
             position: absolute;
             inset: 0;
@@ -2618,88 +2616,6 @@
             }
         }
 
-        .hero-carousel-dots {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-            display: flex;
-            gap: 8px;
-        }
-        .hero-carousel-dots span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(250, 249, 242, 0.45);
-            transition: background 0.3s ease;
-        }
-        .hero-carousel-dots span.active {
-            background: var(--cream);
-        }
-
-        /* Admin-only per-slide controls, same editing idea as the other
-           six headers (removePageHeaderImage etc.), but a small stacked
-           panel instead of overlay buttons - there's no single ancestor
-           element that's both "this one slide's own box" and "always
-           visible" the way .page-header-editable is for those headers,
-           since a crossfading slide's own box is sometimes opacity: 0.
-           Fresh classes rather than reusing .card-edit-btn/
-           .page-header-remove-btn - this needed enough position/size
-           overrides already that piggybacking on those would fight their
-           own absolute-positioning rules more than it would save. */
-        .hero-slide-controls {
-            display: none;
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            z-index: 4;
-            flex-direction: column;
-            gap: 8px;
-        }
-        body.edit-mode-on .hero-slide-controls {
-            display: flex;
-        }
-        .hero-slide-control {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(6, 59, 0, 0.78);
-            border-radius: 999px;
-            padding: 4px 6px 4px 12px;
-        }
-        .hero-slide-control-label {
-            font-family: var(--display);
-            font-weight: 700;
-            font-size: 11px;
-            color: var(--cream);
-            letter-spacing: 0.02em;
-            white-space: nowrap;
-        }
-        .hero-slide-edit-btn, .hero-slide-remove-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .hero-slide-edit-btn svg, .hero-slide-remove-btn svg {
-            width: 12px;
-            height: 12px;
-        }
-        .hero-slide-edit-btn {
-            background: var(--cream);
-            color: var(--aubergine-deep);
-        }
-        .hero-slide-remove-btn {
-            background: rgba(179, 74, 74, 0.9);
-            color: #fff;
-        }
-
         .hero-overlay {
             display: none;
         }
@@ -2719,41 +2635,34 @@
             z-index: 2;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
-            text-align: left;
-            width: 100%;
+            align-items: center;
+            text-align: center;
         }
 
-        /* Fixed cream/chartreuse, not theme-conditional - .hero-text-col
-           is always the dark panel regardless of the site's light/dark
-           toggle (same reasoning as its own background, see above). */
         .eyebrow {
             font-family: var(--display);
             font-weight: 500;
             font-size: 13px;
             letter-spacing: 0.24em;
             text-transform: uppercase;
-            color: var(--chartreuse-soft);
+            color: var(--chartreuse-rich);
             margin-bottom: 16px;
         }
 
         .hero h1 {
             font-family: var(--display);
             font-weight: 700;
-            font-size: clamp(32px, 4.2vw, 48px);
+            font-size: clamp(34px, 6vw, 64px);
             letter-spacing: -0.02em;
-            line-height: 1.12;
-            margin: 6px 0 20px;
-        }
-
-        .hero-accent {
-            color: var(--chartreuse);
+            line-height: 1.1;
+            max-width: 760px;
+            margin: 6px auto 20px;
         }
 
         .hero-sub {
-            max-width: 460px;
-            font-size: clamp(15px, 1.6vw, 17px);
-            color: rgba(250, 249, 242, 0.82);
+            max-width: 520px;
+            font-size: clamp(16px, 2.4vw, 19px);
+            color: #6b5c4f;
             margin-bottom: 22px;
         }
 
@@ -2865,7 +2774,7 @@
         .hero-cta-row {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
             gap: 14px;
             flex-wrap: wrap;
             margin-bottom: 8px;
@@ -2916,15 +2825,50 @@
             font-family: var(--display);
             font-weight: 600;
             font-size: 12.5px;
-            color: rgba(233, 230, 218, 0.65);
+            color: rgba(44, 28, 16, 0.65);
         }
         .hero-social-link svg { width: 15px; height: 15px; }
-        .hero-social-link:hover { color: var(--cream); }
+        .hero-social-link:hover { color: #2C1C10; }
 
-        /* No dark-theme overrides needed here any more - .hero-text-col's
-           own background/text colors are already fixed regardless of the
-           site's light/dark toggle (see its own comment), same as
-           .best-sellers-section's own always-dark treatment. */
+        /* The hero's colours (background, body text, scroll cue, social
+           link) were fixed light-theme values with no dark-mode variant at
+           all, so switching to dark left this one section stranded as a
+           bright white block directly under the dark nav bar. The seal
+           artwork and blobs already use theme-safe brand variables and
+           need no change; only the literal light-theme colours below do. */
+        [data-theme="dark"] .hero {
+            background:
+                radial-gradient(ellipse 70% 60% at 6% 108%, rgba(166, 204, 46, 0.16) 0%, transparent 65%),
+                var(--page-bg);
+            color: var(--ink);
+        }
+        [data-theme="dark"] .hero-sub {
+            color: var(--text-body);
+        }
+        [data-theme="dark"] .hero-scroll-cue {
+            color: rgba(233, 230, 218, 0.32);
+        }
+        [data-theme="dark"] .hero-social-link {
+            color: rgba(233, 230, 218, 0.65);
+        }
+        [data-theme="dark"] .hero-social-link:hover {
+            color: var(--ink);
+        }
+
+        /* Desktop-only: below this the hero is the mobile-tuned centred
+           stack (unchanged). Above it, centering the same stack just left
+           a huge dead gap either side, this shifts the copy into a real
+           left column with its own max-width instead. */
+        @media (min-width: 901px) {
+            .hero-inner {
+                align-items: flex-start;
+                text-align: left;
+            }
+            .hero h1 {
+                max-width: 520px;
+                margin: 6px 0 20px;
+            }
+        }
 
         /* ================= STORY ================= */
         .story {
@@ -11622,58 +11566,25 @@
             <div class="advert-carousel" id="advertCarousel"></div>
         </section>
         <header class="hero">
-            <div class="hero-split">
-                <div class="hero-text-col">
-                    <div class="wrap hero-inner">
-                        <div class="eyebrow">African &amp; Caribbean grocery store, Ipswich.</div>
-                        <h1><span class="hero-accent stretch-word" style="animation-delay:0s">African</span> <span class="stretch-word" style="animation-delay:0.10s">&amp;</span> <span class="stretch-word" style="animation-delay:0.20s">Caribbean</span> <span class="stretch-word" style="animation-delay:0.30s">Groceries,</span> <span class="stretch-word" style="animation-delay:0.40s">Delivered</span> <span class="stretch-word" style="animation-delay:0.50s">Across</span> <span class="stretch-word" style="animation-delay:0.60s">the</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">UK</span>.</h1>
-                        <p class="hero-sub">African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing. Delivered UK-wide, with local collection in Ipswich.</p>
-                        <div class="hero-cta-row">
-                            <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
-                            <a class="btn btn-outline" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">Browse Categories</a>
-                        </div>
-                        <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                <rect x="3" y="3" width="18" height="18" rx="5" />
-                                <circle cx="12" cy="12" r="4" />
-                                <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
-                            </svg>
-                            Follow @yo7foods
-                        </a>
-                    </div>
+            <div class="wrap hero-inner">
+                <div class="eyebrow">African &amp; Caribbean grocery store, Ipswich.</div>
+                <h1><span class="hero-accent stretch-word" style="animation-delay:0s">African</span> <span class="stretch-word" style="animation-delay:0.10s">&amp;</span> <span class="stretch-word" style="animation-delay:0.20s">Caribbean</span> <span class="stretch-word" style="animation-delay:0.30s">Groceries,</span> <span class="stretch-word" style="animation-delay:0.40s">Delivered</span> <span class="stretch-word" style="animation-delay:0.50s">Across</span> <span class="stretch-word" style="animation-delay:0.60s">the</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">UK</span>.</h1>
+                <p class="hero-sub">African and Caribbean groceries, the staples you shop for every week and the ingredients you've been missing. Delivered UK-wide, with local collection in Ipswich.</p>
+                <div class="hero-cta-row">
+                    <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
+                    <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">Browse Categories</a>
                 </div>
-                <div class="hero-media-col">
-                    <div class="hero-carousel">
-                        <div class="hero-slide active" data-hero-slide="0" style="background-image: url('/images/combo-deals/combo-deals-hero.webp')"></div>
-                        <div class="hero-slide" data-hero-slide="1" style="background-image: url('/images/journal/journal-hero-ingredients.webp')"></div>
-                    </div>
-                    <div class="hero-carousel-dots" aria-hidden="true">
-                        <span class="active"></span>
-                        <span></span>
-                    </div>
-                    <div class="hero-slide-controls">
-                        <div class="hero-slide-control" data-slide-control="0">
-                            <span class="hero-slide-control-label">Slide 1</span>
-                            <label class="hero-slide-edit-btn" for="heroSlideUpload-0" aria-label="Change hero slide 1 image" title="Change image">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                <input type="file" accept="image/*" id="heroSlideUpload-0" onchange="handleHeroSlideUpload(this, 0)" style="display:none;">
-                            </label>
-                            <button type="button" class="hero-slide-remove-btn" aria-label="Remove hero slide 1 image" title="Remove image" onclick="removeHeroSlideImage(0)" style="display:none;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                            </button>
-                        </div>
-                        <div class="hero-slide-control" data-slide-control="1">
-                            <span class="hero-slide-control-label">Slide 2</span>
-                            <label class="hero-slide-edit-btn" for="heroSlideUpload-1" aria-label="Change hero slide 2 image" title="Change image">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                                <input type="file" accept="image/*" id="heroSlideUpload-1" onchange="handleHeroSlideUpload(this, 1)" style="display:none;">
-                            </label>
-                            <button type="button" class="hero-slide-remove-btn" aria-label="Remove hero slide 2 image" title="Remove image" onclick="removeHeroSlideImage(1)" style="display:none;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <rect x="3" y="3" width="18" height="18" rx="5" />
+                        <circle cx="12" cy="12" r="4" />
+                        <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+                    </svg>
+                    Follow @yo7foods
+                </a>
+            </div>
+            <div class="hero-scroll-cue" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             </div>
         </header>
 
@@ -15184,7 +15095,6 @@
             if (data.fx_rates_fetched_at) fxRatesFetchedAt = new Date(data.fx_rates_fetched_at);
             if (typeof data.journal_hero_image === 'string') { journalHeroImage = data.journal_hero_image; }
             if (data.page_header_images && typeof data.page_header_images === 'object') pageHeaderImages = data.page_header_images;
-            if (data.hero_images && typeof data.hero_images === 'object') heroImages = data.hero_images;
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -15734,19 +15644,6 @@
         // every one of these now renders into, see .page-header-bg) can't
         // be pre-painted the same way a CSS background-image could.
         let pageHeaderImages = {};
-        // The homepage hero's own split-layout photo carousel, keyed by
-        // slide index as a string ("0", "1") rather than a page id since
-        // there's only ever the one hero, see hero_images in
-        // supabase/schema.sql for the full reasoning. HERO_DEFAULT_IMAGES
-        // is what each slide falls back to when its own key is missing
-        // here - must stay in sync with the literal URLs the markup
-        // itself hardcodes inline (see .hero-slide's own background-image
-        // style) since those are what paints before this ever resolves.
-        const HERO_DEFAULT_IMAGES = {
-            0: '/images/combo-deals/combo-deals-hero.webp',
-            1: '/images/journal/journal-hero-ingredients.webp',
-        };
-        let heroImages = {};
         // Applies pageHeaderImages to every header on the page that has
         // one (there's never more than one match per render, but this
         // intentionally doesn't scope to the current route - these
@@ -15836,71 +15733,6 @@
             showToast('Header image removed.', undefined, 'success');
         }
         window.removePageHeaderImage = removePageHeaderImage;
-        // Paints each .hero-slide's background-image from heroImages[idx]
-        // (an admin override) or HERO_DEFAULT_IMAGES[idx], and shows/hides
-        // each slide's own remove button based on whether an override
-        // exists for it - set directly rather than through a
-        // .has-header-override ancestor class the way the other six
-        // headers do it, there's no single ancestor element shared by a
-        // slide's own background div and its control panel's remove
-        // button (the controls sit in their own fixed corner, not inside
-        // each crossfading slide, so an inactive/invisible slide's own
-        // controls are never themselves invisible).
-        function renderHeroSlides() {
-            document.querySelectorAll('.hero-slide').forEach(slide => {
-                const idx = slide.dataset.heroSlide;
-                const url = heroImages[idx] || HERO_DEFAULT_IMAGES[idx];
-                slide.style.backgroundImage = `url('${url}')`;
-            });
-            document.querySelectorAll('.hero-slide-control').forEach(control => {
-                const idx = control.dataset.slideControl;
-                const removeBtn = control.querySelector('.hero-slide-remove-btn');
-                if (removeBtn) removeBtn.style.display = heroImages[idx] ? 'flex' : 'none';
-            });
-        }
-        async function handleHeroSlideUpload(input, idx) {
-            const file = input.files && input.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
-            if (!supabaseClient) { showToast('Image uploads need accounts connected first, this is preview mode right now.'); return; }
-            showToast('Uploading slide image…');
-            const uploadFile = await compressImageFile(file, 1920, 0.85);
-            const ext = extensionForUpload(uploadFile, file);
-            const path = `hero/slide-${idx}-${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
-            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
-            const nextImages = { ...heroImages, [idx]: publicUrl };
-            // .select() + the empty-array check below turns a silent no-op
-            // into a visible error - same reasoning as
-            // removeJournalHeroImage's own version of this.
-            const { data: savedRows, error: saveError } = await supabaseClient.from('pricing_settings').update({ hero_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true).select('hero_images');
-            if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
-            if (!savedRows || !savedRows.length) { showToast('Uploaded, but the save didn\'t reach the database, please try again.', 6000, 'error'); return; }
-            heroImages = nextImages;
-            renderHeroSlides();
-            logAdminAction('hero_slide_image_updated', 'pricing_settings', `Hero slide ${Number(idx) + 1}`, { imageUrl: publicUrl });
-            showToast('Slide image updated.', undefined, 'success');
-        }
-        window.handleHeroSlideUpload = handleHeroSlideUpload;
-        // Clears an admin-set slide override, same reasoning as
-        // removePageHeaderImage - falls back to that slide's own shipped
-        // default photo (HERO_DEFAULT_IMAGES), not to no photo at all,
-        // the carousel always needs to show something.
-        async function removeHeroSlideImage(idx) {
-            if (!heroImages[idx]) return;
-            if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
-            const nextImages = { ...heroImages };
-            delete nextImages[idx];
-            const { data: savedRows, error: saveError } = await supabaseClient.from('pricing_settings').update({ hero_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true).select('hero_images');
-            if (saveError) { showToast('Could not remove that image: ' + saveError.message, 6000, 'error'); return; }
-            if (!savedRows || !savedRows.length) { showToast('Could not remove that image: the save didn\'t reach the database, please try again.', 6000, 'error'); return; }
-            heroImages = nextImages;
-            renderHeroSlides();
-            logAdminAction('hero_slide_image_removed', 'pricing_settings', `Hero slide ${Number(idx) + 1}`, null);
-            showToast('Slide image removed, back to the default photo.', undefined, 'success');
-        }
-        window.removeHeroSlideImage = removeHeroSlideImage;
         let googlePlaceId = '';
         function renderPlatformBadges() {
             const row = document.getElementById('platformBadgesRow');
@@ -28939,22 +28771,16 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         /* Hero background carousel: slow crossfade between slides, each
            slide also gets its own slow zoom (see .hero-slide.active
            animation). Only rotates if there's more than one slide, single
-           slide sites just sit still with the zoom. The dots (if any -
-           .hero-carousel-dots is optional, not every use of this
-           mechanism needs them) track the same index purely as a visual
-           indicator, nothing reads them back. */
+           slide sites just sit still with the zoom. */
         function startHeroCarousel() {
             const slides = document.querySelectorAll('.hero-carousel .hero-slide');
             if (slides.length < 2) return;
-            const dots = document.querySelectorAll('.hero-carousel-dots span');
             let current = 0;
             setInterval(() => {
                 if (document.hidden) return;
                 const next = (current + 1) % slides.length;
                 slides[current].classList.remove('active');
                 slides[next].classList.add('active');
-                if (dots[current]) dots[current].classList.remove('active');
-                if (dots[next]) dots[next].classList.add('active');
                 current = next;
             }, 7000);
         }
@@ -29038,9 +28864,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // current route, so this doesn't need a hash check, it just
             // needs to run once this data actually exists.
             renderPageHeaderImages();
-            // Same reasoning, hero_images lives here too, and the hero is
-            // also always-present static markup.
-            renderHeroSlides();
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();

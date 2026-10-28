@@ -2073,14 +2073,6 @@ CREATE TABLE IF NOT EXISTS "public"."pricing_settings" (
     -- ("shop-all", "about", "contact", "careers") - a page missing from
     -- this object just has no photo set yet, not an error.
     "page_header_images" "jsonb" DEFAULT '{}'::"jsonb",
-    -- The homepage hero's own split-layout photo carousel (#/), admin-
-    -- editable per slide. Keyed by slide index as a string ("0", "1"),
-    -- a slide missing here falls back to its own hardcoded default photo
-    -- (see HERO_DEFAULT_IMAGES in src/index.html) rather than showing
-    -- nothing - the carousel always needs to show some image, same
-    -- reasoning Shop by department/Combo deals already use for their own
-    -- baked-in defaults.
-    "hero_images" "jsonb" DEFAULT '{}'::"jsonb",
     CONSTRAINT "pricing_settings_singleton" CHECK ("id")
 );
 
