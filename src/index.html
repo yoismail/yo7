@@ -2638,6 +2638,68 @@
             background: var(--cream);
         }
 
+        /* Admin-only per-slide controls, same editing idea as the other
+           six headers (removePageHeaderImage etc.), but a small stacked
+           panel instead of overlay buttons - there's no single ancestor
+           element that's both "this one slide's own box" and "always
+           visible" the way .page-header-editable is for those headers,
+           since a crossfading slide's own box is sometimes opacity: 0.
+           Fresh classes rather than reusing .card-edit-btn/
+           .page-header-remove-btn - this needed enough position/size
+           overrides already that piggybacking on those would fight their
+           own absolute-positioning rules more than it would save. */
+        .hero-slide-controls {
+            display: none;
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 4;
+            flex-direction: column;
+            gap: 8px;
+        }
+        body.edit-mode-on .hero-slide-controls {
+            display: flex;
+        }
+        .hero-slide-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(6, 59, 0, 0.78);
+            border-radius: 999px;
+            padding: 4px 6px 4px 12px;
+        }
+        .hero-slide-control-label {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--cream);
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .hero-slide-edit-btn, .hero-slide-remove-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .hero-slide-edit-btn svg, .hero-slide-remove-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+        .hero-slide-edit-btn {
+            background: var(--cream);
+            color: var(--aubergine-deep);
+        }
+        .hero-slide-remove-btn {
+            background: rgba(179, 74, 74, 0.9);
+            color: #fff;
+        }
+
         .hero-overlay {
             display: none;
         }
@@ -11582,12 +11644,34 @@
                 </div>
                 <div class="hero-media-col">
                     <div class="hero-carousel">
-                        <div class="hero-slide active" style="background-image: url('/images/combo-deals/combo-deals-hero.webp')"></div>
-                        <div class="hero-slide" style="background-image: url('/images/journal/journal-hero-ingredients.webp')"></div>
+                        <div class="hero-slide active" data-hero-slide="0" style="background-image: url('/images/combo-deals/combo-deals-hero.webp')"></div>
+                        <div class="hero-slide" data-hero-slide="1" style="background-image: url('/images/journal/journal-hero-ingredients.webp')"></div>
                     </div>
                     <div class="hero-carousel-dots" aria-hidden="true">
                         <span class="active"></span>
                         <span></span>
+                    </div>
+                    <div class="hero-slide-controls">
+                        <div class="hero-slide-control" data-slide-control="0">
+                            <span class="hero-slide-control-label">Slide 1</span>
+                            <label class="hero-slide-edit-btn" for="heroSlideUpload-0" aria-label="Change hero slide 1 image" title="Change image">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                <input type="file" accept="image/*" id="heroSlideUpload-0" onchange="handleHeroSlideUpload(this, 0)" style="display:none;">
+                            </label>
+                            <button type="button" class="hero-slide-remove-btn" aria-label="Remove hero slide 1 image" title="Remove image" onclick="removeHeroSlideImage(0)" style="display:none;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <div class="hero-slide-control" data-slide-control="1">
+                            <span class="hero-slide-control-label">Slide 2</span>
+                            <label class="hero-slide-edit-btn" for="heroSlideUpload-1" aria-label="Change hero slide 2 image" title="Change image">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                <input type="file" accept="image/*" id="heroSlideUpload-1" onchange="handleHeroSlideUpload(this, 1)" style="display:none;">
+                            </label>
+                            <button type="button" class="hero-slide-remove-btn" aria-label="Remove hero slide 2 image" title="Remove image" onclick="removeHeroSlideImage(1)" style="display:none;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -15100,6 +15184,7 @@
             if (data.fx_rates_fetched_at) fxRatesFetchedAt = new Date(data.fx_rates_fetched_at);
             if (typeof data.journal_hero_image === 'string') { journalHeroImage = data.journal_hero_image; }
             if (data.page_header_images && typeof data.page_header_images === 'object') pageHeaderImages = data.page_header_images;
+            if (data.hero_images && typeof data.hero_images === 'object') heroImages = data.hero_images;
         }
         // Every admin edit (add/remove a tier or rule, change the
         // subscription %, change a bundle/combo %) calls this right after,
@@ -15649,6 +15734,19 @@
         // every one of these now renders into, see .page-header-bg) can't
         // be pre-painted the same way a CSS background-image could.
         let pageHeaderImages = {};
+        // The homepage hero's own split-layout photo carousel, keyed by
+        // slide index as a string ("0", "1") rather than a page id since
+        // there's only ever the one hero, see hero_images in
+        // supabase/schema.sql for the full reasoning. HERO_DEFAULT_IMAGES
+        // is what each slide falls back to when its own key is missing
+        // here - must stay in sync with the literal URLs the markup
+        // itself hardcodes inline (see .hero-slide's own background-image
+        // style) since those are what paints before this ever resolves.
+        const HERO_DEFAULT_IMAGES = {
+            0: '/images/combo-deals/combo-deals-hero.webp',
+            1: '/images/journal/journal-hero-ingredients.webp',
+        };
+        let heroImages = {};
         // Applies pageHeaderImages to every header on the page that has
         // one (there's never more than one match per render, but this
         // intentionally doesn't scope to the current route - these
@@ -15738,6 +15836,71 @@
             showToast('Header image removed.', undefined, 'success');
         }
         window.removePageHeaderImage = removePageHeaderImage;
+        // Paints each .hero-slide's background-image from heroImages[idx]
+        // (an admin override) or HERO_DEFAULT_IMAGES[idx], and shows/hides
+        // each slide's own remove button based on whether an override
+        // exists for it - set directly rather than through a
+        // .has-header-override ancestor class the way the other six
+        // headers do it, there's no single ancestor element shared by a
+        // slide's own background div and its control panel's remove
+        // button (the controls sit in their own fixed corner, not inside
+        // each crossfading slide, so an inactive/invisible slide's own
+        // controls are never themselves invisible).
+        function renderHeroSlides() {
+            document.querySelectorAll('.hero-slide').forEach(slide => {
+                const idx = slide.dataset.heroSlide;
+                const url = heroImages[idx] || HERO_DEFAULT_IMAGES[idx];
+                slide.style.backgroundImage = `url('${url}')`;
+            });
+            document.querySelectorAll('.hero-slide-control').forEach(control => {
+                const idx = control.dataset.slideControl;
+                const removeBtn = control.querySelector('.hero-slide-remove-btn');
+                if (removeBtn) removeBtn.style.display = heroImages[idx] ? 'flex' : 'none';
+            });
+        }
+        async function handleHeroSlideUpload(input, idx) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            if (!supabaseClient) { showToast('Image uploads need accounts connected first, this is preview mode right now.'); return; }
+            showToast('Uploading slide image…');
+            const uploadFile = await compressImageFile(file, 1920, 0.85);
+            const ext = extensionForUpload(uploadFile, file);
+            const path = `hero/slide-${idx}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const nextImages = { ...heroImages, [idx]: publicUrl };
+            // .select() + the empty-array check below turns a silent no-op
+            // into a visible error - same reasoning as
+            // removeJournalHeroImage's own version of this.
+            const { data: savedRows, error: saveError } = await supabaseClient.from('pricing_settings').update({ hero_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true).select('hero_images');
+            if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
+            if (!savedRows || !savedRows.length) { showToast('Uploaded, but the save didn\'t reach the database, please try again.', 6000, 'error'); return; }
+            heroImages = nextImages;
+            renderHeroSlides();
+            logAdminAction('hero_slide_image_updated', 'pricing_settings', `Hero slide ${Number(idx) + 1}`, { imageUrl: publicUrl });
+            showToast('Slide image updated.', undefined, 'success');
+        }
+        window.handleHeroSlideUpload = handleHeroSlideUpload;
+        // Clears an admin-set slide override, same reasoning as
+        // removePageHeaderImage - falls back to that slide's own shipped
+        // default photo (HERO_DEFAULT_IMAGES), not to no photo at all,
+        // the carousel always needs to show something.
+        async function removeHeroSlideImage(idx) {
+            if (!heroImages[idx]) return;
+            if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
+            const nextImages = { ...heroImages };
+            delete nextImages[idx];
+            const { data: savedRows, error: saveError } = await supabaseClient.from('pricing_settings').update({ hero_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true).select('hero_images');
+            if (saveError) { showToast('Could not remove that image: ' + saveError.message, 6000, 'error'); return; }
+            if (!savedRows || !savedRows.length) { showToast('Could not remove that image: the save didn\'t reach the database, please try again.', 6000, 'error'); return; }
+            heroImages = nextImages;
+            renderHeroSlides();
+            logAdminAction('hero_slide_image_removed', 'pricing_settings', `Hero slide ${Number(idx) + 1}`, null);
+            showToast('Slide image removed, back to the default photo.', undefined, 'success');
+        }
+        window.removeHeroSlideImage = removeHeroSlideImage;
         let googlePlaceId = '';
         function renderPlatformBadges() {
             const row = document.getElementById('platformBadgesRow');
@@ -28875,6 +29038,9 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // current route, so this doesn't need a hash check, it just
             // needs to run once this data actually exists.
             renderPageHeaderImages();
+            // Same reasoning, hero_images lives here too, and the hero is
+            // also always-present static markup.
+            renderHeroSlides();
             updateSummaries();
             document.querySelectorAll('#pdSubscribePct').forEach(el => el.textContent = `${subscriptionDiscountPct}%`);
             renderPlatformBadges();
