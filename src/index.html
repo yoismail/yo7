@@ -5876,17 +5876,21 @@
         }
 
         /* Distinguishes the "10% off" card from the plain newsletter one
-           right next to it via its accent colour alone — same wax-seal
-           yellow the rest of the site already uses for discounts/offers
-           (.combo-stamp, .offer-tag). Both cards are solid white now
-           that the footer itself carries this same gold tint (see
+           right next to it via its top accent strip and icon tint alone
+           (see .footer-interest::before and .footer-interest
+           .footer-newsletter-icon below), same wax-seal yellow the rest
+           of the site already uses for discounts/offers (.combo-stamp,
+           .offer-tag). The border stays the same neutral tone as the
+           blog card's (see .footer-newsletter above) rather than its own
+           gold tint, so the two cards read as one consistent pair
+           instead of looking like a mismatch. Both cards are solid white
+           now that the footer itself carries this same gold tint (see
            footer above) — a gradient here as well would just blend the
            card into the surface it's sitting on. The two buttons are
            deliberately identical now (see .newsletter-form button
            above), so there's no button override here any more. */
         .footer-interest {
             background: #FFFFFF;
-            border-color: rgba(225, 225, 0, 0.4);
         }
         [data-theme="dark"] .footer-interest {
             background: var(--card-bg);
