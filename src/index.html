@@ -2457,15 +2457,21 @@
             pointer-events: none;
             animation: heroScrollCue 2s ease-in-out infinite;
         }
+        /* Mirrors .hero-watermark above (the big faded seal icon bleeding
+           off the top-right corner) at the opposite corner, at the same
+           kind of scale and the same translucent-overlay opacity variable
+           — a background watermark, not a small corner signature. Text
+           rather than the icon since the icon watermark is already right
+           there; this is the wordmark half of the same mark. */
         /* Shared by every large background "Yo7" watermark across the site
-           (Best sellers, footer), same family/weight/letter-spacing
-           everywhere, so it always reads as one consistent brand mark.
-           Each place using it sets its own position, size, and
-           color/opacity (a section that stays a fixed light background
-           regardless of theme, like the footer or .shop-header, needs a
-           fixed faded ink color rather than the theme-flipping
-           var(--ink)/--hero-watermark-op pairing the confirmation page's
-           own icon watermark uses). */
+           (hero, About intro, order confirmation, newsletter panel) — same
+           family/weight/letter-spacing everywhere, so it always reads as
+           one consistent brand mark. Each place using it sets its own
+           position, size, and color/opacity (a section that stays a fixed
+           light background regardless of theme, like the footer or
+           .shop-header, needs a fixed faded ink color rather than the
+           theme-flipping var(--ink)/--hero-watermark-op pairing the hero
+           and confirmation page use). */
         .text-watermark {
             position: absolute;
             z-index: 1;
@@ -2475,10 +2481,35 @@
             white-space: nowrap;
         }
         .text-watermark .accent { color: var(--chartreuse-rich); }
-        /* Originally the hero's own big faded "Yo7" text mark's keyframe
-           (that mark itself is gone), kept because .confirm-watermark
-           still reuses it outright (see that rule's own comment) rather
-           than a bespoke one of its own. */
+        .hero-text-watermark {
+            left: -3%;
+            /* em, not %: a %% bottom offset is relative to .hero's own
+               height, which varies a lot by viewport (shorter on mobile,
+               where the headline wraps to fewer relative lines against a
+               near-fixed vertical padding) while this text's own height
+               barely changes (clamp() floors it at 120px). The same -10%
+               that reads as an intentional partial bleed on desktop (~1/3
+               of the mark's height) was clipping ~90% of it away on
+               mobile, effectively hiding the watermark entirely. em ties
+               the offset to the mark's own font-size instead, so the same
+               proportion bleeds off the edge at every viewport width. */
+            bottom: -0.265em;
+            font-size: clamp(120px, 22vw, 340px);
+            color: var(--ink);
+            opacity: var(--hero-watermark-op);
+            /* Same idea as .hero-watermark's tilt-breathe-glow at the
+               opposite corner, tuned for this mark's shape: it bleeds off
+               the bottom-left rather than sitting centred like the seal,
+               so the origin sits near that anchored corner instead of the
+               middle — a rotation around the centre would swing the
+               already-mostly-offscreen text in a way that reads as
+               drifting rather than breathing. A slightly different
+               duration and a negative delay (starts mid-cycle) keep the
+               two corners from pulsing in obvious lockstep. */
+            transform-origin: 15% 100%;
+            animation: heroTextWatermarkLive 7.5s ease-in-out infinite;
+            animation-delay: -2.4s;
+        }
         @keyframes heroTextWatermarkLive {
             0%, 100% { transform: rotate(0deg) scale(1); opacity: var(--hero-watermark-op); }
             32% { transform: rotate(2.5deg) scale(1.025); }
@@ -2486,7 +2517,7 @@
             84% { transform: rotate(-1deg) scale(1.015); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .confirm-watermark { animation: none; }
+            .hero-text-watermark, .confirm-watermark { animation: none; }
         }
         /* Shared by every .shop-header that wants its own glyph bled off
            the corner instead of repeating the sitewide "Yo7" wordmark
@@ -2527,8 +2558,8 @@
         }
         /* .confirm-section (order confirmation) does flip with the theme
            (background: var(--page-bg)), so this can reuse the same
-           var(--ink)/--hero-watermark-op pairing. top is a
-           fixed px offset rather than a percentage on purpose, this
+           var(--ink)/--hero-watermark-op pairing the hero uses. top is a
+           fixed px offset rather than a percentage on purpose — this
            section's height varies a lot with the invoice's own length
            below it, and a percentage bleed (sized off that whole tall
            section) pushed the mark's visible portion entirely above the
@@ -2537,13 +2568,13 @@
            under it ends up being. Excluded from print (see the print media
            query below) so it never bleeds into the saved/printed invoice. */
         /* A checkmark, same glyph as .confirm-check right above it in the
-           markup, instead of the "Yo7" wordmark, this page's whole point
+           markup, instead of the "Yo7" wordmark — this page's whole point
            is "your order is confirmed", so its own icon fits better than
            the sitewide mark repeated a third time. Was text before (see
-           .text-watermark, still used by the Best sellers/footer marks);
-           now an svg, so sizing is width/height rather than font-size,
-           position/z-index/pointer-events moved onto this rule directly
-           since it no longer picks them up from that shared class. */
+           .text-watermark, still used by the hero/footer marks); now an
+           svg, so sizing is width/height rather than font-size, position/
+           z-index/pointer-events moved onto this rule directly since it
+           no longer picks them up from that shared class. */
         .confirm-watermark {
             position: absolute;
             z-index: 1;
@@ -2554,12 +2585,11 @@
             height: clamp(80px, 14vw, 200px);
             color: var(--ink);
             opacity: var(--hero-watermark-op);
-            /* Reuses what was originally the hero's own
-               heroTextWatermarkLive keyframe outright rather than a
-               bespoke one, this mark already shares that same
-               var(--ink)/--hero-watermark-op pairing (see above), so its
-               opacity keyframe (tied to that same variable) is correct
-               here unchanged; only the corner differs. */
+            /* Reuses the hero's own heroTextWatermarkLive keyframe outright
+               rather than a bespoke one — this mark already shares the
+               hero's exact var(--ink)/--hero-watermark-op pairing (see
+               above), so its opacity keyframe (tied to that same variable)
+               is correct here unchanged; only the corner differs. */
             transform-origin: 85% 0%;
             animation: heroTextWatermarkLive 7.5s ease-in-out infinite;
             animation-delay: -4.8s;
@@ -2629,6 +2659,33 @@
             pointer-events: none;
         }
 
+
+        .hero-watermark {
+            position: absolute;
+            top: -8%;
+            right: -6%;
+            width: min(60vw, 640px);
+            opacity: var(--hero-watermark-op);
+            pointer-events: none;
+            z-index: 1;
+            transform-origin: 62% 42%;
+            animation: heroWatermarkLive 6.5s ease-in-out infinite;
+        }
+        /* A continuous tilt-breathe-glow rather than a spin — a mark this
+           size spinning would read as a loading indicator, not a logo.
+           Four uneven stops (not a symmetric 2-point wobble) keep the
+           motion reading as organic rather than mechanical, and the
+           opacity lift at the peak gives it a soft glow pulse so it stays
+           noticeable as ambient motion without shouting for attention. */
+        @keyframes heroWatermarkLive {
+            0%, 100% { transform: rotate(0deg) scale(1); opacity: var(--hero-watermark-op); }
+            30% { transform: rotate(-4deg) scale(1.02); }
+            60% { transform: rotate(7deg) scale(1.09); opacity: calc(var(--hero-watermark-op) + 0.1); }
+            85% { transform: rotate(2deg) scale(1.03); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-watermark { animation: none; }
+        }
 
         .hero-inner {
             position: relative;
@@ -2822,6 +2879,12 @@
                under the 24px minimum touch-target height (WCAG 2.5.8). */
             padding: 3px 0;
             margin-top: 18px;
+            /* The big faded "Yo7" watermark tracks the hero's own bottom
+               edge (see .hero-text-watermark), so this link — the last
+               piece of real content before it — was sitting right up
+               against the "Y", easy to read as part of the same shape
+               rather than its own separate, clickable line. */
+            margin-bottom: 56px;
             font-family: var(--display);
             font-weight: 600;
             font-size: 12.5px;
@@ -2857,8 +2920,10 @@
 
         /* Desktop-only: below this the hero is the mobile-tuned centred
            stack (unchanged). Above it, centering the same stack just left
-           a huge dead gap either side, this shifts the copy into a real
-           left column with its own max-width instead. */
+           a huge dead gap either side — this shifts the copy into a real
+           left column with its own max-width, and gives the background
+           watermark the freed-up right side as a deliberate art moment
+           instead. */
         @media (min-width: 901px) {
             .hero-inner {
                 align-items: flex-start;
@@ -2867,6 +2932,13 @@
             .hero h1 {
                 max-width: 520px;
                 margin: 6px 0 20px;
+            }
+            .hero-watermark {
+                top: -4%;
+                bottom: auto;
+                right: -8%;
+                transform: none;
+                width: min(46vw, 600px);
             }
         }
 
@@ -4545,9 +4617,9 @@
         .best-sellers-section .view-all-btn { color: #FAF9F2; background: rgba(250, 249, 242, 0.12); }
         .best-sellers-section .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
         .best-sellers-section .swipe-hint { color: rgba(250, 249, 242, 0.55); }
-        /* Same "Yo7" wordmark treatment as .footer-text-watermark (the
-           big faded logo bled off a corner), bottom-right here to
-           balance the two colour glows in ::before
+        /* Same "Yo7" wordmark treatment as .hero-text-watermark/
+           .footer-text-watermark (the big faded logo bled off a corner),
+           bottom-right here to balance the two colour glows in ::before
            above, which already lean toward the top-right and bottom-left.
            z-index: 0, between ::before (also 0, painted first since it's
            a ::before) and .wrap (1), so it sits as a backdrop behind the
@@ -5499,15 +5571,17 @@
         [data-theme="dark"] footer {
             color: var(--text-body);
         }
-        /* Same "Yo7" wordmark treatment as .best-sellers-watermark, sized
-           noticeably larger for the footer's own bottom-right corner,
-           the two earlier attempts here (a near-invisible bottom-right
+        /* Same "Yo7" wordmark treatment as .hero-text-watermark (the big
+           faded logo bleeding off the hero's bottom-left corner), mirrored
+           to the footer's bottom-right corner and sized noticeably larger
+           — the two earlier attempts here (a near-invisible bottom-right
            seal icon, then a small animated one at bottom-left) both read
            as texture rather than an actual logo. z-index: 0, same as
            those did, keeps it behind every bit of footer content so it
            never competes with the copyright line or payment badges for
            attention regardless of how big it reads. bottom offset is em,
-           not %, a % of the footer's own height blows up into hundreds of
+           not %, same reason .hero-text-watermark itself already uses em
+           — a % of the footer's own height blows up into hundreds of
            pixels on mobile once the footer stacks into one tall column
            (the exact bug the previous bottom-left version hit). Colour
            flips with the theme now the footer itself does (dark-mode
@@ -11602,6 +11676,9 @@
             <div class="advert-carousel" id="advertCarousel"></div>
         </section>
         <header class="hero">
+            <svg class="hero-watermark" viewBox="65 25 875 900">
+                <use href="#seal-mark" />
+            </svg>
             <div class="wrap hero-inner">
                 <div class="eyebrow">African &amp; Caribbean grocery store, Ipswich.</div>
                 <h1><span class="hero-accent stretch-word" style="animation-delay:0s">African</span> <span class="stretch-word" style="animation-delay:0.10s">&amp;</span> <span class="stretch-word" style="animation-delay:0.20s">Caribbean</span> <span class="stretch-word" style="animation-delay:0.30s">Groceries,</span> <span class="stretch-word" style="animation-delay:0.40s">Delivered</span> <span class="stretch-word" style="animation-delay:0.50s">Across</span> <span class="stretch-word" style="animation-delay:0.60s">the</span> <span class="hero-accent stretch-word" style="animation-delay:0.70s">UK</span>.</h1>
@@ -11622,6 +11699,7 @@
             <div class="hero-scroll-cue" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             </div>
+            <div class="text-watermark hero-text-watermark" aria-hidden="true">YO<span class="accent">7</span></div>
         </header>
 
         <!-- Signed-in returning customers only — hidden by default, shown by
