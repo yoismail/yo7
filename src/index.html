@@ -5209,73 +5209,6 @@
             .offer-card { flex-basis: 168px; max-width: 168px; }
         }
 
-        /* ================= PICK CLUSTER (desktop: Best Sellers / Special Offers) =================
-           Groups of four down the strip, one bigger "pick" (.pick-feature)
-           beside a compact stack of three (.pick-small), instead of four
-           identical boxes in a row - the repeated-equal-unit pattern that
-           read as flat/templated no matter how its own chrome was styled
-           (same lesson "Shop by department"'s mobile rework landed on).
-           These two modifier classes reuse .offer-card/.best-seller-card
-           and their existing thumb/body/price markup as-is, hover, the
-           reveal-in animation, the rank badge, the remove button, the add
-           button all keep working unchanged; they only resize and relay
-           out the SAME card and drop its pale-gradient-box/bottom-accent-
-           line skin in favour of the photo filling the frame, since that
-           skin was the exact thing every card on the site shared. Desktop
-           only (>=900px, the same breakpoint these two carousels already
-           use for their own mobile card width) - mobile keeps today's
-           plain horizontal scroll of individual cards, see
-           renderOfferCarousel()/renderBestSellersSpotlight() for the
-           branch that decides which markup to build, and the
-           matchMedia-change listener near the carousel arrows that
-           re-renders both on actually crossing the breakpoint. */
-        @media (min-width: 900px) {
-            .pick-cluster { display: flex; gap: 16px; flex: 0 0 auto; align-items: flex-start; scroll-snap-align: start; }
-
-            .offer-card.pick-feature, .best-seller-card.pick-feature,
-            .offer-card.pick-small, .best-seller-card.pick-small {
-                border-bottom: none;
-                border-radius: 14px;
-                box-shadow: none;
-            }
-            .pick-feature .thumb, .pick-small .thumb {
-                background: #f1efe6;
-            }
-            [data-theme="dark"] .pick-feature .thumb, [data-theme="dark"] .pick-small .thumb {
-                background: #1c2611;
-            }
-            .pick-feature .thumb .product-photo-img, .pick-small .thumb .product-photo-img {
-                object-fit: cover;
-            }
-
-            .offer-card.pick-feature, .best-seller-card.pick-feature {
-                flex: 0 0 300px; max-width: 300px;
-                box-shadow: 0 10px 28px rgba(var(--border-rgb), 0.14);
-            }
-            .pick-feature .thumb { aspect-ratio: 1/1; }
-            .pick-feature h4 { font-size: 16.5px; }
-
-            .pick-stack { display: flex; flex-direction: column; gap: 14px; flex: 0 0 300px; }
-            .offer-card.pick-small, .best-seller-card.pick-small {
-                display: flex; align-items: center; gap: 12px;
-                flex: 0 0 auto; max-width: none;
-            }
-            .pick-small .thumb {
-                flex: 0 0 68px; width: 68px; height: 68px; aspect-ratio: unset;
-                border-radius: 10px;
-            }
-            .pick-small .body { padding: 8px 10px; border-radius: 10px; flex: 1; min-width: 0; background: var(--card-bg); }
-            .pick-small h4 { font-size: 13px; min-height: 0; margin-bottom: 2px; }
-            .pick-small .cat { display: none; }
-            .pick-small .price { font-size: 12.5px; }
-            .pick-small .product-row { gap: 6px; }
-            .pick-small .card-add-btn { width: 24px; height: 24px; }
-            .pick-small .card-add-btn svg { width: 11px; height: 11px; }
-            .pick-small .best-seller-rank, .pick-small .offer-tag { top: 3px; left: 3px; transform: scale(0.55); transform-origin: top left; }
-            .pick-small .offer-remove-btn { width: 20px; height: 20px; }
-            .pick-small .offer-remove-btn svg { width: 11px; height: 11px; }
-        }
-
         .delivery {
             padding: 96px 0;
             /* Same corner-glow language as the hero/story above. Here
@@ -19457,10 +19390,24 @@
         }
         window.removeAdvertBanner = removeAdvertBanner;
 
-        function offerCardHTML(p, extraClass) {
-            const pct = Math.round((1 - p.salePrice / p.price) * 100);
-            return `
-    <a class="offer-card${extraClass ? ' ' + extraClass : ''} cat-tile-reveal" href="#/product/${p.catSlug}/${p.idx}">
+        function renderOfferCarousel() {
+            // Shuffled per render — the strip only shows a handful of cards
+            // before a customer has to scroll, so a fixed catalog order
+            // would mean the same few products dominate visibility on every
+            // visit while the rest of the sale never gets seen.
+            const items = shuffleArray(offerItems());
+            const strip = document.getElementById('offerCarousel');
+            if (!strip) return;
+            const offerSection = strip.closest('.offer-section');
+            if (items.length === 0) {
+                if (offerSection) offerSection.style.display = 'none';
+                return;
+            }
+            if (offerSection) offerSection.style.display = '';
+            const cardHTML = items.map((p, i) => {
+                const pct = Math.round((1 - p.salePrice / p.price) * 100);
+                return `
+    <a class="offer-card cat-tile-reveal" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
         <span class="offer-tag">${pct}% off</span>
         <button type="button" class="offer-remove-btn" onclick="event.preventDefault(); event.stopPropagation(); removeProductFromOffer('${p.catSlug}', ${p.idx});" aria-label="Remove ${escapeHtml(p.name)} from special offers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -19477,41 +19424,8 @@
         </div>
       </div>
     </a>`;
-        }
-        function renderOfferCarousel() {
-            // Shuffled per render — the strip only shows a handful of cards
-            // before a customer has to scroll, so a fixed catalog order
-            // would mean the same few products dominate visibility on every
-            // visit while the rest of the sale never gets seen.
-            const items = shuffleArray(offerItems());
-            const strip = document.getElementById('offerCarousel');
-            if (!strip) return;
-            const offerSection = strip.closest('.offer-section');
-            if (items.length === 0) {
-                if (offerSection) offerSection.style.display = 'none';
-                return;
-            }
-            if (offerSection) offerSection.style.display = '';
-            // Desktop groups the strip into clusters of one bigger "pick"
-            // plus three compact ones instead of four identical cards in a
-            // row (see the .pick-cluster CSS comment for why) - mobile
-            // keeps the plain scroll of individual cards it already had,
-            // matched to the same >=900px breakpoint these two carousels
-            // already use for their own mobile card width.
-            if (window.matchMedia('(min-width: 900px)').matches) {
-                const groups = [];
-                for (let i = 0; i < items.length; i += 4) groups.push(items.slice(i, i + 4));
-                strip.innerHTML = groups.map(group => {
-                    const [featured, ...rest] = group;
-                    return `
-    <div class="pick-cluster">
-      ${offerCardHTML(featured, 'pick-feature')}
-      <div class="pick-stack">${rest.map(p => offerCardHTML(p, 'pick-small')).join('')}</div>
-    </div>`;
-                }).join('');
-            } else {
-                strip.innerHTML = items.map(p => offerCardHTML(p)).join('');
-            }
+            }).join('');
+            strip.innerHTML = cardHTML;
             observeSectionReveal(offerSection, '.offer-card');
         }
         function renderNewCarousel() {
@@ -19615,11 +19529,20 @@
             }, intervalMs);
         }
         const BEST_SELLER_STAR_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
-        function bestSellerCardHTML(p, rank, extraClass) {
-            return `
-    <a class="best-seller-card${extraClass ? ' ' + extraClass : ''} cat-tile-reveal" href="#/product/${p.catSlug}/${p.idx}">
+        function renderBestSellersSpotlight() {
+            const items = bestSellerItems();
+            const strip = document.getElementById('bestSellerCarousel');
+            if (!strip) return;
+            const bestSellersSection = strip.closest('.best-sellers-section');
+            if (items.length === 0) {
+                if (bestSellersSection) bestSellersSection.style.display = 'none';
+                return;
+            }
+            if (bestSellersSection) bestSellersSection.style.display = '';
+            strip.innerHTML = items.map((p, i) => `
+    <a class="best-seller-card cat-tile-reveal" href="#/product/${p.catSlug}/${p.idx}">
       <div class="thumb">
-        <span class="best-seller-rank">${BEST_SELLER_STAR_SVG}#${rank}</span>
+        <span class="best-seller-rank">${BEST_SELLER_STAR_SVG}#${i + 1}</span>
         ${productPhotoHTML(p, p.name)}
       </div>
       <div class="body">
@@ -19632,40 +19555,7 @@
           </button>
         </div>
       </div>
-    </a>`;
-        }
-        function renderBestSellersSpotlight() {
-            const items = bestSellerItems();
-            const strip = document.getElementById('bestSellerCarousel');
-            if (!strip) return;
-            const bestSellersSection = strip.closest('.best-sellers-section');
-            if (items.length === 0) {
-                if (bestSellersSection) bestSellersSection.style.display = 'none';
-                return;
-            }
-            if (bestSellersSection) bestSellersSection.style.display = '';
-            // Same desktop cluster-of-four/mobile plain-strip split as
-            // renderOfferCarousel() - see its own comment and the
-            // .pick-cluster CSS comment for why. Rank (#1, #2...) stays
-            // tied to the item's real position in the full ranked list,
-            // not its position within its group of 4.
-            if (window.matchMedia('(min-width: 900px)').matches) {
-                const groups = [];
-                for (let i = 0; i < items.length; i += 4) groups.push(items.slice(i, i + 4));
-                let rank = 0;
-                strip.innerHTML = groups.map(group => {
-                    const [featured, ...rest] = group;
-                    const featuredRank = ++rank;
-                    const restHTML = rest.map(p => bestSellerCardHTML(p, ++rank, 'pick-small')).join('');
-                    return `
-    <div class="pick-cluster">
-      ${bestSellerCardHTML(featured, featuredRank, 'pick-feature')}
-      <div class="pick-stack">${restHTML}</div>
-    </div>`;
-                }).join('');
-            } else {
-                strip.innerHTML = items.map((p, i) => bestSellerCardHTML(p, i + 1)).join('');
-            }
+    </a>`).join('');
             observeSectionReveal(bestSellersSection, '.best-seller-card');
         }
         function renderNewArrivalsPage() {
@@ -29394,19 +29284,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         const bestSellerCarouselStrip = document.getElementById('bestSellerCarousel');
         if (bestSellerCarouselPrev && bestSellerCarouselStrip) bestSellerCarouselPrev.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, -460));
         if (bestSellerCarouselNext && bestSellerCarouselStrip) bestSellerCarouselNext.addEventListener('click', () => scrollCarouselStrip(bestSellerCarouselStrip, 460));
-        // Both carousels branch their markup on the same 900px check at
-        // render time (see renderOfferCarousel()/renderBestSellersSpotlight()
-        // and the .pick-cluster CSS comment) - without this, resizing or
-        // rotating a tablet across that width left whichever markup was
-        // built at load time in place until the next full re-render (an
-        // admin edit, a page revisit), not actually in sync with the CSS
-        // breakpoint that's already switched. Same matchMedia-change
-        // pattern as the shop filter dropdown's own 641px cleanup above,
-        // fired both directions since either crossing needs new markup.
-        window.matchMedia('(min-width: 900px)').addEventListener('change', () => {
-            renderOfferCarousel();
-            renderBestSellersSpotlight();
-        });
         const buyAgainCarouselPrev = document.getElementById('buyAgainCarouselPrev');
         const buyAgainCarouselNext = document.getElementById('buyAgainCarouselNext');
         const buyAgainCarouselStrip = document.getElementById('buyAgainCarousel');
