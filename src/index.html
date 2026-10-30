@@ -5101,6 +5101,89 @@
             }
         }
 
+        /* Mobile-only alternative to the pill row above (see
+           renderHeroGlimpse): one large photo-led "featured" department
+           plus the rest as a plain typographic list, instead of small
+           badges that read as cramped once there's only phone-width
+           room for them. Hidden by default/desktop, swapped in with the
+           pill row hidden at the same breakpoint below. */
+        .hero-glimpse-editorial { display: none; }
+        .hge-feature {
+            position: relative;
+            display: block;
+            border-radius: 22px;
+            overflow: hidden;
+            aspect-ratio: 16/11;
+            margin-bottom: 8px;
+            text-decoration: none;
+            box-shadow: 0 16px 36px rgba(var(--border-rgb), 0.22);
+        }
+        .hge-feature-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        .hge-feature-fallback {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(155deg, var(--chartreuse-rich), var(--aubergine-mid));
+        }
+        .hge-feature-fallback .glyph-icon { width: 46px; height: 46px; color: var(--cream); }
+        .hge-feature-scrim {
+            position: absolute; inset: 0;
+            background: linear-gradient(0deg, rgba(4,37,0,0.85) 0%, rgba(4,37,0,0.35) 42%, rgba(4,37,0,0) 68%);
+        }
+        .hge-feature-text { position: absolute; left: 22px; right: 22px; bottom: 20px; }
+        .hge-feature-kicker {
+            font-family: var(--display); font-weight: 600; font-size: 11.5px; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--chartreuse-soft); margin-bottom: 6px;
+        }
+        .hge-feature-name {
+            font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1.04;
+            color: var(--cream); letter-spacing: -0.015em;
+        }
+        .hge-list { margin-top: 4px; }
+        .hge-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 17px 2px; border-bottom: 1px solid rgba(var(--border-rgb), 0.12);
+            text-decoration: none;
+            font-family: var(--display); font-weight: 700; font-size: 19px;
+            color: var(--heading); letter-spacing: -0.01em;
+        }
+        .hge-row:last-child { border-bottom: none; }
+        .hge-row svg { flex-shrink: 0; width: 19px; height: 19px; color: var(--heading); opacity: 0.55; }
+        @media (hover: hover) and (pointer: fine) {
+            .hge-row svg { transition: opacity 0.2s ease, transform 0.2s ease; }
+            .hge-row:hover svg { opacity: 1; transform: translateX(2px); }
+        }
+        @media (max-width: 700px) {
+            .hero-glimpse-row { display: none; }
+            .hero-glimpse-editorial { display: block; }
+            /* The dark photo backdrop stays a desktop-only treatment at
+               this width, the featured department's own photo above
+               already does that job, a second photo band behind it as
+               well just competed with it. Reverts the .has-photo
+               overrides (.page-header-editable's own, see its comment)
+               back to plain light-section colours, since there's no
+               longer a dark photo under this heading to contrast
+               against. */
+            .hero-glimpse-strip.page-header-editable {
+                background: var(--card-bg);
+                color: var(--ink);
+            }
+            .hero-glimpse-strip .hero-glimpse-bg,
+            .hero-glimpse-strip .hero-glimpse-scrim { display: none; }
+            .hero-glimpse-strip.has-photo .hero-glimpse-head h2,
+            .hero-glimpse-head h2 { color: var(--heading); }
+            .hero-glimpse-strip.page-header-editable.has-photo .section-eyebrow {
+                color: var(--chartreuse-rich);
+            }
+            [data-theme="dark"] .hero-glimpse-strip.page-header-editable.has-photo .section-eyebrow {
+                color: var(--chartreuse-soft);
+            }
+            /* Edits the section's dark background photo, which is hidden
+               at this width (above), nothing here for an admin to
+               change from a phone, so these stay hidden even in edit
+               mode. */
+            .hero-glimpse-strip .card-edit-btn,
+            .hero-glimpse-strip .page-header-remove-btn { display: none !important; }
+        }
+
         /* A warm terracotta wash — the same colour the site already uses
            for "deal/reduction" everywhere else (.price-off) — rather than
            the plain var(--section-alt-bg) tint every other section defaults
@@ -11779,6 +11862,7 @@
                     <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(26px,3.6vw,34px); letter-spacing:-0.01em;">Shop by department</h2>
                 </div>
                 <div class="hero-glimpse-row" id="heroGlimpseRow"></div>
+                <div class="hero-glimpse-editorial" id="heroGlimpseEditorial"></div>
             </div>
         </div>
 
@@ -15104,8 +15188,34 @@
         function renderHeroGlimpse() {
             const row = document.getElementById('heroGlimpseRow');
             if (!row) return;
+            const hrefFor = g => g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`;
             row.innerHTML = GROUPS.map((g, i) => `
-      <a class="hero-glimpse-pill" href="${g.categories.length === 1 ? `#/category/${g.categories[0]}` : `#/group/${g.slug}`}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+      <a class="hero-glimpse-pill" href="${hrefFor(g)}"><span class="emoji${g.photo ? ' has-photo' : ''}">${g.photo ? `<img src="${g.photo}" alt="" loading="lazy">` : g.icon}</span>${g.name.replace(/&amp;/g, '&')}</a>`).join('');
+
+            // Mobile-only editorial layout (see .hero-glimpse-editorial's
+            // own CSS comment for why it exists alongside the pill row
+            // above rather than replacing it): one department shown large
+            // as a photo-led feature, the rest as a plain typographic
+            // list. Same GROUPS data as the pill row, not a second,
+            // separately maintained list.
+            const editorial = document.getElementById('heroGlimpseEditorial');
+            if (!editorial) return;
+            const [featured, ...rest] = GROUPS;
+            const featuredHTML = !featured ? '' : `
+      <a class="hge-feature" href="${hrefFor(featured)}">
+        ${featured.photo ? `<img class="hge-feature-img" src="${featured.photo}" alt="" loading="lazy">` : `<div class="hge-feature-fallback">${featured.icon}</div>`}
+        <div class="hge-feature-scrim"></div>
+        <div class="hge-feature-text">
+          <div class="hge-feature-kicker">Featured department</div>
+          <div class="hge-feature-name">${featured.name.replace(/&amp;/g, '&')}</div>
+        </div>
+      </a>`;
+            const listHTML = rest.map(g => `
+      <a class="hge-row" href="${hrefFor(g)}">
+        <span>${g.name.replace(/&amp;/g, '&')}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>`).join('');
+            editorial.innerHTML = featuredHTML + `<div class="hge-list">${listHTML}</div>`;
         }
 
         /* ================= DELIVERY FEE (weight-based) =================
