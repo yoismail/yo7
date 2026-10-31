@@ -116,13 +116,40 @@ Deno.serve(async (req) => {
   // fast path from ever both reaching the insert for the same order,
   // which used to burn two order_number sequence values every time they
   // raced (the loser's insert still fired the number-assigning trigger
-  // before hitting the unique-constraint rejection). No payment_method
-  // expansion here the way confirm-order does for its nicer "Visa ••••
-  // 4242"-style summary — keeping this fallback path's one Stripe call
-  // (already spent verifying the signature) rather than adding a second
-  // one for a path that, by design, only actually fires rarely.
+  // before hitting the unique-constraint rejection).
+  //
+  // Same payment_method expansion + brand/wallet formatting confirm-order
+  // uses for its "Visa •••• 4242" / "Apple Pay" summary. This path used
+  // to skip it to save a Stripe call, leaving every order finalized here
+  // (rather than by the customer's own browser) stuck on the generic
+  // "Paid online" fallback on a real invoice, a real Apple Pay order hit
+  // exactly that. This path only fires when the customer's own browser
+  // didn't make it back to confirm-order (dropped connection, closed
+  // tab), so the extra round trip here is rare, not on the hot path of
+  // every checkout.
+  let paymentMethodSummary = "Paid online";
+  try {
+    const pmId = typeof paymentIntent.payment_method === "string" ? paymentIntent.payment_method : paymentIntent.payment_method?.id;
+    if (pmId) {
+      const pm = await stripe.paymentMethods.retrieve(pmId);
+      if (pm.type === "card" && pm.card) {
+        const wallet = pm.card.wallet?.type;
+        if (wallet === "apple_pay") paymentMethodSummary = "Apple Pay";
+        else if (wallet === "google_pay") paymentMethodSummary = "Google Pay";
+        else {
+          const brand = pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1);
+          paymentMethodSummary = `${brand} •••• ${pm.card.last4}`;
+        }
+      }
+    }
+  } catch (err) {
+    // Non-fatal: an order with the generic fallback summary is still a
+    // correct, fully paid order, same as before this call existed.
+    console.error("stripe-webhook: paymentMethods.retrieve failed (non-fatal, using fallback summary):", err instanceof Error ? err.message : err);
+  }
+
   const { data: result, error: finalizeError } = await db
-    .rpc("finalize_order_from_pending", { p_payment_intent_id: paymentIntent.id })
+    .rpc("finalize_order_from_pending", { p_payment_intent_id: paymentIntent.id, p_payment_method_summary: paymentMethodSummary })
     .single();
 
   if (finalizeError) {

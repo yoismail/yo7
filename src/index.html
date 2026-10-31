@@ -12675,7 +12675,7 @@
                         </div>
                     </div>
 
-                    <div class="invoice-section-title">Delivered to</div>
+                    <div class="invoice-section-title" id="invAddressTitle">Billed to &amp; delivered to</div>
                     <div class="invoice-addr" id="invAddress"></div>
                     <div class="delivery-fee-note" id="invDeliveryEta" style="display:none;"></div>
 
@@ -25238,6 +25238,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             document.getElementById('invDate').textContent = lastOrder.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' at ' + lastOrder.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const di = lastOrder.delivery_info || {};
             const isPickup = lastOrder.fulfilment === 'pickup';
+            document.getElementById('invAddressTitle').textContent = isPickup ? 'Billed to & collecting in store' : 'Billed to & delivered to';
             document.getElementById('invAddress').innerHTML = isPickup
                 ? `${escapeHtml(di.name || '')}<br>Collecting in store: 7 Lancaster Road<br>Ipswich, IP4 2NY<br>${escapeHtml(di.phone || '')}`
                 : `${escapeHtml(di.name || '')}<br>${escapeHtml(di.address || '')}<br>${escapeHtml(di.town || '')} ${escapeHtml(di.postcode || '')}<br>${escapeHtml(di.phone || '')}`;
@@ -25506,10 +25507,10 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             pdf.line(margin, y, pageWidth - margin, y);
             y += 22;
 
-            // ---- Delivered to / Collecting ----
+            // ---- Billed to & delivered to / Collecting ----
             const di = order.delivery_info || {};
             setText(8.5, 'bold', muted);
-            pdf.text(order.fulfilment === 'pickup' ? 'COLLECTING IN STORE' : 'DELIVERED TO', margin, y);
+            pdf.text(order.fulfilment === 'pickup' ? 'BILLED TO & COLLECTING IN STORE' : 'BILLED TO & DELIVERED TO', margin, y);
             y += 14;
             setText(10, 'normal', ink);
             const addrLines = order.fulfilment === 'pickup'
