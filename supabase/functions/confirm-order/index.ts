@@ -42,6 +42,7 @@
 
 import Stripe from "npm:stripe@17.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { formatPaymentMethodSummary } from "../_shared/payment-summary.ts";
 
 const ALLOWED_ORIGINS = new Set([
   "https://yo7foods.co.uk",
@@ -177,19 +178,12 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Same brand/wallet formatting create-payment-intent's own
-  // action:"summarize" path already used.
-  let paymentMethodSummary = "Paid online";
+  // Shared, tested wallet/brand formatting, also used by stripe-webhook
+  // for the rare case where that path (not this one) finalizes the order,
+  // see _shared/payment-summary.ts's own comment for why this moved out
+  // of being copy-pasted between the two.
   const pm = paymentIntent.payment_method;
-  if (pm && typeof pm === "object" && pm.type === "card" && pm.card) {
-    const wallet = pm.card.wallet?.type;
-    if (wallet === "apple_pay") paymentMethodSummary = "Apple Pay";
-    else if (wallet === "google_pay") paymentMethodSummary = "Google Pay";
-    else {
-      const brand = pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1);
-      paymentMethodSummary = `${brand} •••• ${pm.card.last4}`;
-    }
-  }
+  const paymentMethodSummary = formatPaymentMethodSummary(pm && typeof pm === "object" ? pm : null);
 
   // finalize_order_from_pending (see its own comment) does the actual
   // work — looks up pending_checkouts, inserts the order from it, and
