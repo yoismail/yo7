@@ -1,0 +1,44 @@
+name: Deno tests
+
+# Runs the Deno.test() suite in supabase/functions/_shared/ on every push
+# or pull request that touches it, so a change to the pure delivery-fee
+# or payment-method-summary logic (the kind of thing create-payment-intent,
+# confirm-order and stripe-webhook all import) can't merge without those
+# tests passing, instead of only ever being run by hand before a ship.
+#
+# This only covers the pure, dependency-free modules in _shared/ (no
+# live Stripe/Supabase network access needed or available here) - it
+# can't test the edge functions themselves, which still need a manual
+# supabase functions deploy after merging, see README.md's "Supabase
+# backend" section.
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/_shared/**'
+      - '.github/workflows/deno-tests.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/_shared/**'
+      - '.github/workflows/deno-tests.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deno-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deno-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run Deno tests
+        run: deno test supabase/functions/_shared/
