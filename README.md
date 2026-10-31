@@ -119,7 +119,12 @@ It needs no live Supabase/Stripe access, just plain mock objects, so it
 runs offline and should be checked after touching anything in
 `_shared/` or any function that imports from it. Note that `_shared/`
 itself is never deployed (the Supabase CLI skips underscore-prefixed
-folders); only the functions that import from it need redeploying.
+folders); only the functions that import from it need redeploying
+after a merge, this test suite doesn't cover that step.
+
+`.github/workflows/deno-tests.yml` also runs this automatically on
+every push or pull request that touches `supabase/functions/_shared/`,
+so a change to this logic can't merge without the tests passing.
 
 There's no equivalent one-command push for `schema.sql` — it was
 captured via `db dump` for reference/diffing, not `db push` migration
