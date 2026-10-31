@@ -107,6 +107,20 @@ To deploy a change made here back to the live project:
 supabase functions deploy <name>
 ```
 
+`supabase/functions/_shared/` holds pure logic shared between functions
+(delivery fee tiering, payment-method-summary formatting), with real
+`Deno.test()` coverage alongside each module. Run it with:
+
+```
+deno test supabase/functions/_shared/
+```
+
+It needs no live Supabase/Stripe access, just plain mock objects, so it
+runs offline and should be checked after touching anything in
+`_shared/` or any function that imports from it. Note that `_shared/`
+itself is never deployed (the Supabase CLI skips underscore-prefixed
+folders); only the functions that import from it need redeploying.
+
 There's no equivalent one-command push for `schema.sql` — it was
 captured via `db dump` for reference/diffing, not `db push` migration
 tracking, since the project's schema history was never managed through

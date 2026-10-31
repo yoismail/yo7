@@ -65,6 +65,7 @@
 
 import Stripe from "npm:stripe@17.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveWeightTierFee, safeWeight } from "../_shared/delivery.ts";
 
 // Swap for your real domain once this is live — restricting the
 // allowed origin means this function can only ever be called from
@@ -500,20 +501,12 @@ Deno.serve(async (req) => {
       const price = o?.price ?? b.price;
       const salePrice = o && o.sale_price !== undefined ? o.sale_price : b.sale_price;
       const stock = o?.stock ?? b.stock ?? "in";
-      // Guards against a non-numeric or non-finite weight value the same
-      // way every client-side weight read already does (typeof === "number"
-      // checks throughout index.html), rather than trusting the DB column's
-      // actual contents. Without this, a single malformed weight anywhere
-      // (a stray string, Infinity, NaN) poisons totalWeight below into NaN,
-      // and `NaN <= t.maxWeight` is false for every tier, silently falling
-      // through to the highest delivery-fee tier instead of the lowest
-      // (unweighed) one the client's own total would show, a real order was
-      // quoted a low weight-tier fee on the delivery step and then charged
-      // the top tier at payment, this closes that gap at its source so
-      // every place below that reads `.weight` off a trusted() result gets
-      // a safe number for free.
-      const rawWeight = (o?.weight ?? b.weight) ?? 0;
-      const weight = typeof rawWeight === "number" && Number.isFinite(rawWeight) ? rawWeight : 0;
+      // safeWeight() guards against a non-numeric or non-finite weight
+      // value the same way every client-side weight read already does
+      // (typeof === "number" checks throughout index.html), rather than
+      // trusting the DB column's actual contents, see its own comment
+      // in _shared/delivery.ts for the real bug this closes.
+      const weight = safeWeight(o?.weight ?? b.weight);
       // An override's stock_quantity (even if explicitly null) wins over
       // the base row's, same layering as every other field here — an
       // admin can only ever set this via product_overrides/
@@ -773,17 +766,13 @@ Deno.serve(async (req) => {
 
     // ---- delivery ---- (mirrors the client's resolveDeliveryFee exactly,
     // same weight tiers + threshold rules, both loaded from the same
-    // pricing_settings row so the two can't drift apart)
+    // pricing_settings row so the two can't drift apart. Weight-tier
+    // resolution itself is shared/tested code, see _shared/delivery.ts)
     const fulfilmentMethod = body.fulfilmentMethod === "pickup" ? "pickup" : "delivery";
     let delivery = 0;
     if (fulfilmentMethod === "delivery") {
-      // Belt-and-braces against the same NaN-falls-through-to-the-top-tier
-      // failure the trusted()/weight guards above already close at the
-      // source. totalWeight should always be finite by construction now,
-      // this just makes that true regardless of anything upstream.
-      const safeWeight = Number.isFinite(totalWeight) ? totalWeight : 0;
-      const tier = DELIVERY_WEIGHT_TIERS.find((t) => safeWeight <= t.maxWeight) ?? DELIVERY_WEIGHT_TIERS[DELIVERY_WEIGHT_TIERS.length - 1];
-      delivery = tier.fee;
+      delivery = resolveWeightTierFee(totalWeight, DELIVERY_WEIGHT_TIERS);
+      const safeTotalWeight = safeWeight(totalWeight);
       const itemCount = lines.reduce((s, l) => s + l.qty, 0);
       // validate-discount's own request body never includes deliveryInfo
       // (see index.html's validateDiscount()) - this just falls through to
@@ -794,7 +783,7 @@ Deno.serve(async (req) => {
       for (const rule of DELIVERY_THRESHOLD_RULES) {
         if (rule.region === "ipswich" && !inIpswich) continue;
         if (rule.region === "outside_ipswich" && inIpswich) continue;
-        const actual = rule.conditionType === "price" ? subtotal : rule.conditionType === "weight" ? safeWeight : rule.conditionType === "items" ? itemCount : null;
+        const actual = rule.conditionType === "price" ? subtotal : rule.conditionType === "weight" ? safeTotalWeight : rule.conditionType === "items" ? itemCount : null;
         if (actual === null) continue;
         const met = rule.operator === "gte" ? actual >= rule.value : actual <= rule.value;
         if (!met) continue;

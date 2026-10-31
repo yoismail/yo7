@@ -50,6 +50,7 @@
 
 import Stripe from "npm:stripe@17.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { formatPaymentMethodSummary, PAYMENT_METHOD_FALLBACK_SUMMARY } from "../_shared/payment-summary.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -118,29 +119,21 @@ Deno.serve(async (req) => {
   // raced (the loser's insert still fired the number-assigning trigger
   // before hitting the unique-constraint rejection).
   //
-  // Same payment_method expansion + brand/wallet formatting confirm-order
-  // uses for its "Visa •••• 4242" / "Apple Pay" summary. This path used
-  // to skip it to save a Stripe call, leaving every order finalized here
-  // (rather than by the customer's own browser) stuck on the generic
-  // "Paid online" fallback on a real invoice, a real Apple Pay order hit
-  // exactly that. This path only fires when the customer's own browser
-  // didn't make it back to confirm-order (dropped connection, closed
-  // tab), so the extra round trip here is rare, not on the hot path of
-  // every checkout.
-  let paymentMethodSummary = "Paid online";
+  // Same payment_method expansion + shared, tested brand/wallet formatting
+  // confirm-order uses for its "Visa •••• 4242" / "Apple Pay" summary (see
+  // _shared/payment-summary.ts). This path used to skip it to save a
+  // Stripe call, leaving every order finalized here (rather than by the
+  // customer's own browser) stuck on the generic "Paid online" fallback
+  // on a real invoice, a real Apple Pay order hit exactly that. This path
+  // only fires when the customer's own browser didn't make it back to
+  // confirm-order (dropped connection, closed tab), so the extra round
+  // trip here is rare, not on the hot path of every checkout.
+  let paymentMethodSummary = PAYMENT_METHOD_FALLBACK_SUMMARY;
   try {
     const pmId = typeof paymentIntent.payment_method === "string" ? paymentIntent.payment_method : paymentIntent.payment_method?.id;
     if (pmId) {
       const pm = await stripe.paymentMethods.retrieve(pmId);
-      if (pm.type === "card" && pm.card) {
-        const wallet = pm.card.wallet?.type;
-        if (wallet === "apple_pay") paymentMethodSummary = "Apple Pay";
-        else if (wallet === "google_pay") paymentMethodSummary = "Google Pay";
-        else {
-          const brand = pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1);
-          paymentMethodSummary = `${brand} •••• ${pm.card.last4}`;
-        }
-      }
+      paymentMethodSummary = formatPaymentMethodSummary(pm);
     }
   } catch (err) {
     // Non-fatal: an order with the generic fallback summary is still a
