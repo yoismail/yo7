@@ -45,17 +45,21 @@ demand) and must run **after** the two generators above — they depend on
 `src/index.html` staying human-readable (exact-line-number and
 marker-based text patching), so minifying first would break them. It
 minifies the shared `<style>`/main `<script>` blocks once (confirmed
-byte-identical across every generated page) and substitutes the result
-into each page, rather than re-minifying 260 near-identical files from
-scratch.
+byte-identical across every generated page), writes each to its own
+content-hashed file under `assets/` (`app.<hash>.css`/`app.<hash>.js`),
+and points every page at those via `<link rel="stylesheet">`/`<script
+defer src>` instead of inlining the minified text, so a visitor's
+browser caches that ~700KB once (`_headers` gives `/assets/*` an
+immutable, year-long lifetime, safe because the hash changes whenever the
+content does) rather than re-downloading it on every single page.
 
 **This runs automatically now** — `.github/workflows/regenerate-pages.yml`
 re-runs all three scripts on every push to `main` that touches
 `src/index.html`, **and on its own hourly schedule** (to pick up
 admin-panel changes — a new product, an edited price, a delete — none of
 which touch this repo on their own), and pushes back any resulting diff
-in `index.html`, the generated page directories, and `sitemap.xml` on
-its own. You only need to run them by hand for local testing/preview
+in `index.html`, `assets/`, the generated page directories, and
+`sitemap.xml` on its own. You only need to run them by hand for local testing/preview
 (and locally, without network access to Supabase, only the first two
 generators will actually complete); committing their output yourself is
 no longer required.
