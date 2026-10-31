@@ -4292,98 +4292,84 @@
             grid-template-columns: repeat(5, 1fr);
             gap: 20px;
         }
-        /* Dark panel with the photo set into the brand's own seal shape
-           (#seal-clip, see the hidden defs <svg> near the top of <body>)
-           instead of a plain rectangle, same reasoning as the mobile
-           "Shop by department" rework and the Best Sellers band: a photo
-           cropped to a shape that's actually ours reads as considered
-           rather than a generic icon-in-a-box. Fixed dark regardless of
-           site theme (var(--cream)/var(--chartreuse-soft), not themed
-           tokens), same as .best-sellers-section's own always-dark band -
-           this card is meant to read the same whichever theme a visitor's
-           on, not flip to a light panel in light mode. */
+        /* Typography-led: confident type does the work, the photo is a
+           small supporting chip rather than the focal point. Replaces the
+           dark seal-panel treatment (PR #182) per direct follow-up
+           feedback. Theme-aware (var(--page-bg)/var(--heading)/
+           --border-rgb), unlike that dark-panel version. */
         .group-card {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            border-radius: 20px;
-            padding: 20px;
-            background: linear-gradient(155deg, #0b3002, #042500);
-            border: none;
+            display: block;
+            border-radius: 18px;
+            padding: 22px;
+            background: var(--page-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
             text-decoration: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 16px 32px rgba(0,0,0,0.3);
-            transition: transform 0.45s cubic-bezier(.16,.84,.44,1), box-shadow 0.45s cubic-bezier(.16,.84,.44,1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: transform 0.45s cubic-bezier(.16,.84,.44,1), box-shadow 0.45s cubic-bezier(.16,.84,.44,1), border-color 0.35s ease;
         }
 
         /* Once a card has entered view, its transition reverts to the fast
            hover-appropriate timing above rather than the slower entrance
            curve below, this rule's higher specificity guarantees that. */
         .group-card.reveal.is-visible {
-            transition: transform 0.45s cubic-bezier(.16,.84,.44,1), box-shadow 0.45s cubic-bezier(.16,.84,.44,1);
+            transition: transform 0.45s cubic-bezier(.16,.84,.44,1), box-shadow 0.45s cubic-bezier(.16,.84,.44,1), border-color 0.35s ease;
         }
         .group-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.35), 0 26px 46px rgba(0,0,0,0.4);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.14);
+            border-color: var(--chartreuse);
         }
-
-        .group-card:hover .group-card-photo {
-            transform: scale(1.06);
+        .group-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
         }
         .group-card-photo {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
             flex-shrink: 0;
-            width: 86px;
-            height: 86px;
-            background-size: 122%;
-            background-position: center 22%;
-            background-color: rgba(166, 204, 46, 0.16);
-            clip-path: url(#seal-clip);
-            transition: transform 0.6s cubic-bezier(.16,.84,.44,1);
+            background-color: rgba(var(--border-rgb), 0.06);
         }
         .group-card-photo.no-photo {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(145deg, var(--chartreuse-rich), var(--aubergine-mid));
+            background: rgba(114, 148, 0, 0.12);
+            color: var(--chartreuse-rich);
         }
         .group-card-photo.no-photo .glyph-icon {
-            width: 40%;
-            height: 40%;
-            color: var(--cream);
-        }
-        .group-card-body {
-            padding: 0;
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-        }
-        .group-card-body h3 {
-            color: var(--cream);
-            font-family: var(--display);
-            font-weight: 800;
-            font-size: 17px;
-            letter-spacing: -0.01em;
-            margin-bottom: 6px;
-            line-height: 1.25;
+            width: 55%;
+            height: 55%;
         }
         .group-card-arrow {
             display: none;
         }
-        .group-card-body p {
-            color: rgba(250, 249, 242, 0.6);
-            font-size: 12px;
-            line-height: 1.45;
-            margin-bottom: 8px;
+        .group-card h3 {
+            color: var(--heading);
+            font-family: var(--display);
+            font-weight: 800;
+            font-size: 30px;
+            letter-spacing: -0.02em;
+            line-height: 1.05;
+            margin-bottom: 10px;
+        }
+        .group-card p {
+            color: rgba(var(--border-rgb), 0.58);
+            font-size: 13px;
+            line-height: 1.5;
         }
         .group-aisles-badge {
-            align-self: flex-start;
-            margin-top: 0;
             font-family: var(--display);
             font-weight: 600;
-            font-size: 10.5px;
-            letter-spacing: 0.05em;
+            font-size: 11px;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
-            color: var(--chartreuse-soft);
+            color: rgba(var(--border-rgb), 0.45);
             background: none;
             padding: 0;
             border-radius: 0;
@@ -11411,15 +11397,6 @@
                     d="M 811.10 500.00 Q 811.10 500.00 799.66 569.40 Q 788.22 638.80 753.14 706.12 Q 718.06 773.44 643.76 788.90 Q 569.47 804.36 499.62 806.04 Q 429.76 807.73 364.45 779.80 Q 299.14 751.87 269.30 688.67 Q 239.46 625.47 211.74 562.73 Q 184.02 500.00 195.32 429.36 Q 206.61 358.71 247.63 296.84 Q 288.64 234.96 362.97 230.13 Q 437.30 225.31 501.91 216.95 Q 566.51 208.60 621.00 244.26 Q 675.50 279.93 741.08 316.13 Q 806.65 352.32 808.88 426.16 Z"
                     fill="var(--aubergine-deep)" />
             </g>
-            <!-- Same outer seal silhouette as #seal-mark, normalized to a
-                 0-1 objectBoundingBox so any HTML element (not just SVG
-                 shapes) can clip to it with plain CSS: clip-path:
-                 url(#seal-clip). Used by .group-card-photo - the group
-                 page's category cards carry the brand's own mark instead
-                 of a generic square/circle crop. -->
-            <clipPath id="seal-clip" clipPathUnits="objectBoundingBox">
-                <path d="M 0.88591 0.5 Q 0.88591 0.5 0.86056 0.58072 Q 0.83522 0.66143 0.79607 0.7418 Q 0.75692 0.82217 0.66916 0.8394 Q 0.5814 0.85662 0.49587 0.8747 Q 0.41035 0.89277 0.33383 0.84855 Q 0.2573 0.80433 0.21439 0.73127 Q 0.17147 0.65821 0.13544 0.57911 Q 0.09941 0.5 0.13618 0.42125 Q 0.17295 0.3425 0.21343 0.26696 Q 0.25391 0.19142 0.33628 0.1675 Q 0.41865 0.14358 0.50019 0.14276 Q 0.58172 0.14195 0.66368 0.16697 Q 0.74563 0.19199 0.81479 0.25354 Q 0.88395 0.3151 0.88493 0.40755 Z" />
-            </clipPath>
         </defs>
     </svg>
 
@@ -20121,33 +20098,33 @@
                 if (c.image) {
                     return `
     <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
-      <div class="group-card-photo" style="background-image:url('${escapeHtml(c.image)}'); background-size:cover; background-position:center;"></div>
-      <div class="group-card-body">
-        <h3>${c.name}</h3>
-        <p>${escapeHtml(c.tagline)}</p>
+      <div class="group-card-top">
+        <div class="group-card-photo" style="background-image:url('${escapeHtml(c.image)}'); background-size:cover; background-position:center;"></div>
         <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
+      <h3>${c.name}</h3>
+      <p>${escapeHtml(c.tagline)}</p>
     </a>`;
                 }
                 if (photoClass) {
                     return `
     <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
-      <div class="group-card-photo ${photoClass}"></div>
-      <div class="group-card-body">
-        <h3>${c.name}</h3>
-        <p>${escapeHtml(c.tagline)}</p>
+      <div class="group-card-top">
+        <div class="group-card-photo ${photoClass}"></div>
         <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
+      <h3>${c.name}</h3>
+      <p>${escapeHtml(c.tagline)}</p>
     </a>`;
                 }
                 return `
     <a class="group-card reveal" href="#/category/${c.slug}" style="transition-delay:${(i * 0.06).toFixed(2)}s">
-      <div class="group-card-photo no-photo">${c.emoji}</div>
-      <div class="group-card-body">
-        <h3>${c.name}</h3>
-        <p>${escapeHtml(c.tagline)}</p>
+      <div class="group-card-top">
+        <div class="group-card-photo no-photo">${c.emoji}</div>
         <span class="group-aisles-badge">${itemCount} ITEMS</span>
       </div>
+      <h3>${c.name}</h3>
+      <p>${escapeHtml(c.tagline)}</p>
     </a>`;
             }).join('');
             // Scoped to just this grid's own cards, not the global
