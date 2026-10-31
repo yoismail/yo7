@@ -79,3 +79,28 @@ Deno.test("resolveWeightTierFee: a malformed weight resolves to the LOWEST tier,
 Deno.test("resolveWeightTierFee falls back to the last tier if none match (single-tier edge case)", () => {
   assertEquals(resolveWeightTierFee(999, [{ maxWeight: 5, fee: 4.99 }]), 4.99);
 });
+
+// This is the actual regression test for a second real bug (separate
+// from the malformed-weight one above): a customer with a cart well
+// under 20kg was quoted the correct, cheap fee on the cart step, then
+// charged the top tier's fee at payment. pricing_settings.delivery_
+// weight_tiers is admin-editable, and the admin UI's "add weight tier"
+// form appends to the end of the array no matter its maxWeight, so the
+// stored array isn't guaranteed to already be ascending by maxWeight.
+// Here, a new, cheaper 5kg tier was added after the original three,
+// so the catch-all (Infinity) tier sits earlier in the array than it.
+// Before the fix, `.find()` matched that catch-all first for every
+// weight, including ones that should have hit the new, cheaper tier.
+Deno.test("resolveWeightTierFee resolves correctly even when tiers aren't stored in ascending order", () => {
+  const outOfOrderTiers: WeightTier[] = [
+    { maxWeight: 10, fee: 7.99 },
+    { maxWeight: 20, fee: 11.99 },
+    { maxWeight: Infinity, fee: 15.99 },
+    { maxWeight: 5, fee: 5.99 }, // admin-added afterwards, appended to the end
+  ];
+  assertEquals(resolveWeightTierFee(2, outOfOrderTiers), 5.99);
+  assertEquals(resolveWeightTierFee(5, outOfOrderTiers), 5.99);
+  assertEquals(resolveWeightTierFee(7, outOfOrderTiers), 7.99);
+  assertEquals(resolveWeightTierFee(15, outOfOrderTiers), 11.99);
+  assertEquals(resolveWeightTierFee(50, outOfOrderTiers), 15.99);
+});

@@ -32,15 +32,23 @@ export function safeWeight(raw: unknown): number {
   return typeof raw === "number" && Number.isFinite(raw) ? raw : 0;
 }
 
-// `tiers` is assumed sorted ascending by maxWeight (pricing_settings
-// already stores it that way, and create-payment-intent's own fallback
-// default array is written in that order), this does not re-sort, a
-// caller whose tiers aren't already ascending will get a wrong answer
-// from `.find()` short-circuiting on the first match, not a crash, so
-// that assumption is worth keeping in mind if this is ever reused
-// against a different data source.
+// Sorts ascending by maxWeight before resolving, the same defensive
+// step every client-side read of the equivalent array already takes
+// (index.html's own resolveWeightTierFee always does
+// `[...deliveryWeightTiers].sort((a, b) => a.maxWeight - b.maxWeight)`
+// before using it). pricing_settings.delivery_weight_tiers is admin-
+// editable (the "add weight tier" form just appends to the end of the
+// array, whatever its maxWeight), so nothing guarantees it's actually
+// stored in ascending order. This used to assume it was and skip
+// sorting, which meant that the moment it wasn't, `.find()` could
+// short-circuit on the catch-all (Infinity) tier if that happened to
+// sit earlier in the array than a more specific, cheaper tier, pricing
+// every weight at the top tier's fee regardless of how light the order
+// actually was. The client-side total always looked right because it
+// always sorted first; only the server (and the real charge) didn't.
 export function resolveWeightTierFee(weight: unknown, tiers: WeightTier[]): number {
   const safe = safeWeight(weight);
-  const tier = tiers.find((t) => safe <= t.maxWeight) ?? tiers[tiers.length - 1];
+  const sorted = [...tiers].sort((a, b) => a.maxWeight - b.maxWeight);
+  const tier = sorted.find((t) => safe <= t.maxWeight) ?? sorted[sorted.length - 1];
   return tier.fee;
 }
