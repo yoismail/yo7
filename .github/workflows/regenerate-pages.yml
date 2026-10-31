@@ -103,6 +103,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/index.html index.html about/ careers/ contact/ cookie-policy/ delivery-info/ delivery-policy/ guide/ privacy/ returns/ terms/ work-with-us/ product/ sitemap.xml
+          git add src/index.html index.html assets/ about/ careers/ contact/ cookie-policy/ delivery-info/ delivery-policy/ guide/ privacy/ returns/ terms/ work-with-us/ product/ sitemap.xml
           git commit -m "Regenerate + minify static pages for the latest src/index.html and catalogue"
           git push origin HEAD:main
