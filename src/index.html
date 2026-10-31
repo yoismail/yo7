@@ -22861,20 +22861,51 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 return;
             }
 
-            // Reconcile against the server's own numbers — the actual
+            // Reconcile against the server's own numbers, the actual
             // charge, and the order this goes on to create, use these,
             // not the estimate above.
             if (data.verifiedTotal) {
+                const vt = data.verifiedTotal;
                 Object.assign(pendingOrderContext, {
-                    subtotal: data.verifiedTotal.subtotal,
-                    delivery: data.verifiedTotal.delivery,
-                    discountAmount: data.verifiedTotal.discountAmount,
-                    loyaltyDiscountAmount: data.verifiedTotal.loyaltyDiscountAmount,
-                    total: data.verifiedTotal.total,
-                    chargedCurrency: data.verifiedTotal.chargedCurrency,
-                    chargedAmount: data.verifiedTotal.chargedAmount,
+                    subtotal: vt.subtotal,
+                    delivery: vt.delivery,
+                    discountAmount: vt.discountAmount,
+                    loyaltyDiscountAmount: vt.loyaltyDiscountAmount,
+                    total: vt.total,
+                    chargedCurrency: vt.chargedCurrency,
+                    chargedAmount: vt.chargedAmount,
                 });
                 savePendingOrderContext(pendingOrderContext);
+
+                // The block above only updated pendingOrderContext (used
+                // later, once payment succeeds), nothing here touched the
+                // actual on-screen numbers, so "Place order £X" and this
+                // step's own order summary kept showing the earlier
+                // client-side estimate even when the server's real total
+                // (what Stripe's payment sheet, e.g. Apple Pay, actually
+                // asks the customer to pay) came back different, a
+                // discount or loyalty reward the client assumed would
+                // apply can be rejected server-side for reasons the client
+                // can't see. A customer could tap "Place order £16.97" and
+                // have their wallet sheet ask for £26.97 instead, the
+                // actual charge was correct, but what they were shown
+                // right before confirming it wasn't. This re-renders the
+                // payment step's own summary (the "3"-suffixed elements)
+                // and the button itself from the server-verified figures,
+                // so what's on screen always matches what's about to be
+                // charged.
+                document.getElementById('sumSubtotal3').textContent = money(vt.subtotal);
+                document.getElementById('sumDelivery3').textContent = vt.delivery === 0 ? 'Free' : money(vt.delivery);
+                const vShowDiscount = vt.discountAmount > 0;
+                const discountRow3 = document.getElementById('sumDiscountRow3');
+                discountRow3.style.display = vShowDiscount ? 'flex' : 'none';
+                if (vShowDiscount) document.getElementById('sumDiscount3').textContent = `-${money(vt.discountAmount)}`;
+                const vShowLoyalty = vt.loyaltyDiscountAmount > 0;
+                const loyaltyRow3 = document.getElementById('sumLoyaltyRow3');
+                loyaltyRow3.style.display = vShowLoyalty ? 'flex' : 'none';
+                if (vShowLoyalty) document.getElementById('sumLoyalty3').textContent = `-${money(vt.loyaltyDiscountAmount)}`;
+                document.getElementById('sumTotal3').textContent = money(vt.total);
+                document.getElementById('payButtonTotal').textContent = money(vt.total);
             }
 
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
