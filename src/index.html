@@ -4059,30 +4059,44 @@
         @media (min-width: 900px) {
             .dish-picker { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
         }
+        /* Warm-tint redesign (reviewed as Concept B against the 6 real
+           dishes before shipping) - each card takes a soft wash of its own
+           accent colour instead of a flat white tile, reusing the exact
+           5-colour accent rotation already established on
+           .about-value-card/.pd-detail-card/.dinfo-card so this reads as
+           one consistent system rather than a one-off palette. color-mix()
+           with var(--card-bg) (not a literal white) keeps the tint correct
+           in dark mode too, same technique those cards already use via
+           color-mix() against transparent. */
+        .dish-pill:nth-child(5n+1) { --dish-accent: var(--chartreuse-rich); }
+        .dish-pill:nth-child(5n+2) { --dish-accent: var(--aubergine-mid); }
+        .dish-pill:nth-child(5n+3) { --dish-accent: #9a7f00; }
+        .dish-pill:nth-child(5n+4) { --dish-accent: #C1552C; }
+        .dish-pill:nth-child(5n+5) { --dish-accent: #9D6B11; }
         .dish-pill {
             position: relative;
             display: flex; flex-direction: column; align-items: center; gap: 12px;
-            padding: 24px 12px 18px; border-radius: 18px; text-align: center;
-            background: var(--card-bg); border: 1.5px solid rgba(var(--border-rgb), 0.1);
+            padding: 22px 12px 18px; border-radius: 18px; text-align: center;
+            background: color-mix(in srgb, var(--dish-accent, var(--chartreuse-rich)) 14%, var(--card-bg));
+            border: none;
             font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading);
             cursor: pointer;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 10px 22px rgba(var(--border-rgb), 0.035);
-            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1), border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1), background 0.3s ease, color 0.3s ease;
         }
         .dish-pill:hover {
             transform: translateY(-5px);
             box-shadow: 0 4px 10px rgba(var(--border-rgb), 0.06), 0 22px 38px rgba(var(--border-rgb), 0.14);
-            border-color: rgba(var(--border-rgb), 0.2);
         }
         .dish-pill .emoji {
-            width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+            width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
-            background: var(--chartreuse); color: var(--aubergine-deep); font-size: 20px;
+            background: var(--aubergine-deep); color: var(--cream); font-size: 20px;
             transition: background 0.3s ease, color 0.3s ease;
         }
-        .dish-pill .emoji svg { width: 22px; height: 22px; }
+        .dish-pill .emoji svg { width: 25px; height: 25px; }
         .dish-pill.active {
-            background: var(--aubergine); border-color: var(--aubergine); color: var(--cream);
+            background: var(--aubergine); color: var(--cream);
             box-shadow: 0 6px 16px rgba(6, 59, 0, 0.28);
         }
         .dish-pill.active .emoji { background: var(--chartreuse); color: var(--aubergine-deep); }
