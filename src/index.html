@@ -1234,20 +1234,17 @@
             height: 38px;
             border-radius: 13px;
             border: none;
-            background: linear-gradient(155deg, rgba(6, 59, 0, 0.05), rgba(225, 225, 0, 0.07));
-            box-shadow: 0 1px 3px rgba(6, 59, 0, 0.05);
+            background: none;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #2C1C10;
-            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
             text-decoration: none;
         }
 
         .icon-btn:hover {
-            background: linear-gradient(155deg, rgba(6, 59, 0, 0.1), rgba(225, 225, 0, 0.14));
             transform: translateY(-2px);
-            box-shadow: 0 8px 18px rgba(6, 59, 0, 0.13);
         }
 
         /* Hidden by default, shown from 901px up - the same point
@@ -1275,30 +1272,8 @@
             .nav-fav-btn { display: flex; }
         }
 
-        /* Cart still reads as the primary action in this cluster, but as a
-           tinted outline rather than a solid fill, the count badge below is
-           the one deliberate accent moment instead of the whole button
-           competing with the search border and active nav-link for the
-           same bright green. */
-        /* Reported directly: this used to widen into a rounded rectangle
-           (auto width, side padding) instead of the base .icon-btn's fixed
-           38x38 square every other icon in this row (favourites,
-           notifications) already uses - cart read as visibly wider and
-           shorter than its neighbours. .cart-badge is absolute-positioned
-           (see its own rule), so it was never actually load-bearing for
-           the extra width; back to the same 38x38 square, just keeping its
-           own fill colour. */
-        .nav-cart-btn {
-            background: var(--orange);
-            border-color: var(--orange);
-            color: var(--aubergine-deep);
-            box-shadow: 0 3px 10px rgba(225, 225, 0, 0.32);
-        }
-        .nav-cart-btn:hover {
-            background: #C9C900;
-            border-color: #C9C900;
-            box-shadow: 0 8px 20px rgba(225, 225, 0, 0.4);
-        }
+        /* Cart reads as a bare icon like the rest of this row now, the
+           count badge below is the one accent moment left. */
         .nav-cart-btn svg {
             width: 21px;
             height: 21px;
@@ -1461,7 +1436,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: linear-gradient(155deg, rgba(6, 59, 0, 0.05), rgba(225, 225, 0, 0.07));
+            background: none;
             border: none;
             border-radius: 13px;
             padding: 8px 16px 8px 12px;
@@ -1470,14 +1445,11 @@
             font-size: 13px;
             color: #2C1C10;
             text-decoration: none;
-            box-shadow: 0 1px 3px rgba(6, 59, 0, 0.05);
-            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
         }
 
         .nav-account:hover {
-            background: linear-gradient(155deg, rgba(6, 59, 0, 0.1), rgba(225, 225, 0, 0.14));
             transform: translateY(-2px);
-            box-shadow: 0 8px 18px rgba(6, 59, 0, 0.13);
         }
 
         .nav-account svg {
