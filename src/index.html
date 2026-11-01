@@ -19277,6 +19277,12 @@
             if (deferredInstallPrompt) {
                 const promptEvent = deferredInstallPrompt;
                 deferredInstallPrompt = null;
+                // The banner (if it's up) has its own "Install" button with
+                // the same deferredInstallPrompt check - leaving it open
+                // after consuming the prompt from here would strand that
+                // button permanently inert (deferredInstallPrompt is now
+                // null, so its own handler's guard just no-ops forever).
+                dismissInstallBanner();
                 updateInstallMenuBtn();
                 promptEvent.prompt();
                 await promptEvent.userChoice;
