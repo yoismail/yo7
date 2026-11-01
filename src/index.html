@@ -6088,6 +6088,53 @@
             transform: translateX(3px);
         }
 
+        /* The browser's own install affordance (an address-bar icon, or a
+           3-dot-menu entry) only ever shows up when the browser itself
+           decides to offer it, which a desktop visitor can easily never
+           notice at all. This is a persistent, always-reachable fallback
+           sitting right in the footer rather than depending on that, same
+           underlying beforeinstallprompt capture/iOS Safari check as the
+           one-time banner and the mobile menu's own entry (see
+           updateInstallMenuBtn()), just somewhere a desktop visitor who
+           never saw either of those can still find it. A <button>, not an
+           <a>, since this never navigates anywhere, it only ever triggers
+           the captured install prompt or re-shows the instructional
+           banner - same reasoning as every other JS-driven control on this
+           page using a real interactive element instead of a styled div.
+           Hidden by default (shown only once JS confirms there's actually
+           something to offer, see updateInstallMenuBtn()) rather than
+           flashing visible then disappearing on a browser that never
+           fires beforeinstallprompt at all (Firefox, desktop Safari). */
+        .footer-install-btn {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            font-size: 14.5px;
+            color: #2C1C10;
+            background: none;
+            border: none;
+            padding: 3px 0;
+            margin: 0 0 8px;
+            opacity: 0.85;
+            cursor: pointer;
+            text-align: left;
+            transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+        [data-theme="dark"] .footer-install-btn {
+            color: var(--text-body);
+        }
+        .footer-install-btn:hover {
+            opacity: 1;
+            color: var(--chartreuse-rich);
+            transform: translateX(3px);
+        }
+        .footer-install-btn svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
         .footer-contact-icon {
             width: 15px;
             height: 15px;
@@ -14307,6 +14354,7 @@
                         <a href="#/about">About Us</a>
                         <a href="#/work-with-us">Work with Us</a>
                         <a href="#/careers">Careers</a>
+                        <button type="button" class="footer-install-btn" id="footerInstallBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Install app</button>
                     </div>
                 </div>
             </div>
@@ -19206,18 +19254,26 @@
             }
             setTimeout(() => el.classList.add('is-visible'), 50);
         }
-        // Kept reachable from the menu even after the one-time banner is
-        // dismissed or missed - a captured beforeinstallprompt event, or
-        // (on iOS Safari) the same not-yet-installed check the banner
-        // itself uses, is what decides whether it's actually worth
-        // showing, not just "has the banner been seen".
+        // Kept reachable from the menu (and the footer, see
+        // #footerInstallBtn - the one persistent, always-visible-on-
+        // desktop entry point, rather than relying on a visitor ever
+        // noticing the browser's own address-bar icon or 3-dot-menu
+        // entry) even after the one-time banner is dismissed or missed -
+        // a captured beforeinstallprompt event, or (on iOS Safari) the
+        // same not-yet-installed check the banner itself uses, is what
+        // decides whether it's actually worth showing, not just "has the
+        // banner been seen".
         function updateInstallMenuBtn() {
-            const btn = document.getElementById('mobileMenuInstallBtn');
-            if (!btn) return;
             const canOfferInstall = !isStandaloneDisplay() && (deferredInstallPrompt || (isIosSafari() && isIosNonStandalone()));
-            btn.style.display = canOfferInstall ? 'block' : 'none';
+            const btn = document.getElementById('mobileMenuInstallBtn');
+            if (btn) btn.style.display = canOfferInstall ? 'block' : 'none';
+            const footerBtn = document.getElementById('footerInstallBtn');
+            if (footerBtn) footerBtn.style.display = canOfferInstall ? 'flex' : 'none';
         }
-        document.getElementById('mobileMenuInstallBtn').addEventListener('click', async () => {
+        // Shared by mobileMenuInstallBtn and footerInstallBtn, so the two
+        // can't drift - whichever one a visitor actually finds and clicks
+        // does the same thing.
+        async function triggerInstallFlow() {
             if (deferredInstallPrompt) {
                 const promptEvent = deferredInstallPrompt;
                 deferredInstallPrompt = null;
@@ -19232,7 +19288,9 @@
             // an unprompted nag).
             try { localStorage.removeItem('installBannerDismissed'); } catch (e) { /* not fatal */ }
             maybeShowInstallBanner();
-        });
+        }
+        document.getElementById('mobileMenuInstallBtn').addEventListener('click', triggerInstallFlow);
+        document.getElementById('footerInstallBtn').addEventListener('click', triggerInstallFlow);
         const THEME_MODES = ['light', 'dark', 'system'];
         function initThemeToggle() {
             const btn = document.getElementById('themeToggle');
