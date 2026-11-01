@@ -220,22 +220,30 @@
     <svg width="0" height="0" style="position:absolute">
         <defs>
             <g id="seal-mark">
+                <!-- Concept B from the logo-concepts review: the brand's
+                     organic blob smoothed to six evenly-spaced points
+                     (Catmull-Rom through them, not hand-eyeballed), drawn as
+                     ONE path with a single stroke for the ring instead of
+                     two separately-filled, independently-drawn shapes - the
+                     old two-path technique is exactly why the ring's width
+                     visibly varied around the perimeter instead of reading
+                     as one deliberate line. The "7" is the same change: a
+                     monoline stroke path instead of bold Poppins text,
+                     matching the mark's own corner language (rounded caps/
+                     joins) instead of a dropped-in font glyph. See
+                     SEAL_MARK_PNG's own comment below (the PDF invoice logo)
+                     - it has to be re-rendered from this SVG whenever the
+                     mark itself changes, same as it was for the font swap. -->
                 <path
-                    d="M 885.91 500.00 Q 885.91 500.00 860.56 580.72 Q 835.22 661.43 796.07 741.80 Q 756.92 822.17 669.16 839.40 Q 581.40 856.62 495.87 874.70 Q 410.35 892.77 333.83 848.55 Q 257.30 804.33 214.39 731.27 Q 171.47 658.21 135.44 579.11 Q 99.41 500.00 136.18 421.25 Q 172.95 342.50 213.43 266.96 Q 253.91 191.42 336.28 167.50 Q 418.65 143.58 500.19 142.76 Q 581.72 141.95 663.68 166.97 Q 745.63 191.99 814.79 253.54 Q 883.95 315.10 884.93 407.55 Z"
-                    fill="var(--chartreuse)" />
-                <path
-                    d="M 811.10 500.00 Q 811.10 500.00 799.66 569.40 Q 788.22 638.80 753.14 706.12 Q 718.06 773.44 643.76 788.90 Q 569.47 804.36 499.62 806.04 Q 429.76 807.73 364.45 779.80 Q 299.14 751.87 269.30 688.67 Q 239.46 625.47 211.74 562.73 Q 184.02 500.00 195.32 429.36 Q 206.61 358.71 247.63 296.84 Q 288.64 234.96 362.97 230.13 Q 437.30 225.31 501.91 216.95 Q 566.51 208.60 621.00 244.26 Q 675.50 279.93 741.08 316.13 Q 806.65 352.32 808.88 426.16 Z"
-                    fill="var(--aubergine-deep)" />
-                <text x="500" y="629" text-anchor="middle" font-family="Poppins" font-weight="700" font-size="360"
-                    fill="var(--cream)">7</text>
+                    d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"
+                    fill="var(--aubergine-deep)" stroke="var(--chartreuse)" stroke-width="66" stroke-linejoin="round" />
+                <path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" fill="none"
+                    stroke="var(--cream)" stroke-width="76" stroke-linecap="round" stroke-linejoin="round" />
             </g>
             <g id="seal-ring">
                 <path
-                    d="M 885.91 500.00 Q 885.91 500.00 860.56 580.72 Q 835.22 661.43 796.07 741.80 Q 756.92 822.17 669.16 839.40 Q 581.40 856.62 495.87 874.70 Q 410.35 892.77 333.83 848.55 Q 257.30 804.33 214.39 731.27 Q 171.47 658.21 135.44 579.11 Q 99.41 500.00 136.18 421.25 Q 172.95 342.50 213.43 266.96 Q 253.91 191.42 336.28 167.50 Q 418.65 143.58 500.19 142.76 Q 581.72 141.95 663.68 166.97 Q 745.63 191.99 814.79 253.54 Q 883.95 315.10 884.93 407.55 Z"
-                    fill="var(--chartreuse)" />
-                <path
-                    d="M 811.10 500.00 Q 811.10 500.00 799.66 569.40 Q 788.22 638.80 753.14 706.12 Q 718.06 773.44 643.76 788.90 Q 569.47 804.36 499.62 806.04 Q 429.76 807.73 364.45 779.80 Q 299.14 751.87 269.30 688.67 Q 239.46 625.47 211.74 562.73 Q 184.02 500.00 195.32 429.36 Q 206.61 358.71 247.63 296.84 Q 288.64 234.96 362.97 230.13 Q 437.30 225.31 501.91 216.95 Q 566.51 208.60 621.00 244.26 Q 675.50 279.93 741.08 316.13 Q 806.65 352.32 808.88 426.16 Z"
-                    fill="var(--aubergine-deep)" />
+                    d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"
+                    fill="var(--aubergine-deep)" stroke="var(--chartreuse)" stroke-width="66" stroke-linejoin="round" />
             </g>
         </defs>
     </svg>
@@ -3265,7 +3273,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.da8c27812f.js"></script>
+    <script defer src="/assets/app.bfdc5eb562.js"></script>
 
 </body>
 
