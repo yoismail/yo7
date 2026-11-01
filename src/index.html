@@ -1272,6 +1272,26 @@
             .nav-fav-btn { display: flex; }
         }
 
+        /* The "accepted trade-off" above was wrong - reported directly as
+           the search box going fully invisible on an ordinary restored/
+           half-width desktop window, not some extreme edge case. Measured
+           at 1000px: .search-wrap was landing at 0px while .nav-mark
+           (82px) + .nav-links (477px) + .nav-right (332px) alone already
+           used 891px of shrink-resistant content before search ever got a
+           share. Rather than touch spacing at every desktop width (which
+           looks fine from ~1100px up), this narrow band only: drops the
+           "New Here?" link (the one nav item that duplicates the "Sign up
+           / Log in" control already in .nav-right, so losing it here costs
+           the least) and tightens link padding / row gaps slightly,
+           clawing back roughly 170px for the search box - enough to show
+           the icon and real placeholder text again instead of nothing. */
+        @media (min-width: 901px) and (max-width: 1099px) {
+            #navLinkGuide { display: none; }
+            .nav-links a { padding: 8px 6px; }
+            #mainNav .wrap { gap: 10px; }
+            .nav-right { gap: 8px; }
+        }
+
         /* Cart reads as a bare icon like the rest of this row now, the
            count badge below is the one accent moment left. */
         .nav-cart-btn svg {
