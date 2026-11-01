@@ -5040,52 +5040,11 @@
             transition: transform 0.25s cubic-bezier(.16,.84,.44,1), box-shadow 0.25s cubic-bezier(.16,.84,.44,1), border-color 0.25s ease;
         }
         .hero-glimpse-pill span.emoji {
-            position: relative;
-            overflow: hidden;
-            isolation: isolate;
             display: flex; align-items: center; justify-content: center;
             width: 34px; height: 34px; flex-shrink: 0; border-radius: 999px;
             background: linear-gradient(145deg, color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 26%, transparent), color-mix(in srgb, var(--dept-accent, var(--chartreuse-rich)) 9%, transparent));
             color: var(--dept-accent, var(--chartreuse-rich));
             transition: transform 0.25s cubic-bezier(.2, .9, .3, 1.3);
-        }
-        /* An ambient highlight sweep across each icon badge, not gated on
-           hover/tap like the row's other motion above, this plays on its
-           own so it still reads on mobile (most real traffic), where
-           nothing else in this row currently animates without a tap.
-           Same ::after diagonal-sweep technique as .hero-shop-btn's own
-           shimmer, but a much longer cycle with most of it spent paused
-           (12% sweep, 88% hold) - a department row can hold several of
-           these pills at once, and the entrance animation this section
-           used to have was removed for feeling like too much motion, so
-           this stays rare and staggered (one pill's badge sweeps at a
-           time, see the nth-child delays below) rather than a constant,
-           busy row of simultaneous shimmer. */
-        .hero-glimpse-pill span.emoji::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.8) 48%, rgba(255, 255, 255, 0.15) 54%, transparent 68%);
-            background-size: 220% 100%;
-            background-repeat: no-repeat;
-            background-position: 160% 0;
-            animation: deptIconShimmer 8s cubic-bezier(.4, 0, .2, 1) infinite;
-            pointer-events: none;
-        }
-        @keyframes deptIconShimmer {
-            0% { background-position: 160% 0; }
-            12% { background-position: -60% 0; }
-            100% { background-position: -60% 0; }
-        }
-        /* Staggers the sweep across the row instead of every badge firing
-           in sync, reusing the same 5-way nth-child split the accent
-           colours above already use rather than adding new markup. */
-        .hero-glimpse-pill:nth-child(5n+2) span.emoji::after { animation-delay: 1.6s; }
-        .hero-glimpse-pill:nth-child(5n+3) span.emoji::after { animation-delay: 3.2s; }
-        .hero-glimpse-pill:nth-child(5n+4) span.emoji::after { animation-delay: 4.8s; }
-        .hero-glimpse-pill:nth-child(5n+5) span.emoji::after { animation-delay: 6.4s; }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-glimpse-pill span.emoji::after { animation: none; display: none; }
         }
         .hero-glimpse-pill span.emoji .glyph-icon { width: 17px; height: 17px; }
         /* Departments with a real catalogue photo (see GROUPS' own photo
