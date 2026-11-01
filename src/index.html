@@ -1818,16 +1818,14 @@
             height: 34px;
             padding: 0;
             border-radius: 13px;
-            border: 1px solid rgba(6, 59, 0, 0.12);
-            background: linear-gradient(155deg, rgba(6, 59, 0, 0.05), rgba(225, 225, 0, 0.07));
-            box-shadow: 0 1px 3px rgba(6, 59, 0, 0.05);
+            border: none;
+            background: none;
             color: #2C1C10;
             flex-shrink: 0;
-            transition: background 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.2s ease;
         }
         .nav-hamburger:hover {
-            background: linear-gradient(155deg, rgba(6, 59, 0, 0.1), rgba(225, 225, 0, 0.14));
-            border-color: rgba(6, 59, 0, 0.28);
+            transform: translateY(-2px);
         }
 
         .nav-hamburger svg {
