@@ -3827,16 +3827,12 @@
         .build-bundle-promo-inner .btn { flex-shrink: 0; }
 
         /* Same promo-banner language as .build-bundle-promo just above,
-           aubergine-toned instead of gold, with a different section
-           background plus a hairline divider on both edges so the two
-           back-to-back banners (otherwise identical layout, same height)
-           read as clearly separate sections rather than one wall of
-           content. */
-        .wholesale-promo {
-            position: relative; background: var(--section-alt-bg); padding: 48px 0; overflow: hidden;
-            border-top: 1px solid rgba(var(--border-rgb), 0.1);
-            border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
-        }
+           aubergine-toned instead of gold. Uses the alternating section
+           background already used elsewhere on the page (e.g.
+           .whatsapp-list-section below it) so the two back-to-back
+           banners read as distinct sections without needing a visible
+           divider line. */
+        .wholesale-promo { position: relative; background: var(--section-alt-bg); padding: 48px 0; overflow: hidden; }
         .wholesale-promo-watermark {
             position: absolute; z-index: 0; pointer-events: none;
             right: 3%; bottom: -20%; width: 220px; height: 220px;
