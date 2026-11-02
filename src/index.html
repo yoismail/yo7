@@ -1600,6 +1600,22 @@
             background: rgba(var(--border-rgb), 0.06);
         }
 
+        /* Same row layout as .account-dropdown a, but a plain status label
+           rather than a link - "pending review" has nothing to navigate to
+           yet, so no hover/cursor affordance and a muted colour instead of
+           the heading colour actionable rows use. */
+        #wholesalePendingNavLabel {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 12px;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
         .admin-order-badge {
             margin-left: auto;
             background: #C1552C;
@@ -3809,6 +3825,35 @@
         }
         .build-bundle-promo-inner p { color: #6b5c4f; font-size: 14px; max-width: 46ch; }
         .build-bundle-promo-inner .btn { flex-shrink: 0; }
+
+        /* Same promo-banner language as .build-bundle-promo just above,
+           aubergine-toned instead of gold so the two back-to-back banners
+           read as distinct. */
+        .wholesale-promo { position: relative; background: var(--cream); padding: 48px 0; overflow: hidden; }
+        .wholesale-promo-watermark {
+            position: absolute; z-index: 0; pointer-events: none;
+            right: 3%; bottom: -20%; width: 220px; height: 220px;
+            opacity: 0.05; color: #2C1C10;
+            transform: rotate(8deg);
+        }
+        .wholesale-promo-inner {
+            position: relative; z-index: 1;
+            display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+        }
+        .wholesale-promo-icon {
+            width: 48px; height: 48px; flex-shrink: 0; border-radius: 15px;
+            background: linear-gradient(145deg, rgba(38,98,16,0.28), rgba(38,98,16,0.1));
+            color: var(--aubergine-mid);
+            box-shadow: 0 6px 16px rgba(38,98,16,0.2);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .wholesale-promo-icon svg { width: 23px; height: 23px; }
+        .wholesale-promo-inner h2 {
+            font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px);
+            color: #2C1C10; letter-spacing: -0.01em; margin: 4px 0 8px;
+        }
+        .wholesale-promo-inner p { color: #6b5c4f; font-size: 14px; max-width: 46ch; }
+        .wholesale-promo-inner .btn { flex-shrink: 0; }
 
         .whatsapp-list-section { position: relative; background: var(--section-alt-bg); padding: 48px 0; overflow: hidden; }
         /* Same oversized-glyph-behind-the-content language as
@@ -9128,6 +9173,32 @@
             padding: 8px 0;
         }
 
+        .wholesale-product-list { display: flex; flex-direction: column; }
+        .wholesale-product-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 14.5px;
+            color: var(--text-body);
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
+        }
+        .wholesale-product-row:last-child { border-bottom: none; }
+        .wholesale-product-name { font-weight: 600; }
+        .wholesale-product-price { color: var(--text-muted); }
+        .wholesale-product-oos {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--text-muted);
+            background: rgba(var(--border-rgb), 0.12);
+            border-radius: 14px;
+            padding: 3px 9px;
+        }
+
         .discount-row { color: var(--heading-mid); }
         .loyalty-note {
             font-size: 12.5px;
@@ -11588,6 +11659,32 @@
                             </svg>
                             Refer a friend
                         </a>
+                        <a href="#/wholesale/apply" id="wholesaleApplyNavLink" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 7l9-4 9 4-9 4-9-4Z" />
+                                <path d="M3 7v10l9 4 9-4V7" />
+                                <path d="M12 11v10" />
+                            </svg>
+                            Apply for a trade account
+                        </a>
+                        <span id="wholesalePendingNavLabel" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 7v5l3 3" />
+                            </svg>
+                            Trade account pending review
+                        </span>
+                        <a href="#/wholesale" id="wholesaleStoreNavLink" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 7l9-4 9 4-9 4-9-4Z" />
+                                <path d="M3 7v10l9 4 9-4V7" />
+                                <path d="M12 11v10" />
+                            </svg>
+                            Wholesale store
+                        </a>
                         <a href="#/admin" id="adminNavLink" style="display:none;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -11623,6 +11720,7 @@
             <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
+            <a href="#/wholesale/apply">Wholesale</a>
             <a href="#/about">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
@@ -11958,6 +12056,23 @@
                         <p>Select a meal and we'll list the ingredients you need. Uncheck what you already have, and add the rest in one tap.</p>
                     </div>
                     <a class="btn btn-outline-dark" href="#/build-bundle">Build a bundle</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="wholesale-promo scroll-reveal">
+            <svg class="wholesale-promo-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
+            <div class="wrap">
+                <div class="wholesale-promo-inner reveal">
+                    <div class="wholesale-promo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
+                    </div>
+                    <div>
+                        <div class="section-eyebrow">For businesses</div>
+                        <h2>Buying in bulk? Open a trade account.</h2>
+                        <p>Poultry, meat and fish in wholesale quantities for restaurants, shops and caterers. Apply for a trade account and we'll review it within a couple of days.</p>
+                    </div>
+                    <a class="btn btn-outline-dark" href="#/wholesale/apply">Apply for wholesale</a>
                 </div>
             </div>
         </section>
@@ -13628,6 +13743,41 @@
         </section>
     </div>
 
+    <!-- ================= WHOLESALE =================
+         Gated to approved trade accounts (profiles.wholesale_status).
+         See apply_for_wholesale_account() and wholesale_products in
+         schema.sql; currentWholesaleStatus/syncWholesaleNavLinks() drive
+         which of these two views and nav links are reachable. -->
+    <div id="view-wholesale-apply" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Wholesale</div>
+                <h1>Trade account application</h1>
+                <p>Buy poultry, meat and fish in wholesale quantities. Apply for a trade account and we'll review it within a couple of days.</p>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div id="wholesaleApplySlot"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-wholesale" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Wholesale</div>
+                <h1>Wholesale store</h1>
+                <p>Trade pricing for approved accounts. Everything here is sold in wholesale quantities.</p>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div id="wholesaleStoreSlot"></div>
+            </div>
+        </section>
+    </div>
+
     <div id="view-special-offers" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
@@ -14134,6 +14284,16 @@
                         </form>
                         <div class="auth-error" id="addAdminError" role="alert" style="display:none;"></div>
                         <div class="auth-success" id="addAdminSuccess" role="status" style="display:none;"></div>
+                    </div>
+                    <div class="admin-panel-section panel-wholesale">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>Wholesale applications</h2>
+                        <p class="sub">Trade account applications waiting for review. Approving turns on the wholesale store for that account.</p>
+                        <div id="wholesaleApplicationsList"></div>
+                    </div>
+                    <div class="admin-panel-section panel-wholesale">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>Wholesale products</h2>
+                        <p class="sub">Set a price, unit and stock for each draft product. Nothing here is orderable until stock is switched to "In stock".</p>
+                        <div id="wholesaleProductsList"></div>
                     </div>
                 </div>
             </div>
@@ -16764,6 +16924,7 @@
         // of truth for the rest of boot.
         const isPasswordRecoveryLoad = /(^|[#&])type=recovery(&|$)/.test(window.location.hash);
         let currentIsAdmin = false; // set from profiles.is_admin after login, gates the admin orders dashboard
+        let currentWholesaleStatus = 'none'; // set from profiles.wholesale_status after login: 'none' | 'pending' | 'approved' | 'rejected'
 
         // Fire-and-forget: an audit-log write failing (e.g. a dropped
         // connection) shouldn't ever block or roll back the real action it's
@@ -24782,6 +24943,94 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
     </div>`;
         }
 
+        async function renderWholesaleApplicationsAdmin() {
+            const el = document.getElementById('wholesaleApplicationsList');
+            if (!el) return;
+            if (!supabaseClient || !currentSupabaseUser || !currentIsAdmin) return;
+            el.innerHTML = '<div class="order-history-loading">Loading applications…</div>';
+            const { data, error } = await supabaseClient
+                .from('wholesale_applications')
+                .select('*, profiles(email, wholesale_status)')
+                .order('created_at', { ascending: false })
+                .limit(200);
+            if (error) { el.innerHTML = '<div class="order-history-error">Couldn\'t load applications right now, please try again shortly.</div>'; return; }
+            if (!data || data.length === 0) { el.innerHTML = '<div class="order-history-empty">No applications yet.</div>'; return; }
+            el.innerHTML = `
+    <div class="admin-orders-table-wrap">
+        <table class="admin-orders-table">
+            <thead><tr><th>Business</th><th>Contact</th><th>Email</th><th>Phone</th><th>Message</th><th>Applied</th><th>Status</th></tr></thead>
+            <tbody>${data.map(a => {
+                const status = a.profiles ? a.profiles.wholesale_status : 'none';
+                const email = a.profiles ? a.profiles.email : null;
+                const actionsHtml = status === 'pending'
+                    ? `<div style="display:flex; gap:8px;">
+                        <button type="button" class="btn btn-primary" style="padding:6px 12px; font-size:12.5px;" onclick="reviewWholesaleApplication('${a.id}', '${a.user_id}', 'approved')">Approve</button>
+                        <button type="button" class="btn btn-outline-dark" style="padding:6px 12px; font-size:12.5px;" onclick="reviewWholesaleApplication('${a.id}', '${a.user_id}', 'rejected')">Reject</button>
+                       </div>`
+                    : `<span class="order-status-badge ${status === 'approved' ? 'delivered' : status === 'rejected' ? 'cancelled' : ''}">${escapeHtml(status)}</span>`;
+                return `
+    <tr>
+        <td>${escapeHtml(a.business_name)}</td>
+        <td>${escapeHtml(a.contact_name)}</td>
+        <td>${email ? escapeHtml(email) : '-'}</td>
+        <td>${escapeHtml(a.phone || '-')}</td>
+        <td>${a.message ? escapeHtml(a.message) : '-'}</td>
+        <td>${new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+        <td>${actionsHtml}</td>
+    </tr>`;
+            }).join('')}</tbody>
+        </table>
+    </div>`;
+        }
+        async function reviewWholesaleApplication(applicationId, userId, newStatus) {
+            const { error: profileError } = await supabaseClient.from('profiles').update({ wholesale_status: newStatus }).eq('id', userId);
+            if (profileError) { showToast("Couldn't update this application: " + profileError.message, 6000, 'error'); return; }
+            const { error: appError } = await supabaseClient.from('wholesale_applications').update({ reviewed_at: new Date().toISOString() }).eq('id', applicationId);
+            if (appError) { showToast("Couldn't mark this application reviewed: " + appError.message, 6000, 'error'); return; }
+            showToast(newStatus === 'approved' ? 'Trade account approved.' : 'Application rejected.');
+            renderWholesaleApplicationsAdmin();
+        }
+        async function renderWholesaleProductsAdmin() {
+            const el = document.getElementById('wholesaleProductsList');
+            if (!el) return;
+            if (!supabaseClient || !currentSupabaseUser || !currentIsAdmin) return;
+            el.innerHTML = '<div class="order-history-loading">Loading products…</div>';
+            const { data, error } = await supabaseClient.from('wholesale_products').select('*').order('cat_slug').order('sort_order');
+            if (error) { el.innerHTML = '<div class="order-history-error">Couldn\'t load wholesale products right now, please try again shortly.</div>'; return; }
+            if (!data || data.length === 0) { el.innerHTML = '<div class="order-history-empty">No wholesale products yet.</div>'; return; }
+            el.innerHTML = `
+    <div class="admin-orders-table-wrap">
+        <table class="admin-orders-table">
+            <thead><tr><th>Category</th><th>Product</th><th>Price (£)</th><th>Unit</th><th>Stock</th><th></th></tr></thead>
+            <tbody>${data.map(p => `
+    <tr>
+        <td>${escapeHtml(WHOLESALE_CATEGORY_LABELS[p.cat_slug] || p.cat_slug)}</td>
+        <td>${escapeHtml(p.name)}</td>
+        <td><input type="number" step="0.01" min="0" id="wp-price-${p.id}" value="${p.price != null ? p.price : ''}" placeholder="e.g. 24.99" style="width:90px;"></td>
+        <td><input type="text" id="wp-unit-${p.id}" value="${escapeHtml(p.unit || '')}" placeholder="e.g. per box" style="width:100px;"></td>
+        <td>
+            <select id="wp-stock-${p.id}">
+                <option value="out" ${p.stock === 'out' ? 'selected' : ''}>Out of stock</option>
+                <option value="in" ${p.stock === 'in' ? 'selected' : ''}>In stock</option>
+            </select>
+        </td>
+        <td><button type="button" class="btn btn-outline-dark" style="padding:6px 12px; font-size:12.5px;" onclick="saveWholesaleProduct('${p.id}')">Save</button></td>
+    </tr>`).join('')}</tbody>
+        </table>
+    </div>`;
+        }
+        async function saveWholesaleProduct(productId) {
+            const priceInput = document.getElementById(`wp-price-${productId}`);
+            const unitInput = document.getElementById(`wp-unit-${productId}`);
+            const stockSelect = document.getElementById(`wp-stock-${productId}`);
+            const price = priceInput.value.trim() === '' ? null : Number(priceInput.value);
+            const unit = unitInput.value.trim() || null;
+            const stock = stockSelect.value;
+            const { error } = await supabaseClient.from('wholesale_products').update({ price, unit, stock }).eq('id', productId);
+            if (error) { showToast("Couldn't save this product: " + error.message, 6000, 'error'); return; }
+            showToast('Saved.');
+        }
+
         // 'month' pages one calendar month at a time (the original
         // behaviour), '3month'/'6month' page in that many calendar months
         // per step, 'custom' ignores paging entirely and uses whatever
@@ -25026,6 +25275,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             renderActivityLog();
             renderAnalytics(0);
             renderComingSoonSignups();
+            renderWholesaleApplicationsAdmin();
+            renderWholesaleProductsAdmin();
             if (autoEnterEditMode) {
                 autoEnterEditMode = false;
                 setEditMode(true);
@@ -26013,18 +26264,21 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // decides whether to subscribe to admin notifications.
         async function refreshAdminStatus() {
             currentIsAdmin = false;
+            currentWholesaleStatus = 'none';
             const syncAdminNavLink = () => {
                 const link = document.getElementById('adminNavLink');
                 if (link) link.style.display = currentIsAdmin ? 'flex' : 'none';
+                syncWholesaleNavLinks();
             };
             if (!supabaseClient || !currentSupabaseUser) { unsubscribeAdminOrderNotifications(); syncAdminNavLink(); return; }
             const { data, error } = await supabaseClient
                 .from('profiles')
-                .select('is_admin')
+                .select('is_admin, wholesale_status')
                 .eq('id', currentSupabaseUser.id)
                 .single();
             if (error || !data) { syncAdminNavLink(); return; }
             currentIsAdmin = !!data.is_admin;
+            currentWholesaleStatus = data.wholesale_status || 'none';
             if (currentIsAdmin) {
                 subscribeAdminOrderNotifications();
                 // Restores edit mode after a refresh — it's an in-memory flag
@@ -26044,6 +26298,139 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 migrateDeliveryThresholdRulesToRegional();
             } else unsubscribeAdminOrderNotifications();
             syncAdminNavLink();
+        }
+        // Toggles the three mutually-exclusive wholesale rows in the
+        // account dropdown (apply / pending / store) off currentWholesaleStatus.
+        // Called from refreshAdminStatus's own syncAdminNavLink on every
+        // login/logout/session-restore, so this never needs its own
+        // separate listener wiring.
+        function syncWholesaleNavLinks() {
+            const applyLink = document.getElementById('wholesaleApplyNavLink');
+            const pendingLabel = document.getElementById('wholesalePendingNavLabel');
+            const storeLink = document.getElementById('wholesaleStoreNavLink');
+            if (!applyLink || !pendingLabel || !storeLink) return;
+            const loggedIn = !!currentSupabaseUser;
+            applyLink.style.display = (loggedIn && (currentWholesaleStatus === 'none' || currentWholesaleStatus === 'rejected')) ? 'flex' : 'none';
+            pendingLabel.style.display = (loggedIn && currentWholesaleStatus === 'pending') ? 'flex' : 'none';
+            storeLink.style.display = (loggedIn && currentWholesaleStatus === 'approved') ? 'flex' : 'none';
+        }
+        function renderWholesaleApplyView() {
+            const slot = document.getElementById('wholesaleApplySlot');
+            if (!slot) return;
+            if (!currentSupabaseUser) {
+                slot.innerHTML = `
+                    <div class="panel">
+                        <h2>Log in to apply</h2>
+                        <p>You'll need an account before applying for a trade account.</p>
+                        <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+                            <a class="btn btn-primary btn-block" href="#/signup">Create an account</a>
+                            <a class="btn btn-outline-dark btn-block" href="#/login">Log in</a>
+                        </div>
+                    </div>`;
+                return;
+            }
+            if (currentWholesaleStatus === 'approved') {
+                slot.innerHTML = `
+                    <div class="panel">
+                        <h2>You're all set</h2>
+                        <p>Your trade account is approved.</p>
+                        <a class="btn btn-primary" href="#/wholesale">Go to the wholesale store</a>
+                    </div>`;
+                return;
+            }
+            if (currentWholesaleStatus === 'pending') {
+                slot.innerHTML = `
+                    <div class="panel">
+                        <h2>Application under review</h2>
+                        <p>Thanks, we've got your application. We'll be in touch once it's been reviewed.</p>
+                    </div>`;
+                return;
+            }
+            const rejectedNote = currentWholesaleStatus === 'rejected'
+                ? `<p class="auth-error" role="alert" style="margin-bottom:14px;">Your previous application wasn't approved. You're welcome to apply again with more details.</p>`
+                : '';
+            slot.innerHTML = `
+                <div class="panel">
+                    <h2>Apply for a trade account</h2>
+                    <p>Tell us a bit about your business and we'll review your application within a couple of days.</p>
+                    ${rejectedNote}
+                    <form id="wholesaleApplyForm">
+                        <div class="field"><label for="waBusinessName">Business name</label><input type="text" id="waBusinessName" required placeholder="Your business name"></div>
+                        <div class="field"><label for="waContactName">Contact name</label><input type="text" id="waContactName" required placeholder="Your name"></div>
+                        <div class="field"><label for="waPhone">Phone number</label><input type="tel" id="waPhone" required placeholder="07000 000000"></div>
+                        <div class="field"><label for="waMessage">Anything else we should know (optional)</label><textarea id="waMessage" rows="3" placeholder="What you're looking to buy, how often, etc."></textarea></div>
+                        <div class="auth-error" id="wholesaleApplyError" role="alert" style="display:none;"></div>
+                        <button class="btn btn-primary btn-block btn-lg" type="submit">Submit application</button>
+                    </form>
+                </div>`;
+            document.getElementById('wholesaleApplyForm').addEventListener('submit', submitWholesaleApplication);
+        }
+        async function submitWholesaleApplication(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('wholesaleApplyError');
+            errorEl.style.display = 'none';
+            if (!supabaseClient) { errorEl.textContent = 'Applications need a moment to connect, try again shortly.'; errorEl.style.display = 'block'; return; }
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting…';
+            const business_name = document.getElementById('waBusinessName').value.trim();
+            const contact_name = document.getElementById('waContactName').value.trim();
+            const phone = document.getElementById('waPhone').value.trim();
+            const message = document.getElementById('waMessage').value.trim() || null;
+            const { error } = await supabaseClient.rpc('apply_for_wholesale_account', {
+                p_business_name: business_name,
+                p_contact_name: contact_name,
+                p_phone: phone,
+                p_message: message,
+            });
+            if (error) {
+                errorEl.textContent = error.message || "Couldn't submit your application, try again.";
+                errorEl.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit application';
+                return;
+            }
+            await refreshAdminStatus();
+            renderWholesaleApplyView();
+            showToast("Thanks, your application's in. We'll be in touch once it's reviewed.");
+        }
+        const WHOLESALE_CATEGORY_LABELS = {
+            'wholesale-poultry': 'Poultry',
+            'wholesale-meat': 'Meat',
+            'wholesale-fish-seafood': 'Fish & Seafood',
+        };
+        async function renderWholesaleStoreView() {
+            const slot = document.getElementById('wholesaleStoreSlot');
+            if (!slot) return;
+            if (!currentSupabaseUser || currentWholesaleStatus !== 'approved') {
+                slot.innerHTML = `
+                    <div class="panel">
+                        <h2>Trade account required</h2>
+                        <p>The wholesale store is only open to approved trade accounts.</p>
+                        <a class="btn btn-primary" href="#/wholesale/apply">Apply for a trade account</a>
+                    </div>`;
+                return;
+            }
+            slot.innerHTML = `<p class="careers-loading">Loading the wholesale catalogue…</p>`;
+            const { data, error } = await supabaseClient.from('wholesale_products').select('*').order('cat_slug').order('sort_order');
+            if (error) { slot.innerHTML = `<p class="careers-loading">Couldn't load the wholesale catalogue.</p>`; return; }
+            if (!data || data.length === 0) { slot.innerHTML = `<p class="careers-loading">No wholesale products yet, check back soon.</p>`; return; }
+            const byCategory = {};
+            for (const p of data) {
+                (byCategory[p.cat_slug] = byCategory[p.cat_slug] || []).push(p);
+            }
+            slot.innerHTML = Object.keys(byCategory).map(catSlug => `
+                <div class="panel" style="margin-bottom:20px;">
+                    <h2>${escapeHtml(WHOLESALE_CATEGORY_LABELS[catSlug] || catSlug)}</h2>
+                    <div class="wholesale-product-list">
+                        ${byCategory[catSlug].map(p => `
+                            <div class="wholesale-product-row">
+                                <span class="wholesale-product-name">${escapeHtml(p.name)}</span>
+                                <span class="wholesale-product-price">${p.price != null ? ('£' + Number(p.price).toFixed(2) + (p.unit ? ' / ' + escapeHtml(p.unit) : '')) : 'Price coming soon'}</span>
+                                ${p.stock === 'out' ? '<span class="wholesale-product-oos">Out of stock</span>' : ''}
+                            </div>`).join('')}
+                    </div>
+                </div>`).join('');
         }
         // Live "New order has been placed" notification for whoever's logged
         // in as admin with the site open, via Supabase Realtime on inserts
@@ -28219,7 +28606,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         window.markApplicationReviewed = markApplicationReviewed;
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-journal', 'view-journal-post', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-wholesale-apply', 'view-wholesale', 'view-journal', 'view-journal-post', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Unlike the other two floats, the currency fab stays up through
@@ -28638,6 +29025,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash === '#/build-bundle') {
                 showView('view-build-bundle');
                 renderDishPicker();
+            } else if (hash === '#/wholesale/apply') {
+                showView('view-wholesale-apply');
+                renderWholesaleApplyView();
+            } else if (hash === '#/wholesale') {
+                showView('view-wholesale');
+                renderWholesaleStoreView();
             } else if (hash === '' || hash === '#/') {
                 showView('view-home');
                 // These five sections used to only be rendered once at page
