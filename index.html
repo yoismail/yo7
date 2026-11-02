@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.33ef6756ed.css">    <script>
+    <link rel="stylesheet" href="/assets/app.5b03be707c.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -355,6 +355,32 @@
                             </svg>
                             Refer a friend
                         </a>
+                        <a href="#/wholesale/apply" id="wholesaleApplyNavLink" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 7l9-4 9 4-9 4-9-4Z" />
+                                <path d="M3 7v10l9 4 9-4V7" />
+                                <path d="M12 11v10" />
+                            </svg>
+                            Apply for a trade account
+                        </a>
+                        <span id="wholesalePendingNavLabel" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 7v5l3 3" />
+                            </svg>
+                            Trade account pending review
+                        </span>
+                        <a href="#/wholesale" id="wholesaleStoreNavLink" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 7l9-4 9 4-9 4-9-4Z" />
+                                <path d="M3 7v10l9 4 9-4V7" />
+                                <path d="M12 11v10" />
+                            </svg>
+                            Wholesale store
+                        </a>
                         <a href="#/admin" id="adminNavLink" style="display:none;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -390,6 +416,7 @@
             <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
+            <a href="#/wholesale/apply">Wholesale</a>
             <a href="#/about">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
@@ -2395,6 +2422,41 @@
         </section>
     </div>
 
+    <!-- ================= WHOLESALE =================
+         Gated to approved trade accounts (profiles.wholesale_status).
+         See apply_for_wholesale_account() and wholesale_products in
+         schema.sql; currentWholesaleStatus/syncWholesaleNavLinks() drive
+         which of these two views and nav links are reachable. -->
+    <div id="view-wholesale-apply" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Wholesale</div>
+                <h1>Trade account application</h1>
+                <p>Buy poultry, meat and fish in wholesale quantities. Apply for a trade account and we'll review it within a couple of days.</p>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div id="wholesaleApplySlot"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="view-wholesale" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Wholesale</div>
+                <h1>Wholesale store</h1>
+                <p>Trade pricing for approved accounts. Everything here is sold in wholesale quantities.</p>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div id="wholesaleStoreSlot"></div>
+            </div>
+        </section>
+    </div>
+
     <div id="view-special-offers" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
@@ -2902,6 +2964,16 @@
                         <div class="auth-error" id="addAdminError" role="alert" style="display:none;"></div>
                         <div class="auth-success" id="addAdminSuccess" role="status" style="display:none;"></div>
                     </div>
+                    <div class="admin-panel-section panel-wholesale">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>Wholesale applications</h2>
+                        <p class="sub">Trade account applications waiting for review. Approving turns on the wholesale store for that account.</p>
+                        <div id="wholesaleApplicationsList"></div>
+                    </div>
+                    <div class="admin-panel-section panel-wholesale">
+                        <h2><span class="admin-panel-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>Wholesale products</h2>
+                        <p class="sub">Set a price, unit and stock for each draft product. Nothing here is orderable until stock is switched to "In stock".</p>
+                        <div id="wholesaleProductsList"></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -3270,7 +3342,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.cd996307b3.js"></script>
+    <script defer src="/assets/app.f3243590fe.js"></script>
 
 </body>
 
