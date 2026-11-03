@@ -15882,10 +15882,10 @@
             }
             const sub = cartSubtotal(cartArr);
             if (sub >= loyaltySpendThreshold) {
-                return `This order qualifies! Complete checkout and <strong>${loyaltyRewardPct}% off</strong> your next order unlocks automatically.`;
+                return `Your current order qualifies! Complete checkout and <strong>${loyaltyRewardPct}% off</strong> your next order unlocks automatically.`;
             }
             if (sub > 0) {
-                return `Add <strong>${money(loyaltySpendThreshold - sub)}</strong> more to this order to unlock <strong>${loyaltyRewardPct}% off</strong> your next one.`;
+                return `Add <strong>${money(loyaltySpendThreshold - sub)}</strong> more to your current order to unlock <strong>${loyaltyRewardPct}% off</strong> your next one.`;
             }
             return `Spend <strong>${money(loyaltySpendThreshold)}</strong> or more in one order to unlock <strong>${loyaltyRewardPct}% off</strong> your next order.`;
         }
@@ -17078,7 +17078,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-10-06.1';
+        const BUILD_VERSION = '2026-11-03.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
