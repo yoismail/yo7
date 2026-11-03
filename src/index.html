@@ -20476,7 +20476,12 @@
             filterShopAll();
         }
         function renderShopAllPills() {
-            const pills = [{ slug: 'all', name: 'All' }, ...CATEGORIES];
+            // CATEGORIES itself stays in its original (curated-elsewhere)
+            // order - sorted only here, so this page's filter list reads
+            // alphabetically instead of in whatever order categories were
+            // originally added in, without touching anywhere else that
+            // reads CATEGORIES.
+            const pills = [{ slug: 'all', name: 'All' }, ...[...CATEGORIES].sort((a, b) => a.name.localeCompare(b.name))];
             document.getElementById('shopAllPillRow').innerHTML = pills.map(c => `
     <button type="button" class="cat-pill ${shopAllActiveCat === c.slug ? 'active' : ''}" data-slug="${c.slug}">${c.name.replace(/&amp;/g, '&')}</button>`).join('');
             document.querySelectorAll('#shopAllPillRow .cat-pill').forEach(btn => {
