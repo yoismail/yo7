@@ -228,6 +228,12 @@ function effectiveVariantPrice(v: WeightVariant): number {
   return typeof v.salePrice === "number" && v.salePrice < v.price ? v.salePrice : v.price;
 }
 type OverrideRow = { product_key: string; price: number | null; sale_price: number | null; stock: string | null; weight: number | null; weight_variants: WeightVariant[] | null; stock_quantity?: number | null };
+// Wholesale catalogue, deliberately separate from the three rows above:
+// wholesale_products isn't part of the public cat_slug::idx catalogue at
+// all (see its own comment in schema.sql), has its own id (a uuid, not a
+// cat_slug/idx pair), has no weight, and a line can only ever be priced
+// here once the caller's own wholesale_status has been checked.
+type WholesaleRow = { id: string; cat_slug: string; name: string; price: number | null; stock: string; min_qty: number };
 
 // A product-shaped cart id is "<catSlug>::<idx>" optionally followed by
 // more "::"-separated segments — a weight-variant's own label
@@ -449,6 +455,19 @@ Deno.serve(async (req) => {
     }
     const catSlugs = [...new Set([...productKeys].map((k) => k.split("::")[0]))];
 
+    // "wholesale::<uuid>" ids never collide with a real cat_slug::idx
+    // pattern (that's always a slug followed by a plain integer), so
+    // these are pulled out up front rather than threaded through
+    // parseProductCartId/trusted() at all. A wholesale line is priced
+    // from its own table, under its own gate (wholesale_status must be
+    // 'approved'), never from products/custom_products/product_overrides.
+    const wholesaleIds = new Set<string>();
+    for (const it of items) {
+      if (typeof it.id !== "string") continue;
+      const m = it.id.match(/^wholesale::([0-9a-fA-F-]{36})$/);
+      if (m) wholesaleIds.add(m[1]);
+    }
+
     // These three are the entire base of trusted()'s pricing — silently
     // discarding a real error from any one of them (a network hiccup, an
     // RLS policy change, a typo in a future edit) used to leave that
@@ -463,7 +482,7 @@ Deno.serve(async (req) => {
     // rejects the charge outright with an honest reason, instead of
     // quietly mispricing (or outright refusing) carts built from
     // whichever rows happened to still load.
-    const [productsRes, customProductsRes, overridesRes] = await Promise.all([
+    const [productsRes, customProductsRes, overridesRes, wholesaleRes, wholesaleProfileRes] = await Promise.all([
       db.from("products").select("cat_slug, idx, price, sale_price, stock, weight").in("cat_slug", catSlugs),
       // Admin-created products (the "Add a new product" form) never get a
       // row in the seeded `products` table above — they only ever exist
@@ -473,17 +492,33 @@ Deno.serve(async (req) => {
       // cart gets rejected as "Unknown product" the moment one is added.
       db.from("custom_products").select("cat_slug, idx, price, sale_price, stock, weight, stock_quantity").in("cat_slug", catSlugs),
       db.from("product_overrides").select("product_key, price, sale_price, stock, weight, weight_variants, stock_quantity").in("product_key", [...productKeys]),
+      // Skipped entirely (rather than sent with an empty .in()) when the
+      // cart has no wholesale lines at all, the overwhelming majority of
+      // carts, no sense paying for a round trip that's a guaranteed no-op.
+      wholesaleIds.size > 0
+        ? db.from("wholesale_products").select("id, cat_slug, name, price, stock, min_qty").in("id", [...wholesaleIds])
+        : Promise.resolve({ data: [] as WholesaleRow[], error: null }),
+      // Only this caller's own approval status, never trusted from the
+      // client. A cart with no wholesale lines, or no signed-in caller,
+      // has nothing to check here at all.
+      wholesaleIds.size > 0 && userId
+        ? db.from("profiles").select("wholesale_status").eq("id", userId).maybeSingle()
+        : Promise.resolve({ data: null as { wholesale_status: string } | null, error: null }),
     ]);
-    if (productsRes.error || customProductsRes.error || overridesRes.error) {
+    if (productsRes.error || customProductsRes.error || overridesRes.error || wholesaleRes.error || wholesaleProfileRes.error) {
       console.error(
         "priceCart: catalogue lookup failed",
         productsRes.error?.message, customProductsRes.error?.message, overridesRes.error?.message,
+        wholesaleRes.error?.message, wholesaleProfileRes.error?.message,
       );
       return { ok: false as const, error: "Couldn't verify pricing right now, please try again in a moment." };
     }
     const productRows = productsRes.data;
     const customProductRows = customProductsRes.data;
     const overrideRows = overridesRes.data;
+    const wholesaleMap = new Map<string, WholesaleRow>();
+    (wholesaleRes.data ?? []).forEach((r: WholesaleRow) => wholesaleMap.set(r.id, r));
+    const isApprovedWholesaler = wholesaleProfileRes.data?.wholesale_status === "approved";
 
     const base = new Map<string, ProductRow>();
     (productRows ?? []).forEach((r: ProductRow) => base.set(`${r.cat_slug}::${r.idx}`, r));
@@ -567,6 +602,27 @@ Deno.serve(async (req) => {
         }
         const unitPrice = round2(rawTotal * (1 - def.discountPercent / 100));
         lines.push({ unitPrice, qty, weight: weight * qty, catSlug: null, productId: it.id });
+        continue;
+      }
+
+      const wholesaleMatch = it.id.match(/^wholesale::([0-9a-fA-F-]{36})$/);
+      if (wholesaleMatch) {
+        // Checked before looking the product up at all. A non-approved
+        // (or signed-out) caller gets the same rejection whether or not
+        // the id is even real, rather than leaking which ids exist.
+        if (!isApprovedWholesaler) { rejection = "Your account isn't approved for wholesale pricing."; break; }
+        const wp = wholesaleMap.get(wholesaleMatch[1]);
+        if (!wp) { rejection = `Unknown product: ${it.id}`; break; }
+        if (wp.price == null) { rejection = `"${itemDisplayName(it)}" isn't available to buy yet.`; break; }
+        if (wp.stock === "out") { rejection = `${itemDisplayName(it)} just went out of stock, please remove it and try again.`; break; }
+        const minQty = wp.min_qty ?? 1;
+        if (qty < minQty) { rejection = `Minimum order quantity for "${itemDisplayName(it)}" is ${minQty}.`; break; }
+        // No weight (wholesale_products carries none) and no stockKey
+        // (left undefined on purpose): decrement_stock only ever runs
+        // against products/custom_products' own numeric stock_quantity,
+        // never this table's plain in/out stock flag, so a wholesale line
+        // simply isn't included in the stockLines collapsed below.
+        lines.push({ unitPrice: Number(wp.price), qty, weight: 0, catSlug: wp.cat_slug, productId: it.id });
         continue;
       }
 
