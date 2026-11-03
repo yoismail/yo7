@@ -3827,19 +3827,18 @@
         .build-bundle-promo-inner .btn { flex-shrink: 0; }
 
         /* Same promo-banner language as .build-bundle-promo just above,
-           but a solid brand-colour fill (deep aubergine, the same tone
-           every heading on the site already uses, just inverted into a
-           background) rather than another pale alternating-section tint
-           - every other homepage section is cream/white or the faint alt
-           tint, so this is the one genuinely bold, unmissable block on
+           but a solid brand-colour fill (chartreuse, lighter and bolder
+           than the pale alternating-section tint every other homepage
+           block uses) so this still reads as the one standout block on
            the page, deliberate for a B2B callout that needs to register
-           even to someone just skimming past. */
-        .wholesale-promo { position: relative; background: var(--aubergine); padding: 48px 0; overflow: hidden; }
-        .wholesale-promo .section-eyebrow { color: var(--chartreuse-soft); }
+           even to someone just skimming past, without the heavier dark
+           fill of the earlier aubergine version. */
+        .wholesale-promo { position: relative; background: var(--chartreuse); padding: 48px 0; overflow: hidden; }
+        .wholesale-promo .section-eyebrow { color: var(--aubergine-mid); }
         .wholesale-promo-watermark {
             position: absolute; z-index: 0; pointer-events: none;
             right: 3%; bottom: -20%; width: 220px; height: 220px;
-            opacity: 0.08; color: var(--cream);
+            opacity: 0.1; color: var(--aubergine);
             transform: rotate(8deg);
         }
         .wholesale-promo-inner {
@@ -3848,17 +3847,17 @@
         }
         .wholesale-promo-icon {
             width: 48px; height: 48px; flex-shrink: 0; border-radius: 15px;
-            background: rgba(144, 184, 0, 0.22);
-            color: var(--chartreuse-soft);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+            background: rgba(6, 59, 0, 0.14);
+            color: var(--aubergine);
+            box-shadow: 0 6px 16px rgba(6, 59, 0, 0.18);
             display: flex; align-items: center; justify-content: center;
         }
         .wholesale-promo-icon svg { width: 23px; height: 23px; }
         .wholesale-promo-inner h2 {
             font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px);
-            color: var(--cream); letter-spacing: -0.01em; margin: 4px 0 8px;
+            color: var(--aubergine); letter-spacing: -0.01em; margin: 4px 0 8px;
         }
-        .wholesale-promo-inner p { color: rgba(250, 249, 242, 0.72); font-size: 14px; max-width: 46ch; }
+        .wholesale-promo-inner p { color: rgba(6, 59, 0, 0.72); font-size: 14px; max-width: 46ch; }
         .wholesale-promo-inner .btn { flex-shrink: 0; }
 
         .whatsapp-list-section { position: relative; background: var(--section-alt-bg); padding: 48px 0; overflow: hidden; }
@@ -12133,7 +12132,7 @@
                         <h2>Buying in bulk? Open a trade account.</h2>
                         <p>Poultry, meat and fish in wholesale quantities for restaurants, shops and caterers. Apply for a trade account and we'll review it within a couple of days.</p>
                     </div>
-                    <a class="btn btn-outline" href="#/wholesale/apply">Apply for wholesale</a>
+                    <a class="btn btn-outline-dark" href="#/wholesale/apply">Apply for wholesale</a>
                 </div>
             </div>
         </section>
