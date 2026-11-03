@@ -2053,6 +2053,7 @@ CREATE TABLE IF NOT EXISTS "public"."job_vacancies" (
     "employment_type" "text",
     "description" "text" NOT NULL,
     "is_open" boolean DEFAULT true NOT NULL,
+    "closes_at" timestamp with time zone,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
@@ -3143,7 +3144,7 @@ CREATE POLICY "Anyone can read loyalty settings" ON "public"."loyalty_settings" 
 
 CREATE POLICY "Anyone can submit a job application" ON "public"."job_applications" FOR INSERT WITH CHECK ((("reviewed_at" IS NULL) AND (EXISTS ( SELECT 1
    FROM "public"."job_vacancies" "v"
-  WHERE (("v"."id" = "job_applications"."vacancy_id") AND ("v"."is_open" = true))))));
+  WHERE (("v"."id" = "job_applications"."vacancy_id") AND ("v"."is_open" = true) AND (("v"."closes_at" IS NULL) OR ("v"."closes_at" > "now"())))))));
 
 
 
@@ -3151,7 +3152,7 @@ CREATE POLICY "Anyone can view custom products" ON "public"."custom_products" FO
 
 
 
-CREATE POLICY "Anyone can view open vacancies" ON "public"."job_vacancies" FOR SELECT USING ((("is_open" = true) OR "public"."is_admin_user"()));
+CREATE POLICY "Anyone can view open vacancies" ON "public"."job_vacancies" FOR SELECT USING (((("is_open" = true) AND (("closes_at" IS NULL) OR ("closes_at" > "now"()))) OR "public"."is_admin_user"()));
 
 
 
