@@ -15882,10 +15882,10 @@
             }
             const sub = cartSubtotal(cartArr);
             if (sub >= loyaltySpendThreshold) {
-                return `This order qualifies! Complete checkout and <strong>${loyaltyRewardPct}% off</strong> your next order unlocks automatically.`;
+                return `Your current order qualifies! Complete checkout and <strong>${loyaltyRewardPct}% off</strong> your next order unlocks automatically.`;
             }
             if (sub > 0) {
-                return `Add <strong>${money(loyaltySpendThreshold - sub)}</strong> more to this order to unlock <strong>${loyaltyRewardPct}% off</strong> your next one.`;
+                return `Add <strong>${money(loyaltySpendThreshold - sub)}</strong> more to your current order to unlock <strong>${loyaltyRewardPct}% off</strong> your next one.`;
             }
             return `Spend <strong>${money(loyaltySpendThreshold)}</strong> or more in one order to unlock <strong>${loyaltyRewardPct}% off</strong> your next order.`;
         }
