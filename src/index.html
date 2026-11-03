@@ -20475,13 +20475,39 @@
             renderShopAllPills();
             filterShopAll();
         }
+        // Grocery-aisle order for the #/shop filter list (grains/starches,
+        // then protein, then fresh produce, then cooking essentials, and
+        // so on) rather than alphabetical, which split related aisles
+        // like Rice/Beans/Meat/Sea Foods apart from each other. Any
+        // category slug not listed here (a newly added one) falls back
+        // to alphabetical, appended after every known group, so it still
+        // shows up rather than silently vanishing.
+        const SHOP_ALL_CATEGORY_ORDER = [
+            'rice', 'beans', 'flour', 'noodles', 'baking-essentials',
+            'meat', 'poultry', 'sea-foods',
+            'fruits-vegetables', 'peppers-chillies', 'root-vegetables', 'other-vegetables', 'tropical-foods',
+            'oils', 'seasoning', 'condiments',
+            'dairy', 'breakfast-cereals', 'bakery',
+            'beverages', 'drinks', 'herbal-teas',
+            'snacks-confectionary',
+            'hair-products', 'body-oral-products',
+            'miscellaneous',
+        ];
         function renderShopAllPills() {
             // CATEGORIES itself stays in its original (curated-elsewhere)
-            // order - sorted only here, so this page's filter list reads
-            // alphabetically instead of in whatever order categories were
-            // originally added in, without touching anywhere else that
-            // reads CATEGORIES.
-            const pills = [{ slug: 'all', name: 'All' }, ...[...CATEGORIES].sort((a, b) => a.name.localeCompare(b.name))];
+            // order - reordered only here, so this page's filter list
+            // reads as grouped aisles instead of whatever order categories
+            // were originally added in, without touching anywhere else
+            // that reads CATEGORIES.
+            const sortedCats = [...CATEGORIES].sort((a, b) => {
+                const ai = SHOP_ALL_CATEGORY_ORDER.indexOf(a.slug);
+                const bi = SHOP_ALL_CATEGORY_ORDER.indexOf(b.slug);
+                if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+                if (ai === -1) return 1;
+                if (bi === -1) return -1;
+                return ai - bi;
+            });
+            const pills = [{ slug: 'all', name: 'All' }, ...sortedCats];
             document.getElementById('shopAllPillRow').innerHTML = pills.map(c => `
     <button type="button" class="cat-pill ${shopAllActiveCat === c.slug ? 'active' : ''}" data-slug="${c.slug}">${c.name.replace(/&amp;/g, '&')}</button>`).join('');
             document.querySelectorAll('#shopAllPillRow .cat-pill').forEach(btn => {
