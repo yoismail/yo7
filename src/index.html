@@ -748,9 +748,9 @@
            only on a page header that actually has an admin-set override to
            remove (.has-header-override, toggled by renderPageHeaderImages()),
            not just whenever a photo happens to be showing - shop-by-
-           department and combo-deals always show SOME photo (their own
-           shipped default), and there's nothing admin-specific to remove
-           until an admin actually replaces that default with their own. */
+           department always shows SOME photo (its own shipped default),
+           and there's nothing admin-specific to remove until an admin
+           actually replaces that default with their own. */
         .page-header-remove-btn {
             display: none;
             position: absolute; top: 10px; right: 48px; z-index: 4;
@@ -3582,34 +3582,31 @@
         }
         /* Same admin-editable-photo mechanism as the Blog hero and the
            Shop/About/Contact/Careers headers (page_header_images keyed by
-           "combo-deals", see handlePageHeaderImageUpload), but unlike
-           those four this section is always photo-backed from the start
-           via this hardcoded default rather than defaulting to the plain
-           page background - the same relationship .journal-hero's own
-           hardcoded default has to journalHeroImage. An admin's own
-           upload overrides this via .page-header-bg's own src (see the
-           <img> in the markup, and .page-header-bg/.page-header-scrim's
-           own CSS below) exactly as it does there, so .has-photo is never
-           needed here. */
+           "combo-deals", see handlePageHeaderImageUpload) - no hardcoded
+           default photo of its own any more, so it starts on the plain
+           .bundles-section background above like those four, and only
+           switches to the cream-on-photo treatment below once .has-photo
+           is set, same as them. */
         .bundles-section.page-header-editable {
             position: relative;
             overflow: hidden;
-            color: var(--cream);
         }
-        .bundles-section.page-header-editable .section-eyebrow { color: var(--chartreuse-soft); }
-        .bundles-section.page-header-editable .new-section-head h2 { color: var(--cream); }
-        .bundles-section.page-header-editable .new-section-head p { color: rgba(250, 249, 242, 0.84); }
+        .bundles-section.page-header-editable.has-photo { color: var(--cream); }
+        .bundles-section.page-header-editable.has-photo .section-eyebrow { color: var(--chartreuse-soft); }
+        .bundles-section.page-header-editable.has-photo .new-section-head h2 { color: var(--cream); }
+        .bundles-section.page-header-editable.has-photo .new-section-head p { color: rgba(250, 249, 242, 0.84); }
         /* A near-transparent pill (the same treatment Best Sellers' own
            view-all button uses, fine there against a flat colour) nearly
-           disappeared here: a busy photo's brightness varies constantly
+           disappears against a busy photo: its brightness varies constantly
            behind it, so a translucent fill reads as legible in some
            spots and invisible in others depending what part of the image
            sits behind it. A fully opaque cream fill, the same colour the
            combo cards themselves use, stays visible everywhere on the
-           photo and ties the button to the cards it leads to. */
-        .bundles-section.page-header-editable .view-all-btn { color: var(--aubergine-deep); background: var(--cream); }
-        .bundles-section.page-header-editable .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
-        .bundles-section.page-header-editable .swipe-hint { color: rgba(250, 249, 242, 0.55); }
+           photo and ties the button to the cards it leads to. Only needed
+           once a photo is actually behind it. */
+        .bundles-section.page-header-editable.has-photo .view-all-btn { color: var(--aubergine-deep); background: var(--cream); }
+        .bundles-section.page-header-editable.has-photo .view-all-btn:hover { background: var(--chartreuse); color: var(--aubergine-deep); }
+        .bundles-section.page-header-editable.has-photo .swipe-hint { color: rgba(250, 249, 242, 0.55); }
         .bundles-grid {
             display: grid;
             /* A capped max here (not 1fr) reads as a definite track size,
@@ -3827,18 +3824,19 @@
         .build-bundle-promo-inner .btn { flex-shrink: 0; }
 
         /* Same promo-banner language as .build-bundle-promo just above,
-           but a solid brand-colour fill (chartreuse, lighter and bolder
-           than the pale alternating-section tint every other homepage
-           block uses) so this still reads as the one standout block on
-           the page, deliberate for a B2B callout that needs to register
-           even to someone just skimming past, without the heavier dark
-           fill of the earlier aubergine version. */
-        .wholesale-promo { position: relative; background: var(--chartreuse); padding: 48px 0; overflow: hidden; }
-        .wholesale-promo .section-eyebrow { color: var(--aubergine-mid); }
+           on the same soft cream fill as the rest of the page, so this
+           stands out through a framing chartreuse top/bottom border and
+           bold colour accents (icon chip, eyebrow) instead of a solid
+           colour fill - a lighter touch than the chartreuse and
+           aubergine fills tried in earlier rounds. */
+        .wholesale-promo {
+            position: relative; background: var(--cream); padding: 48px 0; overflow: hidden;
+            border-top: 3px solid var(--chartreuse); border-bottom: 3px solid var(--chartreuse);
+        }
         .wholesale-promo-watermark {
             position: absolute; z-index: 0; pointer-events: none;
             right: 3%; bottom: -20%; width: 220px; height: 220px;
-            opacity: 0.1; color: var(--aubergine);
+            opacity: 0.05; color: var(--aubergine);
             transform: rotate(8deg);
         }
         .wholesale-promo-inner {
@@ -3847,17 +3845,17 @@
         }
         .wholesale-promo-icon {
             width: 48px; height: 48px; flex-shrink: 0; border-radius: 15px;
-            background: rgba(6, 59, 0, 0.14);
-            color: var(--aubergine);
-            box-shadow: 0 6px 16px rgba(6, 59, 0, 0.18);
+            background: linear-gradient(145deg, rgba(144,184,0,0.3), rgba(144,184,0,0.12));
+            color: var(--aubergine-mid);
+            box-shadow: 0 6px 16px rgba(144,184,0,0.25);
             display: flex; align-items: center; justify-content: center;
         }
         .wholesale-promo-icon svg { width: 23px; height: 23px; }
         .wholesale-promo-inner h2 {
             font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px);
-            color: var(--aubergine); letter-spacing: -0.01em; margin: 4px 0 8px;
+            color: var(--heading); letter-spacing: -0.01em; margin: 4px 0 8px;
         }
-        .wholesale-promo-inner p { color: rgba(6, 59, 0, 0.72); font-size: 14px; max-width: 46ch; }
+        .wholesale-promo-inner p { color: #6b5c4f; font-size: 14px; max-width: 46ch; }
         .wholesale-promo-inner .btn { flex-shrink: 0; }
 
         .whatsapp-list-section { position: relative; background: var(--section-alt-bg); padding: 48px 0; overflow: hidden; }
@@ -6723,11 +6721,9 @@
            .hero-glimpse-bg/.hero-glimpse-scrim already got for the Shop by
            department header (see that header's own markup comment): Low
            Data Mode skips a CSS background-image but still loads a real
-           <img>. Shop Everything/About/Contact/Careers have no photo at
-           all until an admin sets one, so both layers stay hidden until
-           .has-photo; Combo deals is always photo-backed (see its own
-           comment above), so its own rule further down forces them
-           visible unconditionally instead. */
+           <img>. Shop Everything/About/Contact/Careers/Combo deals have no
+           photo at all until an admin sets one, so both layers stay
+           hidden until .has-photo. */
         .page-header-bg {
             position: absolute;
             inset: 0;
@@ -6747,12 +6743,6 @@
         }
         .page-header-editable.has-photo .page-header-bg,
         .page-header-editable.has-photo .page-header-scrim {
-            display: block;
-        }
-        /* Always visible, not gated behind .has-photo - see the comment
-           on .bundles-section.page-header-editable itself. */
-        .bundles-section.page-header-editable .page-header-bg,
-        .bundles-section.page-header-editable .page-header-scrim {
             display: block;
         }
         /* .wrap only - see the matching comment on .hero-glimpse-strip's
@@ -12071,7 +12061,7 @@
         </section>
 
         <section class="bundles-section page-header-editable" data-page-header="combo-deals">
-            <img class="page-header-bg" src="/images/combo-deals/combo-deals-hero.webp" alt="" loading="lazy" decoding="async">
+            <img class="page-header-bg" alt="" loading="lazy" decoding="async">
             <div class="page-header-scrim"></div>
             <label class="card-edit-btn" for="pageHeaderUpload-combo-deals" aria-label="Change Combo deals background image" title="Change background image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -16040,15 +16030,15 @@
         // same as any other photo on the site (see .hero-glimpse-bg's own
         // markup comment for the full story).
         //
-        // Shop by department and Combo deals ship with their own hardcoded
-        // default photo already in that <img>'s src attribute (see each
-        // header's own markup); the other four start with no src at all.
+        // Shop by department ships with its own hardcoded default photo
+        // already in that <img>'s src attribute (see its own markup); the
+        // other five (including Combo deals) start with no src at all.
         // dataset.defaultSrc captures whichever of those two states a
         // header started in, the first time this function ever touches
         // it, so removePageHeaderImage() has something real to fall back
         // to - without it, "remove" would have nothing to put back for
-        // Shop by department/Combo deals, and would need special-casing
-        // per header instead of this one shared function handling all six.
+        // Shop by department, and would need special-casing per header
+        // instead of this one shared function handling all six.
         function renderPageHeaderImages() {
             document.querySelectorAll('[data-page-header]').forEach(header => {
                 const key = header.dataset.pageHeader;
@@ -16095,10 +16085,10 @@
         // Clears an admin-set header override, not a confirm()-gated
         // delete - same reasoning as removeAdvertBanner just above: easily
         // re-added by uploading again, nothing unique or cascading lost.
-        // For Shop by department/Combo deals this falls back to their own
-        // shipped default photo (dataset.defaultSrc, see
-        // renderPageHeaderImages()), not to no photo at all; the other
-        // four go back to their icon-badge state.
+        // For Shop by department this falls back to its own shipped
+        // default photo (dataset.defaultSrc, see renderPageHeaderImages()),
+        // not to no photo at all; the other five (including Combo deals)
+        // go back to their plain, no-photo header state.
         async function removePageHeaderImage(key) {
             if (!pageHeaderImages[key]) return;
             if (!supabaseClient) { showToast('Image management needs accounts connected first, this is preview mode right now.'); return; }
