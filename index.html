@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.25e5972df0.css">    <script>
+    <link rel="stylesheet" href="/assets/app.17a4ea4334.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -493,6 +493,27 @@
                     </a>
                 </div>
             </div>
+            <!-- Third slide, same crossfade rotation (initLaunchBannerRotator
+                 reads every .launch-banner-slide in the rotator, nothing
+                 hardcoded to two) - the wholesale store is also linked from
+                 the account dropdown, mobile menu, footer and its own
+                 homepage promo section, but this is the one spot that
+                 reaches a visitor who hasn't scrolled anywhere yet. -->
+            <div class="launch-banner-slide" aria-hidden="true">
+                <div class="wrap launch-banner-inner">
+                    <span class="launch-banner-badge" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
+                    </span>
+                    <div class="launch-banner-text">
+                        <h2>Buying in bulk for your business?</h2>
+                        <p>Poultry, meat and fish in wholesale quantities, trade pricing for approved accounts. Apply for a trade account to get started.</p>
+                    </div>
+                    <a class="launch-banner-tag" href="#/wholesale/apply" tabindex="-1">
+                        <span class="launch-banner-dot" aria-hidden="true"></span>
+                        Explore Wholesale
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -768,7 +789,7 @@
                         <h2>Buying in bulk? Open a trade account.</h2>
                         <p>Poultry, meat and fish in wholesale quantities for restaurants, shops and caterers. Apply for a trade account and we'll review it within a couple of days.</p>
                     </div>
-                    <a class="btn btn-outline-dark" href="#/wholesale/apply">Apply for wholesale</a>
+                    <a class="btn btn-outline" href="#/wholesale/apply">Apply for wholesale</a>
                 </div>
             </div>
         </section>
