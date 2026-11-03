@@ -4113,11 +4113,6 @@
             transition: background 0.3s ease, color 0.3s ease;
         }
         .dish-pill .emoji svg { width: 25px; height: 25px; }
-        .dish-pill.active {
-            background: var(--aubergine); color: var(--cream);
-            box-shadow: 0 6px 16px rgba(6, 59, 0, 0.28);
-        }
-        .dish-pill.active .emoji { background: var(--chartreuse); color: var(--aubergine-deep); }
         .dish-pill-remove {
             display: none;
             position: absolute; top: 10px; right: 10px;
@@ -18263,7 +18258,7 @@
             const picker = document.getElementById('dishPicker');
             if (!picker) return;
             picker.innerHTML = DISH_TEMPLATES.map((d, i) => `
-    <span class="dish-pill ${activeDishIndex === i ? 'active' : ''}" onclick="selectDish(${i})">
+    <span class="dish-pill" onclick="selectDish(${i})">
       <span class="emoji">${d.emoji}</span>${d.name}
       <button type="button" class="dish-pill-remove" onclick="removeDish(event, ${i})" aria-label="Remove dish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </span>`).join('') || '<p style="font-size:13px; color:var(--text-muted);">No dishes set up yet.</p>';
@@ -18274,21 +18269,6 @@
             dishSelectedItems = new Set(dish.items.map((_, idx) => idx));
             renderDishPicker();
             renderDishBuilder();
-            // The ingredient list renders below the dish picker row, out of
-            // view on anything shorter than a full desktop screen — nothing
-            // on screen hinted a list had even appeared, so this jumps to it.
-            // Targets the header specifically, and offsets by the fixed
-            // nav+trust-bar height (same fix as the data-scroll-to handler
-            // above) — a plain scrollIntoView() aligns the header's top edge
-            // with the viewport's top edge, which is exactly where those
-            // fixed bars sit, so the header landed hidden behind them and
-            // the list looked like it started with no heading at all.
-            const builderHeader = document.getElementById('dishBuilderHeader');
-            if (builderHeader) {
-                const fixedHeaderHeight = parseFloat(document.body.style.paddingTop) || 0;
-                const targetY = builderHeader.getBoundingClientRect().top + window.scrollY - fixedHeaderHeight - 16;
-                window.scrollTo({ top: targetY, behavior: 'smooth' });
-            }
         }
         window.selectDish = selectDish;
         function removeDish(e, i) {
