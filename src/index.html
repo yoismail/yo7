@@ -2858,21 +2858,27 @@
             .hero-shop-btn::after { animation: none; display: none; }
         }
 
+        /* flex-basis: 100% wraps this onto its own line within
+           .hero-cta-row (same gap as the two buttons above it, from the
+           row's own `gap`), keeping it visually grouped with Shop Now/
+           Browse Categories - it used to be a separate block further
+           down .hero-inner, margined off to clear the big faded "Yo7"
+           watermark bleeding off the bottom-left (.hero-text-watermark),
+           but at some viewport widths that gap wasn't enough and the
+           watermark's own low-contrast ink colour still read as part of
+           the same shape as this link, swallowing it rather than the
+           watermark staying safely below. Living inside the CTA row
+           instead sidesteps that entirely: it never gets near the
+           bottom-anchored mark in the first place. */
         .hero-social-link {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
+            flex-basis: 100%;
             /* Same reasoning as .footer-col a — this was ~19px tall,
                under the 24px minimum touch-target height (WCAG 2.5.8). */
             padding: 3px 0;
-            margin-top: 18px;
-            /* The big faded "Yo7" watermark tracks the hero's own bottom
-               edge (see .hero-text-watermark), so this link — the last
-               piece of real content before it — was sitting right up
-               against the "Y", easy to read as part of the same shape
-               rather than its own separate, clickable line. */
-            margin-bottom: 56px;
             font-family: var(--display);
             font-weight: 600;
             font-size: 12.5px;
@@ -4113,11 +4119,6 @@
             transition: background 0.3s ease, color 0.3s ease;
         }
         .dish-pill .emoji svg { width: 25px; height: 25px; }
-        .dish-pill.active {
-            background: var(--aubergine); color: var(--cream);
-            box-shadow: 0 6px 16px rgba(6, 59, 0, 0.28);
-        }
-        .dish-pill.active .emoji { background: var(--chartreuse); color: var(--aubergine-deep); }
         .dish-pill-remove {
             display: none;
             position: absolute; top: 10px; right: 10px;
@@ -11787,15 +11788,15 @@
                 <div class="hero-cta-row">
                     <a class="btn btn-primary hero-shop-btn" href="#/shop">Shop Now</a>
                     <a class="btn btn-outline-dark" href="javascript:void(0)" onclick="document.getElementById('shopByGroup').scrollIntoView({behavior:'smooth', block:'start'})">Browse Categories</a>
+                    <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <rect x="3" y="3" width="18" height="18" rx="5" />
+                            <circle cx="12" cy="12" r="4" />
+                            <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+                        </svg>
+                        Follow @yo7foods
+                    </a>
                 </div>
-                <a class="hero-social-link" href="https://instagram.com/yo7foods" target="_blank" rel="noopener">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <rect x="3" y="3" width="18" height="18" rx="5" />
-                        <circle cx="12" cy="12" r="4" />
-                        <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
-                    </svg>
-                    Follow @yo7foods
-                </a>
             </div>
             <div class="hero-scroll-cue" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
@@ -12013,7 +12014,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                     </div>
                     <div>
-                        <div class="section-eyebrow">New</div>
+                        <div class="section-eyebrow">Build a bundle</div>
                         <h2>Know the dish? We'll guide the ingredients.</h2>
                         <p>Select a meal and we'll list the ingredients you need. Uncheck what you already have, and add the rest in one tap.</p>
                     </div>
@@ -18263,7 +18264,7 @@
             const picker = document.getElementById('dishPicker');
             if (!picker) return;
             picker.innerHTML = DISH_TEMPLATES.map((d, i) => `
-    <span class="dish-pill ${activeDishIndex === i ? 'active' : ''}" onclick="selectDish(${i})">
+    <span class="dish-pill" onclick="selectDish(${i})">
       <span class="emoji">${d.emoji}</span>${d.name}
       <button type="button" class="dish-pill-remove" onclick="removeDish(event, ${i})" aria-label="Remove dish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </span>`).join('') || '<p style="font-size:13px; color:var(--text-muted);">No dishes set up yet.</p>';
@@ -18274,21 +18275,6 @@
             dishSelectedItems = new Set(dish.items.map((_, idx) => idx));
             renderDishPicker();
             renderDishBuilder();
-            // The ingredient list renders below the dish picker row, out of
-            // view on anything shorter than a full desktop screen — nothing
-            // on screen hinted a list had even appeared, so this jumps to it.
-            // Targets the header specifically, and offsets by the fixed
-            // nav+trust-bar height (same fix as the data-scroll-to handler
-            // above) — a plain scrollIntoView() aligns the header's top edge
-            // with the viewport's top edge, which is exactly where those
-            // fixed bars sit, so the header landed hidden behind them and
-            // the list looked like it started with no heading at all.
-            const builderHeader = document.getElementById('dishBuilderHeader');
-            if (builderHeader) {
-                const fixedHeaderHeight = parseFloat(document.body.style.paddingTop) || 0;
-                const targetY = builderHeader.getBoundingClientRect().top + window.scrollY - fixedHeaderHeight - 16;
-                window.scrollTo({ top: targetY, behavior: 'smooth' });
-            }
         }
         window.selectDish = selectDish;
         function removeDish(e, i) {
@@ -20495,8 +20481,39 @@
             renderShopAllPills();
             filterShopAll();
         }
+        // Grocery-aisle order for the #/shop filter list (grains/starches,
+        // then protein, then fresh produce, then cooking essentials, and
+        // so on) rather than alphabetical, which split related aisles
+        // like Rice/Beans/Meat/Sea Foods apart from each other. Any
+        // category slug not listed here (a newly added one) falls back
+        // to alphabetical, appended after every known group, so it still
+        // shows up rather than silently vanishing.
+        const SHOP_ALL_CATEGORY_ORDER = [
+            'rice', 'beans', 'flour', 'noodles', 'baking-essentials',
+            'meat', 'poultry', 'sea-foods',
+            'fruits-vegetables', 'peppers-chillies', 'root-vegetables', 'other-vegetables', 'tropical-foods',
+            'oils', 'seasoning', 'condiments',
+            'dairy', 'breakfast-cereals', 'bakery',
+            'beverages', 'drinks', 'herbal-teas',
+            'snacks-confectionary',
+            'hair-products', 'body-oral-products',
+            'miscellaneous',
+        ];
         function renderShopAllPills() {
-            const pills = [{ slug: 'all', name: 'All' }, ...CATEGORIES];
+            // CATEGORIES itself stays in its original (curated-elsewhere)
+            // order - reordered only here, so this page's filter list
+            // reads as grouped aisles instead of whatever order categories
+            // were originally added in, without touching anywhere else
+            // that reads CATEGORIES.
+            const sortedCats = [...CATEGORIES].sort((a, b) => {
+                const ai = SHOP_ALL_CATEGORY_ORDER.indexOf(a.slug);
+                const bi = SHOP_ALL_CATEGORY_ORDER.indexOf(b.slug);
+                if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+                if (ai === -1) return 1;
+                if (bi === -1) return -1;
+                return ai - bi;
+            });
+            const pills = [{ slug: 'all', name: 'All' }, ...sortedCats];
             document.getElementById('shopAllPillRow').innerHTML = pills.map(c => `
     <button type="button" class="cat-pill ${shopAllActiveCat === c.slug ? 'active' : ''}" data-slug="${c.slug}">${c.name.replace(/&amp;/g, '&')}</button>`).join('');
             document.querySelectorAll('#shopAllPillRow .cat-pill').forEach(btn => {
@@ -28513,10 +28530,26 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',
             employment_type: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
         };
+        const VACANCY_CLOSES_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+        // RLS (job_vacancies' "Anyone can view open vacancies" policy)
+        // already keeps a past-due vacancy out of a visitor's own query
+        // results, so this only matters for an admin, who can still see
+        // every row regardless of closes_at - it lets the UI show the
+        // same "closed" state they'll see, without touching is_open.
+        function vacancyIsPastClosingDate(v) {
+            return !!(v.closes_at && new Date(v.closes_at) <= new Date());
+        }
+        function vacancyIsEffectivelyOpen(v) {
+            return v.is_open && !vacancyIsPastClosingDate(v);
+        }
         function vacancyMetaPillsHTML(v) {
             const pills = ['department', 'location', 'employment_type']
                 .filter(key => v[key])
                 .map(key => `<span class="vacancy-meta-pill">${VACANCY_META_ICONS[key]}${escapeHtml(v[key])}</span>`);
+            if (v.closes_at) {
+                const label = (vacancyIsPastClosingDate(v) ? 'Closed ' : 'Closes ') + new Date(v.closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                pills.push(`<span class="vacancy-meta-pill">${VACANCY_CLOSES_ICON}${escapeHtml(label)}</span>`);
+            }
             return pills.length ? `<span class="vacancy-meta-pills">${pills.join('')}</span>` : '';
         }
         // Turns a plain admin-typed description into real paragraphs and
@@ -28549,18 +28582,19 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const { data, error } = await supabaseClient.from('job_vacancies').select('*').order('created_at', { ascending: false });
             if (error) { listEl.innerHTML = `<p class="careers-loading">Couldn't load open roles right now, try refreshing.</p>`; return; }
             vacancies = data || [];
-            const visible = canManage ? vacancies : vacancies.filter(v => v.is_open);
+            const visible = canManage ? vacancies : vacancies.filter(v => vacancyIsEffectivelyOpen(v));
             if (!visible.length) { listEl.innerHTML = ''; emptyEl.style.display = ''; return; }
             listEl.innerHTML = visible.map(v => vacancyCardHTML(v, canManage)).join('');
         }
         function vacancyCardHTML(v, canManage) {
             const pills = vacancyMetaPillsHTML(v);
+            const effectivelyOpen = vacancyIsEffectivelyOpen(v);
             return `
-      <div class="vacancy-card${!v.is_open ? ' vacancy-card-closed' : ''}" id="vacancy-${v.id}">
+      <div class="vacancy-card${!effectivelyOpen ? ' vacancy-card-closed' : ''}" id="vacancy-${v.id}">
         <button type="button" class="vacancy-card-head" onclick="toggleVacancyCard('${v.id}')" aria-expanded="false" aria-controls="vacancy-body-${v.id}">
           <span class="vacancy-icon-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
           <span class="vacancy-card-head-text">
-            <span class="vacancy-title">${escapeHtml(v.title)}${!v.is_open ? '<span class="vacancy-closed-tag">Closed</span>' : ''}</span>
+            <span class="vacancy-title">${escapeHtml(v.title)}${!effectivelyOpen ? '<span class="vacancy-closed-tag">Closed</span>' : ''}</span>
             ${pills}
           </span>
           <svg class="vacancy-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -28569,7 +28603,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         <div class="edit-panel-slot" id="vacancy-edit-slot-${v.id}"></div>
         <div class="vacancy-card-body" id="vacancy-body-${v.id}" hidden>
           <div class="vacancy-desc">${vacancyDescriptionHTML(v.description)}</div>
-          ${v.is_open ? `<div class="vacancy-divider"></div>
+          ${effectivelyOpen ? `<div class="vacancy-divider"></div>
           <button type="button" class="btn btn-primary vacancy-apply-btn" id="apply-btn-${v.id}" onclick="showApplyForm('${v.id}')">Apply for this role</button>
           <div id="apply-slot-${v.id}"></div>` : ''}
           ${canManage ? `<button type="button" class="vacancy-applications-toggle" onclick="toggleVacancyApplications('${v.id}')">View applications</button>
@@ -28600,14 +28634,16 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             <div><label for="ep-vac-dept-${idAttr}">Department (optional)</label><input type="text" id="ep-vac-dept-${idAttr}" placeholder="e.g. Warehouse" value="${escapeHtml(v && v.department || '')}"></div>
             <div><label for="ep-vac-location-${idAttr}">Location (optional)</label><input type="text" id="ep-vac-location-${idAttr}" placeholder="e.g. Ipswich" value="${escapeHtml(v && v.location || '')}"></div>
           </div>
-          <div class="ep-row" style="grid-template-columns:1fr;">
+          <div class="ep-row">
             <div><label for="ep-vac-type-${idAttr}">Employment type (optional)</label><input type="text" id="ep-vac-type-${idAttr}" placeholder="e.g. Full-time" value="${escapeHtml(v && v.employment_type || '')}"></div>
+            <div><label for="ep-vac-closes-${idAttr}">Closing date (optional)</label><input type="date" id="ep-vac-closes-${idAttr}" value="${v && v.closes_at ? v.closes_at.slice(0, 10) : ''}"></div>
           </div>
           <div class="ep-row" style="grid-template-columns:1fr;">
             <div><label for="ep-vac-desc-${idAttr}">Full description</label><textarea id="ep-vac-desc-${idAttr}" rows="6">${escapeHtml(v ? v.description : '')}</textarea></div>
           </div>
           <div class="ep-row" style="grid-template-columns:1fr;">
             <label style="display:flex; align-items:center; gap:8px; font-weight:400;"><input type="checkbox" id="ep-vac-open-${idAttr}" ${(!v || v.is_open) ? 'checked' : ''}> Open (visible to visitors)</label>
+            ${v && vacancyIsPastClosingDate(v) ? `<p style="font-size:12.5px; color:var(--text-muted); margin:6px 0 0;">Its closing date has passed, so it's already hidden from visitors regardless of this toggle. Clear or push back the closing date to reopen it.</p>` : ''}
           </div>
           <div class="ep-actions">
             <button class="ep-save" type="button" onclick="saveVacancyEditPanel('${vacancyId || ''}', this)">Save</button>
@@ -28621,6 +28657,10 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const title = document.getElementById(`ep-vac-title-${idAttr}`).value.trim();
             const description = document.getElementById(`ep-vac-desc-${idAttr}`).value.trim();
             if (!title || !description) { showToast('Job title and description are both required.'); return; }
+            // The date picker only gives a day, no time - end-of-day keeps
+            // the role visible through its whole stated closing date
+            // rather than cutting off at midnight that morning.
+            const closesDateVal = document.getElementById(`ep-vac-closes-${idAttr}`).value;
             const row = {
                 title,
                 department: document.getElementById(`ep-vac-dept-${idAttr}`).value.trim() || null,
@@ -28628,6 +28668,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 employment_type: document.getElementById(`ep-vac-type-${idAttr}`).value.trim() || null,
                 description,
                 is_open: document.getElementById(`ep-vac-open-${idAttr}`).checked,
+                closes_at: closesDateVal ? closesDateVal + 'T23:59:59' : null,
             };
             btn.disabled = true;
             btn.textContent = 'Saving…';
