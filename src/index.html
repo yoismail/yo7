@@ -15967,7 +15967,7 @@
             const path = `page-headers/${key}-${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             const nextImages = { ...pageHeaderImages, [key]: publicUrl };
             const { error: saveError } = await supabaseClient.from('pricing_settings').update({ page_header_images: nextImages, updated_at: new Date().toISOString() }).eq('id', true);
             if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
@@ -16984,6 +16984,25 @@
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
             : null;
 
+        // Every admin-uploaded photo (product, category, advert banner,
+        // page headers, blog covers, wholesale) lives in the one public
+        // "product-photos" bucket and gets fetched straight from Supabase
+        // Storage's own CDN today, which bills as Supabase "Cached Egress"
+        // on every single request, from every visitor, not just the first.
+        // worker.js proxies this same bucket through this site's own
+        // Cloudflare Worker at /cdn-img/<path>, where Cloudflare's edge
+        // cache absorbs repeat requests instead. Rewriting a fresh
+        // getPublicUrl() result through this helper at the point it's
+        // first stored (not at render time) means every render site that
+        // already just prints out whatever URL is in the database needs
+        // no changes at all.
+        const PRODUCT_PHOTOS_PUBLIC_PREFIX = SUPABASE_URL + '/storage/v1/object/public/product-photos/';
+        function cdnImageUrl(url) {
+            return (typeof url === 'string' && url.startsWith(PRODUCT_PHOTOS_PUBLIC_PREFIX))
+                ? '/cdn-img/' + url.slice(PRODUCT_PHOTOS_PUBLIC_PREFIX.length)
+                : url;
+        }
+
         /* Public half of the VAPID key pair the send-push Edge Function
            signs with — safe to ship client-side, same reasoning as the
            Supabase anon key above: it can only be used to prove pushes
@@ -17907,7 +17926,7 @@
                 preview.innerHTML = cat.image ? `<img src="${escapeHtml(cat.image)}" alt="">` : `<span>${cat.emoji}</span>`;
                 return;
             }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             cat.image = publicUrl;
             CATEGORY_OVERRIDES[categoryEditSlug] = { ...(CATEGORY_OVERRIDES[categoryEditSlug] || {}), image: publicUrl };
             await savePricingSettings();
@@ -19576,7 +19595,7 @@
             const path = `adverts/${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             const sortOrder = advertBanners.length ? Math.max(...advertBanners.map(b => b.sort_order || 0)) + 1 : 0;
             const { data: inserted, error: insertError } = await supabaseClient.from('advert_banners').insert({ image_url: publicUrl, sort_order: sortOrder }).select('*').single();
             if (insertError) { showToast('Uploaded, but couldn\'t save it: ' + insertError.message, 6000, 'error'); return; }
@@ -20925,7 +20944,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const path = `journal/${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             // A fallback post (see JOURNAL_FALLBACK_POSTS) has no real
             // blog_posts row to update yet - changing its image is exactly
             // the kind of edit that should promote it into a real one, same
@@ -21027,7 +21046,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 updateJournalCoverPreview(document.getElementById('newJournalCoverImage').value);
                 return;
             }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             document.getElementById('newJournalCoverImage').value = publicUrl;
             updateJournalCoverPreview(publicUrl);
             showToast('Cover image uploaded.', undefined, 'success');
@@ -21049,7 +21068,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const path = `journal/hero-${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) { showToast('Could not upload that image: ' + uploadError.message, 6000, 'error'); return; }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             const { error: saveError } = await supabaseClient.from('pricing_settings').update({ journal_hero_image: publicUrl, updated_at: new Date().toISOString() }).eq('id', true);
             if (saveError) { showToast('Uploaded, but couldn\'t save it: ' + saveError.message, 6000, 'error'); return; }
             journalHeroImage = publicUrl;
@@ -25104,7 +25123,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const path = `wholesale/${productId}-${Date.now()}.${ext}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
             if (uploadError) { showToast('Could not upload that photo: ' + uploadError.message, 6000, 'error'); return; }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             const { error: saveError } = await supabaseClient.from('wholesale_products').update({ image_url: publicUrl }).eq('id', productId);
             if (saveError) { showToast("Uploaded, but couldn't save it: " + saveError.message, 6000, 'error'); return; }
             const img = document.getElementById(`wp-photo-${productId}`);
@@ -27456,13 +27475,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (preview) preview.innerHTML = `<span>${(findCategory(catSlug).products[idx].emoji) || DEFAULT_ITEM_ICON_SVG}</span>`;
                 return;
             }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             // A failed thumb upload (rare - the full photo above already
             // succeeded) shouldn't block the photo update itself; every
             // thumb consumer already falls back to the full image when
             // imageThumb is unset, same as it does for a product that
             // predates this thumbnail system entirely.
-            const publicThumbUrl = thumbUploadError ? null : supabaseClient.storage.from('product-photos').getPublicUrl(thumbPath).data.publicUrl;
+            const publicThumbUrl = thumbUploadError ? null : cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(thumbPath).data.publicUrl);
             const cat = findCategory(catSlug);
             const product = cat.products[idx];
             product.image = publicUrl;
@@ -27600,9 +27619,9 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (preview) preview.innerHTML = `<span>${DEFAULT_ITEM_ICON_SVG}</span>`;
                 return;
             }
-            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const publicUrl = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(path).data.publicUrl);
             newProductPhotoData[uid] = publicUrl;
-            if (!thumbUploadError) newProductPhotoThumbData[uid] = supabaseClient.storage.from('product-photos').getPublicUrl(thumbPath).data.publicUrl;
+            if (!thumbUploadError) newProductPhotoThumbData[uid] = cdnImageUrl(supabaseClient.storage.from('product-photos').getPublicUrl(thumbPath).data.publicUrl);
             if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="">`;
         }
         window.handleNewProductPhotoUpload = handleNewProductPhotoUpload;
