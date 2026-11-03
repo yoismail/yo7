@@ -9176,21 +9176,6 @@
             padding: 8px 0;
         }
 
-        .wholesale-product-list { display: flex; flex-direction: column; }
-        .wholesale-product-row {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: 10px;
-            flex-wrap: wrap;
-            font-size: 14.5px;
-            color: var(--text-body);
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
-        }
-        .wholesale-product-row:last-child { border-bottom: none; }
-        .wholesale-product-name { font-weight: 600; }
-        .wholesale-product-price { color: var(--text-muted); }
         .wholesale-product-oos {
             font-size: 11.5px;
             font-weight: 700;
@@ -9201,17 +9186,6 @@
             border-radius: 14px;
             padding: 3px 9px;
         }
-        /* flex-basis:100% drops these onto their own line below the
-           name/price/stock-badge row every time, rather than competing
-           for space with them in .wholesale-product-row's own wrap. */
-        .wholesale-product-buy {
-            flex-basis: 100%;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 4px;
-        }
-        .wholesale-qty-label { font-size: 12.5px; color: var(--text-muted); }
         .wholesale-qty-input {
             width: 60px;
             padding: 7px 8px;
@@ -9220,11 +9194,47 @@
             font-size: 14px;
             text-align: center;
         }
-        .wholesale-product-minqty {
-            flex-basis: 100%;
-            font-size: 12px;
-            color: var(--text-muted);
+
+        /* Proper product cards for the wholesale store grid, deliberately
+           a separate, simpler set of classes from .product-card/.product-thumb
+           rather than reusing them: those carry PD-page links, favourite
+           hearts, edit-panel wiring and productPhotoHTML's own lazy-load
+           fade-in, none of which apply here. Same grid (.shop-all-grid) and
+           the same rounded-card visual language, just self-contained. */
+        .wholesale-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
+        .wholesale-card-thumb {
+            aspect-ratio: 1/1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%),
+                linear-gradient(165deg, #f4f7ea, #e8edd6);
+        }
+        [data-theme="dark"] .wholesale-card-thumb {
+            background:
+                radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%),
+                linear-gradient(165deg, #1c2611, #11150a);
+        }
+        .wholesale-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .wholesale-card-thumb-placeholder { color: rgba(var(--border-rgb), 0.4); }
+        .wholesale-card-thumb-placeholder svg { width: 40%; height: 40%; }
+        .wholesale-card-thumb .wholesale-product-oos { position: absolute; top: 10px; left: 10px; }
+        .wholesale-card-body { padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .wholesale-card-body h4 { font-family: var(--display); font-weight: 700; font-size: 14.5px; color: var(--heading); margin: 0; }
+        .wholesale-card-price { font-size: 13.5px; color: var(--text-muted); }
+        .wholesale-card-buy { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; }
+        .wholesale-card-buy .wholesale-qty-input { width: 54px; }
+        .wholesale-card-buy .btn { flex: 1; }
+        .wholesale-card-minqty { font-size: 11.5px; color: var(--text-muted); }
 
         .discount-row { color: var(--heading-mid); }
         .loyalty-note {
@@ -15581,21 +15591,28 @@
             return tier ? tier.fee : sorted[sorted.length - 1].fee;
         }
 
-        function cartTotalWeight() {
+        // Every one of these takes an optional cart array, defaulting to
+        // the regular `cart` global so every existing zero-arg call site
+        // across the site (header badge, free-delivery banners, etc.)
+        // keeps reading the regular basket exactly as before. Only the
+        // checkout funnel itself ever passes `wholesaleCart` explicitly,
+        // when checkoutMode === 'wholesale' - see updateSummaries() and
+        // initStripePayment().
+        function cartTotalWeight(cartArr = cart) {
             // Products without a real recorded weight contribute 0 — no invented
             // figure is substituted, so the weight tier simply won't reflect an
             // unweighed item rather than guessing at its weight.
-            return cart.reduce((sum, i) => sum + (typeof i.weight === 'number' ? i.weight * i.qty : 0), 0);
+            return cartArr.reduce((sum, i) => sum + (typeof i.weight === 'number' ? i.weight * i.qty : 0), 0);
         }
-        function cartItemCount() {
-            return cart.reduce((sum, i) => sum + i.qty, 0);
+        function cartItemCount(cartArr = cart) {
+            return cartArr.reduce((sum, i) => sum + i.qty, 0);
         }
 
-        function resolveDeliveryFee(postcode) {
-            const weight = cartTotalWeight();
+        function resolveDeliveryFee(postcode, cartArr = cart) {
+            const weight = cartTotalWeight(cartArr);
             let fee = resolveWeightTierFee(weight);
-            const subtotal = cartSubtotal();
-            const items = cartItemCount();
+            const subtotal = cartSubtotal(cartArr);
+            const items = cartItemCount(cartArr);
             const inIpswich = isIpswichPostcode(postcode);
             // Tracks whichever rule (or discount code) actually zeroed the fee,
             // so the checkout summary can tell the customer why delivery is
@@ -15934,7 +15951,7 @@
            panel's own Loyalty reward line. Every other call site (the
            orders page, just browsing) leaves this off, where "next
            order" is still the accurate, forward-looking framing. */
-        function loyaltyStatusHTML(activelyApplying) {
+        function loyaltyStatusHTML(activelyApplying, cartArr = cart) {
             if (!currentUser) {
                 return `<a href="#/login">Log in</a> to unlock <strong>${loyaltyRewardPct}% off</strong> your next order whenever a single order reaches <strong>${money(loyaltySpendThreshold)}</strong>.`;
             }
@@ -15955,7 +15972,7 @@
                     ? `You've got <strong>${pending.pct}% off</strong> this order, already applied below.`
                     : `You've got <strong>${pending.pct}% off</strong> your next order, it applies automatically at checkout.`;
             }
-            const sub = cartSubtotal();
+            const sub = cartSubtotal(cartArr);
             if (sub >= loyaltySpendThreshold) {
                 return `This order qualifies! Complete checkout and <strong>${loyaltyRewardPct}% off</strong> your next order unlocks automatically.`;
             }
@@ -16299,30 +16316,30 @@
             if (!qualifyingProductId) return false;
             return itemId === qualifyingProductId || itemId.startsWith(qualifyingProductId + '::');
         }
-        function cartQualifiesForDiscount(d) {
-            if (d.minOrder && cartSubtotal() < d.minOrder) return false;
-            if (d.qualifyingScope === 'all' || !d.qualifyingScope) return cart.length > 0;
-            if (d.qualifyingScope === 'category') return cart.some(i => i.catSlug === d.qualifyingCategory);
-            if (d.qualifyingScope === 'product') return cart.some(i => matchesQualifyingProduct(i.id, d.qualifyingProductId));
+        function cartQualifiesForDiscount(d, cartArr = cart) {
+            if (d.minOrder && cartSubtotal(cartArr) < d.minOrder) return false;
+            if (d.qualifyingScope === 'all' || !d.qualifyingScope) return cartArr.length > 0;
+            if (d.qualifyingScope === 'category') return cartArr.some(i => i.catSlug === d.qualifyingCategory);
+            if (d.qualifyingScope === 'product') return cartArr.some(i => matchesQualifyingProduct(i.id, d.qualifyingProductId));
             return false;
         }
-        async function validateDiscount(code) {
+        async function validateDiscount(code, cartArr = cart) {
             if (!supabaseClient) return { ok: false, error: 'Discount codes need a moment, try again shortly.' };
             const { data, error } = await supabaseClient.functions.invoke('create-payment-intent', {
-                body: { action: 'validate-discount', code, items: cartLineItemsForServer() },
+                body: { action: 'validate-discount', code, items: cartLineItemsForServer(cartArr) },
             });
             if (error || !data) return { ok: false, error: 'Couldn\'t check that code right now, try again in a moment.' };
             if (!data.ok) return { ok: false, error: data.error || 'That code isn\'t valid.', requiresLogin: !!data.requiresLogin };
             return { ok: true, discount: data.discount };
         }
-        function qualifyingCartItems(d) {
-            if (d.qualifyingScope === 'category') return cart.filter(i => i.catSlug === d.qualifyingCategory);
-            if (d.qualifyingScope === 'product') return cart.filter(i => matchesQualifyingProduct(i.id, d.qualifyingProductId));
-            return cart;
+        function qualifyingCartItems(d, cartArr = cart) {
+            if (d.qualifyingScope === 'category') return cartArr.filter(i => i.catSlug === d.qualifyingCategory);
+            if (d.qualifyingScope === 'product') return cartArr.filter(i => matchesQualifyingProduct(i.id, d.qualifyingProductId));
+            return cartArr;
         }
-        function computeDiscountAmount(d) {
+        function computeDiscountAmount(d, cartArr = cart) {
             if (!d) return 0;
-            const items = qualifyingCartItems(d);
+            const items = qualifyingCartItems(d, cartArr);
             const qualifyingSubtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
             if (d.type === 'percent') return qualifyingSubtotal * (d.value / 100);
             if (d.type === 'fixed') return Math.min(d.value, qualifyingSubtotal);
@@ -16343,8 +16360,8 @@
             }
             return 0; // freeDelivery has no cart-total effect — handled in delivery fee resolution
         }
-        async function applyDiscountCode(code) {
-            const result = await validateDiscount(code);
+        async function applyDiscountCode(code, cartArr = cart) {
+            const result = await validateDiscount(code, cartArr);
             if (!result.ok) return result;
             appliedDiscount = result.discount;
             updateSummaries();
@@ -16363,8 +16380,8 @@
         // order the webhook had to reconstruct (the browser never made it
         // back to finishOrderAfterPayment) showed empty item names forever,
         // since pending_checkouts.items had nothing else to give it.
-        function cartLineItemsForServer() {
-            return cart.map(i => ({ ...i }));
+        function cartLineItemsForServer(cartArr = cart) {
+            return cartArr.map(i => ({ ...i }));
         }
         function removeAppliedDiscount() {
             appliedDiscount = null;
@@ -16923,6 +16940,20 @@
 
         /* ================= STATE ================= */
         let cart = loadCartFromStorage(); // {id, name, unit, price, emoji, qty, catSlug}, restored from localStorage so a refresh doesn't lose it
+        // A genuinely separate basket for wholesale items (see
+        // addWholesaleToCart/removeFromWholesaleCart/changeWholesaleQty
+        // below), never merged into `cart` - a wholesaler can have
+        // personal groceries in one and a trade order in the other at the
+        // same time. Local-only (no server-side cross-device sync, unlike
+        // the regular cart's scheduleCartSync): the wholesale catalogue is
+        // low-volume and admin-approved per account already, so this
+        // stays a deliberately smaller, simpler mechanism. The shared
+        // checkout funnel (showCheckoutStep/updateSummaries/
+        // initStripePayment) reads whichever of the two checkoutMode
+        // points at, see activeCheckoutCart() below.
+        let wholesaleCart = loadWholesaleCartFromStorage();
+        let checkoutMode = 'regular'; // 'regular' | 'wholesale', which basket the checkout funnel is currently acting on; always set explicitly at each checkout entry point (the #/checkout and #/wholesale/checkout route handlers), never relied on to reset itself on exit
+        function activeCheckoutCart() { return checkoutMode === 'wholesale' ? wholesaleCart : cart; }
         let favorites = loadFavoritesFromStorage(); // array of catSlug::idx keys, restored from localStorage the same way
         let fulfilmentMethod = 'delivery'; // 'delivery' | 'pickup' — chosen at checkout
         // Which of the 3 checkout steps (cart, delivery, payment) is
@@ -17401,8 +17432,8 @@
             return { ...cat.products[idx], id: catSlug + '::' + idx, catSlug, catName: cat.name, emoji: cat.emoji, idx };
         }
 
-        function cartCount() { return cart.reduce((s, i) => s + i.qty, 0); }
-        function cartSubtotal() { return cart.reduce((s, i) => s + i.qty * i.price, 0); }
+        function cartCount(cartArr = cart) { return cartArr.reduce((s, i) => s + i.qty, 0); }
+        function cartSubtotal(cartArr = cart) { return cartArr.reduce((s, i) => s + i.qty * i.price, 0); }
 
         /* ================= ORDER VIA WHATSAPP =================
            For anyone who'd rather send a message than fill in a card form.
@@ -17451,6 +17482,45 @@
                 const saved = JSON.parse(localStorage.getItem('yo7-cart') || '[]');
                 return Array.isArray(saved) ? saved : [];
             } catch (e) { return []; }
+        }
+        function saveWholesaleCartToStorage() {
+            try { localStorage.setItem('yo7-wholesale-cart', JSON.stringify(wholesaleCart)); }
+            catch (e) { /* localStorage unavailable, basket just won't survive a refresh this session */ }
+        }
+        function loadWholesaleCartFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('yo7-wholesale-cart') || '[]');
+                return Array.isArray(saved) ? saved : [];
+            } catch (e) { return []; }
+        }
+        function updateWholesaleCartBadge() {
+            saveWholesaleCartToStorage();
+            const badge = document.getElementById('wholesaleCartBadge');
+            if (badge) {
+                const n = wholesaleCart.reduce((s, i) => s + i.qty, 0);
+                badge.textContent = n;
+                badge.style.display = n > 0 ? 'inline-flex' : 'none';
+            }
+        }
+        function removeFromWholesaleCart(i) {
+            wholesaleCart.splice(i, 1);
+            updateWholesaleCartBadge();
+            renderWholesaleCartPanel();
+        }
+        // Floors at the item's own min_qty (looked up from
+        // wholesaleProductsById, the same cache the storefront grid
+        // itself populates) rather than letting it be decremented below
+        // the minimum the admin set - removal is the explicit "I don't
+        // want this any more" action, a stray extra click on "-" isn't.
+        function changeWholesaleQty(i, delta) {
+            const line = wholesaleCart[i];
+            if (!line) return;
+            const minQty = (wholesaleProductsById[line.id.replace(/^wholesale::/, '')] || {}).min_qty || 1;
+            const next = line.qty + delta;
+            if (next < minQty) return;
+            line.qty = next;
+            updateWholesaleCartBadge();
+            renderWholesaleCartPanel();
         }
         // Combines two item lists without ever dropping anything: matching
         // ids have their quantities added together, anything only on one
@@ -22557,7 +22627,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         window.removeFromCart = removeFromCart;
 
         function updateSummaries() {
-            if (appliedDiscount && !cartQualifiesForDiscount(appliedDiscount)) {
+            const activeCart = activeCheckoutCart();
+            if (appliedDiscount && !cartQualifiesForDiscount(appliedDiscount, activeCart)) {
                 appliedDiscount = null;
                 showToast("Your discount code no longer applies, your basket changed.");
             }
@@ -22569,12 +22640,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const loyaltyNoteEl = document.getElementById('loyaltyNote');
             if (loyaltyNoteEl) {
                 loyaltyNoteEl.classList.toggle('loyalty-note-earned', !!pendingLoyaltyReward());
-                loyaltyNoteEl.innerHTML = loyaltyStatusHTML(true);
+                loyaltyNoteEl.innerHTML = loyaltyStatusHTML(true, activeCart);
             }
-            const sub = cartSubtotal();
+            const sub = cartSubtotal(activeCart);
             const postcodeField = document.getElementById('dPostcode');
             const postcode = postcodeField ? postcodeField.value : '';
-            const { fee: resolvedFee, freeReason } = resolveDeliveryFee(postcode);
+            const { fee: resolvedFee, freeReason } = resolveDeliveryFee(postcode, activeCart);
             // On the cart step specifically, dPostcode can already hold a
             // real address from prefillDeliveryFromLastOrder() before the
             // shopper has reached (or even seen) the delivery step this
@@ -22588,7 +22659,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // the address is genuinely visible to them to review or change
             // before continuing - see checkoutStepName's own comment.
             const onCartStep = checkoutStepName === 'cart';
-            const cartStepFee = resolveWeightTierFee(cartTotalWeight());
+            const cartStepFee = resolveWeightTierFee(cartTotalWeight(activeCart));
             // A free-delivery discount code or a region-less promotional
             // rule holds no matter what address the shopper eventually
             // confirms, so it's honest to show even on the cart step -
@@ -22596,8 +22667,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // wait for the delivery step, since only that one depends on
             // an address that hasn't actually been reviewed yet.
             const addressIndependentFree = resolvedFee === 0 && freeReason && !freeReason.addressDependent;
-            const delivery = (cart.length && fulfilmentMethod === 'delivery') ? (onCartStep && !addressIndependentFree ? cartStepFee : resolvedFee) : 0;
-            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
+            const delivery = (activeCart.length && fulfilmentMethod === 'delivery') ? (onCartStep && !addressIndependentFree ? cartStepFee : resolvedFee) : 0;
+            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount, activeCart), sub) : 0;
             // A referral code and the loyalty reward never both apply to
             // the same order (mirrors the same rule in create-payment-intent's
             // pricing action) — otherwise a referred friend would get their
@@ -22608,7 +22679,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
             const label = fulfilmentMethod === 'pickup' ? 'Pickup' : 'Delivery';
             const deliveryIsFree = fulfilmentMethod === 'pickup' || (fulfilmentMethod === 'delivery' && (addressIndependentFree || (!onCartStep && resolvedFee === 0)));
-            const totalWeight = cartTotalWeight();
+            const totalWeight = cartTotalWeight(activeCart);
             ['sumSubtotal', 'sumSubtotal2', 'sumSubtotal3'].forEach(id => document.getElementById(id).textContent = money(sub));
             ['sumWeight', 'sumWeight2', 'sumWeight3'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = `${totalWeight.toFixed(totalWeight % 1 === 0 ? 0 : 1)}kg`; });
             ['sumDelivery', 'sumDelivery2', 'sumDelivery3'].forEach(id => document.getElementById(id).textContent = deliveryIsFree ? 'Free' : money(delivery));
@@ -22646,8 +22717,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             document.getElementById('payButtonTotal').textContent = money(total);
             const cartDeliveryWindowEl = document.getElementById('cartDeliveryWindow');
             if (cartDeliveryWindowEl) {
-                cartDeliveryWindowEl.style.display = cart.length ? 'flex' : 'none';
-                if (cart.length) document.getElementById('cartDeliveryWindowText').textContent = deliveryWindowText();
+                cartDeliveryWindowEl.style.display = activeCart.length ? 'flex' : 'none';
+                if (activeCart.length) document.getElementById('cartDeliveryWindowText').textContent = deliveryWindowText();
             }
             // Only shown once a real postcode is being collected (delivery,
             // not pickup) — pickup already has its own "ready within 2
@@ -22730,7 +22801,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             }
             showCheckoutStep('delivery');
         });
-        document.getElementById('backToCartBtn').addEventListener('click', () => showCheckoutStep('cart'));
+        document.getElementById('backToCartBtn').addEventListener('click', () => {
+            // A wholesale checkout never shows this view's own "cart" step
+            // (see the #/wholesale/checkout route) - "back" from delivery
+            // means back to the wholesale store's own basket panel instead.
+            if (checkoutMode === 'wholesale') { window.location.hash = '#/wholesale'; return; }
+            showCheckoutStep('cart');
+        });
         document.getElementById('backToDeliveryBtn').addEventListener('click', () => showCheckoutStep('delivery'));
 
         /* ================= DELIVERY / PICKUP TOGGLE ================= */
@@ -22868,7 +22945,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 applyDiscountBtn.disabled = true;
                 msg.textContent = 'Checking…';
                 msg.className = 'discount-code-msg';
-                const result = await applyDiscountCode(code);
+                const result = await applyDiscountCode(code, activeCheckoutCart());
                 applyDiscountBtn.disabled = false;
                 if (result.ok) {
                     msg.textContent = `"${appliedDiscount.code}" applied.`;
@@ -23040,10 +23117,11 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // client-side total was previously the only amount that ever
             // reached Stripe, which meant it could be edited before the
             // request went out; this estimate now only ever drives the UI.
-            const sub = cartSubtotal();
-            const { fee: resolvedFee, freeReason } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '');
+            const activeCart = activeCheckoutCart();
+            const sub = cartSubtotal(activeCart);
+            const { fee: resolvedFee, freeReason } = resolveDeliveryFee(deliveryInfo ? deliveryInfo.postcode : '', activeCart);
             const delivery = fulfilmentMethod === 'pickup' ? 0 : resolvedFee;
-            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount), sub) : 0;
+            const discountAmount = appliedDiscount ? Math.min(computeDiscountAmount(appliedDiscount, activeCart), sub) : 0;
             // See the matching comment where this same guard first appears,
             // above in updateSummaries().
             const pendingReward = (appliedDiscount && appliedDiscount.isReferral) ? null : pendingLoyaltyReward();
@@ -23051,7 +23129,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const total = Math.max(0, sub + delivery - discountAmount - loyaltyDiscountAmount);
 
             pendingOrderContext = {
-                items: cart.map(i => ({ ...i })),
+                items: activeCart.map(i => ({ ...i })),
+                checkoutMode,
                 subtotal: sub,
                 delivery,
                 discountAmount,
@@ -23061,7 +23140,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 total,
                 deliveryInfo,
                 fulfilmentMethod,
-                deliveryWeight: cartTotalWeight(),
+                deliveryWeight: cartTotalWeight(activeCart),
                 // Captured now, not recomputed at confirmation time - the
                 // rule or discount that earned free delivery is fixed to
                 // this order, and shouldn't change retroactively if
@@ -23076,7 +23155,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             try {
                 ({ data, error } = await supabaseClient.functions.invoke('create-payment-intent', {
                     body: {
-                        items: cartLineItemsForServer(),
+                        items: cartLineItemsForServer(activeCart),
                         discountCode: appliedDiscount ? appliedDiscount.code : undefined,
                         fulfilmentMethod,
                         // effectiveCurrency(), not selectedCurrency directly -
@@ -23088,7 +23167,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                         // create-payment-intent/index.ts).
                         currency: effectiveCurrency(),
                         customerEmail: currentSupabaseUser ? currentSupabaseUser.email : undefined,
-                        orderDescription: `YO7 Foods order, ${cart.length} item${cart.length === 1 ? '' : 's'}`,
+                        orderDescription: `YO7 Foods ${checkoutMode === 'wholesale' ? 'wholesale ' : ''}order, ${activeCart.length} item${activeCart.length === 1 ? '' : 's'}`,
                         // Lets the server write a pending_checkouts row (see
                         // migration 33 + stripe-webhook) the moment the
                         // PaymentIntent exists, so an order can still be
@@ -23283,8 +23362,11 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     // Pay, Amazon Pay) — card/Apple Pay/Google Pay confirm
                     // without ever navigating away, this URL is never
                     // visited for those. handleStripeRedirectReturn() is
-                    // what actually picks things back up on return.
-                    return_url: window.location.origin + window.location.pathname + '#/checkout',
+                    // what actually picks things back up on return; this
+                    // hash just decides what briefly shows while that runs,
+                    // so a wholesale order returns to its own checkout
+                    // route rather than flashing the regular basket.
+                    return_url: window.location.origin + window.location.pathname + (checkoutMode === 'wholesale' ? '#/wholesale/checkout' : '#/checkout'),
                 },
             });
 
@@ -23457,9 +23539,23 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             lastOrder.loyaltyRewardEarned = !!(justPlaced && await issueLoyaltyRewardIfEarned(justPlaced.id));
 
             clearPendingOrderContext();
-            cart = [];
+            // ctx.checkoutMode (snapshotted into pendingOrderContext by
+            // initStripePayment, not the live checkoutMode variable) is
+            // what decides which basket to clear - this function also runs
+            // from handleStripeRedirectReturn() after a full page reload
+            // (Klarna/Revolut Pay/Amazon Pay bounce back), by which point
+            // the in-memory checkoutMode has already reset to its default.
+            // ctx survives that reload via sessionStorage, so it's the only
+            // reliable source here.
+            if (ctx.checkoutMode === 'wholesale') {
+                wholesaleCart = [];
+                updateWholesaleCartBadge();
+                checkoutMode = 'regular';
+            } else {
+                cart = [];
+                updateCartBadge();
+            }
             appliedDiscount = null;
-            updateCartBadge();
             justCompletedOrder = true;
             window.location.hash = '#/order-confirmation';
             return { ok: true };
@@ -25035,9 +25131,15 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             el.innerHTML = `
     <div class="admin-orders-table-wrap">
         <table class="admin-orders-table">
-            <thead><tr><th>Category</th><th>Product</th><th>Price (£)</th><th>Unit</th><th>Min qty</th><th>Stock</th><th></th></tr></thead>
+            <thead><tr><th>Photo</th><th>Category</th><th>Product</th><th>Price (£)</th><th>Unit</th><th>Min qty</th><th>Stock</th><th></th></tr></thead>
             <tbody>${data.map(p => `
     <tr>
+        <td>
+            <label class="wp-photo-upload" style="cursor:pointer; display:block; width:44px; height:44px; border-radius:10px; overflow:hidden; background:rgba(var(--border-rgb),0.08); flex-shrink:0;">
+                <img id="wp-photo-${p.id}" src="${p.image_url ? escapeHtml(p.image_url) : ''}" style="width:100%; height:100%; object-fit:cover; display:${p.image_url ? 'block' : 'none'};" alt="">
+                <input type="file" accept="image/*" style="display:none;" onchange="handleWholesaleProductImageUpload(this, '${p.id}')">
+            </label>
+        </td>
         <td>${escapeHtml(WHOLESALE_CATEGORY_LABELS[p.cat_slug] || p.cat_slug)}</td>
         <td>${escapeHtml(p.name)}</td>
         <td><input type="number" step="0.01" min="0" id="wp-price-${p.id}" value="${p.price != null ? p.price : ''}" placeholder="e.g. 24.99" style="width:90px;"></td>
@@ -25066,6 +25168,24 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const { error } = await supabaseClient.from('wholesale_products').update({ price, unit, min_qty, stock }).eq('id', productId);
             if (error) { showToast("Couldn't save this product: " + error.message, 6000, 'error'); return; }
             showToast('Saved.');
+        }
+        async function handleWholesaleProductImageUpload(input, productId) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Please choose an image file.'); return; }
+            if (!supabaseClient) { showToast('Image uploads need accounts connected first, this is preview mode right now.'); return; }
+            showToast('Uploading photo…');
+            const uploadFile = await compressImageFile(file, 1200, 0.85);
+            const ext = extensionForUpload(uploadFile, file);
+            const path = `wholesale/${productId}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-photos').upload(path, uploadFile, { upsert: true, cacheControl: '31536000', contentType: uploadFile.type || file.type });
+            if (uploadError) { showToast('Could not upload that photo: ' + uploadError.message, 6000, 'error'); return; }
+            const { data: { publicUrl } } = supabaseClient.storage.from('product-photos').getPublicUrl(path);
+            const { error: saveError } = await supabaseClient.from('wholesale_products').update({ image_url: publicUrl }).eq('id', productId);
+            if (saveError) { showToast("Uploaded, but couldn't save it: " + saveError.message, 6000, 'error'); return; }
+            const img = document.getElementById(`wp-photo-${productId}`);
+            if (img) { img.src = publicUrl; img.style.display = 'block'; }
+            showToast('Photo updated.', undefined, 'success');
         }
 
         // 'month' pages one calendar month at a time (the original
@@ -26252,6 +26372,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             saveCartToStorage();
             clearCartOwnerTag();
             updateCartBadge();
+            // Same reasoning as the regular basket wipe just above - the
+            // wholesale basket is local-only to begin with (see its own
+            // declaration comment), so there's no server copy to lose.
+            wholesaleCart = [];
+            updateWholesaleCartBadge();
+            checkoutMode = 'regular';
             // Same shared-device privacy reasoning as the basket wipe right
             // above - a saved-items list is at least as revealing as a
             // basket, and leaving it in localStorage would show the next
@@ -26463,29 +26589,35 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             for (const p of data) {
                 (byCategory[p.cat_slug] = byCategory[p.cat_slug] || []).push(p);
             }
-            slot.innerHTML = Object.keys(byCategory).map(catSlug => `
+            const placeholderIconSvg = '<span class="wholesale-card-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></span>';
+            slot.innerHTML = `<div class="panel wholesale-basket-panel" id="wholesaleCartPanelSlot" style="margin-bottom:20px;"></div>` + Object.keys(byCategory).map(catSlug => `
                 <div class="panel" style="margin-bottom:20px;">
                     <h2>${escapeHtml(WHOLESALE_CATEGORY_LABELS[catSlug] || catSlug)}</h2>
-                    <div class="wholesale-product-list">
+                    <div class="shop-all-grid">
                         ${byCategory[catSlug].map(p => {
                             const orderable = p.price != null && p.stock === 'in';
                             const minQty = p.min_qty || 1;
                             return `
-                            <div class="wholesale-product-row">
-                                <span class="wholesale-product-name">${escapeHtml(p.name)}</span>
-                                <span class="wholesale-product-price">${p.price != null ? ('£' + Number(p.price).toFixed(2) + (p.unit ? ' / ' + escapeHtml(p.unit) : '')) : 'Price coming soon'}</span>
-                                ${p.stock === 'out' ? '<span class="wholesale-product-oos">Out of stock</span>' : ''}
-                                ${orderable ? `
-                                <div class="wholesale-product-buy">
-                                    <label class="wholesale-qty-label" for="wq-${p.id}">Qty</label>
-                                    <input type="number" id="wq-${p.id}" class="wholesale-qty-input" value="${minQty}" min="${minQty}" step="1">
-                                    <button type="button" class="btn btn-primary" style="padding:7px 16px; font-size:12.5px;" onclick="addWholesaleToCart('${p.id}')">Add to basket</button>
-                                </div>` : ''}
-                                ${orderable && minQty > 1 ? `<span class="wholesale-product-minqty">Min. order ${minQty}${p.unit ? ' ' + escapeHtml(p.unit) : ''}</span>` : ''}
+                            <div class="wholesale-card">
+                                <div class="wholesale-card-thumb">
+                                    ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name)}" loading="lazy">` : placeholderIconSvg}
+                                    ${p.stock === 'out' ? '<span class="wholesale-product-oos">Out of stock</span>' : ''}
+                                </div>
+                                <div class="wholesale-card-body">
+                                    <h4>${escapeHtml(p.name)}</h4>
+                                    <div class="wholesale-card-price">${p.price != null ? ('£' + Number(p.price).toFixed(2) + (p.unit ? ' / ' + escapeHtml(p.unit) : '')) : 'Price coming soon'}</div>
+                                    ${orderable ? `
+                                    <div class="wholesale-card-buy">
+                                        <input type="number" id="wq-${p.id}" class="wholesale-qty-input" value="${minQty}" min="${minQty}" step="1" aria-label="Quantity">
+                                        <button type="button" class="btn btn-primary" style="padding:7px 10px; font-size:12.5px;" onclick="addWholesaleToCart('${p.id}')">Add</button>
+                                    </div>
+                                    ${minQty > 1 ? `<span class="wholesale-card-minqty">Min. order ${minQty}${p.unit ? ' ' + escapeHtml(p.unit) : ''}</span>` : ''}` : ''}
+                                </div>
                             </div>`;
                         }).join('')}
                     </div>
                 </div>`).join('');
+            renderWholesaleCartPanel();
         }
         function addWholesaleToCart(productId) {
             const p = wholesaleProductsById[productId];
@@ -26495,14 +26627,64 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             let qty = Math.floor(Number(qtyInput.value));
             if (!Number.isFinite(qty) || qty < minQty) qty = minQty;
             qtyInput.value = qty;
-            addToCart({
-                id: `wholesale::${p.id}`,
-                name: p.name,
-                unit: p.unit,
-                price: p.price,
-                catSlug: p.cat_slug,
-            }, qty);
-            showToast(`Added ${qty} × ${p.name} to your basket.`);
+            // A genuinely separate basket (see wholesaleCart's own
+            // declaration comment), so this pushes directly into it rather
+            // than going through the shared addToCart() the regular shop
+            // uses - wholesale items have none of the combo/subscription/
+            // weight-variant complexity that function also handles.
+            const id = `wholesale::${p.id}`;
+            const existing = wholesaleCart.find(i => i.id === id);
+            if (existing) existing.qty += qty;
+            else wholesaleCart.push({ id, name: p.name, unit: p.unit, price: p.price, catSlug: p.cat_slug, qty });
+            updateWholesaleCartBadge();
+            renderWholesaleCartPanel();
+            showToast(`Added ${qty} × ${p.name} to your wholesale basket.`);
+        }
+        function renderWholesaleCartPanel() {
+            const slot = document.getElementById('wholesaleCartPanelSlot');
+            if (!slot) return;
+            if (!wholesaleCart.length) {
+                slot.innerHTML = `
+                    <h2>Your wholesale basket</h2>
+                    <p class="sub" style="margin:0;">Empty. Add products below to build a trade order.</p>`;
+                return;
+            }
+            const subtotal = wholesaleCart.reduce((s, i) => s + i.qty * i.price, 0);
+            slot.innerHTML = `
+                <h2>Your wholesale basket</h2>
+                <div>
+                    ${wholesaleCart.map((item, i) => `
+                        <div class="cart-row">
+                            <div class="cart-info">
+                                <h4>${escapeHtml(item.name)}</h4>
+                                ${item.unit ? `<span>${escapeHtml(item.unit)}</span>` : ''}
+                            </div>
+                            <div class="cart-qty">
+                                <button type="button" onclick="changeWholesaleQty(${i}, -1)" aria-label="Decrease quantity">&minus;</button>
+                                <span>${item.qty}</span>
+                                <button type="button" onclick="changeWholesaleQty(${i}, 1)" aria-label="Increase quantity">+</button>
+                            </div>
+                            <div class="cart-price">${money(item.qty * item.price)}</div>
+                            <button class="cart-remove" type="button" onclick="removeFromWholesaleCart(${i})" aria-label="Remove">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            </button>
+                        </div>`).join('')}
+                </div>
+                <div class="summary-row" style="font-weight:700; margin-top:6px;">
+                    <span>Subtotal</span>
+                    <span>${money(subtotal)}</span>
+                </div>
+                <button type="button" class="btn btn-primary btn-block" style="margin-top:10px;" onclick="goToWholesaleCheckout()">Checkout</button>`;
+        }
+        function goToWholesaleCheckout() {
+            if (!wholesaleCart.length) return;
+            if (supabaseClient && !currentSupabaseUser) {
+                postLoginRedirect = '#/wholesale';
+                showToast('Please log in to complete your trade order.', 5500);
+                window.location.hash = '#/login';
+                return;
+            }
+            window.location.hash = '#/wholesale/checkout';
         }
         // Live "New order has been placed" notification for whoever's logged
         // in as admin with the site open, via Supabase Realtime on inserts
@@ -29006,9 +29188,28 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 showView('view-product');
                 renderProductPage(parts[0], parts[1]);
             } else if (hash === '#/checkout') {
+                // Always decided fresh on entry, never relied on to have
+                // been reset on whatever way the previous checkout session
+                // (regular or wholesale) was left - see checkoutMode's own
+                // declaration comment.
+                checkoutMode = 'regular';
                 showView('view-checkout');
                 renderCartList();
                 showCheckoutStep('cart');
+                prefillDeliveryFromLastOrder();
+            } else if (hash === '#/wholesale/checkout') {
+                if (!wholesaleCart.length) { window.location.hash = '#/wholesale'; return; }
+                if (supabaseClient && !currentSupabaseUser) {
+                    postLoginRedirect = '#/wholesale';
+                    window.location.hash = '#/login';
+                    return;
+                }
+                checkoutMode = 'wholesale';
+                showView('view-checkout');
+                // The wholesale basket is reviewed on the wholesale store
+                // page itself (see renderWholesaleCartPanel), not this
+                // view's own "cart" step - jumps straight to delivery.
+                showCheckoutStep('delivery');
                 prefillDeliveryFromLastOrder();
             } else if (hash === '#/order-confirmation') {
                 showView('view-confirm');
