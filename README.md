@@ -3,7 +3,8 @@
 Yo7 Foods — a single-file static site backed by Supabase, deployed via
 Cloudflare Workers (static assets, "Connect to Git" — see
 `wrangler.jsonc`). Cloudflare itself runs no build step: whatever's
-committed at a served path is exactly what's live.
+committed at a served path is exactly what's live, aside from the one
+small scripted route `worker.js` adds (see "Image proxy" below).
 
 `src/index.html` is the single source of truth for every page's content —
 the one file to hand-edit. Repo-root `index.html`, and every page under
@@ -63,6 +64,30 @@ in `index.html`, `assets/`, the generated page directories, and
 (and locally, without network access to Supabase, only the first two
 generators will actually complete); committing their output yourself is
 no longer required.
+
+## Image proxy (`worker.js`)
+
+Every admin-uploaded photo (product, category, advert banner, page
+headers, blog covers, wholesale) lives in one public Supabase Storage
+bucket and used to be rendered straight from Supabase's own CDN domain,
+which bills every single request, from every visitor, as Supabase
+"Cached Egress" (the free tier's 5GB/month cap is easy to blow through
+on image traffic alone). `worker.js` adds a `/cdn-img/<path>` route to
+the Cloudflare Worker that proxies that same bucket and caches the
+response at Cloudflare's own edge, so a second visitor's request for the
+same photo never reaches Supabase at all. See `wrangler.jsonc`'s own
+comment for how this combines with the static-assets deploy without
+changing how any other page or asset is served.
+
+`src/index.html`'s `cdnImageUrl()` rewrites a freshly admin-uploaded
+photo's URL into this `/cdn-img/` form at the moment it's first stored
+(every `getPublicUrl()` call site), not at render time: every place
+that renders an image just prints out whatever URL is already in the
+database, so none of those needed to change. Photos uploaded **before**
+this existed still point at the raw Supabase domain until
+`supabase/cdn-image-proxy-migration.sql` is run once against the live
+project, since `cdnImageUrl()` only rewrites what passes through it
+going forward.
 
 ## Regression check
 

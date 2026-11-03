@@ -20,10 +20,23 @@
   // serves this same index.html, and the app's own router (see
   // syncHashFromPath()/route() in index.html) figures out which view to
   // show from the URL itself, then renders it.
+  //
+  // "main" adds worker.js on top of that same static-assets deploy, only
+  // for the one route (/cdn-img/*, a Supabase Storage image proxy) that
+  // needs real logic - a request whose path matches a real file on disk
+  // is still served directly by the assets layer without ever reaching
+  // worker.js (see that file's own comment), so every static page/asset
+  // above behaves exactly as it did before this was added. "binding"
+  // names how worker.js reaches that same assets layer itself
+  // (env.ASSETS.fetch()) for every other request, which is what keeps
+  // the single-page-application fallback working now that something
+  // other than the assets layer answers first.
   "name": "yo7",
   "compatibility_date": "2025-01-01",
+  "main": "worker.js",
   "assets": {
     "directory": "./",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   }
 }
