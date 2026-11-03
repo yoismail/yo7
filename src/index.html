@@ -26394,9 +26394,14 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 submitBtn.textContent = 'Submit application';
                 return;
             }
-            await refreshAdminStatus();
-            renderWholesaleApplyView();
-            showToast("Thanks, your application's in. We'll be in touch once it's reviewed.");
+            currentWholesaleStatus = 'pending';
+            syncWholesaleNavLinks();
+            document.getElementById('wholesaleApplySlot').innerHTML = `
+                <div class="panel">
+                    <h2>Application under review</h2>
+                    <p>Thanks, ${escapeHtml(contact_name)}. We've got your application for ${escapeHtml(business_name)} and we'll be in touch once it's been reviewed.</p>
+                </div>`;
+            refreshAdminStatus();
         }
         const WHOLESALE_CATEGORY_LABELS = {
             'wholesale-poultry': 'Poultry',
