@@ -1600,22 +1600,6 @@
             background: rgba(var(--border-rgb), 0.06);
         }
 
-        /* Same row layout as .account-dropdown a, but a plain status label
-           rather than a link - "pending review" has nothing to navigate to
-           yet, so no hover/cursor affordance and a muted colour instead of
-           the heading colour actionable rows use. */
-        #wholesalePendingNavLabel {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 10px 12px;
-            font-family: var(--display);
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
         .admin-order-badge {
             margin-left: auto;
             background: #C1552C;
@@ -3825,41 +3809,6 @@
         }
         .build-bundle-promo-inner p { color: #6b5c4f; font-size: 14px; max-width: 46ch; }
         .build-bundle-promo-inner .btn { flex-shrink: 0; }
-
-        /* Same promo-banner language as .build-bundle-promo just above,
-           but a solid brand-colour fill (deep aubergine, the same tone
-           every heading on the site already uses, just inverted into a
-           background) rather than another pale alternating-section tint
-           - every other homepage section is cream/white or the faint alt
-           tint, so this is the one genuinely bold, unmissable block on
-           the page, deliberate for a B2B callout that needs to register
-           even to someone just skimming past. */
-        .wholesale-promo { position: relative; background: var(--aubergine); padding: 48px 0; overflow: hidden; }
-        .wholesale-promo .section-eyebrow { color: var(--chartreuse-soft); }
-        .wholesale-promo-watermark {
-            position: absolute; z-index: 0; pointer-events: none;
-            right: 3%; bottom: -20%; width: 220px; height: 220px;
-            opacity: 0.08; color: var(--cream);
-            transform: rotate(8deg);
-        }
-        .wholesale-promo-inner {
-            position: relative; z-index: 1;
-            display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
-        }
-        .wholesale-promo-icon {
-            width: 48px; height: 48px; flex-shrink: 0; border-radius: 15px;
-            background: rgba(144, 184, 0, 0.22);
-            color: var(--chartreuse-soft);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .wholesale-promo-icon svg { width: 23px; height: 23px; }
-        .wholesale-promo-inner h2 {
-            font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 28px);
-            color: var(--cream); letter-spacing: -0.01em; margin: 4px 0 8px;
-        }
-        .wholesale-promo-inner p { color: rgba(250, 249, 242, 0.72); font-size: 14px; max-width: 46ch; }
-        .wholesale-promo-inner .btn { flex-shrink: 0; }
 
         .whatsapp-list-section { position: relative; background: var(--section-alt-bg); padding: 48px 0; overflow: hidden; }
         /* Same oversized-glyph-behind-the-content language as
@@ -11699,32 +11648,6 @@
                             </svg>
                             Refer a friend
                         </a>
-                        <a href="#/wholesale/apply" id="wholesaleApplyNavLink" style="display:none;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 7l9-4 9 4-9 4-9-4Z" />
-                                <path d="M3 7v10l9 4 9-4V7" />
-                                <path d="M12 11v10" />
-                            </svg>
-                            Apply for a trade account
-                        </a>
-                        <span id="wholesalePendingNavLabel" style="display:none;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="9" />
-                                <path d="M12 7v5l3 3" />
-                            </svg>
-                            Trade account pending review
-                        </span>
-                        <a href="#/wholesale" id="wholesaleStoreNavLink" style="display:none;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 7l9-4 9 4-9 4-9-4Z" />
-                                <path d="M3 7v10l9 4 9-4V7" />
-                                <path d="M12 11v10" />
-                            </svg>
-                            Wholesale store
-                        </a>
                         <a href="#/admin" id="adminNavLink" style="display:none;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                 stroke-linecap="round" stroke-linejoin="round">
@@ -11760,7 +11683,6 @@
             <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
-            <a href="#/wholesale/apply">Wholesale</a>
             <a href="#/about">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
@@ -11834,27 +11756,6 @@
                     <a class="launch-banner-tag" href="#/refer" tabindex="-1">
                         <span class="launch-banner-dot" aria-hidden="true"></span>
                         Refer a Friend
-                    </a>
-                </div>
-            </div>
-            <!-- Third slide, same crossfade rotation (initLaunchBannerRotator
-                 reads every .launch-banner-slide in the rotator, nothing
-                 hardcoded to two) - the wholesale store is also linked from
-                 the account dropdown, mobile menu, footer and its own
-                 homepage promo section, but this is the one spot that
-                 reaches a visitor who hasn't scrolled anywhere yet. -->
-            <div class="launch-banner-slide" aria-hidden="true">
-                <div class="wrap launch-banner-inner">
-                    <span class="launch-banner-badge" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
-                    </span>
-                    <div class="launch-banner-text">
-                        <h2>Buying in bulk for your business?</h2>
-                        <p>Poultry, meat and fish in wholesale quantities, trade pricing for approved accounts. Apply for a trade account to get started.</p>
-                    </div>
-                    <a class="launch-banner-tag" href="#/wholesale/apply" tabindex="-1">
-                        <span class="launch-banner-dot" aria-hidden="true"></span>
-                        Explore Wholesale
                     </a>
                 </div>
             </div>
@@ -12117,23 +12018,6 @@
                         <p>Select a meal and we'll list the ingredients you need. Uncheck what you already have, and add the rest in one tap.</p>
                     </div>
                     <a class="btn btn-outline-dark" href="#/build-bundle">Build a bundle</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="wholesale-promo scroll-reveal">
-            <svg class="wholesale-promo-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
-            <div class="wrap">
-                <div class="wholesale-promo-inner reveal">
-                    <div class="wholesale-promo-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
-                    </div>
-                    <div>
-                        <div class="section-eyebrow">For businesses</div>
-                        <h2>Buying in bulk? Open a trade account.</h2>
-                        <p>Poultry, meat and fish in wholesale quantities for restaurants, shops and caterers. Apply for a trade account and we'll review it within a couple of days.</p>
-                    </div>
-                    <a class="btn btn-outline" href="#/wholesale/apply">Apply for wholesale</a>
                 </div>
             </div>
         </section>
@@ -14551,7 +14435,6 @@
                         <a href="#/checkout">Basket</a>
                         <a href="#/orders">My Orders</a>
                         <a href="#/refer">Refer a Friend</a>
-                        <a href="#/wholesale/apply">Wholesale</a>
                         <a href="#/delivery-info">Delivery Info</a>
                         <a href="#/guide">New Here?</a>
                     </div>
