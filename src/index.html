@@ -17158,7 +17158,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.8';
+        const BUILD_VERSION = '2026-11-04.9';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -24297,11 +24297,24 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             card.style.display = 'block';
 
             const sub = await getCurrentPushSubscription();
-            // Not yet subscribed: nothing persisted to reflect, so this
-            // all-true default is both what's shown and what the first
-            // toggle interaction (see savePushPrefs()) will subscribe
-            // with - matching "on by default" the same way the install-
-            // time auto-enable (maybeAutoEnablePushOnInstall()) already does.
+            // Not yet subscribed - subscribe right now with the all-true
+            // default, the same way visiting this page would have made it
+            // look already on even though nothing had actually happened
+            // yet (a previous version of this just displayed the default
+            // and waited for a toggle click to act on it - meant a
+            // visitor who arrived with everything looking "on" and never
+            // touched a switch never actually got subscribed at all).
+            // Mirrors maybeAutoEnablePushOnInstall()'s own install-time
+            // trigger; this is the second, page-visit trigger for exactly
+            // the same "on by default" promise. savePushPrefs() re-renders
+            // this function itself once it's done, which is a safe,
+            // terminating recursion: the next pass finds a real
+            // subscription (or a now-'denied' permission) and takes a
+            // different branch instead of looping back here.
+            if (!sub) {
+                savePushPrefs({ notify_orders: true, notify_announcements: true, notify_offers: true });
+                return;
+            }
             let prefs = { notify_orders: true, notify_announcements: true, notify_offers: true };
             if (sub && currentSupabaseUser) {
                 const { data } = await supabaseClient.from('push_subscriptions')
