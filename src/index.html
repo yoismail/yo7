@@ -10764,6 +10764,15 @@
            ones fade to the same muted, borderless look every other "seen
            this already" state on the site uses. */
         .notif-list { display: flex; flex-direction: column; gap: 12px; }
+        .notif-guest-note {
+            font-size: 13px; color: var(--text-muted); line-height: 1.5;
+            background: var(--card-bg);
+            border: 1px dashed rgba(var(--border-rgb), 0.25);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin: 0;
+        }
+        .notif-guest-note a { color: var(--chartreuse-rich); font-weight: 700; }
         .notif-item {
             position: relative;
             background: var(--card-bg);
@@ -17149,7 +17158,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.7';
+        const BUILD_VERSION = '2026-11-04.8';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -23969,7 +23978,23 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // joined on" query — kept as one function so they can never drift
         // out of sync with each other on what counts as unread.
         async function loadNotificationsWithReadState() {
-            if (!supabaseClient || !currentSupabaseUser) return [];
+            if (!supabaseClient) return [];
+            if (!currentSupabaseUser) {
+                // No account to track read-state against, and RLS on
+                // notifications only ever lets a signed-out request see
+                // broadcast rows anyway (user_id IS NULL) - a targeted
+                // order-status/reward notification still needs a real
+                // sign-in. Shown as already-read rather than always "New",
+                // which could never actually clear with nothing to persist
+                // it to.
+                const { data: notifs, error } = await supabaseClient.from('notifications')
+                    .select('*')
+                    .is('user_id', null)
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+                if (error || !notifs) return [];
+                return notifs.map(n => ({ ...n, isRead: true }));
+            }
             const [{ data: notifs, error: nErr }, { data: reads }] = await Promise.all([
                 supabaseClient.from('notifications')
                     .select('*')
@@ -24083,30 +24108,33 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (!supabaseClient) {
                 list.innerHTML = '';
                 empty.style.display = 'block';
-                empty.innerHTML = 'Log in to see your notifications. <a href="#/login" onclick="postLoginRedirect=\'#/notifications\'">Log in</a>';
+                empty.innerHTML = 'Not connected right now, try again shortly.';
                 return;
             }
-            if (!currentSupabaseUser) {
-                // Same "haven't checked the session yet" case as
-                // renderOrderHistory()/renderAdminPage() — avoids flashing
-                // the login prompt on a hard refresh for someone who's
-                // actually already signed in.
-                list.innerHTML = '';
-                empty.style.display = 'block';
-                empty.innerHTML = supabaseSessionRestored
-                    ? 'Log in to see your notifications. <a href="#/login" onclick="postLoginRedirect=\'#/notifications\'">Log in</a>'
-                    : 'Loading your notifications…';
-                return;
-            }
+            // A signed-out visitor still sees every announcement/offer
+            // broadcast - RLS on notifications only ever returns those for
+            // them anyway (see that policy's own definition in schema.sql),
+            // never a specific customer's order-status/reward history,
+            // which still needs a real account. Letting push reach a
+            // signed-out install (see maybeAutoEnablePushOnInstall()) but
+            // then hiding the list it points back to would defeat the
+            // point of that.
             const items = await loadNotificationsWithReadState();
+            // A standing, non-blocking hint rather than a hard gate - a
+            // signed-out visitor already sees every broadcast below, this
+            // just explains why an actual order update won't show up here
+            // until they sign in, instead of leaving that silently unsaid.
+            const guestNote = (!currentSupabaseUser && supabaseClient)
+                ? `<p class="notif-guest-note"><a href="#/login" onclick="postLoginRedirect='#/notifications'">Log in</a> to also see updates on your own orders.</p>`
+                : '';
             if (items.length === 0) {
                 list.innerHTML = '';
                 empty.style.display = 'block';
-                empty.innerHTML = "Nothing here yet. We'll let you know about order updates and anything else worth knowing.";
+                empty.innerHTML = guestNote + "<p>Nothing here yet. We'll let you know about order updates and anything else worth knowing.</p>";
                 return;
             }
             empty.style.display = 'none';
-            list.innerHTML = items.map(n => notifItemHTML(n)).join('');
+            list.innerHTML = guestNote + items.map(n => notifItemHTML(n)).join('');
             const unreadIds = items.filter(n => !n.isRead).map(n => n.id);
             if (unreadIds.length) markNotificationsRead(unreadIds);
         }
