@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.297bb0d8eb.css">    <script>
+    <link rel="stylesheet" href="/assets/app.d5130e6c09.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -2713,21 +2713,54 @@
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Notifications</div>
                 <h1>Notifications</h1>
-                <p>Order updates and announcements from YO7 Foods.</p>
+                <p>Order updates, announcements and offers from YO7 Foods.</p>
             </div>
         </header>
         <section class="orders-section">
             <div class="wrap">
-                <div id="pushToggleCard" class="push-toggle-card" style="display:none;">
-                    <svg class="push-toggle-card-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span class="push-toggle-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    </span>
-                    <div class="push-toggle-text">
-                        <strong id="pushToggleTitle">Turn on push notifications</strong>
-                        <span id="pushToggleDesc">Get an alert on this device the moment there's an order update or announcement, even with the site closed.</span>
+                <div id="pushPrefsCard" class="push-prefs-card" style="display:none;">
+                    <div class="push-prefs-select-all">
+                        <span>Select all</span>
+                        <label class="switch">
+                            <input type="checkbox" id="pushPrefSelectAll" onchange="onPushPrefSelectAllChange(this.checked)">
+                            <span class="switch-track"></span><span class="switch-thumb"></span>
+                        </label>
                     </div>
-                    <button type="button" class="btn btn-secondary" id="pushToggleBtn">Turn on</button>
+                    <div class="push-prefs-list">
+                        <div class="push-pref-row">
+                            <span class="push-pref-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></span>
+                            <div class="push-pref-text">
+                                <strong>Order updates</strong>
+                                <span>We'll let you know the moment your order's status changes, even with the site closed.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="pushPrefOrders" onchange="onPushPrefChange('notify_orders', this.checked)">
+                                <span class="switch-track"></span><span class="switch-thumb"></span>
+                            </label>
+                        </div>
+                        <div class="push-pref-row">
+                            <span class="push-pref-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></span>
+                            <div class="push-pref-text">
+                                <strong>Announcements</strong>
+                                <span>News from YO7 Foods, like new products or a change worth knowing about.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="pushPrefAnnouncements" onchange="onPushPrefChange('notify_announcements', this.checked)">
+                                <span class="switch-track"></span><span class="switch-thumb"></span>
+                            </label>
+                        </div>
+                        <div class="push-pref-row">
+                            <span class="push-pref-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.59 13.41-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>
+                            <div class="push-pref-text">
+                                <strong>Offers &amp; discounts</strong>
+                                <span>Be first to hear about a discount code or a deal worth grabbing.</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="pushPrefOffers" onchange="onPushPrefChange('notify_offers', this.checked)">
+                                <span class="switch-track"></span><span class="switch-thumb"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div id="pushToggleHint" class="push-toggle-hint" style="display:none;"></div>
                 <div id="notifList" class="notif-list"></div>
@@ -3315,7 +3348,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.e7d5d959d9.js"></script>
+    <script defer src="/assets/app.e52879953d.js"></script>
 
 </body>
 

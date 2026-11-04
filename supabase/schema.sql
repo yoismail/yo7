@@ -2393,7 +2393,10 @@ CREATE TABLE IF NOT EXISTS "public"."push_subscriptions" (
     "endpoint" "text" NOT NULL,
     "p256dh" "text" NOT NULL,
     "auth_key" "text" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "notify_orders" boolean DEFAULT true NOT NULL,
+    "notify_announcements" boolean DEFAULT true NOT NULL,
+    "notify_offers" boolean DEFAULT true NOT NULL
 );
 
 
@@ -2405,6 +2408,12 @@ COMMENT ON COLUMN "public"."push_subscriptions"."endpoint" IS 'Browser push serv
 
 
 COMMENT ON COLUMN "public"."push_subscriptions"."user_id" IS 'NULL = an anonymous install (not signed in when it subscribed). Still reachable by a broadcast notification (user_id IS NULL in notifications), just not tied to an account.';
+
+
+
+COMMENT ON COLUMN "public"."push_subscriptions"."notify_orders" IS 'Per-device preference from the #/notifications page, matches notifications.category = order. Default true: every new subscription opts in to everything.';
+COMMENT ON COLUMN "public"."push_subscriptions"."notify_announcements" IS 'Per-device preference from the #/notifications page, matches notifications.category = announcement. Default true: every new subscription opts in to everything.';
+COMMENT ON COLUMN "public"."push_subscriptions"."notify_offers" IS 'Per-device preference from the #/notifications page, matches notifications.category = offer. Default true: every new subscription opts in to everything. Does not gate category = restock/reward, which are always a specific customer''s own opted-in alert, never a broadcast, and have no toggle on that page.';
 
 
 
