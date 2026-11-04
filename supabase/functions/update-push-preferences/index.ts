@@ -1,4 +1,4 @@
-// Yo7 Foods — Supabase Edge Function: update-push-preferences
+// Yo7 Foods: Supabase Edge Function: update-push-preferences
 //
 // THE PROBLEM THIS SOLVES: the #/notifications page's category toggles
 // (Order Updates / Announcements / Offers) need to update an EXISTING
@@ -6,7 +6,7 @@
 // already do this directly via supabase-js (existing RLS: auth.uid() =
 // user_id covers UPDATE). An anonymous install can't: push_subscriptions'
 // anon policy is INSERT-only, on purpose (see that policy's own comment
-// in schema.sql) — granting UPDATE would also require granting SELECT,
+// in schema.sql), granting UPDATE would also require granting SELECT,
 // which would let any anonymous client read every other anonymous
 // subscriber's endpoint/p256dh/auth_key. This function is the narrow,
 // service-role-backed door around that: it updates exactly one row,
@@ -16,7 +16,7 @@
 //
 // Deploy with the Supabase CLI from the project root:
 //   supabase functions deploy update-push-preferences
-// (JWT verification stays ON, the default — unlike send-push/
+// (JWT verification stays ON, the default, unlike send-push/
 // verify-email-domain, this IS called by a real browser, signed in or
 // not, and Supabase already accepts the anon key's own token for that.)
 //
@@ -39,7 +39,7 @@ function corsHeaders(origin: string | null) {
   };
 }
 
-// Same allowlist/reasoning as send-push's own isAllowedPushEndpoint —
+// Same allowlist/reasoning as send-push's own isAllowedPushEndpoint,
 // not a security boundary here (this function never fetches the
 // endpoint itself), just a cheap, correct sanity check that what's
 // being matched against really is a push-service URL, not junk.
@@ -106,12 +106,12 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   // Carries the caller's own token so auth.getUser() tells us who's
-  // actually asking — can't read anything RLS wouldn't already let this
+  // actually asking, can't read anything RLS wouldn't already let this
   // user read.
   const authClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
   });
-  // Bypasses RLS entirely — the only way this can reach an anonymous
+  // Bypasses RLS entirely, the only way this can reach an anonymous
   // (user_id IS NULL) row at all, since that row's own RLS grants anon
   // nothing past INSERT. Never exposed to the client.
   const db = createClient(supabaseUrl, serviceRoleKey);
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
   }
 
   // A row tied to a signed-in account can only be changed by that same
-  // account — the endpoint-as-secret trust model is what protects an
+  // account - the endpoint-as-secret trust model is what protects an
   // anonymous row (there's no account to check it against), but an
   // authenticated one gets this extra check for free since a session is
   // right there to verify.

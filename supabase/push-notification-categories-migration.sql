@@ -8,7 +8,7 @@
 --
 -- Also requires deploying the new update-push-preferences Edge Function
 -- (used for an anonymous install's own changes, since push_subscriptions'
--- anon RLS policy is deliberately INSERT-only — see that policy's own
+-- anon RLS policy is deliberately INSERT-only, see that policy's own
 -- comment in schema.sql):
 --   supabase functions deploy update-push-preferences
 --
