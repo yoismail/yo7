@@ -8297,6 +8297,61 @@
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 16px;
         }
+
+        /* ================= RECIPE IDEAS (up to 3 per product, admin-edited, stored as product_overrides.recipes) ================= */
+        .pd-recipes {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(var(--border-rgb), 0.1);
+        }
+        /* Customers never see an empty "no recipes yet" section - only an
+           admin in edit mode does, since that's the one audience who can
+           actually do something about it. Driven purely by this class
+           (set once per render in renderRecipeIdeasSection(), not
+           recomputed on edit-mode toggle) so turning edit mode on/off
+           while already on the page shows/hides this with no extra
+           re-render, same as every other edit-mode-gated control. */
+        body:not(.edit-mode-on) .pd-recipes.is-empty { display: none; }
+        .pd-recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .pd-recipe-card {
+            background: var(--section-alt-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 14px;
+            padding: 18px 20px;
+        }
+        .pd-recipe-card .eyebrow {
+            display: flex; align-items: center; gap: 6px;
+            font-family: var(--display); font-weight: 700; font-size: 11px;
+            letter-spacing: 0.05em; text-transform: uppercase; color: var(--chartreuse-rich);
+            margin-bottom: 8px;
+        }
+        .pd-recipe-card .eyebrow svg { width: 14px; height: 14px; }
+        .pd-recipe-card h4 {
+            font-family: var(--display); font-weight: 700; font-size: 15px;
+            color: var(--heading); margin-bottom: 6px; line-height: 1.3;
+        }
+        .pd-recipe-card p { font-size: 13.5px; color: var(--text-body); line-height: 1.55; margin: 0; }
+        .pd-recipes-empty { display: none; margin-bottom: 12px; }
+        body.edit-mode-on .pd-recipes-empty { display: flex; }
+        .pd-recipes-empty p { color: var(--text-muted); font-size: 13.5px; font-style: italic; margin: 0; }
+        .pd-recipes-edit { display: flex; flex-direction: column; gap: 14px; margin-bottom: 12px; }
+        .pd-recipe-edit-slot label {
+            display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+            text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
+        }
+        .pd-recipe-edit-slot input, .pd-recipe-edit-slot textarea {
+            width: 100%; font-family: var(--body); font-size: 15px; padding: 8px 10px;
+            border-radius: 8px; border: 1.5px solid rgba(var(--border-rgb), 0.2);
+            background: var(--card-bg); color: var(--text-body); box-sizing: border-box;
+        }
+        .pd-recipe-edit-slot input { margin-bottom: 6px; }
+        .pd-recipe-edit-slot textarea { resize: vertical; }
+
         .pd-reviews {
             margin-top: 40px;
             padding-top: 40px;
@@ -12530,6 +12585,14 @@
                 <div class="pd-details" id="pdDetailsSection">
                     <h2 class="pd-details-heading">Product details</h2>
                     <div class="pd-details-grid" id="pdDetailsGrid"></div>
+                </div>
+
+                <div class="pd-recipes" id="pdRecipesSection">
+                    <h2 class="pd-details-heading">Recipe ideas</h2>
+                    <div class="pd-recipe-grid" id="pdRecipesGrid"></div>
+                    <div class="pd-recipes-empty" id="pdRecipesEmpty"><p>No recipe ideas added yet for this product.</p></div>
+                    <div id="pdRecipesEditWrap"></div>
+                    <button class="pd-detail-edit-btn" type="button" onclick="openRecipesEdit()">Edit recipe ideas</button>
                 </div>
 
                 <div class="pd-reviews" id="pdReviewsSection">
@@ -17152,7 +17215,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.15';
+        const BUILD_VERSION = '2026-11-04.16';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -21635,6 +21698,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const related = cat.products.map((rp, ri) => ({ ...rp, emoji: cat.emoji, catSlug, idx: ri })).filter(rp => rp.idx !== p.idx && !rp.deleted).slice(0, 4);
             renderGrid(related, 'relatedGrid');
             renderProductDetailsSection(p, catSlug);
+            renderRecipeIdeasSection(p, catSlug);
             renderProductReviews(catSlug, Number(idx));
             loadFrequentlyBoughtTogether(catSlug, idx);
         }
@@ -22123,6 +22187,89 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         }
         window.openPdDetailEdit = openPdDetailEdit;
         window.savePdDetailEdit = savePdDetailEdit;
+
+        /* ================= RECIPE IDEAS =================
+           Up to 3 per product - a structured {title, description} array,
+           not a plain string like the detail cards above, so it gets its
+           own open/save pair rather than reusing openPdDetailEdit's
+           generic single-textarea form, the same reasoning openAllergenEdit
+           already has its own pair for the same kind of structured field. */
+        const RECIPE_IDEA_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>';
+        function renderRecipeIdeasSection(p, catSlug) {
+            const section = document.getElementById('pdRecipesSection');
+            const grid = document.getElementById('pdRecipesGrid');
+            const empty = document.getElementById('pdRecipesEmpty');
+            const editWrap = document.getElementById('pdRecipesEditWrap');
+            if (!section || !grid || !empty || !editWrap) return;
+            editWrap.innerHTML = '';
+            // Recipe ideas are a food-content feature, same gate as the
+            // Nutrition/Cooking suggestions cards above - a shampoo or
+            // toothpaste product has no business showing one.
+            if (NON_FOOD_CATEGORIES.includes(catSlug)) { section.style.display = 'none'; return; }
+            section.style.display = '';
+            const recipes = (p.recipes || []).filter(r => r && (r.title || r.description)).slice(0, 3);
+            section.classList.toggle('is-empty', recipes.length === 0);
+            grid.style.display = recipes.length ? 'grid' : 'none';
+            empty.style.display = recipes.length ? 'none' : '';
+            grid.innerHTML = recipes.map(r => `
+    <div class="pd-recipe-card">
+      <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
+      <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
+      <p>${escapeHtml(r.description || '')}</p>
+    </div>`).join('');
+        }
+        window.renderRecipeIdeasSection = renderRecipeIdeasSection;
+        function openRecipesEdit() {
+            if (!pdCurrent) return;
+            const recipes = pdCurrent.recipes || [];
+            const slots = [0, 1, 2].map(i => recipes[i] || { title: '', description: '' });
+            document.getElementById('pdRecipesGrid').style.display = 'none';
+            document.getElementById('pdRecipesEmpty').style.display = 'none';
+            document.getElementById('pdRecipesEditWrap').innerHTML = `
+    <div class="pd-recipes-edit">
+      ${slots.map((r, i) => `
+      <div class="pd-recipe-edit-slot">
+        <label>Recipe idea ${i + 1}</label>
+        <input type="text" id="pdRecipeTitle-${i}" placeholder="e.g. Jollof rice" value="${escapeHtml(r.title || '')}">
+        <textarea id="pdRecipeDesc-${i}" rows="2" placeholder="A short note on how this product is used in the dish">${escapeHtml(r.description || '')}</textarea>
+      </div>`).join('')}
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="saveRecipesEdit()">Save</button>
+        <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderRecipeIdeasSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
+      </div>
+    </div>`;
+        }
+        window.openRecipesEdit = openRecipesEdit;
+        async function saveRecipesEdit() {
+            if (!pdCurrent) return;
+            const cat = findCategory(pdCurrent.catSlug);
+            const realProduct = cat && cat.products[pdCurrent.idx];
+            if (!realProduct) return;
+            const fmt = (arr) => (arr && arr.length) ? arr.map(r => r.title || '(untitled)').join(', ') : 'none';
+            const before = fmt(realProduct.recipes);
+            const recipes = [0, 1, 2].map(i => ({
+                title: document.getElementById(`pdRecipeTitle-${i}`).value.trim(),
+                description: document.getElementById(`pdRecipeDesc-${i}`).value.trim(),
+            })).filter(r => r.title || r.description);
+            if (recipes.length) { realProduct.recipes = recipes; pdCurrent.recipes = recipes; }
+            else { delete realProduct.recipes; delete pdCurrent.recipes; }
+            renderRecipeIdeasSection(pdCurrent, pdCurrent.catSlug);
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(pdCurrent.catSlug, pdCurrent.idx),
+                recipes: recipes.length ? recipes : null,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) { showToast('Could not save recipe ideas: ' + error.message, undefined, 'error'); return; }
+            const after = fmt(recipes);
+            if (before !== after) {
+                logAdminAction('product_updated', 'product', realProduct.name, {
+                    changes: [{ label: 'Recipe ideas', from: before, to: after }],
+                });
+            }
+        }
+        window.saveRecipesEdit = saveRecipesEdit;
+
         document.getElementById('pdQtyMinus').addEventListener('click', () => { pdQty = Math.max(1, pdQty - 1); document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         document.getElementById('pdQtyPlus').addEventListener('click', () => { pdQty += 1; document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         let subscriptionDiscountPct = 10;
@@ -28377,6 +28524,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (row.allergy_note) product.allergyNote = row.allergy_note;
                 if (row.nutrition) product.nutrition = row.nutrition;
                 if (row.cooking_tip) product.cookingTip = row.cooking_tip;
+                if (Array.isArray(row.recipes) && row.recipes.length) product.recipes = row.recipes;
+                else if (row.recipes === null) delete product.recipes;
                 product.deleted = row.deleted === true;
             });
             initialOverridesAttempted = true;
