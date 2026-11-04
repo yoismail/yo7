@@ -8261,8 +8261,21 @@
             flex-shrink: 0;
         }
 
+        /* Now a full-width section after Reviews (see the PD page markup),
+           not a sidebar item squeezed under the buy button anymore - same
+           divider treatment as .pd-details/.pd-recipes/.pd-reviews so it
+           reads as one more section in that sequence, not an orphaned
+           block. Both #fbtStrip and the "More from this aisle" strip
+           always get their own divider - #fbtStrip stays in the DOM
+           with display:none when there's no co-purchase data for this
+           product (see loadFrequentlyBoughtTogether's own comment), so a
+           ":not(:first-child)"-style rule here would strip the other
+           strip's divider based on DOM position alone, not on whether
+           anything's actually visible above it. */
         .related-strip {
-            margin-top: 64px;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(var(--border-rgb), 0.1);
         }
 
         .related-strip h3 {
@@ -12571,20 +12584,7 @@
                             <span class="payment-badge payment-badge-clearpay">Clearpay</span>
                             <span class="payment-badge payment-badge-paybybank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6"/></svg>Pay by Bank</span>
                         </div>
-                        <div class="related-strip" id="fbtStrip" style="display:none;">
-                            <h3>Frequently bought together</h3>
-                            <div class="related-grid" id="fbtGrid"></div>
-                        </div>
-                        <div class="related-strip">
-                            <h3>More from this aisle</h3>
-                            <div class="related-grid" id="relatedGrid"></div>
-                        </div>
                     </div>
-                </div>
-
-                <div class="pd-details" id="pdDetailsSection">
-                    <h2 class="pd-details-heading">Product details</h2>
-                    <div class="pd-details-grid" id="pdDetailsGrid"></div>
                 </div>
 
                 <div class="pd-recipes" id="pdRecipesSection">
@@ -12593,6 +12593,11 @@
                     <div class="pd-recipes-empty" id="pdRecipesEmpty"><p>No recipe ideas added yet for this product.</p></div>
                     <div id="pdRecipesEditWrap"></div>
                     <button class="pd-detail-edit-btn" type="button" onclick="openRecipesEdit()">Edit recipe ideas</button>
+                </div>
+
+                <div class="pd-details" id="pdDetailsSection">
+                    <h2 class="pd-details-heading">Product details</h2>
+                    <div class="pd-details-grid" id="pdDetailsGrid"></div>
                 </div>
 
                 <div class="pd-reviews" id="pdReviewsSection">
@@ -12608,6 +12613,15 @@
                             <a class="btn btn-outline-dark" id="pdReviewEmailBtn" href="mailto:hello@yo7foods.co.uk">Email a review</a>
                         </div>
                     </div>
+                </div>
+
+                <div class="related-strip" id="fbtStrip" style="display:none;">
+                    <h3>Frequently bought together</h3>
+                    <div class="related-grid" id="fbtGrid"></div>
+                </div>
+                <div class="related-strip">
+                    <h3>More from this aisle</h3>
+                    <div class="related-grid" id="relatedGrid"></div>
                 </div>
             </div>
         </section>
@@ -17215,7 +17229,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.16';
+        const BUILD_VERSION = '2026-11-04.17';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
