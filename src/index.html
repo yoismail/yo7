@@ -17103,7 +17103,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-03.2';
+        const BUILD_VERSION = '2026-11-04.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18320,6 +18320,22 @@
             dishSelectedItems = new Set(dish.items.map((_, idx) => idx));
             renderDishPicker();
             renderDishBuilder();
+            // Nudge, don't jump: only scrolls (and only the minimal amount)
+            // when the dish name/ingredient-count header isn't already
+            // visible, so picking a dish whose panel is already on screen
+            // doesn't move the page at all. Same fixed-header offset as
+            // scrollToReviews()/the data-scroll-to handler elsewhere in this
+            // file - a plain scrollIntoView() would land the header right
+            // behind the fixed nav instead of below it.
+            const header = document.getElementById('dishBuilderHeader');
+            if (header) {
+                const fixedHeaderHeight = parseFloat(document.body.style.paddingTop) || 0;
+                const rect = header.getBoundingClientRect();
+                if (rect.top < fixedHeaderHeight || rect.bottom > window.innerHeight) {
+                    const targetY = rect.top + window.scrollY - fixedHeaderHeight - 16;
+                    window.scrollTo({ top: targetY, behavior: 'smooth' });
+                }
+            }
         }
         window.selectDish = selectDish;
         function removeDish(e, i) {
