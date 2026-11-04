@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.486a134817.css">    <script>
+    <link rel="stylesheet" href="/assets/app.8e9676c8d8.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -1195,6 +1195,14 @@
                 <div class="pd-details" id="pdDetailsSection">
                     <h2 class="pd-details-heading">Product details</h2>
                     <div class="pd-details-grid" id="pdDetailsGrid"></div>
+                </div>
+
+                <div class="pd-recipes" id="pdRecipesSection">
+                    <h2 class="pd-details-heading">Recipe ideas</h2>
+                    <div class="pd-recipe-grid" id="pdRecipesGrid"></div>
+                    <div class="pd-recipes-empty" id="pdRecipesEmpty"><p>No recipe ideas added yet for this product.</p></div>
+                    <div id="pdRecipesEditWrap"></div>
+                    <button class="pd-detail-edit-btn" type="button" onclick="openRecipesEdit()">Edit recipe ideas</button>
                 </div>
 
                 <div class="pd-reviews" id="pdReviewsSection">
@@ -3348,7 +3356,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.2b3522c044.js"></script>
+    <script defer src="/assets/app.dc86d61575.js"></script>
 
 </body>
 
