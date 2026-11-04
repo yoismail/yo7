@@ -17090,7 +17090,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.4';
+        const BUILD_VERSION = '2026-11-04.5';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19361,6 +19361,7 @@
             dismissInstallBanner();
             updateInstallMenuBtn();
             showToast('YO7 Foods installed - find it on your Home Screen.', undefined, 'success');
+            maybeAutoEnablePushOnInstall();
         });
         function installBannerDismissed() {
             try { return localStorage.getItem('installBannerDismissed') === 'true'; } catch (e) { return false; }
@@ -24173,7 +24174,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 btn.onclick = enablePushNotifications;
             }
         }
-        async function enablePushNotifications() {
+        async function enablePushNotifications(auto) {
             const btn = document.getElementById('pushToggleBtn');
             if (btn) { btn.disabled = true; btn.textContent = 'Turning on…'; }
             try {
@@ -24191,12 +24192,33 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     p256dh: json.keys.p256dh,
                     auth_key: json.keys.auth,
                 }, { onConflict: 'endpoint' });
+                // The manual toggle's own "Push notifications are on" state
+                // (rendered just below) is feedback enough when someone
+                // clicked a button to get here - this path didn't start
+                // from a click, so without this they'd just see a browser
+                // permission popup appear out of nowhere with no follow-up.
+                if (auto) showToast("Notifications turned on, you'll get order updates and announcements.", undefined, 'success');
             } catch (err) {
                 console.error('enablePushNotifications failed:', err);
             } finally {
                 if (btn) btn.disabled = false;
                 renderPushToggle();
             }
+        }
+        // Installing is the clearest signal a visitor can give that they
+        // want to keep using this as an app, so default push notifications
+        // on right then instead of leaving it as a separate, easy-to-miss
+        // toggle on the account page. Skipped silently if they're not
+        // signed in yet (nothing to tie a subscription to - push_subscriptions
+        // requires a user_id), permission is already denied (requesting
+        // again can't change that), or a subscription already exists.
+        async function maybeAutoEnablePushOnInstall() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            if (!pushSupported()) return;
+            if (Notification.permission === 'denied') return;
+            const existing = await getCurrentPushSubscription();
+            if (existing) return;
+            enablePushNotifications(true);
         }
         async function disablePushNotifications() {
             const btn = document.getElementById('pushToggleBtn');
