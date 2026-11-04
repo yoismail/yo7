@@ -1574,7 +1574,7 @@ begin
           '<div style="text-align:center;margin-bottom:14px;"><img src="https://yo7foods.co.uk/apple-touch-icon.png" width="52" height="52" alt="YO7 Foods" style="display:block;margin:0 auto;border-radius:50%;"></div>' ||
           '<h2 style="color:#063B00;">Running low on ' || v_row.product_name || '?</h2>' ||
           '<p>You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then '' else 's' end) || ', and that time has come round again. Head back to YO7 Foods whenever you''re ready, this is just a reminder, nothing''s been charged.</p>' ||
-          '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/orders" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Reorder now</a></p>' ||
+          '<p style="margin:24px 0;"><a href="https://yo7foods.co.uk/#/product/' || replace(v_row.product_key, '::', '/') || '" style="background:#90B800;color:#063B00;font-weight:bold;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;">Reorder now</a></p>' ||
           '<p style="color:#666;font-size:12.5px;">Any questions? <a href="https://wa.me/447398810052" style="color:#90B800;font-weight:600;text-decoration:underline;">Chat with us on WhatsApp</a></p>' ||
           '<p style="color:#999;font-size:12px;">YO7 Foods &middot; 7 Lancaster Road, Ipswich, IP4 2NY<br>' ||
           '<a href="https://yo7foods.co.uk/#/unsubscribe-reminder/' || v_row.unsubscribe_token || '" style="color:#999;">Stop these reminders for this item</a></p>' ||
@@ -1582,7 +1582,7 @@ begin
         'text',
           'Running low on ' || v_row.product_name || '?' || E'\n\n' ||
           'You subscribed to reorder this every ' || v_row.frequency_weeks || ' week' || (case when v_row.frequency_weeks = 1 then '' else 's' end) || '. This is just a reminder, nothing''s been charged.' || E'\n\n' ||
-          'Reorder now: https://yo7foods.co.uk/#/orders' || E'\n\n' ||
+          'Reorder now: https://yo7foods.co.uk/#/product/' || replace(v_row.product_key, '::', '/') || E'\n\n' ||
           'Any questions? Chat with us on WhatsApp: 07398 810052 (https://wa.me/447398810052)' || E'\n\n' ||
           'Stop these reminders: https://yo7foods.co.uk/#/unsubscribe-reminder/' || v_row.unsubscribe_token || E'\n\n' ||
           'YO7 Foods · 7 Lancaster Road, Ipswich, IP4 2NY'

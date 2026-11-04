@@ -10928,7 +10928,8 @@
            what to look for on your screen", which a 15px icon sitting
            quietly inside a sentence didn't achieve; easy to read straight
            past it without registering it at all. */
-        .push-toggle-hint.ios-steps .share-icon-inline {
+        .push-toggle-hint.ios-steps .share-icon-inline,
+        .push-toggle-hint.ios-steps .bell-icon-inline {
             box-sizing: border-box;
             display: inline-flex;
             align-items: center;
@@ -17149,7 +17150,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.13';
+        const BUILD_VERSION = '2026-11-04.14';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -24273,6 +24274,10 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 hint.className = 'push-toggle-hint ios-steps';
                 hint.style.display = 'flex';
                 const shareIcon = '<svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
+                // Same bell as the nav's own #notifNavBtn - using the
+                // identical shape here is the whole point, so it's
+                // recognisable as "that icon" rather than a generic one.
+                const bellIcon = '<svg class="bell-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
                 hint.innerHTML = `
       <span class="push-hint-icon">${shareIcon}</span>
       <span>
@@ -24282,7 +24287,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
           <li>Tap the Share icon ${shareIcon} in your browser's toolbar. Don't see it? Tap once near the address bar first, it can hide while you're scrolling</li>
           <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
         </ol>
-        Then open YO7 Foods from the icon on your Home Screen (not from the browser) and tap the bell icon to turn notifications on.
+        Then open YO7 Foods from the icon on your Home Screen (not from the browser) and tap the bell icon ${bellIcon} to turn notifications on.
       </span>`;
                 return;
             }
