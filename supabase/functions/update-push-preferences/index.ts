@@ -135,16 +135,18 @@ Deno.serve(async (req) => {
     });
   }
 
-  // A row tied to a signed-in account can only be changed by that same
-  // account - the endpoint-as-secret trust model is what protects an
-  // anonymous row (there's no account to check it against), but an
-  // authenticated one gets this extra check for free since a session is
-  // right there to verify. Fetched regardless of row.user_id, not just
-  // when it's set, since an authenticated caller is also how an
-  // ownerless row gets claimed below.
+  // A row tied to a signed-in account is only blocked from a DIFFERENT
+  // signed-in account - the endpoint-as-secret trust model already
+  // covers a signed-out caller (callerId null) on purpose: the same
+  // physical device that created the subscription, and later signs
+  // out again, still needs to keep managing it, claimed or not, since
+  // it's still the device receiving the actual pushes. Fetched
+  // regardless of row.user_id, not just when it's set, since an
+  // authenticated caller is also how an ownerless row gets claimed
+  // below.
   const { data: userData } = await authClient.auth.getUser();
   const callerId = userData?.user?.id ?? null;
-  if (row.user_id && callerId !== row.user_id) {
+  if (row.user_id && callerId && callerId !== row.user_id) {
     return new Response(JSON.stringify({ error: "Not authorized to change this subscription." }), {
       status: 403,
       headers: { ...cors, "Content-Type": "application/json" },
