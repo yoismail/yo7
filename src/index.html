@@ -14257,7 +14257,7 @@
                             </div>
                             <div class="field"><label for="announcementTitle">Title</label><input type="text" id="announcementTitle" required maxlength="80" placeholder="e.g. We're open for Christmas orders"></div>
                             <div class="field"><label for="announcementBody">Message</label><textarea id="announcementBody" rows="3" required maxlength="500" placeholder="Keep it short, this shows as a single notification card."></textarea></div>
-                            <div class="field"><label for="announcementLink">Link (optional)</label><input type="text" id="announcementLink" maxlength="200" placeholder="e.g. #/special-offers"></div>
+                            <div class="field"><label for="announcementLink">Link (optional)</label><input type="text" id="announcementLink" maxlength="200" placeholder="e.g. #/special-offers, or paste a real yo7foods.co.uk page link"></div>
                             <div class="auth-error" id="announcementError" role="alert" style="display:none;"></div>
                             <div class="auth-success" id="announcementSuccess" role="status" style="display:none;"></div>
                             <button class="btn btn-primary" type="submit" id="announcementSubmitBtn">Send to all customers</button>
@@ -17158,7 +17158,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.9';
+        const BUILD_VERSION = '2026-11-04.10';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -23687,6 +23687,29 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (link.startsWith('#')) return true;
             return link.startsWith('/') && !link.startsWith('//');
         }
+        // The announcement composer's "Link" field already accepts a
+        // relative path (the placeholder's own "#/special-offers"
+        // example), but what an admin naturally reaches for is pasting
+        // the real page URL straight out of the address bar - rejecting
+        // that outright (as isSafeInAppLink() above does, correctly, for
+        // an arbitrary absolute URL) just made the link silently not
+        // render as clickable at all. Strips the origin down to a plain
+        // relative path ONLY for this site's own domain, so it then
+        // passes isSafeInAppLink() same as if it had been typed that way
+        // to begin with - a genuinely different-site URL, or anything
+        // that isn't a parseable absolute URL, is returned unchanged and
+        // still correctly rejected there.
+        function normalizeAnnouncementLink(raw) {
+            if (!raw) return null;
+            if (raw.startsWith('#') || (raw.startsWith('/') && !raw.startsWith('//'))) return raw;
+            try {
+                const url = new URL(raw);
+                if (url.origin === 'https://yo7foods.co.uk' || url.origin === 'https://www.yo7foods.co.uk') {
+                    return (url.pathname + url.search + url.hash) || '/';
+                }
+            } catch (e) { /* not a parseable absolute URL - leave as typed */ }
+            return raw;
+        }
         // Same solid colours the status badge itself already uses (just
         // the "color" half of the pair, not the pale background), reused
         // as the card's left-edge accent so the two reinforce each other
@@ -25703,7 +25726,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 const category = document.getElementById('announcementCategory').value;
                 const title = document.getElementById('announcementTitle').value.trim();
                 const body = document.getElementById('announcementBody').value.trim();
-                const link = document.getElementById('announcementLink').value.trim();
+                const link = normalizeAnnouncementLink(document.getElementById('announcementLink').value.trim());
                 setAuthError('announcementError', '');
                 setAuthSuccess('announcementSuccess', '');
                 if (!title || !body) { setAuthError('announcementError', 'Title and message are both required.'); return; }
