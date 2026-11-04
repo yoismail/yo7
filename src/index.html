@@ -17090,7 +17090,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.5';
+        const BUILD_VERSION = '2026-11-04.6';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -24186,12 +24186,27 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
                 });
                 const json = sub.toJSON();
-                await supabaseClient.from('push_subscriptions').upsert({
-                    user_id: currentSupabaseUser.id,
-                    endpoint: json.endpoint,
-                    p256dh: json.keys.p256dh,
-                    auth_key: json.keys.auth,
-                }, { onConflict: 'endpoint' });
+                const row = { endpoint: json.endpoint, p256dh: json.keys.p256dh, auth_key: json.keys.auth };
+                let writeError;
+                if (currentSupabaseUser) {
+                    row.user_id = currentSupabaseUser.id;
+                    ({ error: writeError } = await supabaseClient.from('push_subscriptions').upsert(row, { onConflict: 'endpoint' }));
+                } else {
+                    // Signed out: still stored (null user_id) and still
+                    // reachable by a broadcast (see push_subscriptions' own
+                    // RLS/comment in schema.sql), just not tied to an
+                    // account. Plain insert, not upsert - Postgres requires
+                    // UPDATE permission for an ON CONFLICT DO UPDATE clause
+                    // even on the branch that never runs, and anon
+                    // deliberately has no UPDATE/SELECT/DELETE here (see
+                    // that same policy comment for why). A duplicate-
+                    // endpoint conflict just means this device already has
+                    // a row, which is already the end state wanted, so
+                    // it's not treated as a failure.
+                    const { error } = await supabaseClient.from('push_subscriptions').insert(row);
+                    if (error && error.code !== '23505') writeError = error;
+                }
+                if (writeError) throw writeError;
                 // The manual toggle's own "Push notifications are on" state
                 // (rendered just below) is feedback enough when someone
                 // clicked a button to get here - this path didn't start
@@ -24208,12 +24223,16 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // Installing is the clearest signal a visitor can give that they
         // want to keep using this as an app, so default push notifications
         // on right then instead of leaving it as a separate, easy-to-miss
-        // toggle on the account page. Skipped silently if they're not
-        // signed in yet (nothing to tie a subscription to - push_subscriptions
-        // requires a user_id), permission is already denied (requesting
-        // again can't change that), or a subscription already exists.
+        // toggle on the account page - signed in or not, so a not-yet-
+        // signed-in install is still reachable by a marketing broadcast
+        // (push_subscriptions.user_id is nullable for exactly this; see
+        // its own RLS policies/comment). Skipped silently if there's no
+        // Supabase connection to save a subscription to at all, push
+        // itself isn't supported here, permission is already denied
+        // (requesting again can't change that), or a subscription
+        // already exists.
         async function maybeAutoEnablePushOnInstall() {
-            if (!supabaseClient || !currentSupabaseUser) return;
+            if (!supabaseClient) return;
             if (!pushSupported()) return;
             if (Notification.permission === 'denied') return;
             const existing = await getCurrentPushSubscription();
