@@ -2,17 +2,24 @@
 //
 // THE PROBLEM THIS SOLVES: the #/notifications page's category toggles
 // (Order Updates / Announcements / Offers) need to update an EXISTING
-// push_subscriptions row's notify_* columns. A signed-in customer can
-// already do this directly via supabase-js (existing RLS: auth.uid() =
-// user_id covers UPDATE). An anonymous install can't: push_subscriptions'
-// anon policy is INSERT-only, on purpose (see that policy's own comment
-// in schema.sql), granting UPDATE would also require granting SELECT,
-// which would let any anonymous client read every other anonymous
-// subscriber's endpoint/p256dh/auth_key. This function is the narrow,
-// service-role-backed door around that: it updates exactly one row,
-// matched by its exact endpoint (an unguessable secret only the owning
-// browser knows, same trust model the rest of this feature already
-// uses), and never returns any row data back to the caller.
+// push_subscriptions row's notify_* columns, for every caller, not just
+// an anonymous one. push_subscriptions' anon RLS policy is INSERT-only
+// on purpose (see that policy's own comment in schema.sql): granting
+// UPDATE would also require granting SELECT, which would let any
+// anonymous client read every other anonymous subscriber's endpoint/
+// p256dh/auth_key. A signed-in customer's own existing RLS (auth.uid()
+// = user_id) looks like it should cover UPDATE directly instead - but a
+// subscription first created before that device ever signed in still
+// has user_id = NULL forever (nothing else ever migrates it), so a
+// direct update from a now-signed-in session silently touches zero rows
+// (RLS just excludes it, no error) instead of actually changing
+// anything. This function is the one, narrow, service-role-backed door
+// around both cases: it updates exactly one row, matched by its exact
+// endpoint (an unguessable secret only the owning browser knows, same
+// trust model the rest of this feature already uses), claims an
+// ownerless row for a signed-in caller as part of that same update
+// (so this stops being a problem on this device after the very first
+// successful call), and never returns any row data back to the caller.
 //
 // Deploy with the Supabase CLI from the project root:
 //   supabase functions deploy update-push-preferences
@@ -132,18 +139,30 @@ Deno.serve(async (req) => {
   // account - the endpoint-as-secret trust model is what protects an
   // anonymous row (there's no account to check it against), but an
   // authenticated one gets this extra check for free since a session is
-  // right there to verify.
-  if (row.user_id) {
-    const { data: userData } = await authClient.auth.getUser();
-    if (userData?.user?.id !== row.user_id) {
-      return new Response(JSON.stringify({ error: "Not authorized to change this subscription." }), {
-        status: 403,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
+  // right there to verify. Fetched regardless of row.user_id, not just
+  // when it's set, since an authenticated caller is also how an
+  // ownerless row gets claimed below.
+  const { data: userData } = await authClient.auth.getUser();
+  const callerId = userData?.user?.id ?? null;
+  if (row.user_id && callerId !== row.user_id) {
+    return new Response(JSON.stringify({ error: "Not authorized to change this subscription." }), {
+      status: 403,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
   }
 
-  const { error: updateError } = await db.from("push_subscriptions").update(update).eq("endpoint", endpoint);
+  const updatePayload: Record<string, boolean | string> = { ...update };
+  if (!row.user_id && callerId) {
+    // This subscription predates being signed in on this device -
+    // link it to the account that's signed in here now, the same way a
+    // fresh subscribe already would (src/index.html's
+    // saveNewPushSubscriptionRow()). From here on, a direct supabase-js
+    // read/update from that account (RLS: auth.uid() = user_id) starts
+    // working for this row too, not just this function.
+    updatePayload.user_id = callerId;
+  }
+
+  const { error: updateError } = await db.from("push_subscriptions").update(updatePayload).eq("endpoint", endpoint);
   if (updateError) {
     console.error("update-push-preferences: update failed:", updateError.message);
     return new Response(JSON.stringify({ error: "Could not save your preferences." }), {

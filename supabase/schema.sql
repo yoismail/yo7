@@ -3253,7 +3253,7 @@ CREATE POLICY "Users can update their own cart" ON "public"."carts" FOR UPDATE U
 
 
 
-CREATE POLICY "Users can view own or broadcast notifications" ON "public"."notifications" FOR SELECT USING ((("auth"."uid"() = "user_id") OR ("user_id" IS NULL)));
+CREATE POLICY "Users can view own or broadcast notifications" ON "public"."notifications" FOR SELECT USING ((("auth"."uid"() IS NOT NULL) AND (("auth"."uid"() = "user_id") OR ("user_id" IS NULL))));
 
 
 
