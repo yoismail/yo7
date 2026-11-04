@@ -17149,7 +17149,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.11';
+        const BUILD_VERSION = '2026-11-04.12';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -24061,6 +24061,18 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             await supabaseClient.from('notification_reads').upsert(rows, { onConflict: 'notification_id,user_id', ignoreDuplicates: true });
             loadUnreadNotificationCount();
         }
+        // Fired by one specific notif-item's own onclick (see
+        // notifItemHTML()) - updates just that element right away rather
+        // than waiting on a full re-render, since a link tag navigates
+        // away immediately and a plain div never re-renders this list on
+        // its own.
+        function markNotificationClicked(el, id) {
+            el.classList.remove('is-unread');
+            const pill = el.querySelector('.notif-new-pill');
+            if (pill) pill.remove();
+            markNotificationsRead([id]);
+        }
+        window.markNotificationClicked = markNotificationClicked;
         // notifications.category (migration 45) is what the admin actually
         // picks in the "Send announcement" panel — Announcement vs Special
         // offer. Order-status inserts (notify_order_status_change /
@@ -24083,6 +24095,9 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const hasSafeLink = isSafeInAppLink(n.link);
             const tag = hasSafeLink ? 'a' : 'div';
             const hrefAttr = hasSafeLink ? ` href="${escapeHtml(n.link)}"` : '';
+            // Only this one notification's own id, not the whole list -
+            // see renderNotificationsPage()'s own comment for why.
+            const clickAttr = n.isRead ? '' : ` onclick="markNotificationClicked(this, '${n.id}')"`;
             const type = n.category || (n.user_id ? 'order' : 'announcement');
             // A cancellation shares the plain 'order' category with every
             // other routine status update (placed, out for delivery,
@@ -24094,7 +24109,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const tagClass = isCancelled ? 'type-order-cancelled' : `type-${type}`;
             const typeLabel = isCancelled ? 'Order cancelled' : (NOTIF_TYPE_LABELS[type] || NOTIF_TYPE_LABELS.announcement);
             return `
-    <${tag} class="notif-item${n.isRead ? '' : ' is-unread'}"${hrefAttr}>
+    <${tag} class="notif-item${n.isRead ? '' : ' is-unread'}"${hrefAttr}${clickAttr}>
       <div class="notif-meta-row">
         <span class="notif-type-tag ${tagClass}">${NOTIF_TYPE_ICONS[type] || NOTIF_TYPE_ICONS.announcement}${typeLabel}</span>
         ${n.isRead ? '' : '<span class="notif-new-pill">New</span>'}
@@ -24139,9 +24154,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 return;
             }
             empty.style.display = 'none';
+            // Each unread item marks itself read on click (see
+            // notifItemHTML()'s onclick), not here - marking the whole
+            // batch read just for landing on this page meant clicking
+            // into any one of several unread notifications cleared the
+            // "New" pill off all of them, not just the one actually
+            // opened.
             list.innerHTML = items.map(n => notifItemHTML(n)).join('');
-            const unreadIds = items.filter(n => !n.isRead).map(n => n.id);
-            if (unreadIds.length) markNotificationsRead(unreadIds);
         }
         window.renderNotificationsPage = renderNotificationsPage;
 
