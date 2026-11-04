@@ -10764,15 +10764,6 @@
            ones fade to the same muted, borderless look every other "seen
            this already" state on the site uses. */
         .notif-list { display: flex; flex-direction: column; gap: 12px; }
-        .notif-guest-note {
-            font-size: 13px; color: var(--text-muted); line-height: 1.5;
-            background: var(--card-bg);
-            border: 1px dashed rgba(var(--border-rgb), 0.25);
-            border-radius: 14px;
-            padding: 12px 16px;
-            margin: 0;
-        }
-        .notif-guest-note a { color: var(--chartreuse-rich); font-weight: 700; }
         .notif-item {
             position: relative;
             background: var(--card-bg);
@@ -17158,7 +17149,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.10';
+        const BUILD_VERSION = '2026-11-04.11';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19399,10 +19390,10 @@
            A real "Install app" affordance isn't guaranteed anywhere in a
            browser's own UI - Chrome/Edge/Samsung Internet tuck it behind
            an address-bar icon or a three-dot menu most people never
-           notice, and iOS Safari has no install UI of its own at all,
-           just the generic Share sheet's "Add to Home Screen" (already
-           used the same way for the push-notification opt-in on
-           #/notifications - see isIosSafari()/isIosNonStandalone() and
+           notice, and no iOS browser has an install UI of its own at
+           all, just the generic Share sheet's "Add to Home Screen"
+           (already used the same way for the push-notification opt-in
+           on #/notifications - see isIosNonStandalone() and
            renderPushToggle() further down). This surfaces the same
            capability once, unmissably, instead of leaving it undiscovered.
 
@@ -19504,14 +19495,14 @@
                     await promptEvent.userChoice;
                 });
                 document.getElementById('installBannerDismissBtn').addEventListener('click', dismissInstallBanner);
-            } else if (isIosSafari() && isIosNonStandalone()) {
+            } else if (isIosNonStandalone()) {
                 const shareIcon = '<svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
                 el.innerHTML = `
       <div class="install-banner-inner">
         <img src="/favicon-192x192.png" width="40" height="40" alt="" class="install-banner-icon">
         <div class="install-banner-text">
           <strong>Get the YO7 Foods app</strong>
-          <span>Tap the Share icon ${shareIcon} in Safari's toolbar, then <strong>Add to Home Screen</strong>, for one-tap ordering and order updates.</span>
+          <span>Tap the Share icon ${shareIcon} in your browser's toolbar, then <strong>Add to Home Screen</strong>, for one-tap ordering and order updates.</span>
         </div>
         <div class="install-banner-actions">
           <button type="button" id="installBannerDismissBtn">Got it</button>
@@ -19528,12 +19519,12 @@
         // desktop entry point, rather than relying on a visitor ever
         // noticing the browser's own address-bar icon or 3-dot-menu
         // entry) even after the one-time banner is dismissed or missed -
-        // a captured beforeinstallprompt event, or (on iOS Safari) the
-        // same not-yet-installed check the banner itself uses, is what
+        // a captured beforeinstallprompt event, or (on iOS) the same
+        // not-yet-installed check the banner itself uses, is what
         // decides whether it's actually worth showing, not just "has the
         // banner been seen".
         function updateInstallMenuBtn() {
-            const canOfferInstall = !isStandaloneDisplay() && (deferredInstallPrompt || (isIosSafari() && isIosNonStandalone()));
+            const canOfferInstall = !isStandaloneDisplay() && (deferredInstallPrompt || isIosNonStandalone());
             const btn = document.getElementById('mobileMenuInstallBtn');
             if (btn) btn.style.display = canOfferInstall ? 'block' : 'none';
             const footerBtn = document.getElementById('footerInstallBtn');
@@ -24001,23 +23992,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // joined on" query — kept as one function so they can never drift
         // out of sync with each other on what counts as unread.
         async function loadNotificationsWithReadState() {
-            if (!supabaseClient) return [];
-            if (!currentSupabaseUser) {
-                // No account to track read-state against, and RLS on
-                // notifications only ever lets a signed-out request see
-                // broadcast rows anyway (user_id IS NULL) - a targeted
-                // order-status/reward notification still needs a real
-                // sign-in. Shown as already-read rather than always "New",
-                // which could never actually clear with nothing to persist
-                // it to.
-                const { data: notifs, error } = await supabaseClient.from('notifications')
-                    .select('*')
-                    .is('user_id', null)
-                    .order('created_at', { ascending: false })
-                    .limit(100);
-                if (error || !notifs) return [];
-                return notifs.map(n => ({ ...n, isRead: true }));
-            }
+            // The in-app list stays signed-in only (unlike push itself,
+            // which an anonymous install can already receive, see
+            // maybeAutoEnablePushOnInstall()): the wanted behaviour for a
+            // signed-out visitor is the actual OS-level notification, with
+            // its own link already wired up (sw.js's notificationclick),
+            // not a browsable list of everything ever sent.
+            if (!supabaseClient || !currentSupabaseUser) return [];
             const [{ data: notifs, error: nErr }, { data: reads }] = await Promise.all([
                 supabaseClient.from('notifications')
                     .select('*')
@@ -24131,33 +24112,34 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (!supabaseClient) {
                 list.innerHTML = '';
                 empty.style.display = 'block';
-                empty.innerHTML = 'Not connected right now, try again shortly.';
+                empty.innerHTML = 'Log in to see your notifications. <a href="#/login" onclick="postLoginRedirect=\'#/notifications\'">Log in</a>';
                 return;
             }
-            // A signed-out visitor still sees every announcement/offer
-            // broadcast - RLS on notifications only ever returns those for
-            // them anyway (see that policy's own definition in schema.sql),
-            // never a specific customer's order-status/reward history,
-            // which still needs a real account. Letting push reach a
-            // signed-out install (see maybeAutoEnablePushOnInstall()) but
-            // then hiding the list it points back to would defeat the
-            // point of that.
+            // The in-app list is signed-in only - push itself already
+            // reaches a signed-out install fine (maybeAutoEnablePushOnInstall()),
+            // with its own link wired up (sw.js's notificationclick), which
+            // is the actual wanted behaviour there, not a browsable list.
+            if (!currentSupabaseUser) {
+                // Same "haven't checked the session yet" case as
+                // renderOrderHistory()/renderAdminPage() - avoids flashing
+                // the login prompt on a hard refresh for someone who's
+                // actually already signed in.
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                empty.innerHTML = supabaseSessionRestored
+                    ? 'Log in to see your notifications. <a href="#/login" onclick="postLoginRedirect=\'#/notifications\'">Log in</a>'
+                    : 'Loading your notifications…';
+                return;
+            }
             const items = await loadNotificationsWithReadState();
-            // A standing, non-blocking hint rather than a hard gate - a
-            // signed-out visitor already sees every broadcast below, this
-            // just explains why an actual order update won't show up here
-            // until they sign in, instead of leaving that silently unsaid.
-            const guestNote = (!currentSupabaseUser && supabaseClient)
-                ? `<p class="notif-guest-note"><a href="#/login" onclick="postLoginRedirect='#/notifications'">Log in</a> to also see updates on your own orders.</p>`
-                : '';
             if (items.length === 0) {
                 list.innerHTML = '';
                 empty.style.display = 'block';
-                empty.innerHTML = guestNote + "<p>Nothing here yet. We'll let you know about order updates and anything else worth knowing.</p>";
+                empty.innerHTML = "Nothing here yet. We'll let you know about order updates and anything else worth knowing.";
                 return;
             }
             empty.style.display = 'none';
-            list.innerHTML = guestNote + items.map(n => notifItemHTML(n)).join('');
+            list.innerHTML = items.map(n => notifItemHTML(n)).join('');
             const unreadIds = items.filter(n => !n.isRead).map(n => n.id);
             if (unreadIds.length) markNotificationsRead(unreadIds);
         }
@@ -24186,25 +24168,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
         }
         // iOS only allows push for a PWA actually added to the home
-        // screen (display-mode: standalone) — offering the toggle in a
-        // plain Safari tab there would just fail silently on subscribe().
+        // screen (display-mode: standalone) - offering the toggle in a
+        // plain browser tab there would just fail silently on subscribe().
         function isIosNonStandalone() {
             const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
             return isIos && !isStandalone;
-        }
-        // Every iOS browser is required to run on Apple's WebKit engine,
-        // so Chrome/Firefox/Edge on an iPhone all still say "Safari" in
-        // their user agent for compatibility — but Apple only exposes the
-        // actual "Add to Home Screen -> installable app with push" path
-        // through Safari's own UI, not to any browser built on top of it.
-        // Their own tokens (CriOS/FxiOS/EdgiOS/OPiOS) are what actually
-        // distinguish them, so those get a different message entirely
-        // rather than steps that don't apply to them at all.
-        function isIosSafari() {
-            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-            const isOtherIosBrowser = /crios|fxios|edgios|opios|duckduckgo|mercury|ucbrowser/i.test(navigator.userAgent);
-            return isIos && !isOtherIosBrowser;
         }
         async function getCurrentPushSubscription() {
             if (!pushSupported()) return null;
@@ -24213,17 +24182,22 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 return await reg.pushManager.getSubscription();
             } catch (err) { return null; }
         }
-        // Anonymous installs can never read push_subscriptions back (see
-        // that table's own anon RLS policy comment in schema.sql) - this
-        // is the only record of "what did I last set" for them, purely
-        // for rendering the toggles correctly on a later visit. Every
-        // actual write still goes by the real endpoint, signed in or not,
-        // so a missing/stale cache never desyncs what's actually saved,
-        // it only means the toggles render the all-on default until the
-        // visitor touches one again.
-        function getAnonPushPrefsCache() {
+        // An anonymous install can never read push_subscriptions back at
+        // all (see that table's own anon RLS policy comment in
+        // schema.sql). A signed-in one normally can - except for a
+        // subscription that was first created before this device ever
+        // signed in: that row's user_id is still NULL (nothing migrates
+        // it to the account later), so a direct SELECT for it is just as
+        // blocked by RLS (auth.uid() = user_id never matches NULL) even
+        // though the visitor is now signed in. This cache is the fallback
+        // for both cases - every actual write still goes by the real
+        // endpoint regardless of sign-in state (see savePushPrefs()), so
+        // a missing/stale cache never desyncs what's actually saved, it
+        // only means the toggles render the all-on default, or a stale
+        // prior value, until the visitor touches one again.
+        function getCachedPushPrefs() {
             try {
-                const raw = localStorage.getItem('anonPushPrefs');
+                const raw = localStorage.getItem('pushPrefs');
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 return {
@@ -24233,8 +24207,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 };
             } catch (e) { return null; }
         }
-        function setAnonPushPrefsCache(prefs) {
-            try { localStorage.setItem('anonPushPrefs', JSON.stringify(prefs)); } catch (e) { /* private browsing etc. */ }
+        function setCachedPushPrefs(prefs) {
+            try { localStorage.setItem('pushPrefs', JSON.stringify(prefs)); } catch (e) { /* private browsing etc. */ }
         }
         function applyPushPrefsToDom(prefs, disabled) {
             const orders = document.getElementById('pushPrefOrders');
@@ -24265,41 +24239,31 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 hint.style.display = 'none';
                 return;
             }
-            // Checked before pushSupported() below on purpose: iOS Safari
-            // in a plain browser tab (not installed to the Home Screen)
-            // has no PushManager at all, so pushSupported() would always
-            // be false there too — this is the one case where "push
-            // isn't available" has an actionable fix worth telling the
-            // customer about, rather than just going quiet.
+            // Checked before pushSupported() below on purpose: an iOS
+            // browser tab (not installed to the Home Screen) has no
+            // PushManager at all, so pushSupported() would always be
+            // false there too - this is the one case where "push isn't
+            // available" has an actionable fix worth telling the customer
+            // about, rather than just going quiet. Not Safari-specific:
+            // every iOS browser's own Share sheet offers the same "Add to
+            // Home Screen" action (confirmed directly - it isn't only a
+            // Safari toolbar feature the way it once was), so the same
+            // steps apply regardless of which one this is.
             if (isIosNonStandalone()) {
                 card.style.display = 'none';
                 hint.className = 'push-toggle-hint ios-steps';
                 hint.style.display = 'flex';
-                if (!isIosSafari()) {
-                    // Apple doesn't give any other iOS browser the
-                    // "install as an app" path at all, so there are no
-                    // steps to give here, just where to actually get them.
-                    const compassIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2 6.4-6.4 2 2-6.4 6.4-2z"/></svg>';
-                    hint.innerHTML = `
-      <span class="push-hint-icon">${compassIcon}</span>
-      <span>
-        <strong>Notifications need Safari on iPhone</strong>
-        iPhone only allows push notifications through Safari, not through Chrome, Firefox or other browsers there, even though this page looks the same in all of them.
-        Open <strong>yo7foods.co.uk</strong> in Safari instead, and you'll see the steps to turn notifications on there.
-      </span>`;
-                    return;
-                }
                 const shareIcon = '<svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
                 hint.innerHTML = `
       <span class="push-hint-icon">${shareIcon}</span>
       <span>
         <strong>Turn on notifications in 2 taps</strong>
-        iPhone only allows notifications for apps added to your Home Screen, not for websites open in Safari. Here's how:
+        iPhone only allows notifications for apps added to your Home Screen, not for a website still open in the browser. Here's how:
         <ol>
-          <li>Tap the Share icon ${shareIcon} (a square with an arrow) in Safari's toolbar. Don't see a toolbar? Tap once near the address bar first, Safari hides it while you're scrolling</li>
+          <li>Tap the Share icon ${shareIcon} in your browser's toolbar. Don't see it? Tap once near the address bar first, it can hide while you're scrolling</li>
           <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
         </ol>
-        Then open YO7 Foods from the icon on your Home Screen (not from Safari) to turn notifications on.
+        Then open YO7 Foods from the icon on your Home Screen (not from the browser) to turn notifications on.
       </span>`;
                 return;
             }
@@ -24339,13 +24303,19 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 return;
             }
             let prefs = { notify_orders: true, notify_announcements: true, notify_offers: true };
-            if (sub && currentSupabaseUser) {
+            if (currentSupabaseUser) {
+                // Works for a subscription this account actually owns;
+                // comes back empty (not an error) for one that's still
+                // tied to no account at all (see getCachedPushPrefs()'s
+                // own comment) rather than this account specifically -
+                // falls back to the cache either way.
                 const { data } = await supabaseClient.from('push_subscriptions')
                     .select('notify_orders, notify_announcements, notify_offers')
                     .eq('endpoint', sub.endpoint).maybeSingle();
-                if (data) prefs = data;
-            } else if (sub && !currentSupabaseUser) {
-                const cached = getAnonPushPrefsCache();
+                if (data) { prefs = data; setCachedPushPrefs(prefs); }
+                else { const cached = getCachedPushPrefs(); if (cached) prefs = cached; }
+            } else {
+                const cached = getCachedPushPrefs();
                 if (cached) prefs = cached;
             }
             applyPushPrefsToDom(prefs, pushPrefsSaving);
@@ -24384,8 +24354,11 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 // it's not treated as a failure.
                 const { error } = await supabaseClient.from('push_subscriptions').insert(row);
                 if (error && error.code !== '23505') throw error;
-                setAnonPushPrefsCache(prefs);
             }
+            // Cached regardless of sign-in state now - see
+            // getCachedPushPrefs()'s own comment for why a signed-in
+            // read can't always be trusted to find this same row either.
+            setCachedPushPrefs(prefs);
         }
         // Drives every checkbox in #pushPrefsCard: disabled while a save
         // is in flight (set here, read back by renderPushToggle() so a
@@ -24418,19 +24391,25 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     const subJson = await subscribeToPush();
                     if (!subJson) return; // declined - renderPushToggle() below reverts to the unsubscribed default view
                     await saveNewPushSubscriptionRow(subJson, prefs);
-                } else if (currentSupabaseUser) {
-                    const { error } = await supabaseClient.from('push_subscriptions').update(prefs).eq('endpoint', sub.endpoint);
-                    if (error) throw error;
                 } else {
-                    // See update-push-preferences/index.ts's own header
-                    // comment for why this needs a dedicated function
-                    // rather than a direct supabase-js update() the way
-                    // the signed-in branch above does.
+                    // Always through the Edge Function, signed in or not -
+                    // never a direct supabase-js update() here. A direct
+                    // update only actually changes anything when this
+                    // exact row's user_id already matches auth.uid();
+                    // for one that was first created before this device
+                    // ever signed in, user_id is still NULL, so RLS
+                    // silently blocks it (0 rows affected, no error) and
+                    // this account would never find out. The function
+                    // bypasses that with service_role and also claims an
+                    // ownerless row for a now-signed-in caller in the same
+                    // update (see its own header comment), so this stops
+                    // being a problem after the very first successful
+                    // call rather than every time.
                     const { error } = await supabaseClient.functions.invoke('update-push-preferences', {
                         body: { endpoint: sub.endpoint, ...prefs },
                     });
                     if (error) throw error;
-                    setAnonPushPrefsCache(prefs);
+                    setCachedPushPrefs(prefs);
                 }
             } catch (err) {
                 console.error('savePushPrefs failed:', err);
