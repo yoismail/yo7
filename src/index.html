@@ -7558,6 +7558,7 @@
             border: 1.5px dashed rgba(var(--border-rgb), 0.24);
             pointer-events: none;
         }
+        .thumb-placeholder-emoji .thumb-placeholder-logo { width: 28px; height: 28px; }
         .thumb-placeholder-label {
             font-family: var(--display); font-weight: 600; font-size: 9.5px;
             letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint);
@@ -8015,6 +8016,7 @@
             border: 2px dashed rgba(var(--border-rgb), 0.24);
             pointer-events: none;
         }
+        .pd-placeholder-emoji .thumb-placeholder-logo { width: 46px; height: 46px; }
         .pd-placeholder span:last-child {
             font-family: var(--display); font-weight: 600; font-size: 12.5px;
             letter-spacing: 0.04em; text-transform: uppercase;
@@ -17150,7 +17152,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-04.14';
+        const BUILD_VERSION = '2026-11-04.15';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -17314,6 +17316,16 @@
         // SVG, and dishes/combos carry one directly). Kept as SVGs, matching
         // every other icon on the site, rather than a platform emoji.
         const DEFAULT_ITEM_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5h17l-1.6 9.3a2 2 0 0 1-2 1.7H7.1a2 2 0 0 1-2-1.7L3.5 9.5Z"/><path d="M7.5 9.5 9 4M16.5 9.5 15 4"/><path d="M8.5 13v5M12 13v5M15.5 13v5"/></svg>';
+        // The actual YO7 mark (same path data as favicon.svg), drawn as an
+        // outline only - no fill - so it reads as a line-art brand stamp
+        // sitting inside the existing blob/dashed-ring placeholder rather
+        // than a solid logo badge sitting on top of it. Used by the "no
+        // photo yet" placeholder specifically (comingSoonThumbHTML below,
+        // and the PD hero's own copy of it), not as a general per-product
+        // icon - every other DEFAULT_ITEM_ICON_SVG/p.emoji use elsewhere
+        // (cart, dish pills, category tiles, admin previews) is unrelated
+        // and stays as it was.
+        const COMING_SOON_LOGO_SVG = '<svg class="thumb-placeholder-logo" aria-hidden="true" viewBox="65 25 875 900" fill="none"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="var(--chartreuse)" stroke-width="54" stroke-linejoin="round"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="var(--heading)" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         const DEFAULT_DISH_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>';
         // A small curated set of on-brand line-art glyphs an admin picks
         // from when adding/editing a dish, instead of typing a raw emoji
@@ -20166,9 +20178,8 @@
             if (s === 'out') return 'Out of stock';
             return 'In stock';
         }
-        function comingSoonThumbHTML(p) {
-            const emoji = (p && p.emoji) ? p.emoji : DEFAULT_ITEM_ICON_SVG;
-            return `<span class="thumb-placeholder-emoji">${emoji}</span><span class="thumb-placeholder-label">Photo coming soon</span>`;
+        function comingSoonThumbHTML() {
+            return `<span class="thumb-placeholder-emoji">${COMING_SOON_LOGO_SVG}</span><span class="thumb-placeholder-label">Photo coming soon</span>`;
         }
         // Renders a real photo when a product has one, shrunk to fit its
         // card via object-fit:contain rather than cropped, so a photo
@@ -20198,9 +20209,9 @@
                 return `<img src="${escapeHtml(src)}" alt="${escapeHtml(altText)}" ${eager ? `loading="eager" fetchpriority="high"` : `loading="lazy"`} decoding="async" class="product-photo-img"
                     onload="this.classList.add('is-loaded')"
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="thumb-placeholder" style="display:none;">${comingSoonThumbHTML(p)}</div>`;
+                    <div class="thumb-placeholder" style="display:none;">${comingSoonThumbHTML()}</div>`;
             }
-            return `<div class="thumb-placeholder">${comingSoonThumbHTML(p)}</div>`;
+            return `<div class="thumb-placeholder">${comingSoonThumbHTML()}</div>`;
         }
         // First couple of rows on a narrow mobile grid (2 columns) or one
         // row on desktop - generous enough to cover what's actually visible
@@ -21579,7 +21590,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const existingImg = pdImageEl.querySelector('.product-photo-img');
             if (existingImg) existingImg.remove();
             const placeholder = document.getElementById('pdPlaceholder');
-            placeholder.innerHTML = `<span class="pd-placeholder-emoji">${p.emoji || DEFAULT_ITEM_ICON_SVG}</span><span>Photo coming soon</span>`;
+            placeholder.innerHTML = `<span class="pd-placeholder-emoji">${COMING_SOON_LOGO_SVG}</span><span>Photo coming soon</span>`;
             if (p.image) {
                 const img = document.createElement('img');
                 // This is the one product photo that's always already in
