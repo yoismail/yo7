@@ -2389,11 +2389,14 @@ ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."push_subscriptions" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "user_id" "uuid" NOT NULL,
+    "user_id" "uuid",
     "endpoint" "text" NOT NULL,
     "p256dh" "text" NOT NULL,
     "auth_key" "text" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "notify_orders" boolean DEFAULT true NOT NULL,
+    "notify_announcements" boolean DEFAULT true NOT NULL,
+    "notify_offers" boolean DEFAULT true NOT NULL
 );
 
 
@@ -2401,6 +2404,16 @@ ALTER TABLE "public"."push_subscriptions" OWNER TO "postgres";
 
 
 COMMENT ON COLUMN "public"."push_subscriptions"."endpoint" IS 'Browser push service URL — unique per device/browser';
+
+
+
+COMMENT ON COLUMN "public"."push_subscriptions"."user_id" IS 'NULL = an anonymous install (not signed in when it subscribed). Still reachable by a broadcast notification (user_id IS NULL in notifications), just not tied to an account.';
+
+
+
+COMMENT ON COLUMN "public"."push_subscriptions"."notify_orders" IS 'Per-device preference from the #/notifications page, matches notifications.category = order. Default true: every new subscription opts in to everything.';
+COMMENT ON COLUMN "public"."push_subscriptions"."notify_announcements" IS 'Per-device preference from the #/notifications page, matches notifications.category = announcement. Default true: every new subscription opts in to everything.';
+COMMENT ON COLUMN "public"."push_subscriptions"."notify_offers" IS 'Per-device preference from the #/notifications page, matches notifications.category = offer. Default true: every new subscription opts in to everything. Does not gate category = restock/reward, which are always a specific customer''s own opted-in alert, never a broadcast, and have no toggle on that page.';
 
 
 
@@ -3203,6 +3216,24 @@ CREATE POLICY "Users can manage their own favorites" ON "public"."favorites" USI
 
 
 CREATE POLICY "Users can manage their own push subscriptions" ON "public"."push_subscriptions" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+-- An anonymous install has no auth.uid() to match against, so it gets
+-- its own narrower policy instead of reusing the one above: INSERT
+-- only, and only ever a row with user_id IS NULL. Deliberately not
+-- SELECT/UPDATE/DELETE: Postgres RLS requires a row to be visible
+-- under some SELECT-type policy before UPDATE/DELETE can touch it at
+-- all (not just their own command-specific USING clause), and a
+-- SELECT policy scoped to "user_id IS NULL" would let any anonymous
+-- client read every other anonymous subscriber's endpoint/p256dh/
+-- auth_key - which is sensitive, knowing them lets someone push
+-- arbitrary payloads straight to that device. Nothing in the app
+-- actually needs more than INSERT here: the manual toggle that can
+-- turn a subscription back off is already gated to signed-in users
+-- (see renderPushToggle() in src/index.html), so a signed-out visitor
+-- only ever creates one, never updates or removes it through this app.
+CREATE POLICY "Anonymous installs can create a push subscription" ON "public"."push_subscriptions" FOR INSERT TO "anon" WITH CHECK (("user_id" IS NULL));
 
 
 

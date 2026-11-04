@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
 
   const { data: notif, error: notifError } = await db
     .from("notifications")
-    .select("id, user_id, title, body, link")
+    .select("id, user_id, title, body, link, category")
     .eq("id", notificationId)
     .single();
   if (notifError || !notif) {
@@ -355,6 +355,18 @@ Deno.serve(async (req) => {
   // already uses.
   let subsQuery = db.from("push_subscriptions").select("endpoint, p256dh, auth_key");
   if (notif.user_id) subsQuery = subsQuery.eq("user_id", notif.user_id);
+  // Only the 3 categories the #/notifications preferences UI actually
+  // exposes a toggle for are filtered here - "restock"/"reward" are
+  // always a specific signed-in customer's own opted-in alert (stock_alerts,
+  // the loyalty-reward trigger), never a broadcast, so there's no
+  // toggle for them and this always sends those regardless.
+  const PUSH_CATEGORY_COLUMN: Record<string, string> = {
+    order: "notify_orders",
+    announcement: "notify_announcements",
+    offer: "notify_offers",
+  };
+  const categoryColumn = PUSH_CATEGORY_COLUMN[notif.category as string];
+  if (categoryColumn) subsQuery = subsQuery.eq(categoryColumn, true);
   const { data: subs, error: subsError } = await subsQuery;
   if (subsError || !subs || subs.length === 0) {
     return new Response(JSON.stringify({ ok: true, sent: 0, total: 0 }), {
