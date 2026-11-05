@@ -1972,6 +1972,14 @@
         .mobile-menu a:last-of-type {
             border-bottom: none;
         }
+        /* Three logical clusters (browse, account, company info) read as
+           one undifferentiated 11-row list without some gap between them -
+           every row already has its own thin divider for rhythm, so this
+           only adds extra breathing room before each new cluster's first
+           item rather than a second, heavier line on top of that. */
+        .mobile-menu a.mobile-menu-group-start {
+            margin-top: 14px;
+        }
 
         .mobile-search {
             max-width: none;
@@ -11803,12 +11811,12 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
-            <a href="#/blog">Blog</a>
             <a href="#/recipes">Recipes</a>
-            <a href="#/favorites">My Favorites</a>
+            <a href="#/blog">Blog</a>
+            <a href="#/favorites" class="mobile-menu-group-start">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
-            <a href="#/about">About Us</a>
+            <a href="#/about" class="mobile-menu-group-start">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
@@ -17304,7 +17312,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-05.6';
+        const BUILD_VERSION = '2026-11-05.7';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
