@@ -1482,6 +1482,79 @@
             display: inline-flex;
         }
 
+        /* Splits the old single "Sign up / Log in" text link (still the
+           icon's own label while signed in, where it shows a name + caret
+           instead) into a quieter "Log in" and an accent "Sign up" pill,
+           the icon stays shared between both states. #accountBtn already
+           gets .is-logged-in toggled by setUser()/clearUser(), so these
+           two rules key off the exact same class rather than a second
+           state to keep in sync by hand. */
+        .nav-account:not(.is-logged-in) #accountLabel {
+            display: none;
+        }
+        /* Right padding on .nav-account was sized for the text label that
+           sat there - with it hidden, shrink to an icon-only box so there
+           isn't a dead gap before "Log in" right next to it. */
+        .nav-account:not(.is-logged-in) {
+            padding: 8px 10px 8px 12px;
+        }
+        .nav-login-link {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13.5px;
+            color: #2C1C10;
+            text-decoration: none;
+            padding: 9px 2px;
+            white-space: nowrap;
+            transition: color 0.2s ease;
+        }
+        .nav-login-link:hover {
+            color: var(--chartreuse-rich);
+        }
+        .nav-signup-btn {
+            padding: 9px 18px;
+            font-size: 13.5px;
+            white-space: nowrap;
+        }
+        /* #accountBtn-anchored (not a plain .nav-signup-btn/.nav-login-link
+           selector) on purpose: .btn's own base rule (display:inline-flex)
+           sits later in the file than these media-query blocks, so a
+           same-specificity plain-class rule here would lose that cascade
+           tie and the buttons would stay visible regardless of this
+           display:none. The id component keeps these ahead of .btn's own
+           rule no matter where either sits in the file. */
+        #accountBtn.is-logged-in ~ .nav-login-link,
+        #accountBtn.is-logged-in ~ .nav-signup-btn {
+            display: none;
+        }
+        /* Mobile keeps the icon-only treatment it already had - these two
+           stay desktop-only, same breakpoint #accountLabel/.account-caret
+           already collapse away at. */
+        @media (max-width: 900px) {
+            #accountBtn ~ .nav-login-link,
+            #accountBtn ~ .nav-signup-btn {
+                display: none;
+            }
+        }
+        /* The 901-1099px band already runs on fumes for horizontal space
+           (see the "New Here?"-dropping media query above) - the two-button
+           split measured as genuinely overflowing the viewport there
+           (confirmed by rendering it, not just reasoning about widths), so
+           this band alone falls back to the old single compact label
+           instead, exactly as it rendered before this change. */
+        @media (min-width: 901px) and (max-width: 1099px) {
+            #accountBtn ~ .nav-login-link,
+            #accountBtn ~ .nav-signup-btn {
+                display: none;
+            }
+            #accountBtn:not(.is-logged-in) #accountLabel {
+                display: inline;
+            }
+            #accountBtn:not(.is-logged-in) {
+                padding: 8px 16px 8px 12px;
+            }
+        }
+
         /* Hidden until .nav-account.is-logged-in is set. On desktop this
            sits next to the "Hi, Jane" text as reinforcement; on mobile the
            text and caret collapse away (see the 480px breakpoint below) so
@@ -1531,6 +1604,9 @@
 
         .account-wrap {
             position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .account-dropdown {
@@ -11758,6 +11834,8 @@
                             <path d="m6 9 6 6 6-6" />
                         </svg>
                     </a>
+                    <a class="nav-login-link" href="#/login">Log in</a>
+                    <a class="btn btn-primary nav-signup-btn" href="#/signup">Sign up</a>
                     <div class="account-dropdown" id="accountDropdown">
                         <div class="account-dropdown-name" id="accountDropdownName"></div>
                         <a href="#/orders" id="orderHistoryLink" style="display:none;">
@@ -17311,7 +17389,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-05.8';
+        const BUILD_VERSION = '2026-11-05.9';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
