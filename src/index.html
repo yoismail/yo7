@@ -1973,29 +1973,6 @@
             border-bottom: none;
         }
 
-        /* Signed-out only (toggled the same way orderHistoryLink/
-           referNavLink already are, from setUser()/clearUser()) - a
-           logged-in visitor has no use for a "create an account" prompt
-           of their own. A divider above (not full pill buttons - those
-           added real height to an already-long list, which is what
-           forced a scroll inside the menu on shorter real-device
-           viewports in the first place) is enough to still read as a
-           distinct pair of actions, not just two more list items. Plain
-           <a> tags here inherit .mobile-menu a's own row styling below
-           (same descendant selector matches them), so no separate
-           typography rule is needed. */
-        .mobile-menu-auth {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid rgba(var(--border-rgb), 0.1);
-        }
-        .mobile-menu-auth a {
-            display: block;
-        }
-        .mobile-menu-auth a:first-child {
-            color: var(--chartreuse-rich);
-        }
-
         .mobile-search {
             max-width: none;
             margin-bottom: 6px;
@@ -11836,10 +11813,6 @@
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
             <button type="button" class="mobile-menu-install-btn" id="mobileMenuInstallBtn">Install app</button>
-            <div class="mobile-menu-auth" id="mobileMenuAuth">
-                <a href="#/signup">Create an account</a>
-                <a href="#/login">Log in</a>
-            </div>
         </div>
     </nav>
 
@@ -17331,7 +17304,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-05.5';
+        const BUILD_VERSION = '2026-11-05.6';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -26942,8 +26915,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = currentSupabaseUser ? 'flex' : 'none';
-            const mobileMenuAuth = document.getElementById('mobileMenuAuth');
-            if (mobileMenuAuth) mobileMenuAuth.style.display = 'none';
             renderCartList();
             syncLoyaltyState().then(renderCartList);
             const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
@@ -27009,8 +26980,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = 'none';
-            const mobileMenuAuth = document.getElementById('mobileMenuAuth');
-            if (mobileMenuAuth) mobileMenuAuth.style.display = 'block';
             const reorderSection = document.getElementById('reorderSection');
             if (reorderSection) reorderSection.style.display = 'none';
             const buyAgainSection = document.getElementById('buyAgainSection');
