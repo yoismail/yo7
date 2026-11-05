@@ -8354,18 +8354,37 @@
             color: var(--heading); margin-bottom: 6px; line-height: 1.3;
         }
         .pd-recipe-card p { font-size: 13.5px; color: var(--text-body); line-height: 1.55; margin: 0; }
-        /* The #/recipes hub reuses .pd-recipe-card wholesale (same card,
-           same look) since it's the exact same content just aggregated
-           across every product rather than scoped to one - this is the
-           only bit that's actually different: the card itself is a real
-           link there, not static content sitting on the page it already
-           belongs to. */
+        /* The #/recipes hub reuses .pd-recipe-card (same eyebrow/h4/p
+           styling via the shared class, descendant selectors above still
+           reach them nested a level deeper) but adds a photo strip and
+           drops the padding to the inner body only, so the image can run
+           edge-to-edge to the card's own rounded corners. */
         .recipe-hub-card {
             display: block; text-decoration: none; color: inherit; cursor: pointer;
+            padding: 0; overflow: hidden;
             transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
         }
         .recipe-hub-card:hover { transform: translateY(-3px); box-shadow: 0 3px 8px rgba(var(--border-rgb), 0.06), 0 18px 34px rgba(var(--border-rgb), 0.1); }
+        /* Same matted/tinted thumb treatment as .best-seller-card .thumb -
+           position:relative + a fixed aspect-ratio is what productPhotoHTML()'s
+           absolutely-positioned <img> needs to actually fill the box (see
+           the comment on .product-photo-img), not just share its look. */
+        .recipe-hub-card-photo {
+            aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 6px;
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6);
+        }
+        [data-theme="dark"] .recipe-hub-card-photo {
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
+        }
+        .recipe-hub-card-body { padding: 16px 18px 18px; }
         .recipe-hub-card-product { margin-top: 12px; font-family: var(--display); font-weight: 600; font-size: 12px; color: var(--heading-mid); }
+        .recipe-hub-category { margin-bottom: 40px; }
+        .recipe-hub-category:last-child { margin-bottom: 0; }
+        .recipe-hub-category-head {
+            font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading);
+            margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
+        }
         .pd-recipes-empty { display: none; margin-bottom: 12px; }
         body.edit-mode-on .pd-recipes-empty { display: flex; }
         .pd-recipes-empty p { color: var(--text-muted); font-size: 13.5px; font-style: italic; margin: 0; }
@@ -12533,7 +12552,7 @@
         </section>
         <section class="products-section">
             <div class="wrap">
-                <div class="pd-recipe-grid" id="recipesHubGrid"></div>
+                <div id="recipesHubGrid"></div>
                 <div class="empty-state" id="recipesHubEmpty" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg></span>
                     <h3>More recipe ideas on the way</h3>
@@ -17312,7 +17331,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-05.4';
+        const BUILD_VERSION = '2026-11-05.5';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -22381,11 +22400,28 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     if (!p || p.deleted || !Array.isArray(p.recipes)) return;
                     p.recipes.forEach(r => {
                         if (!r || (!r.title && !r.description)) return;
-                        items.push({ title: r.title, description: r.description, productName: p.name, catSlug: cat.slug, idx });
+                        items.push({ title: r.title, description: r.description, productName: p.name, image: p.image, imageThumb: p.imageThumb, catSlug: cat.slug, catName: cat.name, idx });
                     });
                 });
             });
             return items;
+        }
+        // Shared by the full hub grid (grouped by category) and the
+        // "Recommended for you" strip below - same card, a photo now
+        // pulled in via productPhotoHTML() (the same helper every other
+        // product thumbnail on the site already uses) so this reads as a
+        // real content page rather than a plain text list.
+        function recipeHubCardHTML(r) {
+            return `
+    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
+      <div class="recipe-hub-card-photo">${productPhotoHTML({ image: r.image, imageThumb: r.imageThumb }, r.productName)}</div>
+      <div class="recipe-hub-card-body">
+        <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
+        <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
+        <p>${escapeHtml(r.description || '')}</p>
+        <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
+      </div>
+    </a>`;
         }
         function renderRecipesHubPage() {
             const grid = document.getElementById('recipesHubGrid');
@@ -22401,14 +22437,22 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 return;
             }
             empty.style.display = 'none';
-            grid.style.display = 'grid';
-            grid.innerHTML = items.map(r => `
-    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
-      <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
-      <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
-      <p>${escapeHtml(r.description || '')}</p>
-      <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
-    </a>`).join('');
+            grid.style.display = '';
+            // Grouped by category (in the same order products already
+            // appear in CATEGORIES) rather than one long flat grid - at
+            // even a dozen categories' worth of recipes, an undifferentiated
+            // list stops reading as a curated page and starts reading as a
+            // dump.
+            const byCategory = new Map();
+            items.forEach(r => {
+                if (!byCategory.has(r.catSlug)) byCategory.set(r.catSlug, { catName: r.catName, items: [] });
+                byCategory.get(r.catSlug).items.push(r);
+            });
+            grid.innerHTML = [...byCategory.values()].map(group => `
+    <div class="recipe-hub-category">
+      <h3 class="recipe-hub-category-head">${escapeHtml((group.catName || '').replace(/&amp;/g, '&'))}</h3>
+      <div class="pd-recipe-grid">${group.items.map(recipeHubCardHTML).join('')}</div>
+    </div>`).join('');
         }
         window.renderRecipesHubPage = renderRecipesHubPage;
 
@@ -22427,7 +22471,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (!Array.isArray(p.recipes)) return;
                 p.recipes.forEach(r => {
                     if (!r || (!r.title && !r.description)) return;
-                    items.push({ title: r.title, description: r.description, productName: p.name, catSlug: p.catSlug, idx: p.idx });
+                    items.push({ title: r.title, description: r.description, productName: p.name, image: p.image, imageThumb: p.imageThumb, catSlug: p.catSlug, idx: p.idx });
                 });
             });
             return items;
@@ -22439,13 +22483,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const items = (await personalRecipeRecommendations()).slice(0, 6);
             if (!items.length) { section.style.display = 'none'; return; }
             section.style.display = '';
-            grid.innerHTML = items.map(r => `
-    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
-      <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
-      <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
-      <p>${escapeHtml(r.description || '')}</p>
-      <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
-    </a>`).join('');
+            grid.innerHTML = items.map(recipeHubCardHTML).join('');
         }
         window.loadPersonalRecipeSection = loadPersonalRecipeSection;
 
