@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.7e28de0e95.css">    <script>
+    <link rel="stylesheet" href="/assets/app.1b2a886c38.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -281,6 +281,7 @@
                 <a href="#/" id="navLinkHome">Home</a>
                 <a href="#/shop" id="navLinkShop">Shop</a>
                 <a href="#/blog" id="navLinkJournal">Blog</a>
+                <a href="#/recipes" id="navLinkRecipes">Recipes</a>
                 <a href="#/about" id="navLinkStory">About Us</a>
                 <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
                 <a href="#/contact" id="navLinkContact">Contact</a>
@@ -389,6 +390,7 @@
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
             <a href="#/blog">Blog</a>
+            <a href="#/recipes">Recipes</a>
             <a href="#/favorites">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
@@ -1068,6 +1070,29 @@
                     <h2>Keep reading</h2>
                 </div>
                 <div class="journal-grid" id="journalRelatedGrid"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================= RECIPE IDEAS (aggregated across every product that
+         has any, see getAllRecipeIdeas()) ================= -->
+    <div id="view-recipes" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Recipe Ideas</div>
+                <h1>Recipe Ideas</h1>
+                <p>Real ways to cook what's in our aisles, pulled straight from the product pages. Tap any one to see the product it's made with.</p>
+                <div class="result-count" id="recipesHubCount"></div>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="pd-recipe-grid" id="recipesHubGrid"></div>
+                <div class="empty-state" id="recipesHubEmpty" style="display:none;">
+                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg></span>
+                    <h3>More recipe ideas on the way</h3>
+                    <p>We're still adding these across the shop. Check back soon, or browse the shop in the meantime.</p>
+                </div>
             </div>
         </section>
     </div>
@@ -3195,6 +3220,7 @@
                         <a href="#/">Home</a>
                         <a href="#/shop">Shop</a>
                         <a href="#/blog">Blog</a>
+                        <a href="#/recipes">Recipes</a>
                         <a href="#/checkout">Basket</a>
                         <a href="#/orders">My Orders</a>
                         <a href="#/refer">Refer a Friend</a>
@@ -3371,7 +3397,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.a5a52c27cd.js"></script>
+    <script defer src="/assets/app.a4d0a9a46a.js"></script>
 
 </body>
 
