@@ -12520,6 +12520,17 @@
                 <div class="result-count" id="recipesHubCount"></div>
             </div>
         </header>
+        <section class="products-section" id="recipesPersonalSection" style="display:none; padding-bottom:16px;">
+            <div class="wrap">
+                <div class="new-section-head reveal">
+                    <div>
+                        <div class="section-eyebrow">Recommended for you</div>
+                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(22px,3vw,28px); letter-spacing:-0.01em;">Recipes for what you've already bought</h2>
+                    </div>
+                </div>
+                <div class="pd-recipe-grid" id="recipesPersonalGrid"></div>
+            </div>
+        </section>
         <section class="products-section">
             <div class="wrap">
                 <div class="pd-recipe-grid" id="recipesHubGrid"></div>
@@ -17301,7 +17312,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-05.2';
+        const BUILD_VERSION = '2026-11-05.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -22400,6 +22411,43 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
     </a>`).join('');
         }
         window.renderRecipesHubPage = renderRecipesHubPage;
+
+        // ================= PERSONALISED RECIPE RECOMMENDATIONS =================
+        // Reuses buyAgainItems() (the same purchase-history lookup behind the
+        // homepage "Buy it again" carousel) rather than a separate query -
+        // "recipes for what you've actually bought" is just that same list
+        // filtered down to products that have recipes, so there's no new
+        // data source to keep in sync. Signed-out, or no purchase history
+        // with recipe content, both resolve to an empty list - same
+        // "nothing to show" handling buyAgainItems()'s other callers use.
+        async function personalRecipeRecommendations() {
+            const purchased = await buyAgainItems();
+            const items = [];
+            purchased.forEach(p => {
+                if (!Array.isArray(p.recipes)) return;
+                p.recipes.forEach(r => {
+                    if (!r || (!r.title && !r.description)) return;
+                    items.push({ title: r.title, description: r.description, productName: p.name, catSlug: p.catSlug, idx: p.idx });
+                });
+            });
+            return items;
+        }
+        async function loadPersonalRecipeSection() {
+            const section = document.getElementById('recipesPersonalSection');
+            const grid = document.getElementById('recipesPersonalGrid');
+            if (!section || !grid) return;
+            const items = (await personalRecipeRecommendations()).slice(0, 6);
+            if (!items.length) { section.style.display = 'none'; return; }
+            section.style.display = '';
+            grid.innerHTML = items.map(r => `
+    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
+      <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
+      <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
+      <p>${escapeHtml(r.description || '')}</p>
+      <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
+    </a>`).join('');
+        }
+        window.loadPersonalRecipeSection = loadPersonalRecipeSection;
 
         document.getElementById('pdQtyMinus').addEventListener('click', () => { pdQty = Math.max(1, pdQty - 1); document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         document.getElementById('pdQtyPlus').addEventListener('click', () => { pdQty += 1; document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
@@ -29839,6 +29887,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash === '#/recipes') {
                 showView('view-recipes');
                 renderRecipesHubPage();
+                loadPersonalRecipeSection();
             } else if (hash === '#/privacy') {
                 showView('view-privacy');
             } else if (hash === '#/terms') {
