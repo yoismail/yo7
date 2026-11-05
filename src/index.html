@@ -1230,9 +1230,9 @@
            generic bordered circles. */
         .icon-btn {
             position: relative;
-            width: 38px;
-            height: 38px;
-            border-radius: 13px;
+            width: 41px;
+            height: 41px;
+            border-radius: 14px;
             border: none;
             background: none;
             display: flex;
@@ -1295,13 +1295,13 @@
         /* Cart reads as a bare icon like the rest of this row now, the
            count badge below is the one accent moment left. */
         .nav-cart-btn svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
         }
 
         .icon-btn svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
         }
 
         /* ================= THEME SWITCH =================
@@ -1473,8 +1473,8 @@
         }
 
         .nav-account svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
         }
 
         .account-icon-wrap {
@@ -1834,8 +1834,8 @@
             display: none;
             align-items: center;
             justify-content: center;
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             padding: 0;
             border-radius: 13px;
             border: none;
@@ -1849,8 +1849,8 @@
         }
 
         .nav-hamburger svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
         }
         /* Hamburger-to-X morph, the standard affordance for "tap again to
            close" - each bar rotates/fades around its own centre (fill-box)
@@ -1888,8 +1888,8 @@
                signed-out still reads clearly from .account-status-dot's
                own pulsing green mark, untouched here. */
             .nav-account {
-                width: 34px;
-                height: 34px;
+                width: 36px;
+                height: 36px;
                 padding: 0;
                 gap: 0;
                 justify-content: center;
@@ -1972,28 +1972,13 @@
         .mobile-menu a:last-of-type {
             border-bottom: none;
         }
-
-        /* Signed-out only (toggled the same way orderHistoryLink/
-           referNavLink already are, from setUser()/clearUser()) - a
-           logged-in visitor has no use for a "create an account" prompt
-           of their own. A divider above (not full pill buttons - those
-           added real height to an already-long list, which is what
-           forced a scroll inside the menu on shorter real-device
-           viewports in the first place) is enough to still read as a
-           distinct pair of actions, not just two more list items. Plain
-           <a> tags here inherit .mobile-menu a's own row styling below
-           (same descendant selector matches them), so no separate
-           typography rule is needed. */
-        .mobile-menu-auth {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid rgba(var(--border-rgb), 0.1);
-        }
-        .mobile-menu-auth a {
-            display: block;
-        }
-        .mobile-menu-auth a:first-child {
-            color: var(--chartreuse-rich);
+        /* Three logical clusters (browse, account, company info) read as
+           one undifferentiated 11-row list without some gap between them -
+           every row already has its own thin divider for rhythm, so this
+           only adds extra breathing room before each new cluster's first
+           item rather than a second, heavier line on top of that. */
+        .mobile-menu a.mobile-menu-group-start {
+            margin-top: 14px;
         }
 
         .mobile-search {
@@ -8354,18 +8339,37 @@
             color: var(--heading); margin-bottom: 6px; line-height: 1.3;
         }
         .pd-recipe-card p { font-size: 13.5px; color: var(--text-body); line-height: 1.55; margin: 0; }
-        /* The #/recipes hub reuses .pd-recipe-card wholesale (same card,
-           same look) since it's the exact same content just aggregated
-           across every product rather than scoped to one - this is the
-           only bit that's actually different: the card itself is a real
-           link there, not static content sitting on the page it already
-           belongs to. */
+        /* The #/recipes hub reuses .pd-recipe-card (same eyebrow/h4/p
+           styling via the shared class, descendant selectors above still
+           reach them nested a level deeper) but adds a photo strip and
+           drops the padding to the inner body only, so the image can run
+           edge-to-edge to the card's own rounded corners. */
         .recipe-hub-card {
             display: block; text-decoration: none; color: inherit; cursor: pointer;
+            padding: 0; overflow: hidden;
             transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
         }
         .recipe-hub-card:hover { transform: translateY(-3px); box-shadow: 0 3px 8px rgba(var(--border-rgb), 0.06), 0 18px 34px rgba(var(--border-rgb), 0.1); }
+        /* Same matted/tinted thumb treatment as .best-seller-card .thumb -
+           position:relative + a fixed aspect-ratio is what productPhotoHTML()'s
+           absolutely-positioned <img> needs to actually fill the box (see
+           the comment on .product-photo-img), not just share its look. */
+        .recipe-hub-card-photo {
+            aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 6px;
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6);
+        }
+        [data-theme="dark"] .recipe-hub-card-photo {
+            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
+        }
+        .recipe-hub-card-body { padding: 16px 18px 18px; }
         .recipe-hub-card-product { margin-top: 12px; font-family: var(--display); font-weight: 600; font-size: 12px; color: var(--heading-mid); }
+        .recipe-hub-category { margin-bottom: 40px; }
+        .recipe-hub-category:last-child { margin-bottom: 0; }
+        .recipe-hub-category-head {
+            font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading);
+            margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
+        }
         .pd-recipes-empty { display: none; margin-bottom: 12px; }
         body.edit-mode-on .pd-recipes-empty { display: flex; }
         .pd-recipes-empty p { color: var(--text-muted); font-size: 13.5px; font-style: italic; margin: 0; }
@@ -11725,27 +11729,26 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                 </a>
                 <a class="icon-btn nav-cart-btn" href="#/checkout" aria-label="Basket">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
-                        <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" />
-                        <circle cx="9" cy="21" r="1.4" />
-                        <circle cx="18" cy="21" r="1.4" />
+                        <path d="M6.5 8h11l1 11.5a1.5 1.5 0 0 1-1.5 1.5h-10a1.5 1.5 0 0 1-1.5-1.5L6.5 8Z" />
+                        <path d="M9 8V6a3 3 0 0 1 6 0v2" />
                     </svg>
                     <span class="cart-badge zero" id="cartBadge">0</span>
                 </a>
                 <a class="icon-btn nav-notif-btn" id="notifNavBtn" href="#/notifications" aria-label="Notifications" style="display:none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a5.5 5.5 0 0 0-5.5 5.5c0 6-2.5 7.5-2.5 7.5h16s-2.5-1.5-2.5-7.5A5.5 5.5 0 0 0 12 3Z" />
+                        <path d="M9.8 19a2.3 2.3 0 0 0 4.4 0" />
                     </svg>
                     <span class="cart-badge zero" id="notifBadge">0</span>
                 </a>
                 <div class="account-wrap" id="accountWrap">
                     <a class="nav-account" id="accountBtn" href="#/login" aria-haspopup="true" aria-expanded="false" aria-label="Sign up or log in">
                         <span class="account-icon-wrap">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                                <circle cx="12" cy="8" r="4" />
-                                <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="7.8" r="3.6" />
+                                <path d="M3.8 20.2c1-4.3 4.3-6.2 8.2-6.2s7.2 1.9 8.2 6.2" />
                             </svg>
                             <span class="account-status-dot" aria-hidden="true"></span>
                         </span>
@@ -11797,7 +11800,7 @@
                 </div>
             </div>
             <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mobileMenu">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
                     <line class="ham-line ham-line-1" x1="3" y1="6" x2="21" y2="6" />
                     <line class="ham-line ham-line-2" x1="3" y1="12" x2="21" y2="12" />
                     <line class="ham-line ham-line-3" x1="3" y1="18" x2="21" y2="18" />
@@ -11807,20 +11810,16 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
-            <a href="#/blog">Blog</a>
             <a href="#/recipes">Recipes</a>
-            <a href="#/favorites">My Favorites</a>
+            <a href="#/blog">Blog</a>
+            <a href="#/favorites" class="mobile-menu-group-start">My Favorites</a>
             <a href="#/orders">My Orders</a>
             <a href="#/refer">Refer a Friend</a>
-            <a href="#/about">About Us</a>
+            <a href="#/about" class="mobile-menu-group-start">About Us</a>
             <a href="#/delivery-info">Delivery</a>
             <a href="#/contact">Contact</a>
             <a href="#/guide">New Here?</a>
             <button type="button" class="mobile-menu-install-btn" id="mobileMenuInstallBtn">Install app</button>
-            <div class="mobile-menu-auth" id="mobileMenuAuth">
-                <a href="#/signup">Create an account</a>
-                <a href="#/login">Log in</a>
-            </div>
         </div>
     </nav>
 
@@ -12533,7 +12532,7 @@
         </section>
         <section class="products-section">
             <div class="wrap">
-                <div class="pd-recipe-grid" id="recipesHubGrid"></div>
+                <div id="recipesHubGrid"></div>
                 <div class="empty-state" id="recipesHubEmpty" style="display:none;">
                     <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg></span>
                     <h3>More recipe ideas on the way</h3>
@@ -17312,7 +17311,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-05.4';
+        const BUILD_VERSION = '2026-11-05.8';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -22381,11 +22380,28 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     if (!p || p.deleted || !Array.isArray(p.recipes)) return;
                     p.recipes.forEach(r => {
                         if (!r || (!r.title && !r.description)) return;
-                        items.push({ title: r.title, description: r.description, productName: p.name, catSlug: cat.slug, idx });
+                        items.push({ title: r.title, description: r.description, productName: p.name, image: p.image, imageThumb: p.imageThumb, catSlug: cat.slug, catName: cat.name, idx });
                     });
                 });
             });
             return items;
+        }
+        // Shared by the full hub grid (grouped by category) and the
+        // "Recommended for you" strip below - same card, a photo now
+        // pulled in via productPhotoHTML() (the same helper every other
+        // product thumbnail on the site already uses) so this reads as a
+        // real content page rather than a plain text list.
+        function recipeHubCardHTML(r) {
+            return `
+    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
+      <div class="recipe-hub-card-photo">${productPhotoHTML({ image: r.image, imageThumb: r.imageThumb }, r.productName)}</div>
+      <div class="recipe-hub-card-body">
+        <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
+        <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
+        <p>${escapeHtml(r.description || '')}</p>
+        <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
+      </div>
+    </a>`;
         }
         function renderRecipesHubPage() {
             const grid = document.getElementById('recipesHubGrid');
@@ -22401,14 +22417,22 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 return;
             }
             empty.style.display = 'none';
-            grid.style.display = 'grid';
-            grid.innerHTML = items.map(r => `
-    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
-      <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
-      <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
-      <p>${escapeHtml(r.description || '')}</p>
-      <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
-    </a>`).join('');
+            grid.style.display = '';
+            // Grouped by category (in the same order products already
+            // appear in CATEGORIES) rather than one long flat grid - at
+            // even a dozen categories' worth of recipes, an undifferentiated
+            // list stops reading as a curated page and starts reading as a
+            // dump.
+            const byCategory = new Map();
+            items.forEach(r => {
+                if (!byCategory.has(r.catSlug)) byCategory.set(r.catSlug, { catName: r.catName, items: [] });
+                byCategory.get(r.catSlug).items.push(r);
+            });
+            grid.innerHTML = [...byCategory.values()].map(group => `
+    <div class="recipe-hub-category">
+      <h3 class="recipe-hub-category-head">${escapeHtml((group.catName || '').replace(/&amp;/g, '&'))}</h3>
+      <div class="pd-recipe-grid">${group.items.map(recipeHubCardHTML).join('')}</div>
+    </div>`).join('');
         }
         window.renderRecipesHubPage = renderRecipesHubPage;
 
@@ -22427,7 +22451,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (!Array.isArray(p.recipes)) return;
                 p.recipes.forEach(r => {
                     if (!r || (!r.title && !r.description)) return;
-                    items.push({ title: r.title, description: r.description, productName: p.name, catSlug: p.catSlug, idx: p.idx });
+                    items.push({ title: r.title, description: r.description, productName: p.name, image: p.image, imageThumb: p.imageThumb, catSlug: p.catSlug, idx: p.idx });
                 });
             });
             return items;
@@ -22439,13 +22463,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const items = (await personalRecipeRecommendations()).slice(0, 6);
             if (!items.length) { section.style.display = 'none'; return; }
             section.style.display = '';
-            grid.innerHTML = items.map(r => `
-    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
-      <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
-      <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
-      <p>${escapeHtml(r.description || '')}</p>
-      <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
-    </a>`).join('');
+            grid.innerHTML = items.map(recipeHubCardHTML).join('');
         }
         window.loadPersonalRecipeSection = loadPersonalRecipeSection;
 
@@ -26904,8 +26922,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = currentSupabaseUser ? 'flex' : 'none';
-            const mobileMenuAuth = document.getElementById('mobileMenuAuth');
-            if (mobileMenuAuth) mobileMenuAuth.style.display = 'none';
             renderCartList();
             syncLoyaltyState().then(renderCartList);
             const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
@@ -26971,8 +26987,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (orderHistoryLink) orderHistoryLink.style.display = 'none';
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = 'none';
-            const mobileMenuAuth = document.getElementById('mobileMenuAuth');
-            if (mobileMenuAuth) mobileMenuAuth.style.display = 'block';
             const reorderSection = document.getElementById('reorderSection');
             if (reorderSection) reorderSection.style.display = 'none';
             const buyAgainSection = document.getElementById('buyAgainSection');
