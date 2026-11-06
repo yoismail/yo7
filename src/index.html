@@ -1494,9 +1494,17 @@
         }
         /* Right padding on .nav-account was sized for the text label that
            sat there - with it hidden, shrink to an icon-only box so there
-           isn't a dead gap before "Log in" right next to it. */
-        .nav-account:not(.is-logged-in) {
-            padding: 8px 10px 8px 12px;
+           isn't a dead gap before "Log in" right next to it. Scoped to
+           the >=1100px band the split buttons actually render in - left
+           unscoped, this beat the mobile/tablet tiers' own padding:0
+           icon-only rules on specificity and ate into their fixed-size
+           box, squeezing the icon itself down to a sliver (caught by
+           measuring the icon's own rendered width at mobile widths, not
+           just checking the row for wrap-around). */
+        @media (min-width: 1100px) {
+            .nav-account:not(.is-logged-in) {
+                padding: 8px 10px 8px 12px;
+            }
         }
         .nav-login-link {
             font-family: var(--display);
@@ -1507,6 +1515,7 @@
             padding: 9px 2px;
             white-space: nowrap;
             transition: color 0.2s ease;
+            flex-shrink: 0;
         }
         .nav-login-link:hover {
             color: var(--chartreuse-rich);
@@ -1515,6 +1524,7 @@
             padding: 9px 18px;
             font-size: 13.5px;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         /* #accountBtn-anchored (not a plain .nav-signup-btn/.nav-login-link
            selector) on purpose: .btn's own base rule (display:inline-flex)
@@ -1607,6 +1617,20 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-shrink: 0;
+        }
+        /* .account-wrap becoming a flex container (needed so #accountBtn,
+           .nav-login-link and .nav-signup-btn sit side by side) meant
+           #accountBtn itself picked up the UA default flex-shrink:1 for
+           the first time - on narrow widths, where .nav-right's own
+           content is already tight, that let the browser's flex-shrink
+           algorithm squeeze #accountBtn (and the icon inside it) down
+           well below its own explicit 29px/36px width rather than
+           respecting it, since nothing told it not to. Caught by actually
+           measuring the rendered icon's own box at mobile widths, not by
+           re-checking row-wrap alone (which this didn't trigger). */
+        #accountBtn {
+            flex-shrink: 0;
         }
 
         .account-dropdown {
@@ -17390,7 +17414,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-06.1';
+        const BUILD_VERSION = '2026-11-06.2';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
