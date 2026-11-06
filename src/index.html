@@ -8470,6 +8470,60 @@
             font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading);
             margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
         }
+        /* Each category is a swipeable row (same scroll-snap mechanic as
+           .best-seller-carousel) rather than a grid that wraps to full
+           height - shorter page, and it reads as browsable content
+           instead of a list to scan top-to-bottom. Reuses .recipe-hub-card
+           wholesale, just gives it a fixed flex-basis instead of the grid
+           sizing .pd-recipe-grid gives it elsewhere (the per-product PD
+           page section, untouched). */
+        .recipe-carousel {
+            display: flex; gap: 14px; overflow-x: auto;
+            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .recipe-carousel::-webkit-scrollbar { display: none; }
+        .recipe-carousel .recipe-hub-card { flex: 0 0 210px; scroll-snap-align: start; }
+        @media (max-width: 480px) {
+            .recipe-carousel .recipe-hub-card { flex-basis: 180px; }
+        }
+
+        /* ===== Featured recipe hero (one recipe, rotates daily) ===== */
+        .recipe-hero {
+            position: relative; border-radius: 20px; overflow: hidden;
+            min-height: 280px; display: flex; flex-direction: column; justify-content: flex-end;
+            background: linear-gradient(165deg, #2b3a1a, #16200c);
+        }
+        .recipe-hero-photo-bg { position: absolute; inset: 0; }
+        .recipe-hero-photo-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .recipe-hero-scrim {
+            position: absolute; inset: 0;
+            background: linear-gradient(0deg, rgba(10,16,4,0.92) 8%, rgba(10,16,4,0.4) 52%, rgba(10,16,4,0.08) 100%),
+                        radial-gradient(ellipse 90% 70% at 72% 18%, rgba(144,184,0,0.25), transparent 60%);
+        }
+        /* Fixed light colours, not var(--heading)/var(--chartreuse) - this
+           card is always dark regardless of the site's own light/dark
+           theme, so the theme tokens (tuned for a light or dark page
+           background, not a permanently-dark card) would go invisible or
+           muddy depending on which theme happened to be active. */
+        .recipe-hero-logo-mark { position: absolute; top: 18px; right: 18px; width: 56px; height: 56px; opacity: 0.5; }
+        .recipe-hero-logo-mark svg { width: 100%; height: 100%; }
+        .recipe-hero-body { position: relative; padding: 22px 20px 24px; color: #fff; }
+        .recipe-hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--display); font-weight: 700; font-size: 11px;
+            letter-spacing: 0.06em; text-transform: uppercase; color: var(--chartreuse);
+            margin-bottom: 10px;
+        }
+        .recipe-hero-body h2 { font-family: var(--display); font-weight: 700; font-size: clamp(21px,4vw,27px); margin: 0 0 8px; line-height: 1.2; }
+        .recipe-hero-body p { font-size: 14px; line-height: 1.55; opacity: 0.88; margin: 0 0 16px; max-width: 42ch; }
+        .recipe-hero-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--display); font-weight: 700; font-size: 13px;
+            color: var(--aubergine-deep); text-decoration: none;
+            background: var(--chartreuse); padding: 10px 18px; border-radius: 999px;
+            transition: transform 0.2s ease;
+        }
+        .recipe-hero-link:hover { transform: translateY(-2px); }
         .pd-recipes-empty { display: none; margin-bottom: 12px; }
         body.edit-mode-on .pd-recipes-empty { display: flex; }
         .pd-recipes-empty p { color: var(--text-muted); font-size: 13.5px; font-style: italic; margin: 0; }
@@ -12622,6 +12676,11 @@
                 <div class="result-count" id="recipesHubCount"></div>
             </div>
         </header>
+        <section class="products-section" id="recipeHeroSection" style="display:none; padding-bottom:8px;">
+            <div class="wrap">
+                <div class="recipe-hero" id="recipeHeroCard"></div>
+            </div>
+        </section>
         <section class="products-section" id="recipesPersonalSection" style="display:none; padding-bottom:16px;">
             <div class="wrap">
                 <div class="new-section-head reveal">
@@ -12630,7 +12689,7 @@
                         <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(22px,3vw,28px); letter-spacing:-0.01em;">Recipes for what you've already bought</h2>
                     </div>
                 </div>
-                <div class="pd-recipe-grid" id="recipesPersonalGrid"></div>
+                <div class="recipe-carousel" id="recipesPersonalGrid"></div>
             </div>
         </section>
         <section class="products-section">
@@ -17414,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-06.2';
+        const BUILD_VERSION = '2026-11-06.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -17588,6 +17647,12 @@
         // (cart, dish pills, category tiles, admin previews) is unrelated
         // and stays as it was.
         const COMING_SOON_LOGO_SVG = '<svg class="thumb-placeholder-logo" aria-hidden="true" viewBox="65 25 875 900" fill="none"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="var(--chartreuse)" stroke-width="54" stroke-linejoin="round"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="var(--heading)" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        // Same mark as COMING_SOON_LOGO_SVG, fixed light colours instead of
+        // var(--chartreuse)/var(--heading) - used only on .recipe-hero,
+        // which is always a dark card regardless of the site's own light/
+        // dark theme, so the theme tokens would go invisible or muddy
+        // depending on which theme happened to be active.
+        const RECIPE_HERO_LOGO_SVG = '<svg aria-hidden="true" viewBox="65 25 875 900" fill="none"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="#90B800" stroke-width="54" stroke-linejoin="round"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="#ffffff" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         const DEFAULT_DISH_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>';
         // A small curated set of on-brand line-art glyphs an admin picks
         // from when adding/editing a dish, instead of typing a raw emoji
@@ -22506,12 +22571,43 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
       </div>
     </a>`;
         }
+        // Picks one recipe to feature at the top of the page. No
+        // "date added" field exists on a recipe (it's just {title,
+        // description} inside a product's jsonb array), so "newest" isn't
+        // something to sort by - instead this rotates to a different
+        // recipe once a day (stable across visitors and page loads on the
+        // same day, no state to store) rather than always landing on
+        // whichever happens to be first in catalogue order.
+        function pickFeaturedRecipe(items) {
+            if (!items.length) return null;
+            const dayIndex = Math.floor(Date.now() / 86400000);
+            return items[dayIndex % items.length];
+        }
+        function renderRecipeHeroSection(items) {
+            const section = document.getElementById('recipeHeroSection');
+            const card = document.getElementById('recipeHeroCard');
+            if (!section || !card) return;
+            const r = pickFeaturedRecipe(items);
+            if (!r) { section.style.display = 'none'; return; }
+            section.style.display = '';
+            const photoSrc = r.imageThumb || r.image;
+            card.innerHTML = `
+    ${photoSrc ? `<div class="recipe-hero-photo-bg"><img src="${escapeHtml(photoSrc)}" alt="" loading="eager"></div>` : `<div class="recipe-hero-logo-mark">${RECIPE_HERO_LOGO_SVG}</div>`}
+    <div class="recipe-hero-scrim"></div>
+    <div class="recipe-hero-body">
+      <div class="recipe-hero-eyebrow">&#9733; Featured today</div>
+      <h2>${escapeHtml(r.title || 'Recipe idea')}</h2>
+      <p>${escapeHtml(r.description || '')}</p>
+      <a class="recipe-hero-link" href="#/product/${r.catSlug}/${r.idx}">See the product &rarr;</a>
+    </div>`;
+        }
         function renderRecipesHubPage() {
             const grid = document.getElementById('recipesHubGrid');
             const empty = document.getElementById('recipesHubEmpty');
             const count = document.getElementById('recipesHubCount');
             if (!grid || !empty) return;
             const items = getAllRecipeIdeas();
+            renderRecipeHeroSection(items);
             if (count) count.textContent = items.length ? `${items.length} recipe idea${items.length === 1 ? '' : 's'}` : '';
             if (!items.length) {
                 grid.innerHTML = '';
@@ -22525,17 +22621,22 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // appear in CATEGORIES) rather than one long flat grid - at
             // even a dozen categories' worth of recipes, an undifferentiated
             // list stops reading as a curated page and starts reading as a
-            // dump.
+            // dump. Each group is a swipeable carousel (see .recipe-carousel)
+            // rather than a wrapping grid, shorter page and reads as
+            // browsable content rather than a list to scan.
             const byCategory = new Map();
             items.forEach(r => {
                 if (!byCategory.has(r.catSlug)) byCategory.set(r.catSlug, { catName: r.catName, items: [] });
                 byCategory.get(r.catSlug).items.push(r);
             });
-            grid.innerHTML = [...byCategory.values()].map(group => `
+            grid.innerHTML = [...byCategory.values()].map(group => {
+                const catLabel = escapeHtml((group.catName || '').replace(/&amp;/g, '&'));
+                return `
     <div class="recipe-hub-category">
-      <h3 class="recipe-hub-category-head">${escapeHtml((group.catName || '').replace(/&amp;/g, '&'))}</h3>
-      <div class="pd-recipe-grid">${group.items.map(recipeHubCardHTML).join('')}</div>
-    </div>`).join('');
+      <h3 class="recipe-hub-category-head">${catLabel}</h3>
+      <div class="recipe-carousel">${group.items.map(recipeHubCardHTML).join('')}</div>
+    </div>`;
+            }).join('');
         }
         window.renderRecipesHubPage = renderRecipesHubPage;
 
