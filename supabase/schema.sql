@@ -2307,7 +2307,8 @@ CREATE TABLE IF NOT EXISTS "public"."product_overrides" (
     "stock_quantity" integer,
     "deleted" boolean,
     "image_thumb_url" "text",
-    "recipes" "jsonb"
+    "recipes" "jsonb",
+    "origin_country" "text"
 );
 
 
