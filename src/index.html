@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-06.3';
+        const BUILD_VERSION = '2026-11-06.4';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -22331,14 +22331,62 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             { key: 'treenuts', label: 'Tree nuts' },
         ];
 
+        // A curated list, not all ~195 countries - the realistic set of
+        // places products in this catalogue actually come from, plus an
+        // "Other" escape hatch (free text) for anything outside it. Origin
+        // used to be a single free-text paragraph; this is the structured
+        // half of it (a real, consistent country rather than however an
+        // admin happened to phrase it that day), with the old free-text
+        // field kept alongside as an optional sourcing note.
+        const ORIGIN_COUNTRIES = [
+            { code: 'NG', name: 'Nigeria', flag: '\u{1F1F3}\u{1F1EC}' },
+            { code: 'GH', name: 'Ghana', flag: '\u{1F1EC}\u{1F1ED}' },
+            { code: 'CI', name: "Côte d'Ivoire", flag: '\u{1F1E8}\u{1F1EE}' },
+            { code: 'SN', name: 'Senegal', flag: '\u{1F1F8}\u{1F1F3}' },
+            { code: 'CM', name: 'Cameroon', flag: '\u{1F1E8}\u{1F1F2}' },
+            { code: 'BJ', name: 'Benin', flag: '\u{1F1E7}\u{1F1EF}' },
+            { code: 'TG', name: 'Togo', flag: '\u{1F1F9}\u{1F1EC}' },
+            { code: 'SL', name: 'Sierra Leone', flag: '\u{1F1F8}\u{1F1F1}' },
+            { code: 'LR', name: 'Liberia', flag: '\u{1F1F1}\u{1F1F7}' },
+            { code: 'ML', name: 'Mali', flag: '\u{1F1F2}\u{1F1F1}' },
+            { code: 'GN', name: 'Guinea', flag: '\u{1F1EC}\u{1F1F3}' },
+            { code: 'ZA', name: 'South Africa', flag: '\u{1F1FF}\u{1F1E6}' },
+            { code: 'KE', name: 'Kenya', flag: '\u{1F1F0}\u{1F1EA}' },
+            { code: 'ET', name: 'Ethiopia', flag: '\u{1F1EA}\u{1F1F9}' },
+            { code: 'JM', name: 'Jamaica', flag: '\u{1F1EF}\u{1F1F2}' },
+            { code: 'TT', name: 'Trinidad and Tobago', flag: '\u{1F1F9}\u{1F1F9}' },
+            { code: 'IN', name: 'India', flag: '\u{1F1EE}\u{1F1F3}' },
+            { code: 'TH', name: 'Thailand', flag: '\u{1F1F9}\u{1F1ED}' },
+            { code: 'VN', name: 'Vietnam', flag: '\u{1F1FB}\u{1F1F3}' },
+            { code: 'ID', name: 'Indonesia', flag: '\u{1F1EE}\u{1F1E9}' },
+            { code: 'MY', name: 'Malaysia', flag: '\u{1F1F2}\u{1F1FE}' },
+            { code: 'CN', name: 'China', flag: '\u{1F1E8}\u{1F1F3}' },
+            { code: 'GB', name: 'United Kingdom', flag: '\u{1F1EC}\u{1F1E7}' },
+            { code: 'US', name: 'United States', flag: '\u{1F1FA}\u{1F1F8}' },
+            { code: 'BR', name: 'Brazil', flag: '\u{1F1E7}\u{1F1F7}' },
+            { code: 'IT', name: 'Italy', flag: '\u{1F1EE}\u{1F1F9}' },
+            { code: 'CH', name: 'Switzerland', flag: '\u{1F1E8}\u{1F1ED}' },
+        ];
+        // Known code -> "flag Name"; an unrecognised value is whatever an
+        // admin typed into the "Other" field, so it's shown as-is instead.
+        function originDisplayName(code) {
+            if (!code) return '';
+            const known = ORIGIN_COUNTRIES.find(c => c.code === code);
+            return known ? `${known.flag} ${known.name}` : code;
+        }
+
         function pdDetailCards(p, catSlug) {
             const isFood = !NON_FOOD_CATEGORIES.includes(catSlug);
             const declared = p.allergens || [];
             const allergyValue = declared.length
                 ? declared.map(k => (UK_ALLERGENS.find(a => a.key === k) || {}).label).filter(Boolean).join(', ') + (p.allergyNote ? `. ${p.allergyNote}` : '')
                 : (p.allergyNote || '');
+            const originCountryLabel = originDisplayName(p.originCountry);
+            const originValue = originCountryLabel
+                ? `<strong>${originCountryLabel}</strong>${p.origin ? ` &middot; ${p.origin}` : ''}`
+                : (p.origin || '');
             const cards = [
-                { key: 'origin', label: 'Origin', value: p.origin || '', placeholder: 'Origin not yet added. Check back soon, or get in touch.' },
+                { key: 'origin', label: 'Origin', value: originValue, placeholder: 'Origin not yet added. Check back soon, or get in touch.' },
                 { key: 'storage', label: 'Storage', value: p.storage || (CATEGORY_STORAGE[catSlug] || 'Store as indicated on the packaging.'), placeholder: '' },
                 { key: 'allergyInfo', label: 'Allergy info', value: allergyValue, placeholder: "No allergens declared yet for this product. Please check the packaging, or get in touch and we'll help." },
             ];
@@ -22358,7 +22406,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
     <div class="pd-detail-card" id="pdCard-${c.key}">
       <div class="label">${PD_DETAIL_ICONS[c.key]} ${c.label}</div>
       <div class="body ${isPlaceholder ? 'is-placeholder' : ''}" id="pdCardBody-${c.key}">${text}</div>
-      <button class="pd-detail-edit-btn" type="button" onclick="${c.key === 'allergyInfo' ? 'openAllergenEdit()' : `openPdDetailEdit('${c.key}')`}">Edit</button>
+      <button class="pd-detail-edit-btn" type="button" onclick="${c.key === 'allergyInfo' ? 'openAllergenEdit()' : c.key === 'origin' ? 'openOriginEdit()' : `openPdDetailEdit('${c.key}')`}">Edit</button>
     </div>`;
             }).join('');
         }
@@ -22409,6 +22457,67 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (changes.length) logAdminAction('product_updated', 'product', realProduct.name, { changes });
         }
         window.saveAllergenEdit = saveAllergenEdit;
+        function openOriginEdit() {
+            if (!pdCurrent) return;
+            const card = document.getElementById('pdCard-origin');
+            const currentCode = pdCurrent.originCountry || '';
+            const isKnown = ORIGIN_COUNTRIES.some(c => c.code === currentCode);
+            const isOther = !!currentCode && !isKnown;
+            card.querySelector('.body').outerHTML = `
+      <div class="body">
+        <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Country of origin</label>
+        <select id="pdEdit-originCountry" onchange="toggleOriginOtherField(this.value)" style="width:100%; font-family:var(--body); font-size:16px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body);">
+          <option value="">Not set</option>
+          ${ORIGIN_COUNTRIES.map(c => `<option value="${c.code}" ${currentCode === c.code ? 'selected' : ''}>${c.flag} ${c.name}</option>`).join('')}
+          <option value="__other__" ${isOther ? 'selected' : ''}>Other</option>
+        </select>
+        <input type="text" id="pdEdit-originOther" placeholder="Country name" value="${isOther ? currentCode : ''}" style="width:100%; margin-top:8px; display:${isOther ? 'block' : 'none'}; font-family:var(--body); font-size:16px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body);">
+        <label style="font-size:11px; color:var(--text-muted); display:block; margin:10px 0 4px;">Sourcing note (optional)</label>
+        <textarea id="pdEdit-originNote" rows="2" placeholder="e.g. Grown in the Niger Delta region" style="width:100%; font-family:var(--body); font-size:16px; padding:8px 10px; border-radius:8px; border:1.5px solid rgba(var(--border-rgb),0.2); background:var(--card-bg); color:var(--text-body); resize:vertical;">${pdCurrent.origin || ''}</textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="saveOriginEdit()">Save</button>
+          <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderProductDetailsSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
+        </div>
+      </div>`;
+        }
+        window.openOriginEdit = openOriginEdit;
+        function toggleOriginOtherField(val) {
+            const other = document.getElementById('pdEdit-originOther');
+            if (other) other.style.display = val === '__other__' ? 'block' : 'none';
+        }
+        window.toggleOriginOtherField = toggleOriginOtherField;
+        async function saveOriginEdit() {
+            if (!pdCurrent) return;
+            const select = document.getElementById('pdEdit-originCountry');
+            const otherInput = document.getElementById('pdEdit-originOther');
+            const note = document.getElementById('pdEdit-originNote').value.trim();
+            let countryCode = select.value;
+            if (countryCode === '__other__') countryCode = otherInput.value.trim();
+            const cat = findCategory(pdCurrent.catSlug);
+            const realProduct = cat && cat.products[pdCurrent.idx];
+            if (!realProduct) return;
+            const beforeCountry = originDisplayName(realProduct.originCountry) || 'none';
+            const beforeNote = realProduct.origin || 'none';
+            if (countryCode) { realProduct.originCountry = countryCode; pdCurrent.originCountry = countryCode; }
+            else { delete realProduct.originCountry; delete pdCurrent.originCountry; }
+            if (note) { realProduct.origin = note; pdCurrent.origin = note; }
+            else { delete realProduct.origin; delete pdCurrent.origin; }
+            renderProductDetailsSection(pdCurrent, pdCurrent.catSlug);
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.from('product_overrides').upsert({
+                product_key: productKey(pdCurrent.catSlug, pdCurrent.idx),
+                origin_country: countryCode || null,
+                origin: note || null,
+                updated_at: new Date().toISOString(),
+            });
+            if (error) { showToast('Could not save origin: ' + error.message, undefined, 'error'); return; }
+            const afterCountry = originDisplayName(countryCode) || 'none';
+            const changes = [];
+            if (beforeCountry !== afterCountry) changes.push({ label: 'Origin country', from: beforeCountry, to: afterCountry });
+            if (beforeNote !== (note || 'none')) changes.push({ label: 'Origin note', from: beforeNote, to: note || 'none' });
+            if (changes.length) logAdminAction('product_updated', 'product', realProduct.name, { changes });
+        }
+        window.saveOriginEdit = saveOriginEdit;
         function openPdDetailEdit(key) {
             if (!pdCurrent) return;
             const card = document.getElementById(`pdCard-${key}`);
@@ -22422,8 +22531,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         </div>
       </div>`;
         }
-        const PD_DETAIL_COLUMNS = { origin: 'origin', storage: 'storage', nutrition: 'nutrition', cookingTip: 'cooking_tip' };
-        const PD_DETAIL_LABELS = { origin: 'Origin', storage: 'Storage', nutrition: 'Nutrition', cookingTip: 'Cooking suggestions' };
+        const PD_DETAIL_COLUMNS = { storage: 'storage', nutrition: 'nutrition', cookingTip: 'cooking_tip' };
+        const PD_DETAIL_LABELS = { storage: 'Storage', nutrition: 'Nutrition', cookingTip: 'Cooking suggestions' };
         async function savePdDetailEdit(key) {
             if (!pdCurrent) return;
             const val = document.getElementById(`pdEdit-${key}`).value.trim();
@@ -28916,6 +29025,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (row.is_new === true) product.isNew = true;
                 else if (row.is_new === false) product.isNew = false;
                 if (row.origin) product.origin = row.origin;
+                if (row.origin_country) product.originCountry = row.origin_country;
                 if (row.storage) product.storage = row.storage;
                 if (Array.isArray(row.allergens) && row.allergens.length) product.allergens = row.allergens;
                 if (row.allergy_note) product.allergyNote = row.allergy_note;
