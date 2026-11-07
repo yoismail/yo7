@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.2';
+        const BUILD_VERSION = '2026-11-07.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -26456,6 +26456,32 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (myOrdersChannel && supabaseClient) supabaseClient.removeChannel(myOrdersChannel);
             myOrdersChannel = null;
         }
+        // Keeps the nav bell badge (and the notifications page itself, if
+        // open) live when a new row lands in `notifications` (an order
+        // status change, an admin announcement/offer broadcast, a restock
+        // alert), instead of only ever picking it up on the next full page
+        // load. No explicit user_id filter here: `notifications` carries the
+        // same RLS policy loadNotificationsWithReadState() already queries
+        // under ("own row or user_id IS NULL"), and Realtime only delivers a
+        // row a subscriber's own RLS would let them SELECT, so an unfiltered
+        // INSERT subscription here is exactly "mine or broadcast", same as
+        // subscribeAdminOrderNotifications()'s unfiltered one relies on
+        // admins' own broader orders policy.
+        let notificationsChannel = null;
+        function subscribeNotifications() {
+            if (!supabaseClient || !currentSupabaseUser || notificationsChannel) return;
+            notificationsChannel = supabaseClient
+                .channel('my-notifications-' + currentSupabaseUser.id)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
+                    loadUnreadNotificationCount();
+                    if (window.location.hash === '#/notifications') renderNotificationsPage();
+                })
+                .subscribe();
+        }
+        function unsubscribeNotifications() {
+            if (notificationsChannel && supabaseClient) supabaseClient.removeChannel(notificationsChannel);
+            notificationsChannel = null;
+        }
         // lastOrder only ever lives in memory, so a refresh of this exact
         // page (easy to do by accident right after paying, e.g. a
         // pull-to-refresh on mobile) wiped it and showed "No recent order
@@ -27243,6 +27269,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (freshSignIn && !staleOwnFavoritesMirror) mergeGuestFavoritesIntoAccount(); else loadAccountFavorites();
             refreshAdminStatus();
             subscribeMyOrders();
+            subscribeNotifications();
             loadReorderSuggestion();
             loadBuyAgainSuggestions();
             loadUnreadNotificationCount();
@@ -27312,6 +27339,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (adminNavLink) adminNavLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
             unsubscribeMyOrders();
+            unsubscribeNotifications();
             // The previous identity's cached reward doesn't belong to
             // whoever's using this browser next.
             syncLoyaltyState();
