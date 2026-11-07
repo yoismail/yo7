@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-06.4';
+        const BUILD_VERSION = '2026-11-07.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -28150,7 +28150,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             }
             const priceEl = document.getElementById(`ep-price-${catSlug}-${idx}`);
             const priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
-            const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`)?.value ?? '';
+            const saleEl = document.getElementById(`ep-sale-${catSlug}-${idx}`);
+            const saleVal = saleEl?.value ?? '';
             const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`)?.value;
             const stockQtyVal = document.getElementById(`ep-stockqty-${catSlug}-${idx}`)?.value ?? '';
             const unitLabelVal = document.getElementById(`ep-unitlabel-${catSlug}-${idx}`)?.value.trim() ?? '';
@@ -28159,7 +28160,19 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (saleVal === '' ) { delete product.salePrice; }
             else {
                 const sv = parseFloat(saleVal);
-                if (!isNaN(sv) && sv >= 0) product.salePrice = sv;
+                if (isNaN(sv) || sv < 0) {
+                    // leave product.salePrice untouched, same as an out-of-range price above
+                } else if (sv >= product.price) {
+                    // Every display site only treats salePrice as an offer when
+                    // it's below price, so saving one that isn't would persist
+                    // silently and never actually show anywhere, looking like
+                    // the edit did nothing.
+                    showToast(`Sale price needs to be lower than the price (${gbp(product.price)}) to show as an offer.`);
+                    delete product.salePrice;
+                    saleEl.value = '';
+                } else {
+                    product.salePrice = sv;
+                }
             }
             if (stockVal) product.stock = stockVal;
             if (stockQtyVal === '') { delete product.stockQuantity; }
