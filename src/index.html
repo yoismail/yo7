@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.4';
+        const BUILD_VERSION = '2026-11-07.5';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -22904,6 +22904,23 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // out-of-stock item can never reach checkout in the first place.
         function pruneOutOfStockFromCart() {
             if (cartAuthoritativeFetchPending) return;
+            // getProduct() below reads straight out of cat.products, which
+            // starts out holding each slot's hardcoded default (seeded in
+            // this file) until applyProductOverrides() merges in the real
+            // admin-set values from Supabase, asynchronously, sometime
+            // after boot. A product an admin renamed/restocked (overriding
+            // a slot whose hardcoded default happens to be 'out', e.g. a
+            // placeholder product later turned into a real one) reads as
+            // still-out-of-stock for however long that fetch is still in
+            // flight, reported directly: a freshly in-stock item got
+            // pulled from the basket on a refresh that just happened to
+            // call this before the override had landed, even though the
+            // database already said 'in' the whole time. initialOverridesAttempted
+            // flips true once that first fetch resolves (success or
+            // failure, see applyProductOverrides()), so skipping until
+            // then means this only ever judges stock against the real
+            // data, never the placeholder it starts from.
+            if (!initialOverridesAttempted) return;
             const removedNames = [];
             // A product an admin deletes outright, not just marks out of
             // stock, needs the exact same pruning, otherwise it sat in a
