@@ -16921,12 +16921,12 @@
             if (ipswichRule && outsideRule) {
                 pillText = `Free delivery: over ${moneyWhole(ipswichRule.value)} in Ipswich, over ${moneyWhole(outsideRule.value)} elsewhere`;
             } else if (ipswichRule) {
-                pillText = `Free delivery over ${moneyWhole(ipswichRule.value)} (Ipswich)`;
+                pillText = `Free delivery on orders over ${moneyWhole(ipswichRule.value)} (Ipswich)`;
             } else if (outsideRule) {
-                pillText = `Free delivery over ${moneyWhole(outsideRule.value)}`;
+                pillText = `Free delivery on orders over ${moneyWhole(outsideRule.value)}`;
             } else {
                 const anyRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && !r.region);
-                pillText = anyRule ? `Free delivery over ${moneyWhole(anyRule.value)}` : null;
+                pillText = anyRule ? `Free delivery on orders over ${moneyWhole(anyRule.value)}` : null;
             }
             if (pillText) document.querySelectorAll('.free-delivery-text').forEach(el => { el.textContent = pillText; });
             const el = document.getElementById('dinfoFeeText');
@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.1';
+        const BUILD_VERSION = '2026-11-07.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -23553,7 +23553,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (result.ok === true) {
                 dPostcodeField.value = result.normalized;
                 const applicable = applicableFreeDeliveryRule(result.normalized);
-                const thresholdNote = applicable ? ` · Free delivery over ${money(applicable.value)}` : '';
+                const thresholdNote = applicable ? ` · Free delivery on orders over ${money(applicable.value)}` : '';
                 dPostcodeHint.textContent = `Valid postcode: ${deliveryEtaLabel(result.normalized)}${thresholdNote}`;
                 dPostcodeHint.className = 'field-hint success';
                 lastPostcodeCheck = { value: result.normalized, result };
@@ -23563,7 +23563,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 lastPostcodeCheck = { value: raw, result };
             } else {
                 const applicable = applicableFreeDeliveryRule(raw);
-                const thresholdNote = applicable ? ` · Free delivery over ${money(applicable.value)}` : '';
+                const thresholdNote = applicable ? ` · Free delivery on orders over ${money(applicable.value)}` : '';
                 dPostcodeHint.textContent = `Couldn't fully verify this postcode right now: ${deliveryEtaLabel(raw)}${thresholdNote}`;
                 dPostcodeHint.className = 'field-hint checking';
                 lastPostcodeCheck = { value: raw, result };
@@ -26456,6 +26456,32 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (myOrdersChannel && supabaseClient) supabaseClient.removeChannel(myOrdersChannel);
             myOrdersChannel = null;
         }
+        // Keeps the nav bell badge (and the notifications page itself, if
+        // open) live when a new row lands in `notifications` (an order
+        // status change, an admin announcement/offer broadcast, a restock
+        // alert), instead of only ever picking it up on the next full page
+        // load. No explicit user_id filter here: `notifications` carries the
+        // same RLS policy loadNotificationsWithReadState() already queries
+        // under ("own row or user_id IS NULL"), and Realtime only delivers a
+        // row a subscriber's own RLS would let them SELECT, so an unfiltered
+        // INSERT subscription here is exactly "mine or broadcast", same as
+        // subscribeAdminOrderNotifications()'s unfiltered one relies on
+        // admins' own broader orders policy.
+        let notificationsChannel = null;
+        function subscribeNotifications() {
+            if (!supabaseClient || !currentSupabaseUser || notificationsChannel) return;
+            notificationsChannel = supabaseClient
+                .channel('my-notifications-' + currentSupabaseUser.id)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
+                    loadUnreadNotificationCount();
+                    if (window.location.hash === '#/notifications') renderNotificationsPage();
+                })
+                .subscribe();
+        }
+        function unsubscribeNotifications() {
+            if (notificationsChannel && supabaseClient) supabaseClient.removeChannel(notificationsChannel);
+            notificationsChannel = null;
+        }
         // lastOrder only ever lives in memory, so a refresh of this exact
         // page (easy to do by accident right after paying, e.g. a
         // pull-to-refresh on mobile) wiped it and showed "No recent order
@@ -27243,6 +27269,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (freshSignIn && !staleOwnFavoritesMirror) mergeGuestFavoritesIntoAccount(); else loadAccountFavorites();
             refreshAdminStatus();
             subscribeMyOrders();
+            subscribeNotifications();
             loadReorderSuggestion();
             loadBuyAgainSuggestions();
             loadUnreadNotificationCount();
@@ -27312,6 +27339,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (adminNavLink) adminNavLink.style.display = 'none';
             unsubscribeAdminOrderNotifications();
             unsubscribeMyOrders();
+            unsubscribeNotifications();
             // The previous identity's cached reward doesn't belong to
             // whoever's using this browser next.
             syncLoyaltyState();
