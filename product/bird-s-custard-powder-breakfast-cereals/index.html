@@ -1149,7 +1149,7 @@
                         <button class="card-share-btn" type="button" id="pdShareBtn" aria-label="Share this product">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>
                         </button>
-                        <span class="pd-placeholder" id="pdPlaceholder"></span>
+                        <img src="/cdn-img/breakfast-cereals-6-1794052734440.png" alt="Bird&#x27;s Custard Powder" loading="eager" fetchpriority="high" decoding="async" class="product-photo-img"><span class="pd-placeholder" id="pdPlaceholder" style="display:none;"></span>
                     </div>
                     <div>
                         <div class="pd-cat-tag" id="pdCatTag">Breakfast &amp; Cereals</div>
@@ -3920,7 +3920,7 @@
             "beverages::15": "lipton-yellow-label-beverages-3", "beverages::16": "the-original-nurishment-choco-flavour", "beverages::17": "nescafe-2-in1",
             "body-oral-products::0": "raw-shea-butter", "body-oral-products::1": "african-black-soap", "body-oral-products::2": "dudu-osun-soap",
             "body-oral-products::3": "chewing-stick-atim",
-            "breakfast-cereals::0": "cerelac-wheat-and-honey", "breakfast-cereals::1": "cerelac-fruits-and-wheat", "breakfast-cereals::2": "cerelac-fruits-and-wheat-breakfast-cereals",
+            "breakfast-cereals::0": "nestl-cerelac-wheat-and-honey", "breakfast-cereals::1": "nestl-cerelac-fruits-and-wheat", "breakfast-cereals::2": "nestl-cerelac-mixed-fruits-and-wheat",
             "breakfast-cereals::3": "cerelac-wheat", "breakfast-cereals::4": "cerelac-baby-rice", "breakfast-cereals::5": "bird-s-custard-powder",
             "breakfast-cereals::6": "bird-s-custard-powder-breakfast-cereals", "breakfast-cereals::7": "checkers-custard-powder-milk", "breakfast-cereals::8": "checkers-custard-powder-vanilla",
             "breakfast-cereals::9": "checkers-custard-powder-milk-breakfast-cereals", "breakfast-cereals::10": "checkers-custard-powder-vanilla-breakfast-cereals", "breakfast-cereals::11": "quaker-white-oats",
@@ -3955,8 +3955,8 @@
             "meat::3": "oxtail",
             "miscellaneous::0": "aluminium-foil-wrap", "miscellaneous::1": "ziplock-freezer-bags", "miscellaneous::2": "cellophane-nylon-bags",
             "miscellaneous::3": "disposable-food-containers",
-            "noodles::0": "indomie-chicken-carton", "noodles::1": "indomie-chicken", "noodles::2": "chikki-spaghetti",
-            "noodles::3": "rice-vermicelli", "noodles::4": "indomie-onion-carton",
+            "noodles::0": "indomie-chicken-noodles-carton", "noodles::1": "indomie-chicken-noodles", "noodles::2": "ghana-indomie-instant-chicken-flavour-noodles-carton",
+            "noodles::3": "indomie-onion-noodles", "noodles::4": "indomie-onion-noodles-carton",
             "oils::0": "palm-oil-zomi", "oils::1": "groundnut-oil", "oils::2": "vegetable-oil",
             "oils::3": "coconut-oil", "oils::4": "ktc-pure-coconut-oil", "oils::5": "ktc-pure-coconut-oil-oils",
             "other-vegetables::0": "garden-eggs", "other-vegetables::1": "fresh-okra", "other-vegetables::4": "african-star-apple-agbalumo",
@@ -5899,7 +5899,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-06.4';
+        const BUILD_VERSION = '2026-11-07.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -16576,7 +16576,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             }
             const priceEl = document.getElementById(`ep-price-${catSlug}-${idx}`);
             const priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
-            const saleVal = document.getElementById(`ep-sale-${catSlug}-${idx}`)?.value ?? '';
+            const saleEl = document.getElementById(`ep-sale-${catSlug}-${idx}`);
+            const saleVal = saleEl?.value ?? '';
             const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`)?.value;
             const stockQtyVal = document.getElementById(`ep-stockqty-${catSlug}-${idx}`)?.value ?? '';
             const unitLabelVal = document.getElementById(`ep-unitlabel-${catSlug}-${idx}`)?.value.trim() ?? '';
@@ -16585,7 +16586,19 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (saleVal === '' ) { delete product.salePrice; }
             else {
                 const sv = parseFloat(saleVal);
-                if (!isNaN(sv) && sv >= 0) product.salePrice = sv;
+                if (isNaN(sv) || sv < 0) {
+                    // leave product.salePrice untouched, same as an out-of-range price above
+                } else if (sv >= product.price) {
+                    // Every display site only treats salePrice as an offer when
+                    // it's below price, so saving one that isn't would persist
+                    // silently and never actually show anywhere, looking like
+                    // the edit did nothing.
+                    showToast(`Sale price needs to be lower than the price (${gbp(product.price)}) to show as an offer.`);
+                    delete product.salePrice;
+                    saleEl.value = '';
+                } else {
+                    product.salePrice = sv;
+                }
             }
             if (stockVal) product.stock = stockVal;
             if (stockQtyVal === '') { delete product.stockQuantity; }
