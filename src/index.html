@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.3';
+        const BUILD_VERSION = '2026-11-07.4';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -17913,6 +17913,10 @@
         async function mergeGuestCartIntoAccount() {
             if (!supabaseClient || !currentSupabaseUser) return;
             const serverItems = await fetchAccountCartItems();
+            // Cleared here, win or lose: a failed fetch leaving pruning
+            // permanently stuck off for the rest of the session would be
+            // worse than just falling back to whatever's already in `cart`.
+            cartAuthoritativeFetchPending = false;
             if (serverItems === null) return;
             if (serverItems.length > 0) cart = mergeCartItems(serverItems, cart);
             tagCartOwner(currentSupabaseUser.id);
@@ -17927,6 +17931,9 @@
         async function loadAccountCart() {
             if (!supabaseClient || !currentSupabaseUser) return;
             const serverItems = await fetchAccountCartItems();
+            // Cleared here, win or lose: see the identical comment in
+            // mergeGuestCartIntoAccount() above.
+            cartAuthoritativeFetchPending = false;
             if (serverItems === null) return;
             cart = serverItems;
             tagCartOwner(currentSupabaseUser.id);
@@ -22873,6 +22880,21 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         });
 
         /* ================= CHECKOUT ================= */
+        // setUser() paints the cart once immediately, from whatever's
+        // already in memory, purely so the list isn't blank while
+        // mergeGuestCartIntoAccount()/loadAccountCart() fetch the real,
+        // authoritative server copy a moment later. Without this flag that
+        // first paint's own prune pass (on a cart that's about to be
+        // replaced anyway) raced the authoritative fetch: whichever
+        // resolved second overwrote `cart` with the still-unpruned server
+        // copy and pruned it all over again, which is why an out-of-stock
+        // item's removal showed its toast twice on one load and never
+        // reliably reached the server (the two passes' debounced
+        // scheduleCartSync() calls kept pre-empting each other). Set before
+        // the provisional render, cleared by mergeGuestCartIntoAccount()/
+        // loadAccountCart() right before their own (real) render, so only
+        // one pass ever prunes, toasts, and persists per load.
+        let cartAuthoritativeFetchPending = false;
         // Stock can change after something's already sitting in someone's
         // basket — an admin marking it out, or the basket simply persisting
         // across sessions/days. Pruning it right here, where the basket is
@@ -22881,6 +22903,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // below) rather than it silently vanishing at payment time, and an
         // out-of-stock item can never reach checkout in the first place.
         function pruneOutOfStockFromCart() {
+            if (cartAuthoritativeFetchPending) return;
             const removedNames = [];
             // A product an admin deletes outright, not just marks out of
             // stock, needs the exact same pruning, otherwise it sat in a
@@ -27261,6 +27284,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (orderHistoryLink) orderHistoryLink.style.display = currentSupabaseUser ? 'flex' : 'none';
             const referNavLink = document.getElementById('referNavLink');
             if (referNavLink) referNavLink.style.display = currentSupabaseUser ? 'flex' : 'none';
+            // Only the two calls below ever actually fetch/merge the
+            // account's real cart, and only when there's a backend to fetch
+            // it from, so gate the flag on that same condition: a
+            // no-Supabase preview session (where neither call runs, or
+            // clears it) isn't left with pruning permanently disabled.
+            cartAuthoritativeFetchPending = !!(supabaseClient && currentSupabaseUser);
             renderCartList();
             syncLoyaltyState().then(renderCartList);
             const staleOwnCartMirror = freshSignIn && currentSupabaseUser && getCartOwnerTag() === currentSupabaseUser.id;
