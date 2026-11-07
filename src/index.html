@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.6';
+        const BUILD_VERSION = '2026-11-07.7';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -20664,7 +20664,7 @@
         // while, showing them all at once meant an endlessly long page.
         // This factory paints only a page's worth at a time per grid, with
         // a "See more" button to reveal the next batch.
-        const GRID_PAGE_SIZE = 12;
+        const GRID_PAGE_SIZE = 24;
         function createPaginatedGrid(gridId, emptyId, loadMoreId, loadMoreBtnId, pageSize = GRID_PAGE_SIZE) {
             const state = { items: [], visible: 0 };
             function paint() {
