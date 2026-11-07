@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.5';
+        const BUILD_VERSION = '2026-11-07.6';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -29069,6 +29069,19 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // than a false "Product not found" flash while this is still in
         // flight, the route() call below re-renders it correctly either
         // way once this settles.
+        //
+        // That route() re-render is also why most other code that reads a
+        // product's live stock/deleted state needs no guard of its own:
+        // whatever it rendered off the still-hardcoded seed data gets
+        // redrawn moments later with the real thing, the same self-healing
+        // every category/PD/homepage render already gets for free. The one
+        // kind of call this doesn't protect is a DESTRUCTIVE one-shot
+        // action, not a repeatable render, there's nothing left to redraw
+        // once it's already removed/persisted/sent something based on a
+        // stale read. pruneOutOfStockFromCart() is the one of those on the
+        // site today (its own comment has the real incident this flag
+        // fixed for it); check this flag the same way before adding
+        // another.
         let initialOverridesAttempted = false;
         async function applyProductOverrides(opts) {
             if (!supabaseClient) { initialOverridesAttempted = true; return; }
