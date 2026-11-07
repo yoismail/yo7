@@ -16921,12 +16921,12 @@
             if (ipswichRule && outsideRule) {
                 pillText = `Free delivery: over ${moneyWhole(ipswichRule.value)} in Ipswich, over ${moneyWhole(outsideRule.value)} elsewhere`;
             } else if (ipswichRule) {
-                pillText = `Free delivery over ${moneyWhole(ipswichRule.value)} (Ipswich)`;
+                pillText = `Free delivery on orders over ${moneyWhole(ipswichRule.value)} (Ipswich)`;
             } else if (outsideRule) {
-                pillText = `Free delivery over ${moneyWhole(outsideRule.value)}`;
+                pillText = `Free delivery on orders over ${moneyWhole(outsideRule.value)}`;
             } else {
                 const anyRule = deliveryThresholdRules.find(r => r.effect === 'free' && r.conditionType === 'price' && !r.region);
-                pillText = anyRule ? `Free delivery over ${moneyWhole(anyRule.value)}` : null;
+                pillText = anyRule ? `Free delivery on orders over ${moneyWhole(anyRule.value)}` : null;
             }
             if (pillText) document.querySelectorAll('.free-delivery-text').forEach(el => { el.textContent = pillText; });
             const el = document.getElementById('dinfoFeeText');
@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.1';
+        const BUILD_VERSION = '2026-11-07.2';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -23553,7 +23553,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (result.ok === true) {
                 dPostcodeField.value = result.normalized;
                 const applicable = applicableFreeDeliveryRule(result.normalized);
-                const thresholdNote = applicable ? ` · Free delivery over ${money(applicable.value)}` : '';
+                const thresholdNote = applicable ? ` · Free delivery on orders over ${money(applicable.value)}` : '';
                 dPostcodeHint.textContent = `Valid postcode: ${deliveryEtaLabel(result.normalized)}${thresholdNote}`;
                 dPostcodeHint.className = 'field-hint success';
                 lastPostcodeCheck = { value: result.normalized, result };
@@ -23563,7 +23563,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 lastPostcodeCheck = { value: raw, result };
             } else {
                 const applicable = applicableFreeDeliveryRule(raw);
-                const thresholdNote = applicable ? ` · Free delivery over ${money(applicable.value)}` : '';
+                const thresholdNote = applicable ? ` · Free delivery on orders over ${money(applicable.value)}` : '';
                 dPostcodeHint.textContent = `Couldn't fully verify this postcode right now: ${deliveryEtaLabel(raw)}${thresholdNote}`;
                 dPostcodeHint.className = 'field-hint checking';
                 lastPostcodeCheck = { value: raw, result };
