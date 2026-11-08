@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-07.10';
+        const BUILD_VERSION = '2026-11-08.2';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -20507,10 +20507,35 @@
             if (c.saveData) return true;
             return c.effectiveType === 'slow-2g' || c.effectiveType === '2g';
         }
-        function stockLabel(s) {
-            if (s === 'low') return 'Low stock';
+        // quantity is optional, passed only where there's room to show it
+        // (the PD page's plain-text meta line, not the small pill badges on
+        // a card thumbnail or the PD image, which stay the short generic
+        // label so a long count never cramps or wraps a stadium-shaped
+        // badge, see the pill-radius note on short/wrapping content).
+        function stockLabel(s, quantity) {
+            if (s === 'low') return (typeof quantity === 'number') ? `Only ${quantity} left in stock` : 'Low stock';
             if (s === 'out') return 'Out of stock';
             return 'In stock';
+        }
+        // Combines an explicitly chosen stock status with what the tracked
+        // quantity itself implies, taking whichever is more restrictive
+        // (in < low < out), the same one-way "never loosen it back" rule
+        // decrement_stock() already applies server-side as real orders
+        // deplete a tracked product (see its own comment in schema.sql),
+        // just run client-side too so typing a low quantity into the admin
+        // panel flags it immediately instead of waiting on the next sale to
+        // trigger the server-side version. An untracked product (quantity
+        // not a number) is left exactly as the admin picked, there's no
+        // count here to derive anything from.
+        const LOW_STOCK_THRESHOLD = 10;
+        function deriveStockStatus(explicitStock, quantity) {
+            const rank = { in: 0, low: 1, out: 2 };
+            let status = explicitStock || 'in';
+            if (typeof quantity === 'number') {
+                const implied = quantity <= 0 ? 'out' : (quantity <= LOW_STOCK_THRESHOLD ? 'low' : null);
+                if (implied && rank[implied] > rank[status]) status = implied;
+            }
+            return status;
         }
         function comingSoonThumbHTML() {
             return `<span class="thumb-placeholder-emoji">${COMING_SOON_LOGO_SVG}</span><span class="thumb-placeholder-label">Photo coming soon</span>`;
@@ -21898,7 +21923,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const badge = document.getElementById('pdStockBadge');
             badge.className = 'stock-badge ' + stock;
             badge.textContent = stockLabel(stock);
-            document.getElementById('pdStockText').textContent = stockLabel(stock);
+            document.getElementById('pdStockText').textContent = stockLabel(stock, p.stockQuantity);
             const deliveryWindowEl = document.getElementById('pdDeliveryWindow');
             if (deliveryWindowEl) {
                 deliveryWindowEl.style.display = stock === 'out' ? 'none' : 'flex';
@@ -28226,7 +28251,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const priceVal = priceEl ? parseFloat(priceEl.value) : NaN;
             const saleEl = document.getElementById(`ep-sale-${catSlug}-${idx}`);
             const saleVal = saleEl?.value ?? '';
-            const stockVal = document.getElementById(`ep-stock-${catSlug}-${idx}`)?.value;
+            const stockEl = document.getElementById(`ep-stock-${catSlug}-${idx}`);
+            const stockVal = stockEl?.value;
             const stockQtyVal = document.getElementById(`ep-stockqty-${catSlug}-${idx}`)?.value ?? '';
             const unitLabelVal = document.getElementById(`ep-unitlabel-${catSlug}-${idx}`)?.value.trim() ?? '';
 
@@ -28253,6 +28279,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             else {
                 const qv = parseInt(stockQtyVal, 10);
                 if (!isNaN(qv) && qv >= 0) product.stockQuantity = qv;
+            }
+            const derivedStock = deriveStockStatus(product.stock, product.stockQuantity);
+            if (derivedStock !== product.stock) {
+                showToast(`Quantity is ${product.stockQuantity}, flagged as ${stockLabel(derivedStock).toLowerCase()} automatically.`);
+                product.stock = derivedStock;
+                if (stockEl) stockEl.value = derivedStock;
             }
 
             const weightVal = document.getElementById(`ep-weight-${catSlug}-${idx}`)?.value ?? '';
@@ -28703,6 +28735,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
 
             const newProduct = { name, unit, price, stock };
             if (stockQtyVal !== '' && !isNaN(parseInt(stockQtyVal, 10)) && parseInt(stockQtyVal, 10) >= 0) newProduct.stockQuantity = parseInt(stockQtyVal, 10);
+            newProduct.stock = deriveStockStatus(newProduct.stock, newProduct.stockQuantity);
             if (saleVal !== '' && !isNaN(parseFloat(saleVal))) newProduct.salePrice = parseFloat(saleVal);
             if (weightVal !== '' && !isNaN(parseFloat(weightVal))) {
                 const wv = parseFloat(weightVal);
@@ -28748,7 +28781,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 p_name: name, p_unit: unit, p_price: price,
                 p_sale_price: newProduct.salePrice ?? null,
                 p_weight: newProduct.weight ?? null,
-                p_stock: stock, p_stock_quantity: newProduct.stockQuantity ?? null,
+                p_stock: newProduct.stock, p_stock_quantity: newProduct.stockQuantity ?? null,
                 p_description: descVal || null,
                 p_image_url: newProduct.image || null,
                 p_is_new: isNewChecked, p_is_best_seller: isBestSellerChecked,
