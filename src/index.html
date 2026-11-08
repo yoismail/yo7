@@ -17473,7 +17473,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-08.1';
+        const BUILD_VERSION = '2026-11-08.2';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -20507,8 +20507,13 @@
             if (c.saveData) return true;
             return c.effectiveType === 'slow-2g' || c.effectiveType === '2g';
         }
-        function stockLabel(s) {
-            if (s === 'low') return 'Low stock';
+        // quantity is optional, passed only where there's room to show it
+        // (the PD page's plain-text meta line, not the small pill badges on
+        // a card thumbnail or the PD image, which stay the short generic
+        // label so a long count never cramps or wraps a stadium-shaped
+        // badge, see the pill-radius note on short/wrapping content).
+        function stockLabel(s, quantity) {
+            if (s === 'low') return (typeof quantity === 'number') ? `Only ${quantity} left in stock` : 'Low stock';
             if (s === 'out') return 'Out of stock';
             return 'In stock';
         }
@@ -21918,7 +21923,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const badge = document.getElementById('pdStockBadge');
             badge.className = 'stock-badge ' + stock;
             badge.textContent = stockLabel(stock);
-            document.getElementById('pdStockText').textContent = stockLabel(stock);
+            document.getElementById('pdStockText').textContent = stockLabel(stock, p.stockQuantity);
             const deliveryWindowEl = document.getElementById('pdDeliveryWindow');
             if (deliveryWindowEl) {
                 deliveryWindowEl.style.display = stock === 'out' ? 'none' : 'flex';
