@@ -14921,7 +14921,7 @@
         <span class="float-cart-badge" id="floatCartBadge">0</span>
     </a>
 
-    <a class="float-order" id="floatOrder" href="https://wa.me/447398810052" target="_blank" rel="noopener"
+    <a class="float-order" id="floatOrder" href="https://wa.me/447398810052?text=Hi%20YO7%20Foods!%20I'd%20like%20to%20place%20an%20order." target="_blank" rel="noopener"
         aria-label="Order on WhatsApp">
         <svg viewBox="0 0 24 24" fill="currentColor">
             <path
@@ -17507,7 +17507,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-08.4';
+        const BUILD_VERSION = '2026-11-08.5';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -17813,16 +17813,27 @@
            WhatsApp with it pre-filled, the person still has to hit send,
            and YO7 Foods confirms and takes payment manually from there, this
            isn't a substitute for checkout, it's a genuine alternative to it. */
-        function sendCartViaWhatsApp() {
-            if (cart.length === 0) { showToast('Your basket is empty.'); return; }
+        function cartWhatsAppMessage() {
+            if (cart.length === 0) return `Hi YO7 Foods! I'd like to place an order.`;
             const lines = cart.map(i => {
                 const note = i.isCombo ? ' (combo)' : i.isSubscription ? ` (subscription, every ${i.subscriptionFrequency} weeks)` : '';
                 return `${i.qty}x ${i.name}${note} - ${money(i.price * i.qty)}`;
             });
-            const message = `Hi YO7 Foods! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${money(cartSubtotal())}\n\n(Sent from yo7foods.co.uk, delivery/pickup and payment to confirm with you.)`;
-            window.open(`https://wa.me/447398810052?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+            return `Hi YO7 Foods! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${money(cartSubtotal())}\n\n(Sent from yo7foods.co.uk, delivery/pickup and payment to confirm with you.)`;
+        }
+        function sendCartViaWhatsApp() {
+            if (cart.length === 0) { showToast('Your basket is empty.'); return; }
+            window.open(`https://wa.me/447398810052?text=${encodeURIComponent(cartWhatsAppMessage())}`, '_blank', 'noopener');
         }
         window.sendCartViaWhatsApp = sendCartViaWhatsApp;
+        // Keeps the floating WhatsApp button's pre-filled text in sync with
+        // the basket, so tapping it (rather than the dedicated "order on
+        // WhatsApp" buttons, which require a non-empty cart) still opens
+        // with a real, itemised message when there's something to order.
+        function updateFloatOrderLink() {
+            const floatBtn = document.getElementById('floatOrder');
+            if (floatBtn) floatBtn.href = `https://wa.me/447398810052?text=${encodeURIComponent(cartWhatsAppMessage())}`;
+        }
 
         // Every place that mutates `cart` (add, quickAdd, changeQty,
         // removeFromCart, clearing it after a placed order) already calls
@@ -17978,6 +17989,7 @@
         function updateCartBadge() {
             saveCartToStorage();
             scheduleCartSync();
+            updateFloatOrderLink();
             const badge = document.getElementById('cartBadge');
             const n = cartCount();
             badge.textContent = n;
