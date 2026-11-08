@@ -3727,6 +3727,34 @@
         }
         .bundles-scroll { gap: 20px; padding: 4px 2px 10px; }
         .bundles-scroll .bundle-card { flex: 0 0 300px; max-width: 300px; scroll-snap-align: start; }
+        /* openComboEdit()/openBundleEdit() add .is-editing to the card the
+           moment its preview content is replaced with an edit form - the
+           280/300/340px widths above (and .combo-card's own padding:0,
+           see its base rule) are tuned for the compact preview card, not a
+           form with uppercase labels and full-width inputs/selects, which
+           wrapped mid-word and sat flush against bare edges without this.
+           Split by context since the fix itself differs: a flex carousel
+           row just needs a wider flex-basis, nothing else there is sized
+           off this card's content so nothing to overflow into; but a grid
+           cell is sized by minmax(280px, 1fr) independent of any one
+           item's own content needs, so simply widening the card would
+           overflow its track into its neighbours - spanning the full grid
+           row instead gives it real room without disturbing them. */
+        .combos-scroll .combo-card.is-editing,
+        .bundles-scroll .bundle-card.is-editing {
+            flex: 1 1 min(480px, 94vw);
+            max-width: min(480px, 94vw);
+        }
+        .bundles-grid > .combo-card.is-editing,
+        .bundles-grid > .bundle-card.is-editing {
+            grid-column: 1 / -1;
+            max-width: min(560px, 100%);
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .combo-card.is-editing {
+            padding: 18px 20px 16px;
+        }
         .bundle-card {
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
@@ -17473,7 +17501,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-08.2';
+        const BUILD_VERSION = '2026-11-08.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18534,6 +18562,12 @@
             // no matter which one was actually clicked.
             const card = btnEl ? btnEl.closest('.bundle-card') : document.getElementById(`bundleCard-${bi}`);
             if (!card || !bundle) return;
+            // Same reasoning as the identical line in openComboEdit() above:
+            // this card's own 300/340px carousel/grid width is tuned for the
+            // compact preview, not a form with uppercase labels and
+            // full-width inputs. Comes off automatically on Save/Cancel,
+            // both re-render the card fresh from bundleCardHTML().
+            card.classList.add('is-editing');
             bundleEditNewItems = [...(bundle.items || [])];
             const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
@@ -19129,6 +19163,16 @@
             // fixes it regardless of which page it was clicked from.
             const card = btnEl ? btnEl.closest('.combo-card') : document.getElementById(`comboCard-${ci}`);
             if (!card || !combo) return;
+            // The card's own width/padding (280px, padding:0, its own
+            // padding delegated to inner .combo-ticket-head/-body wrappers
+            // that this edit form doesn't use) are tuned for the compact
+            // preview "ticket stub" look, not a multi-field form with
+            // uppercase labels and full-width inputs/selects - without this
+            // class every label wrapped mid-word and the fields sat flush
+            // against the card's bare edges. Comes off automatically on
+            // Save/Cancel, both just re-render the card fresh from
+            // comboCardHTML() rather than toggling this back off.
+            card.classList.add('is-editing');
             comboEditNewItems = [...(combo.items || [])];
             const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
             card.innerHTML = `
