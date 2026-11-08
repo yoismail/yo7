@@ -398,47 +398,17 @@ Deno.serve(async (req) => {
     console.error("auth.getUser() failed for an authenticated request, proceeding as guest:", getUserError.message);
   }
 
-  // Second job this function does: once a payment's gone through, the
-  // client only has a payment_method *id* (not brand/last4 — reading
-  // that back requires the secret key too), so this is also how the
-  // receipt/admin view gets something readable like "Visa •••• 4242"
-  // instead of a raw Stripe id.
-  if (body.action === "summarize") {
-    const paymentIntentId = body.paymentIntentId;
-    if (typeof paymentIntentId !== "string" || !paymentIntentId.startsWith("pi_")) {
-      return new Response(JSON.stringify({ error: "Invalid payment intent id." }), {
-        status: 200,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
-    try {
-      const pi = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["payment_method"] });
-      const pm = pi.payment_method;
-      let summary = "Paid online";
-      if (pm && typeof pm === "object" && pm.type === "card" && pm.card) {
-        const wallet = pm.card.wallet?.type;
-        if (wallet === "apple_pay") summary = "Apple Pay";
-        else if (wallet === "google_pay") summary = "Google Pay";
-        else {
-          const brand = pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1);
-          summary = `${brand} •••• ${pm.card.last4}`;
-        }
-      }
-      return new Response(JSON.stringify({ summary, status: pi.status }), {
-        status: 200,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      console.error("Payment method summary lookup failed:", err);
-      return new Response(JSON.stringify({ summary: "Paid online", status: "unknown" }), {
-        status: 200,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
-  }
-
-  // Only the two paths below (discount preview, real charge) need
-  // pricing data at all — "summarize" already returned above without it.
+  // This used to also handle action:"summarize" - retrieving an arbitrary
+  // client-supplied PaymentIntent id from Stripe and returning its
+  // payment-method summary ("Visa •••• 4242"/"Apple Pay"), with no check
+  // that the caller actually owned that PaymentIntent. confirm-order now
+  // computes and saves that same summary itself, server-side, as part of
+  // actually finalising the order (see its own comment on this), so
+  // nothing has called action:"summarize" for a while - removed outright
+  // rather than patched with an ownership check, since this function has
+  // verify_jwt disabled (the cron/guest-checkout paths below need that),
+  // which left any caller, authenticated or not, able to look up any
+  // PaymentIntent on the account just by guessing/obtaining its id.
   await loadPricingSettings(db);
 
   // ---- shared cart pricing, used by both "validate-discount" (a
