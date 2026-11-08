@@ -71,7 +71,7 @@ const FRESHNESS_HOURS = 20;
 // (src/index.html's CURRENCY_NAMES/CURRENCY_SYMBOLS/CURRENCY_FLAGS) —
 // GBP excluded, since it's the base currency every rate here converts
 // FROM, never a rate to fetch.
-const SUPPORTED_AUTO_CURRENCIES = ["CAD", "USD", "NGN"] as const;
+const SUPPORTED_AUTO_CURRENCIES = ["CAD", "USD", "NGN", "EUR"] as const;
 
 async function checkRateLimit(
   db: ReturnType<typeof createClient>,
