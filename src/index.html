@@ -9342,12 +9342,13 @@
             grid-template-columns: 1fr 1fr;
             gap: 14px;
         }
-        /* Currency rates is the one field-row with three inputs (CAD/USD/
-           NGN), not two - a plain 2-column .field-row would strand the
-           third field alone on its own half-width row. */
-        .field-row-3 {
+        /* Currency rates renders one field per entry in FX_AUTO_CODES (4
+           today: CAD/USD/NGN/EUR) - auto-fit rather than a fixed column
+           count so the next currency added or removed there just reflows
+           instead of needing this rule edited again too. */
+        .field-row-auto {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 14px;
         }
 
@@ -11735,7 +11736,7 @@
                 background: linear-gradient(90deg, transparent, rgba(var(--border-rgb), 0.16) 15%, rgba(var(--border-rgb), 0.16) 85%, transparent);
             }
 
-            .field-row, .field-row-3 {
+            .field-row, .field-row-auto {
                 grid-template-columns: 1fr;
             }
 
@@ -17531,7 +17532,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-08.6';
+        const BUILD_VERSION = '2026-11-08.7';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -17560,7 +17561,7 @@
         // panel's own "Refresh live rates now" button has. Display-only
         // (shown in the admin panel), never read by money()/checkout.
         let fxRatesFetchedAt = null;
-        const CURRENCY_SYMBOLS = { GBP: '£', CAD: 'CA$', USD: 'US$', NGN: '₦' };
+        const CURRENCY_SYMBOLS = { GBP: '£', CAD: 'CA$', USD: 'US$', NGN: '₦', EUR: '€' };
         // Apple Pay/Google Pay aren't reliable Stripe presentment currencies
         // for NGN — a real order (YO7-0046) was placed with NGN selected and
         // Apple Pay as the payment method, and ended up charged in GBP
@@ -27919,7 +27920,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
            the left edge it first shipped at) and at the middle rather
            than the bottom, so it never competes with .float-order (same
            edge, bottom corner) for space or attention. */
-        const CURRENCY_NAMES = { GBP: 'GBP', CAD: 'CAD', USD: 'USD', NGN: 'NGN' };
+        const CURRENCY_NAMES = { GBP: 'GBP', CAD: 'CAD', USD: 'USD', NGN: 'NGN', EUR: 'EUR' };
         // Real inline-SVG flags rather than flag emoji - see
         // .currency-fab-flag's own CSS comment for why (Windows Chrome/
         // Edge render a flag emoji as its own literal fallback text, not
@@ -27934,6 +27935,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             CAD: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="15" height="40" fill="#d80621"/><rect x="45" width="15" height="40" fill="#d80621"/><path d="M30,9 L32,15 L38,13 L35,19 L41,21 L34,23 L35,29 L30,26 L25,29 L26,23 L19,21 L25,19 L22,13 L28,15 Z" fill="#d80621"/></svg>',
             USD: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="60" height="5.71" fill="#b22234"/><rect y="11.43" width="60" height="5.71" fill="#b22234"/><rect y="22.86" width="60" height="5.71" fill="#b22234"/><rect y="34.29" width="60" height="5.71" fill="#b22234"/><rect width="24" height="22.86" fill="#3c3b6e"/><circle cx="8" cy="6" r="1.3" fill="#fff"/><circle cx="16" cy="6" r="1.3" fill="#fff"/><circle cx="12" cy="11.4" r="1.3" fill="#fff"/><circle cx="8" cy="16.8" r="1.3" fill="#fff"/><circle cx="16" cy="16.8" r="1.3" fill="#fff"/></svg>',
             NGN: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#008751"/><rect x="40" width="20" height="40" fill="#008751"/></svg>',
+            EUR: '<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#039"/><circle cx="40" cy="20" r="1.3" fill="#fc0"/><circle cx="38.66" cy="15" r="1.3" fill="#fc0"/><circle cx="35" cy="11.34" r="1.3" fill="#fc0"/><circle cx="30" cy="10" r="1.3" fill="#fc0"/><circle cx="25" cy="11.34" r="1.3" fill="#fc0"/><circle cx="21.34" cy="15" r="1.3" fill="#fc0"/><circle cx="20" cy="20" r="1.3" fill="#fc0"/><circle cx="21.34" cy="25" r="1.3" fill="#fc0"/><circle cx="25" cy="28.66" r="1.3" fill="#fc0"/><circle cx="30" cy="30" r="1.3" fill="#fc0"/><circle cx="35" cy="28.66" r="1.3" fill="#fc0"/><circle cx="38.66" cy="25" r="1.3" fill="#fc0"/></svg>',
         };
         function currencyCheckSvg() {
             return '<svg class="currency-fab-panel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -27961,7 +27963,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // rather than diffed, so a rate the admin just removed can't leave
         // a stale, now-unselectable option sitting in the panel.
         function availableCurrencies() {
-            return ['GBP', 'CAD', 'USD', 'NGN'].filter(c => c === 'GBP' || (typeof fxRates[c] === 'number' && fxRates[c] > 0));
+            return ['GBP', 'CAD', 'USD', 'NGN', 'EUR'].filter(c => c === 'GBP' || (typeof fxRates[c] === 'number' && fxRates[c] > 0));
         }
         function renderCurrencySwitch() {
             const options = availableCurrencies();
@@ -31076,7 +31078,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // future currency only ever means editing this one list (plus
         // CURRENCY_NAMES/SYMBOLS/FLAGS, same as every other spot already
         // keyed off exactly these three).
-        const FX_AUTO_CODES = ['CAD', 'USD', 'NGN'];
+        const FX_AUTO_CODES = ['CAD', 'USD', 'NGN', 'EUR'];
         function toggleFxRateInputDisabled(code) {
             const autoEl = document.getElementById(`fxRateAuto${code}`);
             const inputEl = document.getElementById(`fxRate${code}Input`);
@@ -31106,7 +31108,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             el.innerHTML = `
     <h3>Currency rates <span class="admin-only-tag">Edit mode only</span></h3>
     <p class="delivery-admin-note">Every price, discount, and report stays in GBP everywhere else on the site and in this admin panel, regardless of what's set here - this only sets the rate a shopper's chosen currency converts to, for on-screen display and for what Stripe actually charges their card. Leave a field blank (with auto-update off) to turn that currency off entirely: the floating currency picker only ever offers a currency with a real rate set here, and disappears entirely once fewer than two are available. A currency with "Auto-update" on instead gets refreshed daily from a live exchange-rate provider - its own field becomes read-only, since a typed-in value would just be overwritten at the next refresh anyway. ${lastFetchedLabel}</p>
-    <div class="field-row field-row-3">${fieldsHTML}</div>
+    <div class="field-row field-row-auto">${fieldsHTML}</div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
       <button type="button" class="btn btn-primary" id="currencyRatesSaveBtn">Save changes</button>
       <button type="button" class="btn btn-secondary" id="currencyRatesRefreshBtn">Refresh live rates now</button>

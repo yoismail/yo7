@@ -533,6 +533,7 @@ begin
     when 'CAD' then 'CA$'
     when 'USD' then 'US$'
     when 'NGN' then '₦'
+    when 'EUR' then '€'
     else '£'
   end) || to_char(coalesce(p_amount, 0), 'FM999,999,990.00');
 end;
@@ -2182,7 +2183,7 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     -- value that drifts if fx_rates changes later.
     "charged_currency" "text" DEFAULT 'GBP'::"text" NOT NULL,
     "charged_amount" numeric(10,2),
-    CONSTRAINT "orders_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text", 'NGN'::"text"]))),
+    CONSTRAINT "orders_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text", 'NGN'::"text", 'EUR'::"text"]))),
     CONSTRAINT "orders_fulfilment_method_check" CHECK (("fulfilment_method" = ANY (ARRAY['delivery'::"text", 'pickup'::"text"]))),
     CONSTRAINT "orders_status_check" CHECK (("status" = ANY (ARRAY['placed'::"text", 'being_prepared'::"text", 'out_for_delivery'::"text", 'ready_for_pickup'::"text", 'delivered'::"text", 'cancelled'::"text", 'returned'::"text"])))
 );
@@ -2230,7 +2231,7 @@ CREATE TABLE IF NOT EXISTS "public"."pending_checkouts" (
     -- charged_currency is GBP), so nothing downstream needs to guess.
     "charged_currency" "text" DEFAULT 'GBP'::"text" NOT NULL,
     "charged_amount" numeric(10,2),
-    CONSTRAINT "pending_checkouts_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text", 'NGN'::"text"])))
+    CONSTRAINT "pending_checkouts_charged_currency_check" CHECK (("charged_currency" = ANY (ARRAY['GBP'::"text", 'CAD'::"text", 'USD'::"text", 'NGN'::"text", 'EUR'::"text"])))
 );
 
 
