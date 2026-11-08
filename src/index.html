@@ -4196,6 +4196,18 @@
         body.edit-mode-on .combo-edit-btn, body.edit-mode-on .bundle-edit-btn { display: block; }
 
         /* ================= BUILD A BUNDLE ================= */
+        .dish-search-wrap { position: relative; margin-bottom: 18px; }
+        .dish-search-wrap svg {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            width: 16px; height: 16px; color: var(--text-muted); pointer-events: none;
+        }
+        .dish-search-input {
+            width: 100%; padding: 13px 16px 13px 42px; border-radius: 11px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.14); background: var(--card-bg);
+            color: var(--heading); font-family: var(--body); font-size: 15px;
+        }
+        .dish-search-input::placeholder { color: var(--text-muted); }
+        .dish-search-input:focus { outline: none; border-color: var(--chartreuse-rich); }
         .dish-picker {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
             gap: 14px; margin-bottom: 36px;
@@ -4326,6 +4338,14 @@
         .dish-builder-row label em { color: #b34a4a; font-style: normal; font-size: 12px; }
         .dish-builder-unit { font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
         .dish-builder-row .price { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); flex-shrink: 0; }
+        .dish-sub-suggestion {
+            padding: 0 6px 12px; margin-top: -8px; font-size: 12.5px; color: var(--text-muted);
+        }
+        .dish-sub-suggestion button {
+            background: none; border: none; padding: 0; margin-left: 4px;
+            font-family: var(--body); font-size: 12.5px; font-weight: 600; color: var(--chartreuse-rich);
+            text-decoration: underline; cursor: pointer;
+        }
         .dish-builder-summary {
             background: var(--section-alt-bg); padding: 22px 24px;
             display: flex; flex-direction: column; justify-content: flex-end;
@@ -14057,6 +14077,10 @@
         </header>
         <section class="products-section">
             <div class="wrap">
+                <div class="dish-search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                    <input type="text" id="dishSearchInput" class="dish-search-input" placeholder="Search for a dish, e.g. jollof, suya, pepper soup..." autocomplete="off" aria-label="Search for a dish" oninput="filterDishPicker(this.value)">
+                </div>
                 <div class="dish-picker" id="dishPicker"></div>
                 <div id="dishBuilderPanel" class="dish-builder-panel" style="display:none;">
                     <div class="dish-builder-header" id="dishBuilderHeader"></div>
@@ -17507,7 +17531,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-08.5';
+        const BUILD_VERSION = '2026-11-08.6';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18739,29 +18763,81 @@
         // for any dish added later: a 24x24 viewBox, stroke="currentColor",
         // stroke-width 1.7, round caps/joins, no raw emoji characters.
         let DISH_TEMPLATES = [
-            { name: 'Jollof Rice', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>', items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'seasoning', idx: 0 }] },
-            { name: 'Suya Night', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11h4.3M17.2 11H21.5"/><rect x="6.3" y="8" width="5" height="6" rx="1.6"/><rect x="12.7" y="8" width="5" height="6" rx="1.6"/><path d="M9 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3ZM15 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3Z"/></svg>', items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }, { catSlug: 'oils', idx: 1 }] },
-            { name: 'Pepper Soup', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><circle cx="9.5" cy="5.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12.7" cy="4.4" r=".9" fill="currentColor" stroke="none"/><circle cx="15.3" cy="5.9" r=".9" fill="currentColor" stroke="none"/></svg>', items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'peppers-chillies', idx: 1 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'sea-foods', idx: 1 }] },
-            { name: 'Fried Rice', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5c0 4.5 3.8 7.8 9 7.8s9-3.3 9-7.8"/><path d="M2 10.5h20"/><path d="M18.2 6 21.5 3.3"/><ellipse cx="17" cy="7" rx="1.5" ry="1" transform="rotate(-30 17 7)"/><ellipse cx="8" cy="13.2" rx=".8" ry="1.1" transform="rotate(-20 8 13.2)"/><ellipse cx="11" cy="14.3" rx=".8" ry="1.1" transform="rotate(10 11 14.3)"/><ellipse cx="14" cy="13.6" rx=".8" ry="1.1" transform="rotate(-10 14 13.6)"/></svg>', items: [{ catSlug: 'rice', idx: 2 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'poultry', idx: 1 }] },
-            { name: 'Ewa Agoyin', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9.3" cy="12.6" rx="1.3" ry=".9" transform="rotate(20 9.3 12.6)"/><ellipse cx="12.5" cy="13.4" rx="1.3" ry=".9" transform="rotate(-15 12.5 13.4)"/><ellipse cx="15.1" cy="12.1" rx="1.3" ry=".9" transform="rotate(25 15.1 12.1)"/></svg>', items: [{ catSlug: 'beans', idx: 3 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'sea-foods', idx: 1 }] },
-            { name: 'Efo Riro', emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.8h14v3a7 6.2 0 0 1-14 0v-3Z"/><path d="M4.3 11.6c-.9-.1-1.4.6-1.2 1.5M19.7 11.6c.9-.1 1.4.6 1.2 1.5"/><path d="M9 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9ZM15 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9Z"/></svg>', items: [{ catSlug: 'fruits-vegetables', idx: 1 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'sea-foods', idx: 1 }, { catSlug: 'sea-foods', idx: 2 }, { catSlug: 'condiments', idx: 1 }] },
+            { name: 'Jollof Rice', aliases: ['jellof', 'jalof', 'jollof'], emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9" cy="8.3" rx="1" ry="1.6" transform="rotate(-20 9 8.3)"/><ellipse cx="12.3" cy="7.3" rx="1" ry="1.6"/><ellipse cx="15.5" cy="8.3" rx="1" ry="1.6" transform="rotate(20 15.5 8.3)"/></svg>', items: [{ catSlug: 'rice', idx: 1 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'condiments', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'seasoning', idx: 0 }] },
+            { name: 'Suya Night', aliases: ['suya', 'suyar', 'suyya'], emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11h4.3M17.2 11H21.5"/><rect x="6.3" y="8" width="5" height="6" rx="1.6"/><rect x="12.7" y="8" width="5" height="6" rx="1.6"/><path d="M9 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3ZM15 18.5c-.9-1.3-.9-2.3 0-3.3.9 1 .9 2 0 3.3Z"/></svg>', items: [{ catSlug: 'meat', idx: 2 }, { catSlug: 'seasoning', idx: 3 }, { catSlug: 'oils', idx: 1 }] },
+            { name: 'Pepper Soup', aliases: ['peppersoup', 'pepper-soup', 'pepe soup'], emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><circle cx="9.5" cy="5.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12.7" cy="4.4" r=".9" fill="currentColor" stroke="none"/><circle cx="15.3" cy="5.9" r=".9" fill="currentColor" stroke="none"/></svg>', items: [{ catSlug: 'meat', idx: 0 }, { catSlug: 'peppers-chillies', idx: 1 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'sea-foods', idx: 1 }] },
+            { name: 'Fried Rice', aliases: ['friedrice', 'nigerian fried rice'], emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5c0 4.5 3.8 7.8 9 7.8s9-3.3 9-7.8"/><path d="M2 10.5h20"/><path d="M18.2 6 21.5 3.3"/><ellipse cx="17" cy="7" rx="1.5" ry="1" transform="rotate(-30 17 7)"/><ellipse cx="8" cy="13.2" rx=".8" ry="1.1" transform="rotate(-20 8 13.2)"/><ellipse cx="11" cy="14.3" rx=".8" ry="1.1" transform="rotate(10 11 14.3)"/><ellipse cx="14" cy="13.6" rx=".8" ry="1.1" transform="rotate(-10 14 13.6)"/></svg>', items: [{ catSlug: 'rice', idx: 2 }, { catSlug: 'oils', idx: 2 }, { catSlug: 'seasoning', idx: 2 }, { catSlug: 'poultry', idx: 1 }] },
+            { name: 'Ewa Agoyin', aliases: ['agoyin beans', 'ewagoyin', 'ewa goyin'], emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 5.5 0 0 1-8.5 6.5A8.5 5.5 0 0 1 3.5 11Z"/><ellipse cx="9.3" cy="12.6" rx="1.3" ry=".9" transform="rotate(20 9.3 12.6)"/><ellipse cx="12.5" cy="13.4" rx="1.3" ry=".9" transform="rotate(-15 12.5 13.4)"/><ellipse cx="15.1" cy="12.1" rx="1.3" ry=".9" transform="rotate(25 15.1 12.1)"/></svg>', items: [{ catSlug: 'beans', idx: 3 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'condiments', idx: 1 }, { catSlug: 'sea-foods', idx: 1 }] },
+            { name: 'Efo Riro', aliases: ['efo-riro', 'efo elegusi', 'spinach stew'], emoji: '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.8h14v3a7 6.2 0 0 1-14 0v-3Z"/><path d="M4.3 11.6c-.9-.1-1.4.6-1.2 1.5M19.7 11.6c.9-.1 1.4.6 1.2 1.5"/><path d="M9 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9ZM15 10.8c-1.5-2-1-4.4.5-5.9 1 2.3.7 4.4-.5 5.9Z"/></svg>', items: [{ catSlug: 'fruits-vegetables', idx: 1 }, { catSlug: 'oils', idx: 0 }, { catSlug: 'sea-foods', idx: 1 }, { catSlug: 'sea-foods', idx: 2 }, { catSlug: 'condiments', idx: 1 }] },
         ];
         let activeDishIndex = null;
         let dishSelectedItems = new Set(); // indices into the active dish's items array
+        let dishSearchQuery = '';
+
+        function normalizeDishQuery(s) {
+            return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        }
+        // Plain edit distance, no typo tolerance library needed for a
+        // handful of short dish names - every spelling variant an admin
+        // will actually hit (missing letter, doubled letter, one swapped
+        // vowel) lands within 2 edits of the correct spelling.
+        function levenshtein(a, b) {
+            const m = a.length, n = b.length;
+            if (m === 0) return n;
+            if (n === 0) return m;
+            let prev = Array.from({ length: n + 1 }, (_, j) => j);
+            for (let i = 1; i <= m; i++) {
+                const row = [i];
+                for (let j = 1; j <= n; j++) {
+                    row[j] = a[i - 1] === b[j - 1]
+                        ? prev[j - 1]
+                        : 1 + Math.min(prev[j - 1], prev[j], row[j - 1]);
+                }
+                prev = row;
+            }
+            return prev[n];
+        }
+        // A dish matches a typed-in query if the query is a substring of
+        // its name or one of its known spelling variants (covers "jollof"
+        // finding "Jollof Rice" instantly), or close enough by edit
+        // distance to tolerate a typo or an unlisted spelling (covers
+        // "jellof"/"jalof" finding it too, without having to list every
+        // variant someone might type).
+        function dishMatchesQuery(dish, normalizedQuery) {
+            const candidates = [normalizeDishQuery(dish.name), ...(dish.aliases || []).map(normalizeDishQuery)];
+            return candidates.some(c => {
+                if (c.includes(normalizedQuery) || normalizedQuery.includes(c)) return true;
+                const threshold = normalizedQuery.length <= 4 ? 1 : 2;
+                return levenshtein(c, normalizedQuery) <= threshold;
+            });
+        }
+        function filterDishPicker(value) {
+            dishSearchQuery = value || '';
+            renderDishPicker();
+        }
+        window.filterDishPicker = filterDishPicker;
 
         function renderDishPicker() {
             const picker = document.getElementById('dishPicker');
             if (!picker) return;
-            picker.innerHTML = DISH_TEMPLATES.map((d, i) => `
+            const query = normalizeDishQuery(dishSearchQuery);
+            const entries = DISH_TEMPLATES
+                .map((d, i) => ({ d, i }))
+                .filter(({ d }) => !query || dishMatchesQuery(d, query));
+            const emptyMsg = query
+                ? `<p style="font-size:13px; color:var(--text-muted);">No dish matches "${escapeHtml(dishSearchQuery.trim())}". Try a different spelling, or clear the search to browse everything.</p>`
+                : '<p style="font-size:13px; color:var(--text-muted);">No dishes set up yet.</p>';
+            picker.innerHTML = entries.map(({ d, i }) => `
     <span class="dish-pill ${activeDishIndex === i ? 'active' : ''}" onclick="selectDish(${i})">
       <span class="emoji">${d.emoji}</span>${d.name}
       <button type="button" class="dish-pill-remove" onclick="removeDish(event, ${i})" aria-label="Remove dish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </span>`).join('') || '<p style="font-size:13px; color:var(--text-muted);">No dishes set up yet.</p>';
+    </span>`).join('') || emptyMsg;
         }
         function selectDish(i) {
             activeDishIndex = i;
             const dish = DISH_TEMPLATES[i];
             dishSelectedItems = new Set(dish.items.map((_, idx) => idx));
+            dishSubstitutions = new Map();
             renderDishPicker();
             renderDishBuilder();
             // Nudge, don't jump: only scrolls (and only the minimal amount)
@@ -18794,6 +18870,31 @@
             if (removed) logAdminAction('dish_removed', 'dish', removed.name, null);
         }
         window.removeDish = removeDish;
+        // Maps an item's index in dish.items to a replacement {catSlug, idx}
+        // ref, set when the shopper accepts a same-aisle swap for a
+        // suggested ingredient that's out of stock (see useDishSubstitute()
+        // below). Reset whenever a different dish is selected.
+        let dishSubstitutions = new Map();
+        // Suggests a same-aisle replacement for an out-of-stock suggested
+        // ingredient instead of just dropping the row - the dish still
+        // needs that role filled (you can't make jollof without rice), and
+        // same aisle keeps the suggestion relevant (rice swaps for rice,
+        // not for a random product elsewhere in the catalogue).
+        function findDishSubstitute(catSlug) {
+            const cat = findCategory(catSlug);
+            if (!cat) return null;
+            const idx = cat.products.findIndex(p => !p.deleted && p.stock !== 'out');
+            return idx === -1 ? null : { catSlug, idx };
+        }
+        function useDishSubstitute(idx, catSlug, prodIdx) {
+            dishSubstitutions.set(idx, { catSlug, idx: prodIdx });
+            dishSelectedItems.add(idx);
+            renderDishBuilder();
+        }
+        window.useDishSubstitute = useDishSubstitute;
+        function dishItemRef(dish, idx) {
+            return dishSubstitutions.get(idx) || dish.items[idx];
+        }
         function renderDishBuilder() {
             const panel = document.getElementById('dishBuilderPanel');
             const empty = document.getElementById('dishBuilderEmpty');
@@ -18818,7 +18919,9 @@
             }
             const list = document.getElementById('dishBuilderList');
             list.innerHTML = dish.items.map((ref, idx) => {
-                const p = getProduct(ref.catSlug, ref.idx);
+                const isSwapped = dishSubstitutions.has(idx);
+                const effRef = dishItemRef(dish, idx);
+                const p = getProduct(effRef.catSlug, effRef.idx);
                 // Treated the same as a missing product, same reason
                 // bundleCardHTML()/comboCardHTML() exclude a deleted item
                 // rather than letting it render as a normal, selectable,
@@ -18826,20 +18929,23 @@
                 if (!p || p.deleted) return '';
                 const outOfStock = p.stock === 'out';
                 const checked = dishSelectedItems.has(idx) && !outOfStock;
+                const sub = (!isSwapped && outOfStock) ? findDishSubstitute(ref.catSlug) : null;
+                const subProduct = sub ? getProduct(sub.catSlug, sub.idx) : null;
                 return `
       <div class="dish-builder-row">
         <input type="checkbox" id="dish-item-${idx}" ${checked ? 'checked' : ''} ${outOfStock ? 'disabled' : ''} onchange="toggleDishItem(${idx})">
         <label for="dish-item-${idx}">
-          <span>${escapeHtml(p.name)}${outOfStock ? ' <em>(out of stock)</em>' : ''}</span>
+          <span>${escapeHtml(p.name)}${outOfStock ? ' <em>(out of stock)</em>' : ''}${isSwapped ? ' <em>(swapped in)</em>' : ''}</span>
           ${effectiveUnit(p) ? `<span class="dish-builder-unit">${escapeHtml(effectiveUnit(p))}</span>` : ''}
         </label>
         <span class="price">${money(effectivePrice(p))}</span>
-      </div>`;
+      </div>${subProduct ? `
+      <div class="dish-sub-suggestion">Try instead:<button type="button" onclick="useDishSubstitute(${idx}, '${sub.catSlug}', ${sub.idx})">${escapeHtml(subProduct.name)} (${money(effectivePrice(subProduct))})</button></div>` : ''}`;
             }).join('');
             let total = 0;
             dish.items.forEach((ref, idx) => {
                 if (!dishSelectedItems.has(idx)) return;
-                const p = getProduct(ref.catSlug, ref.idx);
+                const p = getProduct(dishItemRef(dish, idx).catSlug, dishItemRef(dish, idx).idx);
                 if (p && !p.deleted && p.stock !== 'out') total += effectivePrice(p);
             });
             document.getElementById('dishBuilderTotal').textContent = money(total);
@@ -18856,7 +18962,8 @@
             let added = 0;
             dish.items.forEach((ref, idx) => {
                 if (!dishSelectedItems.has(idx)) return;
-                const p = getProduct(ref.catSlug, ref.idx);
+                const effRef = dishItemRef(dish, idx);
+                const p = getProduct(effRef.catSlug, effRef.idx);
                 if (p && !p.deleted && p.stock !== 'out') { addToCart(p, 1); added++; }
             });
             if (added === 0) { showToast('Nothing selected to add.'); return; }
@@ -18963,10 +19070,12 @@
             const itemNamesAfter = DISH_TEMPLATES[i].items.map(r => { const p = getProduct(r.catSlug, r.idx); return p ? p.name : '?'; }).sort().join(', ');
             dishEditNewItems = null;
             dishEditIconSvg = null;
-            // The selection set is indices into the dish's own items array —
+            // The selection set is indices into the dish's own items array -
             // stale once that array's been rebuilt above, so re-select
             // everything fresh rather than risk pointing at the wrong item.
-            if (activeDishIndex === i) dishSelectedItems = new Set(DISH_TEMPLATES[i].items.map((_, idx) => idx));
+            // Any swapped-in substitute is keyed by the same now-stale
+            // indices, so it's cleared for the same reason.
+            if (activeDishIndex === i) { dishSelectedItems = new Set(DISH_TEMPLATES[i].items.map((_, idx) => idx)); dishSubstitutions = new Map(); }
             document.getElementById('dishEditSlot').innerHTML = '';
             renderDishPicker();
             renderDishBuilder();
