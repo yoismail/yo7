@@ -3742,7 +3742,13 @@
            row instead gives it real room without disturbing them. */
         .combos-scroll .combo-card.is-editing,
         .bundles-scroll .bundle-card.is-editing {
-            flex: 1 1 min(480px, 94vw);
+            /* flex-shrink must stay 0, same as every other card in this
+               row: the row already overflows its container by design
+               (that's how the drag-scroll carousel works), so with
+               shrink allowed here and every sibling fixed at shrink:0,
+               the whole row's negative free space landed entirely on
+               this one item and crushed it down to near nothing. */
+            flex: 0 0 min(480px, 94vw);
             max-width: min(480px, 94vw);
         }
         .bundles-grid > .combo-card.is-editing,
@@ -17501,7 +17507,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-08.3';
+        const BUILD_VERSION = '2026-11-08.4';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
