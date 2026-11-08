@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.d6d87ba94c.css">    <script>
+    <link rel="stylesheet" href="/assets/app.b63b0a499a.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -2445,6 +2445,10 @@
         </header>
         <section class="products-section">
             <div class="wrap">
+                <div class="dish-search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                    <input type="text" id="dishSearchInput" class="dish-search-input" placeholder="Search for a dish, e.g. jollof, suya, pepper soup..." autocomplete="off" aria-label="Search for a dish" oninput="filterDishPicker(this.value)">
+                </div>
                 <div class="dish-picker" id="dishPicker"></div>
                 <div id="dishBuilderPanel" class="dish-builder-panel" style="display:none;">
                     <div class="dish-builder-header" id="dishBuilderHeader"></div>
@@ -3426,7 +3430,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.43fe04027d.js"></script>
+    <script defer src="/assets/app.79a288a04f.js"></script>
 
 </body>
 
