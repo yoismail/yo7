@@ -6734,6 +6734,45 @@
             transform: scale(0.6) translateY(12px) !important;
         }
 
+        /* Stacked directly above .float-order (same right edge, 24px bottom
+           + 56px height + 14px gap = 94px), smaller and neutral-toned
+           rather than the primary floats' orange, so it reads as a
+           secondary utility action rather than a third equally-weighted
+           call to action competing with basket/WhatsApp. */
+        .float-top {
+            position: fixed;
+            right: 24px;
+            bottom: 94px;
+            z-index: 89;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            color: var(--heading);
+            border: 1.5px solid rgba(var(--border-rgb), 0.14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+            opacity: 0;
+            transform: scale(0.6) translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.34, 1.56, .64, 1), background 0.2s ease;
+            pointer-events: none;
+            cursor: pointer;
+        }
+        .float-top.is-visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+        .float-top.float-suppressed {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(0.6) translateY(12px) !important;
+        }
+        .float-top:hover { transform: scale(1.08); }
+        .float-top svg { width: 20px; height: 20px; }
+
         .float-order:hover {
             background: #C9C900;
             transform: scale(1.08);
@@ -14954,6 +14993,12 @@
         </svg>
     </a>
 
+    <button type="button" class="float-top" id="floatTop" aria-label="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+    </button>
+
     <div class="currency-fab-wrap" id="currencyFabWrap">
         <button type="button" class="currency-fab" id="currencyFab" aria-haspopup="menu" aria-expanded="false" aria-label="Choose currency to pay in">
             <span class="currency-fab-flag" id="currencyFabFlag"><svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#00247d"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#cf142b" stroke-width="4"/><rect x="0" y="14" width="60" height="12" fill="#fff"/><rect x="24" y="0" width="12" height="40" fill="#fff"/><rect x="0" y="17" width="60" height="6" fill="#cf142b"/><rect x="27" y="0" width="6" height="40" fill="#cf142b"/></svg></span>
@@ -17532,7 +17577,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-08.7';
+        const BUILD_VERSION = '2026-11-10.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -30151,6 +30196,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (floatBtn) floatBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const floatCartBtn = document.getElementById('floatCart');
             if (floatCartBtn) floatCartBtn.classList.toggle('float-suppressed', FLOAT_CART_HIDDEN_VIEWS.includes(id));
+            const floatTopBtn = document.getElementById('floatTop');
+            if (floatTopBtn) floatTopBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const currencyFabWrapEl = document.getElementById('currencyFabWrap');
             if (currencyFabWrapEl) currencyFabWrapEl.classList.toggle('float-suppressed', CURRENCY_FAB_HIDDEN_VIEWS.includes(id));
             const activeEl = document.getElementById(id);
@@ -30641,11 +30688,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         /* ================= SCROLL: float button + reveal ================= */
         const floatOrder = document.getElementById('floatOrder');
         const floatCart = document.getElementById('floatCart');
+        const floatTop = document.getElementById('floatTop');
         const mainNavEl = document.getElementById('mainNav');
         const currencyFabWrapScrollEl = document.getElementById('currencyFabWrap');
         function onScroll() {
             floatOrder.classList.toggle('is-visible', window.scrollY > 260);
             if (floatCart) floatCart.classList.toggle('is-visible', window.scrollY > 260);
+            if (floatTop) floatTop.classList.toggle('is-visible', window.scrollY > 260);
             const onHomepage = window.location.hash === '' || window.location.hash === '#/';
             if (mainNavEl) {
                 mainNavEl.classList.toggle('nav-solid', !onHomepage || window.scrollY > 80);
@@ -30667,6 +30716,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('hashchange', onScroll);
         onScroll();
+        if (floatTop) {
+            floatTop.addEventListener('click', () => {
+                const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+            });
+        }
 
         function observeReveals() {
             const io = new IntersectionObserver((entries) => {
