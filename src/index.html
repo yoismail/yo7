@@ -14701,6 +14701,13 @@
                             <button type="button" class="btn btn-outline-dark" id="analyticsCustomApply">Apply</button>
                             <div class="analytics-custom-error" id="analyticsCustomError" style="display:none;"></div>
                         </div>
+                        <button type="button" class="btn btn-outline-dark" id="analyticsDownloadBtn" style="margin-bottom:14px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 3v12m0 0-4-4m4 4 4-4" />
+                                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                            </svg>
+                            Download report
+                        </button>
                         <div id="analyticsContent"><div class="skeleton-stat-grid">
                             <div class="skeleton-stat-card"><div class="skeleton-block skeleton-label-bar"></div><div class="skeleton-block skeleton-value-bar"></div></div>
                             <div class="skeleton-stat-card"><div class="skeleton-block skeleton-label-bar"></div><div class="skeleton-block skeleton-value-bar"></div></div>
@@ -17577,7 +17584,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-10.1';
+        const BUILD_VERSION = '2026-11-19.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -26379,6 +26386,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         let analyticsRangeMode = 'month';
         let analyticsMonthOffset = 0; // periods back within the current range mode's span — 0 = most recent, never lets you page into the future
         let analyticsCustomRange = null; // { start, end } Date objects, set only once a custom range has been Applied
+        // Snapshot of whatever renderAnalytics() last actually computed and
+        // drew on screen - the "Download report" button builds its PDF from
+        // this rather than re-querying, so the report always matches
+        // exactly what the admin is currently looking at, not a fresh
+        // (and possibly different, if an order landed in between) query.
+        let lastAnalyticsSnapshot = null;
         function analyticsRangeSpan(mode) { return mode === '6month' ? 6 : mode === '3month' ? 3 : 1; }
         function analyticsMonthRange(offset) {
             if (analyticsRangeMode === 'custom') return analyticsCustomRange || { start: new Date(), end: new Date() };
@@ -26402,6 +26415,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (!content) return;
             if (analyticsRangeMode === 'custom' && !analyticsCustomRange) {
                 content.innerHTML = '<div class="analytics-empty">Pick a start and end date above, then Apply.</div>';
+                lastAnalyticsSnapshot = null;
                 return;
             }
             const { start, end } = analyticsMonthRange(offset);
@@ -26415,13 +26429,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (label) label.textContent = `${start.toLocaleDateString('en-GB', sameYear ? { month: 'short' } : { month: 'short', year: 'numeric' })} – ${lastMonth.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
             }
             if (nextBtn) nextBtn.disabled = offset === 0;
-            if (!supabaseClient) { content.innerHTML = '<div class="analytics-empty">Analytics need accounts connected first, this is preview mode right now.</div>'; return; }
+            if (!supabaseClient) { content.innerHTML = '<div class="analytics-empty">Analytics need accounts connected first, this is preview mode right now.</div>'; lastAnalyticsSnapshot = null; return; }
             content.innerHTML = skeletonStatGridHTML(4);
 
             const { data: monthOrders, error } = await supabaseClient
                 .from('orders').select('*')
                 .gte('created_at', start.toISOString()).lt('created_at', end.toISOString());
-            if (error) { content.innerHTML = '<div class="analytics-empty">Couldn\'t load analytics right now.</div>'; return; }
+            if (error) { content.innerHTML = '<div class="analytics-empty">Couldn\'t load analytics right now.</div>'; lastAnalyticsSnapshot = null; return; }
             if (analyticsMonthOffset !== offset) return; // a newer month was requested while this was loading
 
             // "New vs returning" needs to know, for each customer who ordered
@@ -26478,6 +26492,25 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 const tierLabel = (tier && tier.label) || 'Unknown';
                 tierCounts.set(tierLabel, (tierCounts.get(tierLabel) || 0) + 1);
             });
+
+            // Inclusive end-of-range for display purposes - `end` itself is
+            // the exclusive start-of-next-day/month the query actually used
+            // (see analyticsMonthRange()/the custom-range Apply handler),
+            // one day short of what a human reads as "through the 31st".
+            const inclusiveEnd = new Date(end.getTime() - 86400000);
+            const rangeLabelForReport = analyticsRangeMode === 'custom'
+                ? `${start.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} – ${inclusiveEnd.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                : (label && label.textContent) || `${start.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} – ${inclusiveEnd.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+            lastAnalyticsSnapshot = {
+                rangeLabel: rangeLabelForReport,
+                revenue, orderCount: nonCancelled.length, aov,
+                customerCount: userIds.length, newCount, returningCount, cancelledCount,
+                productRevenue, deliveryFeeRevenue,
+                topProducts,
+                discountedOrderCount: discountedOrders.length, discountTotal,
+                deliveryCount: deliveryOrders.length, pickupCount: pickupOrders.length,
+                tierCounts: [...tierCounts.entries()],
+            };
 
             content.innerHTML = `
     <div class="analytics-stat-grid">
@@ -26566,6 +26599,168 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (start >= end) { showError('The start date must be before the end date.'); return; }
                 analyticsCustomRange = { start, end };
                 renderAnalytics(0);
+            });
+        }
+
+        /* ================= PDF: BUSINESS ANALYTICS REPORT =================
+           Same jsPDF + brand-font machinery as buildInvoicePdfBlob() above
+           (ensurePdfLibsLoaded/ensureInvoiceFontsLoaded, the real seal PNG,
+           the same setText/hr drawing helpers redefined locally here since
+           the invoice function keeps its own margin/colour locals too,
+           nothing here depends on an on-screen order so there's nothing
+           shared to factor out). Built from lastAnalyticsSnapshot, exactly
+           whatever renderAnalytics() last put on screen, never a fresh
+           query - the report always matches what the admin is looking at. */
+        async function buildAnalyticsReportPdfBlob(snapshot) {
+            await ensurePdfLibsLoaded();
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
+            const brandFontLoaded = await ensureInvoiceFontsLoaded(pdf);
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 42;
+            let y = margin;
+
+            const ink = [22, 33, 13];
+            const aubergine = [6, 59, 0];
+            const chartreuse = [144, 184, 0];
+            const muted = [138, 127, 120];
+            const rule = [230, 225, 210];
+            const accent = aubergine;
+
+            const setText = (size, style, color) => {
+                pdf.setFont(brandFontLoaded ? 'Poppins' : 'helvetica', style);
+                pdf.setFontSize(size);
+                pdf.setTextColor(...color);
+            };
+            const hr = (yy) => { pdf.setDrawColor(...rule); pdf.setLineWidth(0.75); pdf.line(margin, yy, pageWidth - margin, yy); };
+            const ensureRoom = (needed) => {
+                if (y + needed <= pageHeight - margin) return;
+                pdf.addPage();
+                y = margin;
+                pdf.setFillColor(...chartreuse);
+                pdf.rect(0, 0, pageWidth, 6, 'F');
+                y += 6;
+            };
+            const sectionTitle = (text) => {
+                ensureRoom(26);
+                setText(8.5, 'bold', muted);
+                pdf.text(text.toUpperCase(), margin, y);
+                y += 12;
+                hr(y);
+                y += 16;
+            };
+            const row = (label, value, valueColor = ink) => {
+                ensureRoom(16);
+                setText(10, 'normal', ink);
+                pdf.text(label, margin, y);
+                setText(10, 'bold', valueColor);
+                pdf.text(value, pageWidth - margin, y, { align: 'right' });
+                y += 16;
+            };
+
+            // ---- Chartreuse top strip + header, same treatment as the invoice ----
+            pdf.setFillColor(...chartreuse);
+            pdf.rect(0, 0, pageWidth, 6, 'F');
+            y += 6;
+
+            const sealCx = margin + 16, sealCy = y + 15, sealR = 16;
+            pdf.addImage(SEAL_MARK_PNG, 'PNG', sealCx - sealR, sealCy - sealR - 4, sealR * 2, sealR * 2 + 4);
+            setText(19, 'bold', accent);
+            const wordmarkX = margin + sealR * 2 + 10, wordmarkY = y + 18;
+            pdf.text('YO', wordmarkX, wordmarkY);
+            const yoWidth = pdf.getTextWidth('YO');
+            setText(19, 'bold', chartreuse);
+            pdf.text('7', wordmarkX + yoWidth, wordmarkY);
+            const sevenWidth = pdf.getTextWidth('7');
+            setText(19, 'bold', accent);
+            pdf.text(' Foods', wordmarkX + yoWidth + sevenWidth, wordmarkY);
+            setText(9, 'normal', muted);
+            pdf.text('Business analytics report', margin + sealR * 2 + 10, y + 32);
+
+            setText(10, 'bold', ink);
+            pdf.text(snapshot.rangeLabel, pageWidth - margin, y + 18, { align: 'right' });
+            setText(9, 'normal', muted);
+            pdf.text('Generated ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), pageWidth - margin, y + 32, { align: 'right' });
+
+            y += 48;
+            pdf.setDrawColor(...ink);
+            pdf.setLineWidth(1.4);
+            pdf.line(margin, y, pageWidth - margin, y);
+            y += 24;
+
+            // ---- Summary ----
+            sectionTitle('Summary');
+            row('Revenue (incl. delivery fees)', gbp(snapshot.revenue), accent);
+            row('Orders', String(snapshot.orderCount));
+            row('Average order value', gbp(snapshot.aov));
+            row('Customers (' + snapshot.newCount + ' new, ' + snapshot.returningCount + ' returning)', String(snapshot.customerCount));
+            row('Cancelled orders', String(snapshot.cancelledCount));
+            y += 8;
+
+            // ---- Revenue breakdown ----
+            sectionTitle('Revenue breakdown');
+            row('Product sales', gbp(snapshot.productRevenue));
+            row('Delivery fees', gbp(snapshot.deliveryFeeRevenue));
+            row('Total', gbp(snapshot.revenue));
+            y += 8;
+
+            // ---- Top products ----
+            sectionTitle('Top products');
+            if (snapshot.topProducts.length) {
+                snapshot.topProducts.forEach(([name, s]) => {
+                    ensureRoom(16);
+                    setText(10, 'normal', ink);
+                    const nameLines = pdf.splitTextToSize(name, 280);
+                    pdf.text(nameLines[0], margin, y);
+                    setText(9, 'normal', muted);
+                    pdf.text(`${s.qty} sold`, margin + 290, y);
+                    setText(10, 'bold', ink);
+                    pdf.text(gbp(s.revenue), pageWidth - margin, y, { align: 'right' });
+                    y += 16;
+                });
+            } else {
+                setText(10, 'normal', muted);
+                pdf.text('No orders in this period.', margin, y);
+                y += 16;
+            }
+            y += 8;
+
+            // ---- Discount codes ----
+            sectionTitle('Discount codes');
+            row('Orders using a code', String(snapshot.discountedOrderCount));
+            row('Total given in discounts', gbp(snapshot.discountTotal));
+            y += 8;
+
+            // ---- Delivery & pickup ----
+            sectionTitle('Delivery & pickup');
+            row('Delivery orders', String(snapshot.deliveryCount));
+            row('Pickup orders', String(snapshot.pickupCount));
+            snapshot.tierCounts.forEach(([tierLabel, count]) => row(tierLabel, String(count)));
+
+            return pdf.output('blob');
+        }
+        function analyticsReportFileName(snapshot) {
+            const safeRange = (snapshot.rangeLabel || 'report').replace(/[^\w-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            return `Yo7-Foods-Analytics-${safeRange}.pdf`;
+        }
+        const analyticsDownloadBtn = document.getElementById('analyticsDownloadBtn');
+        if (analyticsDownloadBtn) {
+            analyticsDownloadBtn.addEventListener('click', () => {
+                if (!lastAnalyticsSnapshot) { showToast('Nothing to download yet, pick a period with some data first.'); return; }
+                withButtonBusyState(analyticsDownloadBtn, 'Preparing…', async () => {
+                    try {
+                        const snapshot = lastAnalyticsSnapshot;
+                        const blob = await buildAnalyticsReportPdfBlob(snapshot);
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = analyticsReportFileName(snapshot);
+                        document.body.appendChild(a); a.click(); a.remove();
+                        URL.revokeObjectURL(url);
+                    } catch (e) {
+                        alert('Could not generate the report right now, please try again.');
+                    }
+                });
             });
         }
 
