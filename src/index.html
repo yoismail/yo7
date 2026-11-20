@@ -15201,7 +15201,7 @@
     </button>
 
     <div class="chat-nudge" id="chatNudge" onclick="openChatModal()">
-        Ask about a dish or ingredient!
+        Ask about food, cooking, or an order!
         <button type="button" class="chat-nudge-close" aria-label="Dismiss" onclick="event.stopPropagation(); dismissChatNudge();">&times;</button>
     </div>
 
@@ -15253,13 +15253,13 @@
                     </button>
                 </div>
             </div>
-            <p class="sub">Ask about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</p>
+            <p class="sub">Ask about African or Caribbean dishes, ingredients, or cooking, I'll point you to what we sell or connect you with the team for anything else.</p>
             <div class="chat-messages" id="chatMessages"></div>
             <form class="chat-input-row" id="chatForm">
                 <button type="button" class="chat-mic-btn" id="chatMicBtn" aria-label="Ask by voice" style="display:none;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 11a7 7 0 0 1-14 0" /><path d="M12 18v4" /></svg>
                 </button>
-                <input type="text" id="chatInput" placeholder="Ask about a dish or ingredient..." autocomplete="off" maxlength="500">
+                <input type="text" id="chatInput" placeholder="Ask about food, cooking, or orders..." autocomplete="off" maxlength="500">
                 <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7Z" /></svg>
                 </button>
@@ -17831,7 +17831,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-20.5';
+        const BUILD_VERSION = '2026-11-20.6';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18598,11 +18598,12 @@
         function renderChatMessages() {
             const container = document.getElementById('chatMessages');
             if (!container) return;
-            const greeting = chatMessages.length === 0
-                ? `<div class="chat-msg chat-msg-assistant">Hi! Ask me about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</div>`
-                : '';
+            // No separate empty-state greeting bubble here, the modal's own
+            // .sub paragraph right above already says this, once, and stays
+            // visible the whole conversation, so this isn't the same line
+            // repeated right under it before anyone's typed a word.
             const loading = chatSending ? `<div class="chat-msg chat-msg-loading">Thinking…</div>` : '';
-            container.innerHTML = greeting + chatMessages.map(chatMessageHTML).join('') + loading;
+            container.innerHTML = chatMessages.map(chatMessageHTML).join('') + loading;
             container.scrollTop = container.scrollHeight;
         }
         async function sendChatMessage(e) {
