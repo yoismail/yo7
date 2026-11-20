@@ -6818,6 +6818,27 @@
         [data-theme="dark"] .float-chat { background: var(--chartreuse); color: var(--aubergine-deep); }
         [data-theme="dark"] .float-chat:hover { background: var(--chartreuse-soft); }
 
+        /* The chat modal's own dark-mode surface (--card-bg: #17240E) sat
+           only one shade above the dark-mode page background (--page-bg:
+           #0E1A08) and the assistant bubble behind it (--section-alt-bg:
+           #14210D), so the whole box read as one indistinct dark mass,
+           reported with a screenshot. Rather than pick a one-off colour,
+           re-point the tokens this box's own descendants already read
+           (chips, input, bubbles, muted text) at their light-mode values,
+           so the chat reads as a light surface floating over the dark
+           page, the way a messaging app's own compose window usually
+           does, without touching any rule below one at a time. Light mode
+           itself already had good contrast and is left untouched. */
+        [data-theme="dark"] .chat-modal-box {
+            --card-bg: var(--cream);
+            --section-alt-bg: #F1F5EA;
+            --ink: var(--aubergine);
+            --heading: var(--aubergine);
+            --text-muted: #6b5f58;
+            --text-body: #4a3d3a;
+            --border-rgb: 6, 59, 0;
+        }
+
         /* Speech-bubble callout above .float-chat, nudging a first-time
            visitor to actually tap it rather than leaving a brand-new
            feature to be found by accident. Shown once per visit at most
@@ -6874,6 +6895,13 @@
             display: flex;
             flex-direction: column;
             padding: 20px 20px 16px;
+            /* Redeclared (not just inherited from body) so the dark-mode
+               override below, which redefines --ink locally on this box,
+               actually reaches text like the "Ask YO7" <h3> that has no
+               color rule of its own - a custom property redefined here
+               doesn't retroactively change a `color` value body already
+               computed and handed down before it got here. */
+            color: var(--ink);
         }
         /* Large, faint, decorative only - sits behind every other element in
            the box (each given z-index:1 below) via stacking order alone. */
@@ -17803,7 +17831,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-20.4';
+        const BUILD_VERSION = '2026-11-20.5';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
