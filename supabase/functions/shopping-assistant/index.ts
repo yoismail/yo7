@@ -6,7 +6,9 @@
 // invented name or price, always a live lookup against the same
 // products/custom_products/product_overrides layering create-payment-intent
 // trusts for an actual charge, so a recommended item's price/stock is never
-// stale by the time someone clicks through to buy it.
+// stale by the time someone clicks through to buy it. Also hands off to a
+// real person on WhatsApp via the contact_human tool, for anything the
+// assistant itself can't do (placing an order, an item it can't find).
 //
 // Runs Claude Haiku 5.5 (claude-haiku-5-5) - a cheap, fast model is the
 // right fit for conversational food Q&A with occasional tool calls, not a
@@ -86,6 +88,14 @@ type ProductRow = { cat_slug: string; idx: number; name: string; price: number; 
 type OverrideRow = { product_key: string; price: number | null; sale_price: number | null; stock: string | null };
 type ProductMatch = { name: string; price: number; unit: string; url: string };
 
+// Same WhatsApp number the rest of the site already links to (footer,
+// floating order button, review links). Fixed here rather than something
+// the model could ever paraphrase or mistype.
+const WHATSAPP_CONTACT = {
+  url: `https://wa.me/447398810052?text=${encodeURIComponent("Hi YO7 Foods! I have a question about an order or a product.")}`,
+  label: "Chat with us on WhatsApp",
+};
+
 // Same price/stock layering create-payment-intent's own trusted() helper
 // uses - an admin-set override always wins over the seeded/base row - so a
 // recommended product's price and in-stock status are never a stale number
@@ -141,7 +151,8 @@ Rules:
 - Real departments you can browse by category: ${KNOWN_CATEGORIES.join(", ")}.
 - Keep answers short and mobile-friendly: this is a small chat widget, not an essay. A short paragraph or a tight numbered/bulleted list, not multiple sections.
 - If asked something with nothing to do with African/Caribbean food, cooking, ingredients, or shopping at YO7 Foods, say briefly that's outside what you can help with and steer back to food/shopping questions.
-- Never give food-safety-critical medical advice (allergies, pregnancy-safe foods, etc.) beyond general common knowledge - suggest checking with a doctor for anything serious.`;
+- Never give food-safety-critical medical advice (allergies, pregnancy-safe foods, etc.) beyond general common knowledge - suggest checking with a doctor for anything serious.
+- You can't place an order yourself. If a customer wants to place an order directly, asks whether something not found by search_products is available another way, or explicitly asks to speak to a real person, call contact_human and let them know the team can help on WhatsApp.`;
 
 const SEARCH_PRODUCTS_TOOL: Anthropic.Tool = {
   name: "search_products",
@@ -153,6 +164,12 @@ const SEARCH_PRODUCTS_TOOL: Anthropic.Tool = {
       category: { type: "string", description: `Optional: narrow to one department to browse a whole aisle instead of searching by name. One of: ${KNOWN_CATEGORIES.join(", ")}.` },
     },
   },
+};
+
+const CONTACT_HUMAN_TOOL: Anthropic.Tool = {
+  name: "contact_human",
+  description: "Call this to hand the customer off to a real person on WhatsApp: when they want to place an order directly, ask whether an item not found by search_products is available some other way, or explicitly ask to speak to a human. Returns the real WhatsApp contact link to show them, never invent one yourself.",
+  input_schema: { type: "object", properties: {} },
 };
 
 Deno.serve(async (req) => {
@@ -207,6 +224,7 @@ Deno.serve(async (req) => {
   const anthropic = new Anthropic({ apiKey });
   const messages: Anthropic.MessageParam[] = history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
   const productsUsed = new Map<string, ProductMatch>();
+  let whatsappRequested = false;
 
   try {
     // A real conversation needs at most a couple of tool round-trips
@@ -218,7 +236,7 @@ Deno.serve(async (req) => {
         model: "claude-haiku-5-5",
         max_tokens: 1024,
         system: SYSTEM_PROMPT,
-        tools: [SEARCH_PRODUCTS_TOOL],
+        tools: [SEARCH_PRODUCTS_TOOL, CONTACT_HUMAN_TOOL],
         output_config: { effort: "low" },
         messages,
       });
@@ -231,7 +249,11 @@ Deno.serve(async (req) => {
 
       if (response.stop_reason !== "tool_use") {
         const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
-        return new Response(JSON.stringify({ reply: textBlock?.text ?? "", products: [...productsUsed.values()] }), {
+        return new Response(JSON.stringify({
+          reply: textBlock?.text ?? "",
+          products: [...productsUsed.values()],
+          whatsapp: whatsappRequested ? WHATSAPP_CONTACT : undefined,
+        }), {
           status: 200, headers: { ...cors, "Content-Type": "application/json" },
         });
       }
@@ -240,6 +262,11 @@ Deno.serve(async (req) => {
       const toolUses = response.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const toolUse of toolUses) {
+        if (toolUse.name === "contact_human") {
+          whatsappRequested = true;
+          toolResults.push({ type: "tool_result", tool_use_id: toolUse.id, content: "WhatsApp contact shared with the customer." });
+          continue;
+        }
         const input = toolUse.input as { query?: string; category?: string };
         const matches = await searchProducts(db, input.query, input.category);
         matches.forEach((m) => productsUsed.set(m.url, m));
@@ -254,7 +281,11 @@ Deno.serve(async (req) => {
       messages.push({ role: "user", content: toolResults });
     }
 
-    return new Response(JSON.stringify({ reply: "Sorry, I'm having trouble finding an answer right now, please try asking again.", products: [...productsUsed.values()] }), {
+    return new Response(JSON.stringify({
+      reply: "Sorry, I'm having trouble finding an answer right now, please try asking again.",
+      products: [...productsUsed.values()],
+      whatsapp: whatsappRequested ? WHATSAPP_CONTACT : undefined,
+    }), {
       status: 200, headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (err) {
