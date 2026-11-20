@@ -6773,6 +6773,84 @@
         .float-top:hover { transform: scale(1.08); }
         .float-top svg { width: 20px; height: 20px; }
 
+        /* Stacked above .float-cart, mirroring .float-top's own stack
+           above .float-order on the right edge - keeps the two sides
+           visually balanced (cart+chat on the left, order+top on the
+           right) rather than piling a third icon onto either stack. A
+           distinct dark-green treatment, not the orange of the
+           transactional cart/WhatsApp buttons, since this opens a
+           conversation rather than a purchase action. */
+        .float-chat {
+            position: fixed;
+            left: 24px;
+            bottom: 94px;
+            z-index: 90;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--aubergine-deep);
+            color: var(--cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+            opacity: 0;
+            transform: scale(0.6) translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.34, 1.56, .64, 1), background 0.2s ease;
+            pointer-events: none;
+            border: none;
+            cursor: pointer;
+        }
+        .float-chat.is-visible { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        .float-chat.float-suppressed { opacity: 0 !important; pointer-events: none !important; transform: scale(0.6) translateY(12px) !important; }
+        .float-chat:hover { transform: scale(1.08); }
+        .float-chat svg { width: 24px; height: 24px; }
+
+        .chat-modal-box {
+            max-width: 420px;
+            max-height: min(640px, 85vh);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 20px 16px;
+        }
+        .chat-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+        .chat-modal-header h3 { margin: 0; }
+        .chat-modal-close { background: none; border: none; padding: 6px; margin: -6px; cursor: pointer; color: var(--text-muted); }
+        .chat-modal-close svg { width: 18px; height: 18px; display: block; }
+        .chat-messages {
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+            padding: 12px 2px; margin: 4px -4px 0;
+        }
+        .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.45; }
+        .chat-msg-assistant { align-self: flex-start; background: var(--section-alt-bg); color: var(--text-body); border-bottom-left-radius: 4px; }
+        .chat-msg-user { align-self: flex-end; background: var(--aubergine-deep); color: var(--cream); border-bottom-right-radius: 4px; }
+        .chat-msg-loading { align-self: flex-start; font-size: 13px; color: var(--text-muted); font-style: italic; }
+        .chat-products { display: flex; flex-direction: column; gap: 6px; margin-top: -4px; align-self: flex-start; max-width: 85%; width: 100%; }
+        .chat-product-chip {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0;
+            padding: 8px 12px; border-radius: 11px; border: 1.5px solid rgba(var(--border-rgb), 0.14);
+            background: var(--card-bg); text-decoration: none; color: var(--heading); font-size: 13px;
+        }
+        .chat-product-chip:hover { border-color: var(--chartreuse-rich); }
+        .chat-product-chip-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .chat-product-chip-price { font-family: var(--display); font-weight: 700; flex-shrink: 0; }
+        .chat-input-row { display: flex; gap: 8px; margin-top: 8px; }
+        .chat-input-row input {
+            flex: 1; min-width: 0; padding: 11px 14px; border-radius: 11px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.14);
+            font-family: var(--body); font-size: 16px; background: var(--card-bg); color: var(--heading);
+        }
+        .chat-send-btn {
+            width: 42px; height: 42px; border-radius: 50%; border: none; flex-shrink: 0;
+            background: var(--aubergine-deep); color: var(--cream);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .chat-send-btn:disabled { opacity: 0.5; cursor: default; }
+        .chat-send-btn svg { width: 18px; height: 18px; }
+        @media (max-width: 480px) {
+            .chat-modal-box { max-height: min(640px, 88vh); padding: 16px 16px 14px; }
+        }
+
         .float-order:hover {
             background: #C9C900;
             transform: scale(1.08);
@@ -14992,6 +15070,12 @@
         <span class="float-cart-badge" id="floatCartBadge">0</span>
     </a>
 
+    <button type="button" class="float-chat" id="floatChat" aria-label="Ask about African and Caribbean cooking" onclick="openChatModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+    </button>
+
     <a class="float-order" id="floatOrder" href="https://wa.me/447398810052?text=Hi%20YO7%20Foods!%20I'd%20like%20to%20place%20an%20order." target="_blank" rel="noopener"
         aria-label="Order on WhatsApp">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -15019,6 +15103,25 @@
     </div>
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <div class="modal-overlay" id="chatModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="chatModalTitle" onclick="if (event.target === this) closeChatModal();">
+        <div class="modal-box chat-modal-box">
+            <div class="chat-modal-header">
+                <h3 id="chatModalTitle">Ask YO7</h3>
+                <button type="button" class="chat-modal-close" aria-label="Close" onclick="closeChatModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p class="sub">Ask about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</p>
+            <div class="chat-messages" id="chatMessages"></div>
+            <form class="chat-input-row" id="chatForm">
+                <input type="text" id="chatInput" placeholder="Ask about a dish or ingredient..." autocomplete="off" maxlength="500">
+                <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7Z" /></svg>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="categoryEditModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="categoryEditModalTitle">
         <div class="modal-box">
@@ -17584,7 +17687,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-19.1';
+        const BUILD_VERSION = '2026-11-20.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18305,6 +18408,84 @@
             closeShareSheet();
         }
         window.shareProductVia = shareProductVia;
+
+        /* ================= COOKING/SHOPPING ASSISTANT CHAT =================
+           Backed by the shopping-assistant Edge Function: answers questions
+           about African/Caribbean dishes, ingredients and cooking, and
+           recommends real, in-stock products via a server-side tool call -
+           see that function's own comment for why nothing here is trusted
+           client-side, every product chip it renders came back from the
+           server's own live catalogue lookup. Kept in a plain in-memory
+           array rather than localStorage: a casual chat isn't the kind of
+           state a customer needs surviving a full page reload, unlike the
+           cart, and not persisting it means nothing to clear if someone
+           else uses the same device next. */
+        let chatMessages = [];
+        let chatSending = false;
+        function openChatModal() {
+            const modal = document.getElementById('chatModal');
+            if (modal) modal.style.display = 'flex';
+            renderChatMessages();
+            setTimeout(() => document.getElementById('chatInput')?.focus(), 50);
+        }
+        window.openChatModal = openChatModal;
+        function closeChatModal() {
+            const modal = document.getElementById('chatModal');
+            if (modal) modal.style.display = 'none';
+        }
+        window.closeChatModal = closeChatModal;
+        function chatMessageHTML(msg) {
+            const bubble = `<div class="chat-msg chat-msg-${msg.role}">${escapeHtml(msg.content).replace(/\n/g, '<br>')}</div>`;
+            if (msg.role !== 'assistant' || !msg.products || !msg.products.length) return bubble;
+            const chips = msg.products.map(p => `
+      <a class="chat-product-chip" href="${escapeHtml(p.url)}">
+        <span class="chat-product-chip-name">${escapeHtml(p.name)}</span>
+        <span class="chat-product-chip-price">${money(p.price)}</span>
+      </a>`).join('');
+            return bubble + `<div class="chat-products">${chips}</div>`;
+        }
+        function renderChatMessages() {
+            const container = document.getElementById('chatMessages');
+            if (!container) return;
+            const greeting = chatMessages.length === 0
+                ? `<div class="chat-msg chat-msg-assistant">Hi! Ask me about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</div>`
+                : '';
+            const loading = chatSending ? `<div class="chat-msg chat-msg-loading">Thinking…</div>` : '';
+            container.innerHTML = greeting + chatMessages.map(chatMessageHTML).join('') + loading;
+            container.scrollTop = container.scrollHeight;
+        }
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            if (chatSending) return;
+            const input = document.getElementById('chatInput');
+            const text = (input?.value || '').trim();
+            if (!text) return;
+            if (!supabaseClient) { showToast('The assistant needs accounts connected first, this is preview mode right now.'); return; }
+            input.value = '';
+            chatMessages.push({ role: 'user', content: text });
+            chatSending = true;
+            renderChatMessages();
+            const sendBtn = document.getElementById('chatSendBtn');
+            if (sendBtn) sendBtn.disabled = true;
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('shopping-assistant', {
+                    body: { messages: chatMessages.map(m => ({ role: m.role, content: m.content })) },
+                });
+                if (error || (data && data.error)) {
+                    chatMessages.push({ role: 'assistant', content: (data && data.error) || "Sorry, I couldn't get an answer right now, please try again." });
+                } else {
+                    chatMessages.push({ role: 'assistant', content: (data && data.reply) || '', products: (data && data.products) || [] });
+                }
+            } catch (err) {
+                chatMessages.push({ role: 'assistant', content: "Sorry, I couldn't get an answer right now, please try again." });
+            } finally {
+                chatSending = false;
+                if (sendBtn) sendBtn.disabled = false;
+                renderChatMessages();
+            }
+        }
+        document.getElementById('chatForm')?.addEventListener('submit', sendChatMessage);
+
         async function fetchAccountFavoriteKeys(userId) {
             const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', userId);
             if (error) { console.error('Favorites load failed:', error.message); return null; }
@@ -30393,6 +30574,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (floatCartBtn) floatCartBtn.classList.toggle('float-suppressed', FLOAT_CART_HIDDEN_VIEWS.includes(id));
             const floatTopBtn = document.getElementById('floatTop');
             if (floatTopBtn) floatTopBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
+            const floatChatBtn = document.getElementById('floatChat');
+            if (floatChatBtn) floatChatBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const currencyFabWrapEl = document.getElementById('currencyFabWrap');
             if (currencyFabWrapEl) currencyFabWrapEl.classList.toggle('float-suppressed', CURRENCY_FAB_HIDDEN_VIEWS.includes(id));
             const activeEl = document.getElementById(id);
@@ -30884,12 +31067,14 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         const floatOrder = document.getElementById('floatOrder');
         const floatCart = document.getElementById('floatCart');
         const floatTop = document.getElementById('floatTop');
+        const floatChat = document.getElementById('floatChat');
         const mainNavEl = document.getElementById('mainNav');
         const currencyFabWrapScrollEl = document.getElementById('currencyFabWrap');
         function onScroll() {
             floatOrder.classList.toggle('is-visible', window.scrollY > 260);
             if (floatCart) floatCart.classList.toggle('is-visible', window.scrollY > 260);
             if (floatTop) floatTop.classList.toggle('is-visible', window.scrollY > 260);
+            if (floatChat) floatChat.classList.toggle('is-visible', window.scrollY > 260);
             const onHomepage = window.location.hash === '' || window.location.hash === '#/';
             if (mainNavEl) {
                 mainNavEl.classList.toggle('nav-solid', !onHomepage || window.scrollY > 80);
