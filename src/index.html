@@ -6805,6 +6805,66 @@
         .float-chat.float-suppressed { opacity: 0 !important; pointer-events: none !important; transform: scale(0.6) translateY(12px) !important; }
         .float-chat:hover { transform: scale(1.08); }
         .float-chat svg { width: 24px; height: 24px; }
+        /* --aubergine-deep is a fixed-dark brand colour by design (see the
+           DARK MODE comment above) - fine for the nav/footer, which carry
+           their own permanent dark fill either theme, but this button
+           floats directly over the page body, whose own background goes
+           from cream to near-black in dark mode. Against that near-black
+           page the same near-black circle all but disappeared, reported
+           with a screenshot. Swapped for the bright chartreuse already
+           used for .float-cart's own hover state in dark mode only - light
+           mode (cream page, dark circle) already had good contrast and is
+           left untouched. */
+        [data-theme="dark"] .float-chat { background: var(--chartreuse); color: var(--aubergine-deep); }
+        [data-theme="dark"] .float-chat:hover { background: var(--chartreuse-soft); }
+
+        /* Speech-bubble callout above .float-chat, nudging a first-time
+           visitor to actually tap it rather than leaving a brand-new
+           feature to be found by accident. Shown once per visit at most
+           (see dismissChatNudge()'s own comment on the localStorage flag)
+           and dismissed for good the moment someone either closes it or
+           opens the chat, whichever comes first - it's done its job either
+           way. Comfortably within CLAUDE.md's "moderate radius once text
+           can wrap" guidance (this wraps to two lines on a narrow phone),
+           not a stadium pill. */
+        .chat-nudge {
+            position: fixed;
+            left: 24px;
+            bottom: 158px;
+            z-index: 91;
+            max-width: 200px;
+            background: var(--card-bg);
+            color: var(--heading);
+            padding: 10px 26px 10px 14px;
+            border-radius: 14px;
+            font-family: var(--body);
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.35;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+            opacity: 0;
+            transform: translateY(8px) scale(0.92);
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(.34, 1.56, .64, 1);
+            pointer-events: none;
+            cursor: pointer;
+        }
+        .chat-nudge::after {
+            content: '';
+            position: absolute;
+            left: 20px; bottom: -6px;
+            width: 13px; height: 13px;
+            background: var(--card-bg);
+            transform: rotate(45deg);
+            border-radius: 2px;
+        }
+        .chat-nudge.is-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .chat-nudge.float-suppressed { opacity: 0 !important; pointer-events: none !important; }
+        .chat-nudge-close {
+            position: absolute; top: 2px; right: 2px;
+            width: 22px; height: 22px; border-radius: 50%; border: none; background: none;
+            color: var(--text-muted); font-size: 17px; line-height: 1; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
 
         .chat-modal-box {
             position: relative;
@@ -15109,6 +15169,11 @@
         </svg>
     </button>
 
+    <div class="chat-nudge" id="chatNudge" onclick="openChatModal()">
+        Ask about a dish or ingredient!
+        <button type="button" class="chat-nudge-close" aria-label="Dismiss" onclick="event.stopPropagation(); dismissChatNudge();">&times;</button>
+    </div>
+
     <a class="float-order" id="floatOrder" href="https://wa.me/447398810052?text=Hi%20YO7%20Foods!%20I'd%20like%20to%20place%20an%20order." target="_blank" rel="noopener"
         aria-label="Order on WhatsApp">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -17735,7 +17800,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-20.2';
+        const BUILD_VERSION = '2026-11-20.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18473,6 +18538,7 @@
         function openChatModal() {
             const modal = document.getElementById('chatModal');
             if (modal) modal.style.display = 'flex';
+            if (typeof dismissChatNudge === 'function') dismissChatNudge();
             renderChatMessages();
             setTimeout(() => document.getElementById('chatInput')?.focus(), 50);
         }
@@ -30674,6 +30740,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (floatTopBtn) floatTopBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const floatChatBtn = document.getElementById('floatChat');
             if (floatChatBtn) floatChatBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
+            const chatNudgeBtn = document.getElementById('chatNudge');
+            if (chatNudgeBtn) chatNudgeBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const currencyFabWrapEl = document.getElementById('currencyFabWrap');
             if (currencyFabWrapEl) currencyFabWrapEl.classList.toggle('float-suppressed', CURRENCY_FAB_HIDDEN_VIEWS.includes(id));
             const activeEl = document.getElementById(id);
@@ -31166,6 +31234,20 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         const floatCart = document.getElementById('floatCart');
         const floatTop = document.getElementById('floatTop');
         const floatChat = document.getElementById('floatChat');
+        const chatNudgeEl = document.getElementById('chatNudge');
+        // Shown once at most, ever - dismissed for good (never re-shown,
+        // even on a later visit) the moment someone either closes it or
+        // opens the chat, whichever happens first; either way it's done
+        // its job of pointing a first-time visitor at the button.
+        let chatNudgeDismissed = (function () {
+            try { return localStorage.getItem('yo7-chat-nudge-seen') === 'true'; } catch (e) { return false; }
+        })();
+        function dismissChatNudge() {
+            chatNudgeDismissed = true;
+            if (chatNudgeEl) chatNudgeEl.classList.remove('is-visible');
+            try { localStorage.setItem('yo7-chat-nudge-seen', 'true'); } catch (e) { /* private browsing or storage disabled - just a missed nudge next visit, not worth failing over */ }
+        }
+        window.dismissChatNudge = dismissChatNudge;
         const mainNavEl = document.getElementById('mainNav');
         const currencyFabWrapScrollEl = document.getElementById('currencyFabWrap');
         function onScroll() {
@@ -31173,6 +31255,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (floatCart) floatCart.classList.toggle('is-visible', window.scrollY > 260);
             if (floatTop) floatTop.classList.toggle('is-visible', window.scrollY > 260);
             if (floatChat) floatChat.classList.toggle('is-visible', window.scrollY > 260);
+            if (chatNudgeEl && !chatNudgeDismissed) chatNudgeEl.classList.toggle('is-visible', window.scrollY > 260);
             const onHomepage = window.location.hash === '' || window.location.hash === '#/';
             if (mainNavEl) {
                 mainNavEl.classList.toggle('nav-solid', !onHomepage || window.scrollY > 80);
