@@ -1284,8 +1284,25 @@
            / Log in" control already in .nav-right, so losing it here costs
            the least) and tightens link padding / row gaps slightly,
            clawing back roughly 170px for the search box - enough to show
-           the icon and real placeholder text again instead of nothing. */
-        @media (min-width: 901px) and (max-width: 1099px) {
+           the icon and real placeholder text again instead of nothing.
+
+           Band widened from 1099px to 1499px: .nav-notif-btn (the bell) is
+           now shown to every visitor, signed in or not (see
+           loadUnreadNotificationCount()'s own comment on that), not just a
+           signed-in one as when the numbers above were measured - that's
+           an extra ~117px .nav-right didn't use to spend, which pushed the
+           same "search collapses" bug out across most ordinary laptop
+           widths (1280/1366/1440), not just this original narrow band.
+           Reported again with screenshots at those sizes: search either
+           invisible or reduced to a bare icon with a single typed
+           character showing, and its results dropdown (same width as the
+           search box, see .search-results) too narrow for a thumbnail
+           plus a product name to both fit. Measured this band's fix still
+           keeps search non-degenerate (76-340px) across the whole
+           901-1499px range, and above 1499px the unfixed width is already
+           a comfortable ~290px+ on its own, so the band can safely stop
+           there. */
+        @media (min-width: 901px) and (max-width: 1499px) {
             #navLinkGuide { display: none; }
             .nav-links a { padding: 8px 6px; }
             #mainNav .wrap { gap: 10px; }
@@ -17839,7 +17856,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-20.8';
+        const BUILD_VERSION = '2026-11-20.9';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
