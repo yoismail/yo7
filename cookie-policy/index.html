@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.2a8c53ec53.css">    <script>
+    <link rel="stylesheet" href="/assets/app.9e7da9e8c9.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -3328,6 +3328,11 @@
         </svg>
     </button>
 
+    <div class="chat-nudge" id="chatNudge" onclick="openChatModal()">
+        Ask about food, cooking, or an order!
+        <button type="button" class="chat-nudge-close" aria-label="Dismiss" onclick="event.stopPropagation(); dismissChatNudge();">&times;</button>
+    </div>
+
     <a class="float-order" id="floatOrder" href="https://wa.me/447398810052?text=Hi%20YO7%20Foods!%20I'd%20like%20to%20place%20an%20order." target="_blank" rel="noopener"
         aria-label="Order on WhatsApp">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -3358,16 +3363,31 @@
 
     <div class="modal-overlay" id="chatModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="chatModalTitle" onclick="if (event.target === this) closeChatModal();">
         <div class="modal-box chat-modal-box">
+            <!-- Same mark/path data as favicon.svg, drawn here with
+                 currentColor at low opacity purely as a decorative
+                 background watermark - update alongside favicon.svg if the
+                 mark itself is ever redrawn. aria-hidden since it carries
+                 no information a screen reader needs. -->
+            <svg class="chat-modal-watermark" viewBox="65 25 875 900" aria-hidden="true">
+                <path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" fill="currentColor" stroke="currentColor" stroke-width="66" stroke-linejoin="round" />
+                <path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" fill="none" stroke="var(--card-bg)" stroke-width="76" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
             <div class="chat-modal-header">
                 <h3 id="chatModalTitle">Ask YO7</h3>
-                <button type="button" class="chat-modal-close" aria-label="Close" onclick="closeChatModal()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                </button>
+                <div class="chat-modal-header-actions">
+                    <button type="button" class="chat-clear-btn" id="chatClearBtn" onclick="clearChat()">Clear chat</button>
+                    <button type="button" class="chat-modal-close" aria-label="Close" onclick="closeChatModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                    </button>
+                </div>
             </div>
-            <p class="sub">Ask about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</p>
+            <p class="sub">Ask about African or Caribbean dishes, ingredients, or cooking, I'll point you to what we sell or connect you with the team for anything else.</p>
             <div class="chat-messages" id="chatMessages"></div>
             <form class="chat-input-row" id="chatForm">
-                <input type="text" id="chatInput" placeholder="Ask about a dish or ingredient..." autocomplete="off" maxlength="500">
+                <button type="button" class="chat-mic-btn" id="chatMicBtn" aria-label="Ask by voice" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 11a7 7 0 0 1-14 0" /><path d="M12 18v4" /></svg>
+                </button>
+                <input type="text" id="chatInput" placeholder="Ask about food, cooking, or orders..." autocomplete="off" maxlength="500">
                 <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7Z" /></svg>
                 </button>
@@ -3470,7 +3490,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.7d802b0eb8.js"></script>
+    <script defer src="/assets/app.efd6794f30.js"></script>
 
 </body>
 
