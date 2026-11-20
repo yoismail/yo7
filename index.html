@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.8d21cde546.css">    <script>
+    <link rel="stylesheet" href="/assets/app.2a8c53ec53.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -3320,6 +3320,12 @@
         <span class="float-cart-badge" id="floatCartBadge">0</span>
     </a>
 
+    <button type="button" class="float-chat" id="floatChat" aria-label="Ask about African and Caribbean cooking" onclick="openChatModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+    </button>
+
     <a class="float-order" id="floatOrder" href="https://wa.me/447398810052?text=Hi%20YO7%20Foods!%20I'd%20like%20to%20place%20an%20order." target="_blank" rel="noopener"
         aria-label="Order on WhatsApp">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -3347,6 +3353,25 @@
     </div>
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <div class="modal-overlay" id="chatModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="chatModalTitle" onclick="if (event.target === this) closeChatModal();">
+        <div class="modal-box chat-modal-box">
+            <div class="chat-modal-header">
+                <h3 id="chatModalTitle">Ask YO7</h3>
+                <button type="button" class="chat-modal-close" aria-label="Close" onclick="closeChatModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p class="sub">Ask about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</p>
+            <div class="chat-messages" id="chatMessages"></div>
+            <form class="chat-input-row" id="chatForm">
+                <input type="text" id="chatInput" placeholder="Ask about a dish or ingredient..." autocomplete="off" maxlength="500">
+                <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7Z" /></svg>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="categoryEditModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="categoryEditModalTitle">
         <div class="modal-box">
@@ -3443,7 +3468,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.216d3b819e.js"></script>
+    <script defer src="/assets/app.7d802b0eb8.js"></script>
 
 </body>
 
