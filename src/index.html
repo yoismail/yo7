@@ -6805,18 +6805,139 @@
         .float-chat.float-suppressed { opacity: 0 !important; pointer-events: none !important; transform: scale(0.6) translateY(12px) !important; }
         .float-chat:hover { transform: scale(1.08); }
         .float-chat svg { width: 24px; height: 24px; }
+        /* --aubergine-deep is a fixed-dark brand colour by design (see the
+           DARK MODE comment above) - fine for the nav/footer, which carry
+           their own permanent dark fill either theme, but this button
+           floats directly over the page body, whose own background goes
+           from cream to near-black in dark mode. Against that near-black
+           page the same near-black circle all but disappeared, reported
+           with a screenshot. Swapped for the bright chartreuse already
+           used for .float-cart's own hover state in dark mode only - light
+           mode (cream page, dark circle) already had good contrast and is
+           left untouched. */
+        [data-theme="dark"] .float-chat { background: var(--chartreuse); color: var(--aubergine-deep); }
+        [data-theme="dark"] .float-chat:hover { background: var(--chartreuse-soft); }
+
+        /* The chat modal's own dark-mode surface (--card-bg: #17240E) sat
+           only one shade above the dark-mode page background (--page-bg:
+           #0E1A08) and the assistant bubble behind it (--section-alt-bg:
+           #14210D), so the whole box read as one indistinct dark mass,
+           reported with a screenshot. Rather than pick a one-off colour,
+           re-point the tokens this box's own descendants already read
+           (chips, input, bubbles, muted text) at their light-mode values,
+           so the chat reads as a light surface floating over the dark
+           page, the way a messaging app's own compose window usually
+           does, without touching any rule below one at a time. Light mode
+           itself already had good contrast and is left untouched. */
+        [data-theme="dark"] .chat-modal-box {
+            --card-bg: var(--cream);
+            --section-alt-bg: #F1F5EA;
+            --ink: var(--aubergine);
+            --heading: var(--aubergine);
+            --text-muted: #6b5f58;
+            --text-body: #4a3d3a;
+            --border-rgb: 6, 59, 0;
+        }
+
+        /* Speech-bubble callout above .float-chat, nudging a first-time
+           visitor to actually tap it rather than leaving a brand-new
+           feature to be found by accident. Shown once per visit at most
+           (see dismissChatNudge()'s own comment on the localStorage flag)
+           and dismissed for good the moment someone either closes it or
+           opens the chat, whichever comes first - it's done its job either
+           way. Comfortably within CLAUDE.md's "moderate radius once text
+           can wrap" guidance (this wraps to two lines on a narrow phone),
+           not a stadium pill. */
+        .chat-nudge {
+            position: fixed;
+            left: 24px;
+            bottom: 158px;
+            z-index: 91;
+            max-width: 200px;
+            background: var(--card-bg);
+            color: var(--heading);
+            padding: 10px 26px 10px 14px;
+            border-radius: 14px;
+            font-family: var(--body);
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.35;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+            opacity: 0;
+            transform: translateY(8px) scale(0.92);
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(.34, 1.56, .64, 1);
+            pointer-events: none;
+            cursor: pointer;
+        }
+        .chat-nudge::after {
+            content: '';
+            position: absolute;
+            left: 20px; bottom: -6px;
+            width: 13px; height: 13px;
+            background: var(--card-bg);
+            transform: rotate(45deg);
+            border-radius: 2px;
+        }
+        .chat-nudge.is-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .chat-nudge.float-suppressed { opacity: 0 !important; pointer-events: none !important; }
+        .chat-nudge-close {
+            position: absolute; top: 2px; right: 2px;
+            width: 22px; height: 22px; border-radius: 50%; border: none; background: none;
+            color: var(--text-muted); font-size: 17px; line-height: 1; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
 
         .chat-modal-box {
+            position: relative;
+            overflow: hidden;
             max-width: 420px;
             max-height: min(640px, 85vh);
             display: flex;
             flex-direction: column;
             padding: 20px 20px 16px;
+            /* Redeclared (not just inherited from body) so the dark-mode
+               override below, which redefines --ink locally on this box,
+               actually reaches text like the "Ask YO7" <h3> that has no
+               color rule of its own - a custom property redefined here
+               doesn't retroactively change a `color` value body already
+               computed and handed down before it got here. */
+            color: var(--ink);
         }
+        /* Large, faint, decorative only - sits behind every other element in
+           the box (each given z-index:1 below) via stacking order alone. */
+        .chat-modal-watermark {
+            position: absolute;
+            top: -8%; right: -18%;
+            width: 65%; height: auto;
+            color: var(--ink);
+            opacity: 0.05;
+            pointer-events: none;
+        }
+        .chat-modal-header, .chat-modal-box > .sub, .chat-messages, .chat-input-row { position: relative; z-index: 1; }
         .chat-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
         .chat-modal-header h3 { margin: 0; }
-        .chat-modal-close { background: none; border: none; padding: 6px; margin: -6px; cursor: pointer; color: var(--text-muted); }
+        .chat-modal-header-actions { display: flex; align-items: center; gap: 4px; }
+        .chat-clear-btn {
+            background: none; border: none; padding: 6px 4px; cursor: pointer;
+            font-family: var(--body); font-size: 12.5px; color: var(--text-muted); text-decoration: underline;
+        }
+        .chat-modal-close { background: none; border: none; padding: 6px; margin: -6px 0; cursor: pointer; color: var(--text-muted); }
         .chat-modal-close svg { width: 18px; height: 18px; display: block; }
+        .chat-mic-btn {
+            width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+            border: 1.5px solid rgba(var(--border-rgb), 0.14); background: var(--card-bg); color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+        .chat-mic-btn svg { width: 18px; height: 18px; }
+        .chat-mic-btn.is-recording { background: #C1552C; border-color: #C1552C; color: var(--cream); animation: chatMicPulse 1.4s ease-in-out infinite; }
+        @keyframes chatMicPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(193, 85, 44, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(193, 85, 44, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .chat-mic-btn.is-recording { animation: none; }
+        }
         .chat-messages {
             flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
             padding: 12px 2px; margin: 4px -4px 0;
@@ -6834,6 +6955,9 @@
         .chat-product-chip:hover { border-color: var(--chartreuse-rich); }
         .chat-product-chip-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .chat-product-chip-price { font-family: var(--display); font-weight: 700; flex-shrink: 0; }
+        .chat-whatsapp-chip { justify-content: flex-start; color: #25D366; border-color: rgba(37, 211, 102, 0.35); font-weight: 600; }
+        .chat-whatsapp-chip:hover { border-color: #25D366; }
+        .chat-whatsapp-chip svg { width: 18px; height: 18px; flex-shrink: 0; }
         .chat-input-row { display: flex; gap: 8px; margin-top: 8px; }
         .chat-input-row input {
             flex: 1; min-width: 0; padding: 11px 14px; border-radius: 11px;
@@ -15076,6 +15200,11 @@
         </svg>
     </button>
 
+    <div class="chat-nudge" id="chatNudge" onclick="openChatModal()">
+        Ask about food, cooking, or an order!
+        <button type="button" class="chat-nudge-close" aria-label="Dismiss" onclick="event.stopPropagation(); dismissChatNudge();">&times;</button>
+    </div>
+
     <a class="float-order" id="floatOrder" href="https://wa.me/447398810052?text=Hi%20YO7%20Foods!%20I'd%20like%20to%20place%20an%20order." target="_blank" rel="noopener"
         aria-label="Order on WhatsApp">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -15106,16 +15235,31 @@
 
     <div class="modal-overlay" id="chatModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="chatModalTitle" onclick="if (event.target === this) closeChatModal();">
         <div class="modal-box chat-modal-box">
+            <!-- Same mark/path data as favicon.svg, drawn here with
+                 currentColor at low opacity purely as a decorative
+                 background watermark - update alongside favicon.svg if the
+                 mark itself is ever redrawn. aria-hidden since it carries
+                 no information a screen reader needs. -->
+            <svg class="chat-modal-watermark" viewBox="65 25 875 900" aria-hidden="true">
+                <path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" fill="currentColor" stroke="currentColor" stroke-width="66" stroke-linejoin="round" />
+                <path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" fill="none" stroke="var(--card-bg)" stroke-width="76" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
             <div class="chat-modal-header">
                 <h3 id="chatModalTitle">Ask YO7</h3>
-                <button type="button" class="chat-modal-close" aria-label="Close" onclick="closeChatModal()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                </button>
+                <div class="chat-modal-header-actions">
+                    <button type="button" class="chat-clear-btn" id="chatClearBtn" onclick="clearChat()">Clear chat</button>
+                    <button type="button" class="chat-modal-close" aria-label="Close" onclick="closeChatModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                    </button>
+                </div>
             </div>
-            <p class="sub">Ask about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</p>
+            <p class="sub">Ask about African or Caribbean dishes, ingredients, or cooking, I'll point you to what we sell or connect you with the team for anything else.</p>
             <div class="chat-messages" id="chatMessages"></div>
             <form class="chat-input-row" id="chatForm">
-                <input type="text" id="chatInput" placeholder="Ask about a dish or ingredient..." autocomplete="off" maxlength="500">
+                <button type="button" class="chat-mic-btn" id="chatMicBtn" aria-label="Ask by voice" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 11a7 7 0 0 1-14 0" /><path d="M12 18v4" /></svg>
+                </button>
+                <input type="text" id="chatInput" placeholder="Ask about food, cooking, or orders..." autocomplete="off" maxlength="500">
                 <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7Z" /></svg>
                 </button>
@@ -17687,7 +17831,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-20.1';
+        const BUILD_VERSION = '2026-11-20.6';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18425,6 +18569,7 @@
         function openChatModal() {
             const modal = document.getElementById('chatModal');
             if (modal) modal.style.display = 'flex';
+            if (typeof dismissChatNudge === 'function') dismissChatNudge();
             renderChatMessages();
             setTimeout(() => document.getElementById('chatInput')?.focus(), 50);
         }
@@ -18436,22 +18581,29 @@
         window.closeChatModal = closeChatModal;
         function chatMessageHTML(msg) {
             const bubble = `<div class="chat-msg chat-msg-${msg.role}">${escapeHtml(msg.content).replace(/\n/g, '<br>')}</div>`;
-            if (msg.role !== 'assistant' || !msg.products || !msg.products.length) return bubble;
-            const chips = msg.products.map(p => `
+            if (msg.role !== 'assistant') return bubble;
+            const productChips = (msg.products || []).map(p => `
       <a class="chat-product-chip" href="${escapeHtml(p.url)}">
         <span class="chat-product-chip-name">${escapeHtml(p.name)}</span>
         <span class="chat-product-chip-price">${money(p.price)}</span>
       </a>`).join('');
-            return bubble + `<div class="chat-products">${chips}</div>`;
+            const whatsappChip = msg.whatsapp ? `
+      <a class="chat-product-chip chat-whatsapp-chip" href="${escapeHtml(msg.whatsapp.url)}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.78 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.11.11-1.79-.11-.41-.13-.94-.31-1.62-.6-2.85-1.23-4.71-4.1-4.85-4.29-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.28.57-.35.76-.35h.55c.18 0 .41-.03.64.49.24.55.81 1.9.88 2.04.07.14.12.31.02.5-.09.19-.14.31-.28.47-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.63-.14.26.09 1.64.77 1.92.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"/></svg>
+        <span class="chat-product-chip-name">${escapeHtml(msg.whatsapp.label)}</span>
+      </a>` : '';
+            if (!productChips && !whatsappChip) return bubble;
+            return bubble + `<div class="chat-products">${productChips}${whatsappChip}</div>`;
         }
         function renderChatMessages() {
             const container = document.getElementById('chatMessages');
             if (!container) return;
-            const greeting = chatMessages.length === 0
-                ? `<div class="chat-msg chat-msg-assistant">Hi! Ask me about African or Caribbean dishes, ingredients, or how to cook something, I'll point you to what we sell too.</div>`
-                : '';
+            // No separate empty-state greeting bubble here, the modal's own
+            // .sub paragraph right above already says this, once, and stays
+            // visible the whole conversation, so this isn't the same line
+            // repeated right under it before anyone's typed a word.
             const loading = chatSending ? `<div class="chat-msg chat-msg-loading">Thinking…</div>` : '';
-            container.innerHTML = greeting + chatMessages.map(chatMessageHTML).join('') + loading;
+            container.innerHTML = chatMessages.map(chatMessageHTML).join('') + loading;
             container.scrollTop = container.scrollHeight;
         }
         async function sendChatMessage(e) {
@@ -18474,7 +18626,7 @@
                 if (error || (data && data.error)) {
                     chatMessages.push({ role: 'assistant', content: (data && data.error) || "Sorry, I couldn't get an answer right now, please try again." });
                 } else {
-                    chatMessages.push({ role: 'assistant', content: (data && data.reply) || '', products: (data && data.products) || [] });
+                    chatMessages.push({ role: 'assistant', content: (data && data.reply) || '', products: (data && data.products) || [], whatsapp: (data && data.whatsapp) || null });
                 }
             } catch (err) {
                 chatMessages.push({ role: 'assistant', content: "Sorry, I couldn't get an answer right now, please try again." });
@@ -18485,6 +18637,56 @@
             }
         }
         document.getElementById('chatForm')?.addEventListener('submit', sendChatMessage);
+        function clearChat() {
+            if (chatSending) return;
+            chatMessages = [];
+            renderChatMessages();
+        }
+        window.clearChat = clearChat;
+
+        // Browser-native speech-to-text, no server round trip - purely
+        // transcribes into the text input for the customer to review and
+        // send themselves, same as typing. Not supported on iOS Safari at
+        // all (Apple has never implemented the Web Speech API there, on
+        // any browser engine, since every iOS browser is Safari's WebKit
+        // underneath) - the mic button simply never appears rather than
+        // showing something broken, same feature-detection pattern
+        // navigator.share already uses for the "More" share option.
+        const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let chatRecognition = null;
+        let chatRecording = false;
+        if (SpeechRecognitionCtor) {
+            const micBtn = document.getElementById('chatMicBtn');
+            if (micBtn) {
+                micBtn.style.display = '';
+                chatRecognition = new SpeechRecognitionCtor();
+                chatRecognition.lang = 'en-GB';
+                chatRecognition.interimResults = false;
+                chatRecognition.maxAlternatives = 1;
+                chatRecognition.onresult = (event) => {
+                    const transcript = event.results?.[0]?.[0]?.transcript;
+                    const input = document.getElementById('chatInput');
+                    if (transcript && input) { input.value = transcript; input.focus(); }
+                };
+                chatRecognition.onend = () => { chatRecording = false; micBtn.classList.remove('is-recording'); };
+                chatRecognition.onerror = () => { chatRecording = false; micBtn.classList.remove('is-recording'); };
+                micBtn.addEventListener('click', () => {
+                    if (chatRecording) { chatRecognition.stop(); return; }
+                    try {
+                        chatRecording = true;
+                        micBtn.classList.add('is-recording');
+                        chatRecognition.start();
+                    } catch (e) {
+                        // start() throws if a recognition session is already
+                        // active (e.g. a stray double-click) - nothing to
+                        // recover, the existing session's own onend/onerror
+                        // already resets the button state.
+                        chatRecording = false;
+                        micBtn.classList.remove('is-recording');
+                    }
+                });
+            }
+        }
 
         async function fetchAccountFavoriteKeys(userId) {
             const { data, error } = await supabaseClient.from('favorites').select('product_key').eq('user_id', userId);
@@ -30576,6 +30778,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (floatTopBtn) floatTopBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const floatChatBtn = document.getElementById('floatChat');
             if (floatChatBtn) floatChatBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
+            const chatNudgeBtn = document.getElementById('chatNudge');
+            if (chatNudgeBtn) chatNudgeBtn.classList.toggle('float-suppressed', FLOAT_BUTTON_HIDDEN_VIEWS.includes(id));
             const currencyFabWrapEl = document.getElementById('currencyFabWrap');
             if (currencyFabWrapEl) currencyFabWrapEl.classList.toggle('float-suppressed', CURRENCY_FAB_HIDDEN_VIEWS.includes(id));
             const activeEl = document.getElementById(id);
@@ -31068,6 +31272,20 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         const floatCart = document.getElementById('floatCart');
         const floatTop = document.getElementById('floatTop');
         const floatChat = document.getElementById('floatChat');
+        const chatNudgeEl = document.getElementById('chatNudge');
+        // Shown once at most, ever - dismissed for good (never re-shown,
+        // even on a later visit) the moment someone either closes it or
+        // opens the chat, whichever happens first; either way it's done
+        // its job of pointing a first-time visitor at the button.
+        let chatNudgeDismissed = (function () {
+            try { return localStorage.getItem('yo7-chat-nudge-seen') === 'true'; } catch (e) { return false; }
+        })();
+        function dismissChatNudge() {
+            chatNudgeDismissed = true;
+            if (chatNudgeEl) chatNudgeEl.classList.remove('is-visible');
+            try { localStorage.setItem('yo7-chat-nudge-seen', 'true'); } catch (e) { /* private browsing or storage disabled - just a missed nudge next visit, not worth failing over */ }
+        }
+        window.dismissChatNudge = dismissChatNudge;
         const mainNavEl = document.getElementById('mainNav');
         const currencyFabWrapScrollEl = document.getElementById('currencyFabWrap');
         function onScroll() {
@@ -31075,6 +31293,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (floatCart) floatCart.classList.toggle('is-visible', window.scrollY > 260);
             if (floatTop) floatTop.classList.toggle('is-visible', window.scrollY > 260);
             if (floatChat) floatChat.classList.toggle('is-visible', window.scrollY > 260);
+            if (chatNudgeEl && !chatNudgeDismissed) chatNudgeEl.classList.toggle('is-visible', window.scrollY > 260);
             const onHomepage = window.location.hash === '' || window.location.hash === '#/';
             if (mainNavEl) {
                 mainNavEl.classList.toggle('nav-solid', !onHomepage || window.scrollY > 80);
