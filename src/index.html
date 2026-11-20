@@ -6839,6 +6839,14 @@
             --border-rgb: 6, 59, 0;
         }
 
+        /* TEMPORARY: the shopping-assistant Edge Function has no
+           ANTHROPIC_API_KEY secret set yet (billing isn't funded), so right
+           now it errors for every visitor who taps it. Hiding the button
+           and its nudge rather than leaving a visibly broken feature live.
+           Delete this one rule once the function's funded and deployed, no
+           other change needed, everything else is already built. */
+        .float-chat, .chat-nudge { display: none !important; }
+
         /* Speech-bubble callout above .float-chat, nudging a first-time
            visitor to actually tap it rather than leaving a brand-new
            feature to be found by accident. Shown once per visit at most
@@ -17831,7 +17839,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-20.7';
+        const BUILD_VERSION = '2026-11-20.8';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
