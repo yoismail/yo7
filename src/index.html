@@ -17856,7 +17856,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-20.9';
+        const BUILD_VERSION = '2026-11-22.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18364,6 +18364,28 @@
                     void floatBadge.offsetWidth; // restart the animation even if it's still mid-play from a rapid add
                     floatBadge.classList.add('badge-pulse');
                 }
+            }
+            // A playful bounce on the whole button, not just its badge,
+            // confirming an item actually landed in the basket. Run via the
+            // Web Animations API rather than a toggled class + CSS
+            // @keyframes (the pattern badge-pulse above uses): .is-visible
+            // already owns this same element's `animation` property for
+            // its own one-time entrance bounce, and a second class fighting
+            // over that property would force the entrance bounce to
+            // unexpectedly replay the moment this one's class is removed.
+            // .animate() sidesteps that entirely, each call is independent
+            // and this element's CSS animation isn't even running by the
+            // time someone's adding to an already-visible cart.
+            const floatCartEl = document.getElementById('floatCart');
+            if (floatCartEl && n > lastKnownCartCount && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                floatCartEl.animate([
+                    { transform: 'scale(1) translateY(0)' },
+                    { transform: 'scale(1.1) translateY(-16px)', offset: 0.25 },
+                    { transform: 'scale(0.94) translateY(2px)', offset: 0.5 },
+                    { transform: 'scale(1.04) translateY(-6px)', offset: 0.7 },
+                    { transform: 'scale(0.98) translateY(1px)', offset: 0.85 },
+                    { transform: 'scale(1) translateY(0)' },
+                ], { duration: 600, easing: 'cubic-bezier(.34,1.56,.64,1)' });
             }
             lastKnownCartCount = n;
         }
