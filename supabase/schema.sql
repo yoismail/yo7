@@ -2252,6 +2252,7 @@ CREATE TABLE IF NOT EXISTS "public"."pricing_settings" (
     "combos_data" "jsonb",
     "google_place_id" "text",
     "dish_templates_data" "jsonb",
+    "taste_of_home_packages_data" "jsonb",
     "category_overrides" "jsonb" DEFAULT '{}'::"jsonb",
     -- Admin-set GBP -> X rates for the currency selector, e.g.
     -- {"CAD": 1.72, "USD": 1.27}. Deliberately starts empty rather than
