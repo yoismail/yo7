@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.d90a9c55b0.css">    <script>
+    <link rel="stylesheet" href="/assets/app.8aa75d8ee4.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -281,7 +281,7 @@
                 <a href="#/" id="navLinkHome">Home</a>
                 <a href="#/shop" id="navLinkShop">Shop</a>
                 <a href="#/blog" id="navLinkJournal">Blog</a>
-                <a href="#/recipes" id="navLinkRecipes">Recipes</a>
+                <a href="#/taste-of-home" id="navLinkTasteOfHome">Taste of Home</a>
                 <a href="#/about" id="navLinkStory">About Us</a>
                 <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
                 <a href="#/contact" id="navLinkContact">Contact</a>
@@ -391,7 +391,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
-            <a href="#/recipes">Recipes</a>
+            <a href="#/taste-of-home">Taste of Home</a>
             <a href="#/blog">Blog</a>
             <a href="#/favorites" class="mobile-menu-group-start">My Favorites</a>
             <a href="#/orders">My Orders</a>
@@ -1404,6 +1404,10 @@
                     <div class="checkout-grid">
                         <div class="panel">
                             <h2>Delivery details</h2>
+                            <div class="toh-checkout-banner" id="checkoutGiftBanner" style="display:none;">
+                                <span class="toh-banner-text"></span>
+                                <button type="button" onclick="clearPendingGift()">Remove</button>
+                            </div>
                             <div class="fulfil-toggle" role="group" aria-label="Choose delivery or pickup">
                                 <button type="button" class="fulfil-btn active" id="fulfilDeliveryBtn">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
@@ -2478,6 +2482,43 @@
         </section>
     </div>
 
+    <div id="view-taste-of-home" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Send a Taste of Home</div>
+                <h1>Send a Taste of Home</h1>
+                <p>Someone you know is missing home, a child away at uni, a friend who just moved, a new mum who needs feeding, not advice. Pick a package, write them a few real words, and we'll deliver it to their door, anywhere in the UK.</p>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="toh-package-grid" id="tohPackageGrid"></div>
+            </div>
+        </section>
+        <section class="products-section toh-recipient-section" id="tohRecipientSection" style="display:none;">
+            <div class="wrap">
+                <div class="toh-recipient-panel">
+                    <div class="toh-recipient-header">
+                        <h2 id="tohSelectedPackageName"></h2>
+                        <ul class="toh-recipient-items" id="tohSelectedPackageItems"></ul>
+                    </div>
+                    <form id="tohRecipientForm" onsubmit="submitTasteOfHomeRecipient(event)">
+                        <div class="field"><label for="tohRecipientName">Who's this for?</label><input type="text" id="tohRecipientName" placeholder="Their name" required></div>
+                        <div class="field"><label for="tohRecipientPhone">Their phone (optional, for the courier)</label><input type="tel" id="tohRecipientPhone" placeholder="07000 000000"></div>
+                        <div class="field"><label for="tohRecipientAddress1">Their delivery address</label><input type="text" id="tohRecipientAddress1" placeholder="Address line 1" required></div>
+                        <div class="field"><label for="tohRecipientAddress2">Address line 2 (optional)</label><input type="text" id="tohRecipientAddress2" placeholder="Flat, floor, etc."></div>
+                        <div class="field-row">
+                            <div class="field"><label for="tohRecipientCity">Town / city</label><input type="text" id="tohRecipientCity" placeholder="Town or city" required></div>
+                            <div class="field"><label for="tohRecipientPostcode">Postcode</label><input type="text" id="tohRecipientPostcode" placeholder="CO1 1AA" required></div>
+                        </div>
+                        <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
+                        <button type="submit" class="btn btn-primary btn-block">Add to basket</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= WHOLESALE =================
          Gated to approved trade accounts (profiles.wholesale_status).
          See apply_for_wholesale_account() and wholesale_products in
@@ -3262,7 +3303,7 @@
                         <a href="#/">Home</a>
                         <a href="#/shop">Shop</a>
                         <a href="#/blog">Blog</a>
-                        <a href="#/recipes">Recipes</a>
+                        <a href="#/taste-of-home">Taste of Home</a>
                         <a href="#/checkout">Basket</a>
                         <a href="#/orders">My Orders</a>
                         <a href="#/refer">Refer a Friend</a>
@@ -3490,7 +3531,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.64fa79470d.js"></script>
+    <script defer src="/assets/app.26134dcd4f.js"></script>
 
 </body>
 
