@@ -4395,6 +4395,87 @@
             .dish-builder-summary { border-left: none; border-top: 1px solid rgba(var(--border-rgb), 0.08); }
         }
 
+        /* ================= DISH FINDER: "what's in my kitchen?" =================
+           The reverse direction from the dish picker above - instead of
+           naming a dish and getting its ingredients, tap what's already on
+           hand and get back the dishes those ingredients are closest to,
+           with only what's missing. Reuses DISH_TEMPLATES (the exact same
+           data the name-based picker reads) rather than a second ingredient
+           list to keep in sync. */
+        .dish-finder-mode-toggle { display: flex; gap: 8px; margin-bottom: 24px; max-width: 480px; }
+        .dish-finder-mode-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.14);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+        .dish-finder-mode-btn.active {
+            background: var(--aubergine-deep);
+            color: var(--cream);
+            border-color: var(--aubergine-deep);
+        }
+        .kitchen-intro { color: var(--text-muted); font-size: 14px; margin-bottom: 18px; max-width: 54ch; }
+        .kitchen-ingredient-picker { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+        /* A product name here can run long ("Egusi (Ground Melon Seed)") and
+           wrap to two lines on a narrow phone - a fixed moderate radius
+           rather than a full stadium pill, same reasoning as every other
+           wrappable chip/pill on this site. */
+        .kitchen-ingredient-chip {
+            padding: 10px 16px;
+            border-radius: 14px;
+            border: 1.5px solid rgba(var(--border-rgb), 0.16);
+            background: var(--card-bg);
+            color: var(--text-body);
+            font-family: var(--body);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+        }
+        .kitchen-ingredient-chip:hover { transform: translateY(-2px); }
+        .kitchen-ingredient-chip.active {
+            background: var(--chartreuse);
+            color: var(--aubergine-deep);
+            border-color: var(--chartreuse-rich);
+        }
+        .dish-match-list { display: flex; flex-direction: column; gap: 16px; max-width: 560px; }
+        .dish-match-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 18px;
+            padding: 20px 22px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 18px 36px rgba(var(--border-rgb), 0.06);
+        }
+        .dish-match-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .dish-match-card-header .emoji {
+            width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--chartreuse); color: var(--aubergine-deep);
+        }
+        .dish-match-card-header .emoji svg { width: 21px; height: 21px; }
+        .dish-match-card-header h4 { font-family: var(--display); font-weight: 700; font-size: 16px; color: var(--heading); }
+        .dish-match-card-header span { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+        .dish-match-complete { color: var(--chartreuse-rich); font-weight: 600; font-size: 13.5px; }
+        .dish-match-missing { margin-bottom: 14px; }
+        .dish-match-missing p { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 8px; }
+        .dish-match-missing ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .dish-match-missing li { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--text-body); }
+        .dish-match-missing li .price { font-family: var(--display); font-weight: 700; color: var(--heading); flex-shrink: 0; }
+        .dish-match-missing li em { color: #b34a4a; font-style: normal; font-size: 12px; }
+        .dish-match-empty {
+            display: flex; flex-direction: column; align-items: center; gap: 14px;
+            padding: 56px 24px; text-align: center; color: var(--text-muted); font-size: 14px;
+            background: var(--card-bg); border: 1.5px dashed rgba(var(--border-rgb), 0.18); border-radius: 20px;
+        }
+        .dish-match-empty svg { width: 40px; height: 40px; color: var(--chartreuse-rich); opacity: 0.75; }
+
         /* Shop by group (homepage) gets its own warm yellow treatment,
            scoped by ID so the group-detail page's .shop-section (which
            reuses the same class) is unaffected. */
@@ -12191,7 +12272,7 @@
                 <a href="#/" id="navLinkHome">Home</a>
                 <a href="#/shop" id="navLinkShop">Shop</a>
                 <a href="#/blog" id="navLinkJournal">Blog</a>
-                <a href="#/recipes" id="navLinkRecipes">Recipes</a>
+                <a href="#/build-bundle" id="navLinkDishFinder">Dish Finder</a>
                 <a href="#/about" id="navLinkStory">About Us</a>
                 <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
                 <a href="#/contact" id="navLinkContact">Contact</a>
@@ -12301,7 +12382,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
-            <a href="#/recipes">Recipes</a>
+            <a href="#/build-bundle">Dish Finder</a>
             <a href="#/blog">Blog</a>
             <a href="#/favorites" class="mobile-menu-group-start">My Favorites</a>
             <a href="#/orders">My Orders</a>
@@ -14350,40 +14431,55 @@
     <div id="view-build-bundle" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Build a bundle</div>
-                <h1>Build a bundle</h1>
-                <p>Pick a dish, we'll suggest the real ingredients, uncheck anything you already have and add the rest in one go.</p>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Dish Finder</div>
+                <h1>Dish Finder</h1>
+                <p>Pick a dish and we'll suggest the real ingredients, or tell us what's already in your kitchen and we'll find what you can make.</p>
             </div>
         </header>
         <section class="products-section">
             <div class="wrap">
-                <div class="dish-search-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-                    <input type="text" id="dishSearchInput" class="dish-search-input" placeholder="Search for a dish, e.g. jollof, suya, pepper soup..." autocomplete="off" aria-label="Search for a dish" oninput="filterDishPicker(this.value)">
+                <div class="dish-finder-mode-toggle" role="tablist">
+                    <button type="button" class="dish-finder-mode-btn active" id="dishModeByNameBtn" onclick="setDishFinderMode('byName')">I know the dish</button>
+                    <button type="button" class="dish-finder-mode-btn" id="dishModeByStockBtn" onclick="setDishFinderMode('haveIngredients')">What's in my kitchen?</button>
                 </div>
-                <div class="dish-picker" id="dishPicker"></div>
-                <div id="dishBuilderPanel" class="dish-builder-panel" style="display:none;">
-                    <div class="dish-builder-header" id="dishBuilderHeader"></div>
-                    <div class="dish-builder-list" id="dishBuilderList"></div>
-                    <div class="dish-builder-summary">
-                        <div class="dish-builder-total-row">
-                            <span>Total (selected items)</span>
-                            <span id="dishBuilderTotal">£0.00</span>
+                <div id="dishFinderByName">
+                    <div class="dish-search-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                        <input type="text" id="dishSearchInput" class="dish-search-input" placeholder="Search for a dish, e.g. jollof, suya, pepper soup..." autocomplete="off" aria-label="Search for a dish" oninput="filterDishPicker(this.value)">
+                    </div>
+                    <div class="dish-picker" id="dishPicker"></div>
+                    <div id="dishBuilderPanel" class="dish-builder-panel" style="display:none;">
+                        <div class="dish-builder-header" id="dishBuilderHeader"></div>
+                        <div class="dish-builder-list" id="dishBuilderList"></div>
+                        <div class="dish-builder-summary">
+                            <div class="dish-builder-total-row">
+                                <span>Total (selected items)</span>
+                                <span id="dishBuilderTotal">£0.00</span>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-block" id="dishBuilderAddBtn">Add selected to basket</button>
                         </div>
-                        <button type="button" class="btn btn-primary btn-block" id="dishBuilderAddBtn">Add selected to basket</button>
+                    </div>
+                    <div id="dishEditSlot"></div>
+                    <div class="dish-builder-empty" id="dishBuilderEmpty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+                        <p>Pick a dish above to get started.</p>
+                    </div>
+
+                    <button type="button" class="add-bundle-btn" id="addDishBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        Add a dish
+                    </button>
+                    <div id="addDishSlot"></div>
+                </div>
+                <div id="dishFinderByStock" style="display:none;">
+                    <p class="kitchen-intro">Tap what you've already got, we'll show you the closest dish and only what's missing.</p>
+                    <div class="kitchen-ingredient-picker" id="dishIngredientPicker"></div>
+                    <div class="dish-match-list" id="dishMatchList"></div>
+                    <div class="dish-match-empty" id="dishMatchEmpty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>
+                        <p>Tap a few ingredients above to see what you can make.</p>
                     </div>
                 </div>
-                <div id="dishEditSlot"></div>
-                <div class="dish-builder-empty" id="dishBuilderEmpty">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-                    <p>Pick a dish above to get started.</p>
-                </div>
-
-                <button type="button" class="add-bundle-btn" id="addDishBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                    Add a dish
-                </button>
-                <div id="addDishSlot"></div>
             </div>
         </section>
     </div>
@@ -15172,7 +15268,7 @@
                         <a href="#/">Home</a>
                         <a href="#/shop">Shop</a>
                         <a href="#/blog">Blog</a>
-                        <a href="#/recipes">Recipes</a>
+                        <a href="#/build-bundle">Dish Finder</a>
                         <a href="#/checkout">Basket</a>
                         <a href="#/orders">My Orders</a>
                         <a href="#/refer">Refer a Friend</a>
@@ -17869,7 +17965,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-22.2';
+        const BUILD_VERSION = '2026-11-22.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19464,6 +19560,123 @@
             });
             if (added === 0) { showToast('Nothing selected to add.'); return; }
             showToast(`Added ${added} item${added > 1 ? 's' : ''} for ${dish.name} to your basket.`);
+        }
+
+        /* ================= DISH FINDER: "what's in my kitchen?" =================
+           The reverse direction from the dish picker above: instead of
+           naming a dish to get its ingredients, tap what's already on hand
+           and get back the dishes those ingredients are closest to, with
+           only what's actually missing. Reuses DISH_TEMPLATES directly
+           rather than a second ingredient list, so the two modes can never
+           drift out of sync with each other. */
+        let dishFinderMode = 'byName'; // 'byName' | 'haveIngredients'
+        let haveIngredientKeys = new Set(); // "catSlug::idx" strings
+        function setDishFinderMode(mode) {
+            dishFinderMode = mode;
+            const byNameBtn = document.getElementById('dishModeByNameBtn');
+            const byStockBtn = document.getElementById('dishModeByStockBtn');
+            if (byNameBtn) byNameBtn.classList.toggle('active', mode === 'byName');
+            if (byStockBtn) byStockBtn.classList.toggle('active', mode === 'haveIngredients');
+            const byNameSection = document.getElementById('dishFinderByName');
+            const byStockSection = document.getElementById('dishFinderByStock');
+            if (byNameSection) byNameSection.style.display = mode === 'byName' ? '' : 'none';
+            if (byStockSection) byStockSection.style.display = mode === 'haveIngredients' ? '' : 'none';
+            if (mode === 'haveIngredients') { renderIngredientPicker(); renderDishMatches(); }
+        }
+        window.setDishFinderMode = setDishFinderMode;
+        // Every distinct real product referenced across every dish template,
+        // deduped by catSlug+idx (several dishes share an ingredient, e.g.
+        // palm oil) - this is deliberately small (a handful of dishes times
+        // a handful of ingredients each), so a flat tappable chip list
+        // needs no search of its own the way the dish picker above does.
+        function getAllDishIngredientProducts() {
+            const seen = new Map();
+            DISH_TEMPLATES.forEach(dish => {
+                dish.items.forEach(ref => {
+                    const key = `${ref.catSlug}::${ref.idx}`;
+                    if (seen.has(key)) return;
+                    const p = getProduct(ref.catSlug, ref.idx);
+                    if (!p || p.deleted) return;
+                    seen.set(key, { key, catSlug: ref.catSlug, idx: ref.idx, name: p.name });
+                });
+            });
+            return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+        }
+        function toggleHaveIngredient(key) {
+            if (haveIngredientKeys.has(key)) haveIngredientKeys.delete(key);
+            else haveIngredientKeys.add(key);
+            renderIngredientPicker();
+            renderDishMatches();
+        }
+        window.toggleHaveIngredient = toggleHaveIngredient;
+        function renderIngredientPicker() {
+            const picker = document.getElementById('dishIngredientPicker');
+            if (!picker) return;
+            picker.innerHTML = getAllDishIngredientProducts().map(p => `
+    <button type="button" class="kitchen-ingredient-chip ${haveIngredientKeys.has(p.key) ? 'active' : ''}" onclick="toggleHaveIngredient('${p.key}')">${escapeHtml(p.name)}</button>`).join('');
+        }
+        // A dish only counts as a "match" once at least one of its own
+        // ingredients is actually marked as had - otherwise every dish in
+        // the catalogue would show up as "0 of 5, missing everything" the
+        // moment the page opens, which isn't a suggestion, it's just the
+        // whole menu. Ranked by fewest missing first (closest to done),
+        // ties broken by whoever's got the most already.
+        function computeDishMatches() {
+            return DISH_TEMPLATES.map(dish => {
+                const validItems = dish.items
+                    .map(ref => ({ ref, p: getProduct(ref.catSlug, ref.idx) }))
+                    .filter(x => x.p && !x.p.deleted);
+                const haveCount = validItems.filter(x => haveIngredientKeys.has(`${x.ref.catSlug}::${x.ref.idx}`)).length;
+                const missing = validItems.filter(x => !haveIngredientKeys.has(`${x.ref.catSlug}::${x.ref.idx}`));
+                return { dish, total: validItems.length, haveCount, missing };
+            })
+                .filter(m => m.total > 0 && m.haveCount > 0)
+                .sort((a, b) => (a.missing.length - b.missing.length) || (b.haveCount - a.haveCount));
+        }
+        function addMissingDishItemsToCart(matchIndex) {
+            const match = computeDishMatches()[matchIndex];
+            if (!match) return;
+            let added = 0;
+            match.missing.forEach(x => {
+                if (x.p.stock === 'out') return;
+                addToCart(x.p, 1);
+                added++;
+            });
+            if (added === 0) { showToast('Nothing left to add, those items are currently out of stock.'); return; }
+            showToast(`Added ${added} missing item${added > 1 ? 's' : ''} for ${match.dish.name} to your basket.`);
+        }
+        window.addMissingDishItemsToCart = addMissingDishItemsToCart;
+        function renderDishMatches() {
+            const list = document.getElementById('dishMatchList');
+            const empty = document.getElementById('dishMatchEmpty');
+            if (!list || !empty) return;
+            const matches = computeDishMatches();
+            if (!matches.length) {
+                list.innerHTML = '';
+                list.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            list.style.display = '';
+            list.innerHTML = matches.map((m, i) => `
+    <div class="dish-match-card">
+      <div class="dish-match-card-header">
+        <span class="emoji">${m.dish.emoji}</span>
+        <div>
+          <h4>${escapeHtml(m.dish.name)}</h4>
+          <span>${m.haveCount} of ${m.total} ingredient${m.total === 1 ? '' : 's'} you have</span>
+        </div>
+      </div>
+      ${m.missing.length === 0
+                    ? `<p class="dish-match-complete">You've already got everything for this one.</p>`
+                    : `<div class="dish-match-missing">
+           <p>Missing</p>
+           <ul>${m.missing.map(x => `<li><span>${escapeHtml(x.p.name)}</span><span class="price">${money(effectivePrice(x.p))}${x.p.stock === 'out' ? ' <em>(out of stock)</em>' : ''}</span></li>`).join('')}</ul>
+         </div>
+         <button type="button" class="btn btn-primary btn-block" onclick="addMissingDishItemsToCart(${i})">Add missing to basket</button>`
+                }
+    </div>`).join('');
         }
 
         /* ================= EDIT AN EXISTING DISH (edit mode) =================
@@ -30878,12 +31091,12 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // on every page, not just home.
         function updateActiveNavLink(hash) {
             const isHome = hash === '' || hash === '#/';
-            const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/shop', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers', '#/build-bundle'];
+            const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/shop', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers'];
             const links = {
                 navLinkHome: isHome,
                 navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
                 navLinkJournal: hash === '#/blog' || hash.startsWith('#/blog/'),
-                navLinkRecipes: hash === '#/recipes',
+                navLinkDishFinder: hash === '#/build-bundle',
                 navLinkStory: hash === '#/about',
                 navLinkDelivery: hash === '#/delivery-info' || hash === '#/delivery-policy',
                 navLinkContact: hash === '#/contact',
@@ -31224,6 +31437,8 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash === '#/build-bundle') {
                 showView('view-build-bundle');
                 renderDishPicker();
+                renderIngredientPicker();
+                renderDishMatches();
             } else if (hash === '#/wholesale/apply') {
                 showView('view-wholesale-apply');
                 renderWholesaleApplyView();
