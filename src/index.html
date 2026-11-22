@@ -4410,6 +4410,7 @@
             gap: 20px;
         }
         .toh-package-card {
+            position: relative;
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
             border-radius: 20px;
@@ -4418,14 +4419,48 @@
             flex-direction: column;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 18px 36px rgba(var(--border-rgb), 0.06);
         }
-        .toh-package-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 6px; }
+        .toh-package-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 6px; padding-right: 20px; }
         .toh-package-tagline { color: var(--text-muted); font-size: 13.5px; margin-bottom: 16px; }
-        .toh-package-items { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; flex: 1; }
-        .toh-package-items li { font-size: 13.5px; color: var(--text-body); padding-left: 16px; position: relative; }
-        .toh-package-items li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--chartreuse-rich); }
-        .toh-package-items li em { color: #b34a4a; font-style: normal; font-size: 12px; }
+        .toh-package-items { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; flex: 1; }
+        .toh-package-items li, .toh-recipient-items li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-body); }
+        .toh-package-items li em, .toh-recipient-items li em { color: #b34a4a; font-style: normal; font-size: 12px; }
+        /* Same small image-or-icon recipe .search-result-thumb already
+           uses, duplicated under its own name rather than shared with
+           search's own class - two unrelated features reusing one
+           selector would couple them for no reason. */
+        .toh-item-thumb {
+            width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+            background: linear-gradient(160deg,var(--thumb-grad-1),var(--thumb-grad-2));
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-faint); position: relative; overflow: hidden;
+        }
+        .toh-item-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.25s ease; }
+        .toh-item-thumb img.is-loaded { opacity: 1; }
+        @media (prefers-reduced-motion: reduce) { .toh-item-thumb img { transition: none; } }
+        .toh-item-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+        .toh-item-info .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .toh-item-info .unit { font-size: 11.5px; color: var(--text-muted); }
         .toh-package-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .toh-package-price { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); }
+        /* Admin-only controls, same gating as .dish-pill-remove/.dish-edit-btn
+           above - a customer never sees these. */
+        .toh-package-remove {
+            display: none;
+            position: absolute; top: 14px; right: 14px;
+            width: 22px; height: 22px; border-radius: 50%; border: none;
+            background: rgba(179,74,74,0.14); color: #b34a4a; cursor: pointer;
+            align-items: center; justify-content: center;
+        }
+        .toh-package-remove svg { width: 11px; height: 11px; }
+        body.edit-mode-on .toh-package-remove { display: flex; }
+        .toh-package-edit-btn {
+            display: none;
+            margin-top: 10px;
+            background: none; border: 1.5px solid rgba(var(--border-rgb), 0.18);
+            color: var(--heading); border-radius: 10px; padding: 7px 14px;
+            font-family: var(--display); font-weight: 600; font-size: 12px; cursor: pointer;
+        }
+        body.edit-mode-on .toh-package-edit-btn { display: block; }
 
         .toh-recipient-section { padding-top: 0; }
         .toh-recipient-panel {
@@ -4437,9 +4472,56 @@
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 18px 36px rgba(var(--border-rgb), 0.06);
         }
         .toh-recipient-header h2 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 10px; }
-        .toh-recipient-items { list-style: none; display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
-        .toh-recipient-items li { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body); }
-        .toh-recipient-items li span { font-family: var(--display); font-weight: 700; color: var(--heading); flex-shrink: 0; }
+        .toh-recipient-items { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
+        .toh-recipient-items li .price { font-family: var(--display); font-weight: 700; color: var(--heading); flex-shrink: 0; margin-left: auto; }
+
+        /* ================= CARD DESIGNS ================= */
+        .toh-card-design-label { display: block; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+        .toh-card-design-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .toh-card-design-option {
+            position: relative;
+            aspect-ratio: 5 / 7;
+            border-radius: 12px;
+            border: 2.5px solid transparent;
+            overflow: hidden;
+            cursor: pointer;
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: var(--display);
+            transition: transform 0.2s cubic-bezier(.16,.84,.44,1), border-color 0.2s ease;
+        }
+        .toh-card-design-option:hover { transform: translateY(-3px); }
+        .toh-card-design-option.active { border-color: var(--chartreuse-rich); }
+        .toh-card-design-watermark {
+            position: absolute; top: -10%; right: -22%;
+            width: 70%; height: auto;
+            opacity: 0.16;
+            pointer-events: none;
+        }
+        .toh-card-design-name { position: relative; font-weight: 700; font-size: 12px; z-index: 1; }
+        .toh-card-design-preview { position: relative; font-size: 10.5px; line-height: 1.35; z-index: 1; }
+        .toh-card-design-preview .toh-card-preview-to { font-weight: 700; margin-bottom: 4px; }
+        .toh-card-design-preview .toh-card-preview-note { opacity: 0.85; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        .toh-card-design-check {
+            display: none;
+            position: absolute; top: 10px; right: 10px; z-index: 1;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--chartreuse-rich); color: var(--cream);
+            align-items: center; justify-content: center;
+        }
+        .toh-card-design-check svg { width: 11px; height: 11px; }
+        .toh-card-design-option.active .toh-card-design-check { display: flex; }
+        .toh-card-design-option.design-classic { background: var(--cream); color: var(--aubergine-deep); }
+        .toh-card-design-option.design-classic .toh-card-design-watermark { color: var(--aubergine-deep); }
+        .toh-card-design-option.design-bold { background: var(--aubergine-deep); color: var(--cream); }
+        .toh-card-design-option.design-bold .toh-card-design-watermark { color: var(--chartreuse); }
+        .toh-card-design-option.design-sunshine { background: var(--orange); color: var(--aubergine-deep); }
+        .toh-card-design-option.design-sunshine .toh-card-design-watermark { color: var(--aubergine-deep); }
+        .toh-card-design-option.design-minimal { background: var(--cream); color: var(--aubergine-deep); border-color: rgba(6, 59, 0, 0.18); }
+        .toh-card-design-option.design-minimal .toh-card-design-watermark { color: var(--aubergine-deep); opacity: 0.5; }
+        .toh-card-design-option.design-minimal.active { border-color: var(--chartreuse-rich); }
 
         /* Sits inside the real checkout's own delivery panel (not the
            Taste of Home page), so whoever's paying sees clearly that the
@@ -4453,6 +4535,21 @@
         .toh-checkout-banner button {
             background: none; border: none; padding: 0; color: var(--chartreuse-rich);
             font-family: var(--body); font-weight: 600; font-size: 13px; text-decoration: underline; cursor: pointer; flex-shrink: 0;
+        }
+        /* Large, faint, decorative only - matches .chat-modal-watermark's
+           own positioning logic. .shop-header already has overflow:hidden
+           and gives its own .wrap a higher z-index, so this just needs to
+           sit behind that, no extra stacking rules of its own required. */
+        .toh-hero-watermark {
+            position: absolute;
+            top: -15%; right: 2%;
+            width: 32%; height: auto;
+            color: var(--ink);
+            opacity: 0.05;
+            pointer-events: none;
+        }
+        @media (max-width: 700px) {
+            .toh-hero-watermark { width: 50%; top: -5%; right: -10%; }
         }
 
         /* Shop by group (homepage) gets its own warm yellow treatment,
@@ -14454,6 +14551,22 @@
 
     <div id="view-taste-of-home" class="hidden-view">
         <header class="shop-header">
+            <!-- Same mark/path data as favicon.svg, drawn as outline only
+                 (fill:none at the root, unlike chat-modal-watermark's own
+                 solid-fill-plus-cutout version) - a solid fill here would
+                 need to exactly match whatever colour sits behind it
+                 (.shop-header's own background differs by theme), and
+                 would otherwise hide the inner "Y" stroke entirely since
+                 both would read as the same flat colour at this low an
+                 opacity. Outline-only needs no background colour to match
+                 at all. This page's own brand touch, distinct from the
+                 generic per-page icon every other .shop-header uses (see
+                 .shop-header-watermark elsewhere). aria-hidden since it
+                 carries no information a screen reader needs. -->
+            <svg class="toh-hero-watermark" viewBox="65 25 875 900" fill="none" aria-hidden="true">
+                <path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="currentColor" stroke-width="40" />
+                <path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="currentColor" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Send a Taste of Home</div>
                 <h1>Send a Taste of Home</h1>
@@ -14463,6 +14576,12 @@
         <section class="products-section">
             <div class="wrap">
                 <div class="toh-package-grid" id="tohPackageGrid"></div>
+                <div id="tohPackageEditSlot"></div>
+                <button type="button" class="add-bundle-btn" id="addTohPackageBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Add a package
+                </button>
+                <div id="addTohPackageSlot"></div>
             </div>
         </section>
         <section class="products-section toh-recipient-section" id="tohRecipientSection" style="display:none;">
@@ -14482,6 +14601,10 @@
                             <div class="field"><label for="tohRecipientPostcode">Postcode</label><input type="text" id="tohRecipientPostcode" placeholder="CO1 1AA" required></div>
                         </div>
                         <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
+                        <div class="field">
+                            <span class="toh-card-design-label">Pick a card to print and include</span>
+                            <div class="toh-card-design-picker" id="tohCardDesignPicker" role="radiogroup" aria-label="Card design"></div>
+                        </div>
                         <button type="submit" class="btn btn-primary btn-block">Add to basket</button>
                     </form>
                 </div>
@@ -16233,6 +16356,9 @@
             // old "Add dish (this tab only)" button label), gone the moment
             // the page refreshed. Persisted the same way now.
             if (Array.isArray(data.dish_templates_data)) { DISH_TEMPLATES.length = 0; DISH_TEMPLATES.push(...data.dish_templates_data); }
+            // Same reasoning as dish_templates_data above - a care package
+            // previously only ever lived in this tab's own memory.
+            if (Array.isArray(data.taste_of_home_packages_data)) { TASTE_OF_HOME_PACKAGES.length = 0; TASTE_OF_HOME_PACKAGES.push(...data.taste_of_home_packages_data); }
             if (data.category_overrides && typeof data.category_overrides === 'object') {
                 CATEGORY_OVERRIDES = data.category_overrides;
                 applyCategoryOverrides();
@@ -16268,6 +16394,7 @@
                 bundles_data: BUNDLES,
                 combos_data: COMBOS,
                 dish_templates_data: DISH_TEMPLATES,
+                taste_of_home_packages_data: TASTE_OF_HOME_PACKAGES,
                 category_overrides: CATEGORY_OVERRIDES,
                 updated_at: new Date().toISOString(),
             }).eq('id', true);
@@ -17974,7 +18101,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-22.3';
+        const BUILD_VERSION = '2026-11-22.4';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19599,7 +19726,7 @@
            with the account holder's own last address, so the recipient's
            details win without that function needing to know gifts exist
            at all (it already refuses to overwrite a non-empty dName). */
-        const TASTE_OF_HOME_PACKAGES = [
+        let TASTE_OF_HOME_PACKAGES = [
             {
                 id: 'first-term',
                 name: 'The First Term Box',
@@ -19653,21 +19780,41 @@
                 .map(ref => ({ ref, p: getProduct(ref.catSlug, ref.idx) }))
                 .filter(x => x.p && !x.p.deleted);
         }
+        // Same small image-or-icon thumbnail renderSearchDropdown already
+        // uses for its own result rows - a customer picking a care
+        // package for someone else deserves the same "what am I actually
+        // sending" clarity a product search result already gives.
+        function tohItemThumbHTML(p) {
+            const placeholderSvg = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+            return p.image
+                ? `<img src="${escapeHtml(p.imageThumb || p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onload="this.classList.add('is-loaded')" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                   <span style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${placeholderSvg}</span>`
+                : placeholderSvg;
+        }
         function renderTasteOfHomePackages() {
             const grid = document.getElementById('tohPackageGrid');
             if (!grid) return;
-            grid.innerHTML = TASTE_OF_HOME_PACKAGES.map(pkg => {
+            grid.innerHTML = TASTE_OF_HOME_PACKAGES.map((pkg, i) => {
                 const valid = tohValidItems(pkg);
                 const inStockTotal = valid.filter(x => x.p.stock !== 'out').reduce((sum, x) => sum + effectivePrice(x.p), 0);
                 return `
     <div class="toh-package-card">
+      <button type="button" class="toh-package-remove" onclick="removeTohPackage(${i})" aria-label="Remove package"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <h3>${escapeHtml(pkg.name)}</h3>
       <p class="toh-package-tagline">${escapeHtml(pkg.tagline)}</p>
-      <ul class="toh-package-items">${valid.map(x => `<li>${escapeHtml(x.p.name)}${x.p.stock === 'out' ? ' <em>(out of stock)</em>' : ''}</li>`).join('')}</ul>
+      <ul class="toh-package-items">${valid.map(x => `
+        <li>
+          <div class="toh-item-thumb">${tohItemThumbHTML(x.p)}</div>
+          <div class="toh-item-info">
+            <span class="name">${escapeHtml(x.p.name)}${x.p.stock === 'out' ? ' <em>(out of stock)</em>' : ''}</span>
+            ${effectiveUnit(x.p) ? `<span class="unit">${escapeHtml(effectiveUnit(x.p))}</span>` : ''}
+          </div>
+        </li>`).join('')}</ul>
       <div class="toh-package-footer">
         <span class="toh-package-price">${money(inStockTotal)}</span>
         <button type="button" class="btn btn-primary" onclick="selectTohPackage('${pkg.id}')">Send this</button>
       </div>
+      <button type="button" class="toh-package-edit-btn" onclick="openTohPackageEdit(${i})">Edit package</button>
     </div>`;
             }).join('');
         }
@@ -19681,14 +19828,71 @@
             if (nameEl) nameEl.textContent = pkg.name;
             if (itemsEl) {
                 const valid = tohValidItems(pkg).filter(x => x.p.stock !== 'out');
-                itemsEl.innerHTML = valid.map(x => `<li>${escapeHtml(x.p.name)}<span>${money(effectivePrice(x.p))}</span></li>`).join('');
+                itemsEl.innerHTML = valid.map(x => `
+        <li>
+          <div class="toh-item-thumb">${tohItemThumbHTML(x.p)}</div>
+          <div class="toh-item-info">
+            <span class="name">${escapeHtml(x.p.name)}</span>
+            ${effectiveUnit(x.p) ? `<span class="unit">${escapeHtml(effectiveUnit(x.p))}</span>` : ''}
+          </div>
+          <span class="price">${money(effectivePrice(x.p))}</span>
+        </li>`).join('');
             }
+            renderTohCardDesignPicker();
             if (section) {
                 section.style.display = '';
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
         window.selectTohPackage = selectTohPackage;
+        /* ================= CARD DESIGNS =================
+           A small, fixed set of brand-drawn card faces (not uploaded
+           images - the same inline-SVG approach the rest of the site uses
+           for its own mark, see COMING_SOON_LOGO_SVG) a customer picks
+           between, so whoever packs the order knows which physical card
+           to print and include. The preview inside each option updates
+           live as the sender types the recipient's name/note (see the
+           input listeners wired near the bottom of this script), so
+           picking a design means seeing roughly what it'll say. */
+        const TOH_CARD_DESIGNS = [
+            { id: 'classic', label: 'Classic' },
+            { id: 'bold', label: 'Bold' },
+            { id: 'sunshine', label: 'Sunshine' },
+            { id: 'minimal', label: 'Minimal' },
+        ];
+        // Same mark/path data as favicon.svg, drawn outline-only (both
+        // paths fill:none, stroke:currentColor) rather than a solid fill
+        // - each design's own CSS sets one text colour for the whole
+        // mark, and a solid-filled outer blob would hide the inner "Y"
+        // stroke completely once both read as that same flat colour
+        // (reproduced and fixed directly: the first version of this did
+        // exactly that). Outline-only needs no second "cut out against
+        // this background" colour the way chat-modal-watermark's own
+        // solid-fill version needs.
+        const TOH_CARD_MARK_SVG = '<path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" fill="none" stroke="currentColor" stroke-width="40"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" fill="none" stroke="currentColor" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>';
+        let selectedTohCardDesignId = TOH_CARD_DESIGNS[0].id;
+        function renderTohCardDesignPicker() {
+            const picker = document.getElementById('tohCardDesignPicker');
+            if (!picker) return;
+            const name = document.getElementById('tohRecipientName')?.value.trim();
+            const note = document.getElementById('tohNote')?.value.trim();
+            picker.innerHTML = TOH_CARD_DESIGNS.map(d => `
+    <div class="toh-card-design-option design-${d.id}${selectedTohCardDesignId === d.id ? ' active' : ''}" onclick="selectTohCardDesign('${d.id}')" role="radio" aria-checked="${selectedTohCardDesignId === d.id}" aria-label="${escapeHtml(d.label)} card design">
+      <svg class="toh-card-design-watermark" viewBox="65 25 875 900" aria-hidden="true">${TOH_CARD_MARK_SVG}</svg>
+      <span class="toh-card-design-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="toh-card-design-name">${escapeHtml(d.label)}</span>
+      <div class="toh-card-design-preview">
+        <div class="toh-card-preview-to">To ${escapeHtml(name || 'them')},</div>
+        <div class="toh-card-preview-note">${escapeHtml(note || 'A little taste of home, with love.')}</div>
+      </div>
+    </div>`).join('');
+        }
+        function selectTohCardDesign(id) {
+            selectedTohCardDesignId = id;
+            renderTohCardDesignPicker();
+        }
+        window.selectTohCardDesign = selectTohCardDesign;
+
         function submitTasteOfHomeRecipient(e) {
             e.preventDefault();
             const pkg = TASTE_OF_HOME_PACKAGES.find(p => p.id === activeTohPackageId);
@@ -19706,7 +19910,8 @@
             valid.forEach(x => addToCart(x.p, 1));
             if (valid.length === 0) { showToast('Everything in this package is currently out of stock.'); return; }
 
-            pendingGiftDetails = { packageName: pkg.name, recipientName, recipientPhone, address1, address2, city, postcode, note };
+            const cardDesign = TOH_CARD_DESIGNS.find(d => d.id === selectedTohCardDesignId) || TOH_CARD_DESIGNS[0];
+            pendingGiftDetails = { packageName: pkg.name, recipientName, recipientPhone, address1, address2, city, postcode, note, cardDesignLabel: cardDesign.label };
             savePendingGiftToStorage();
             showToast(`Added "${pkg.name}" to your basket for ${recipientName}.`);
             window.location.hash = '#/checkout';
@@ -19746,7 +19951,7 @@
             if (townField) townField.value = g.city;
             if (postcodeField) postcodeField.value = g.postcode;
             if (notesField) {
-                const giftLine = `Gift for ${g.recipientName}${g.note ? `: "${g.note}"` : ''} (please include a note card if possible).`;
+                const giftLine = `Gift for ${g.recipientName}${g.note ? `: "${g.note}"` : ''}. Card design: ${g.cardDesignLabel || 'Classic'} (please print and include that card).`;
                 notesField.value = notesField.value.trim() ? `${notesField.value.trim()}\n${giftLine}` : giftLine;
             }
             if (banner) {
@@ -19756,6 +19961,159 @@
             }
         }
         window.applyPendingGiftToCheckout = applyPendingGiftToCheckout;
+
+        /* ================= EDIT/ADD/REMOVE A CARE PACKAGE (edit mode) =================
+           Mirrors openDishEdit/openAddDishForm exactly - a shared slot
+           below the grid for whichever package is being edited (or a new
+           one being created), the same category+product select pair for
+           adding items, the same savePricingSettings() persistence. */
+        let tohEditItems = null;
+        function removeTohPackage(i) {
+            const removed = TASTE_OF_HOME_PACKAGES[i];
+            TASTE_OF_HOME_PACKAGES.splice(i, 1);
+            document.getElementById('tohPackageEditSlot').innerHTML = '';
+            tohEditItems = null;
+            renderTasteOfHomePackages();
+            savePricingSettings();
+            if (removed) logAdminAction('taste_of_home_package_removed', 'taste_of_home_package', removed.name, null);
+        }
+        window.removeTohPackage = removeTohPackage;
+        function openTohPackageEdit(i) {
+            const pkg = TASTE_OF_HOME_PACKAGES[i];
+            const slot = document.getElementById('tohPackageEditSlot');
+            if (!slot || !pkg) return;
+            tohEditItems = [...(pkg.items || [])];
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            slot.innerHTML = `
+      <div class="dish-builder-edit-form add-product-form">
+        <h3>Edit package</h3>
+        <div><label for="tpe-name">Package name</label><input type="text" id="tpe-name" value="${escapeHtml(pkg.name)}"></div>
+        <div><label for="tpe-tagline">Tagline</label><textarea id="tpe-tagline" rows="2">${escapeHtml(pkg.tagline)}</textarea></div>
+        <div>
+          <label for="tpe-item-cat">Items (at least 1)</label>
+          <div id="tpe-items-list" class="delivery-rule-list"></div>
+          <div class="apf-row">
+            <div><select id="tpe-item-cat"></select></div>
+            <div><select id="tpe-item-product"></select></div>
+          </div>
+          <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToTohPackageEdit()">Add item</button>
+        </div>
+        <div class="apf-actions">
+          <button class="apf-save" type="button" onclick="saveTohPackageEdit(${i})">Save changes</button>
+          <button class="apf-cancel" type="button" onclick="cancelTohPackageEdit();">Cancel</button>
+        </div>
+      </div>`;
+            document.getElementById('tpe-item-cat').innerHTML = catOptions;
+            populateTohEditProductSelect('tpe-item-cat', 'tpe-item-product');
+            document.getElementById('tpe-item-cat').addEventListener('change', () => populateTohEditProductSelect('tpe-item-cat', 'tpe-item-product'));
+            renderTohPackageEditItemsList();
+            slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        window.openTohPackageEdit = openTohPackageEdit;
+        function cancelTohPackageEdit() {
+            tohEditItems = null;
+            document.getElementById('tohPackageEditSlot').innerHTML = '';
+        }
+        window.cancelTohPackageEdit = cancelTohPackageEdit;
+        function populateTohEditProductSelect(catSelectId, productSelectId) {
+            const catSlug = document.getElementById(catSelectId).value;
+            const cat = findCategory(catSlug);
+            document.getElementById(productSelectId).innerHTML = productOptionsHTML(cat);
+        }
+        function renderTohPackageEditItemsList() {
+            document.getElementById('tpe-items-list').innerHTML = tohEditItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item ? item.name : '?')}</span><button type="button" class="rule-remove-btn" onclick="tohEditItems.splice(${i},1); renderTohPackageEditItemsList();">Remove</button></div>`;
+            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
+        }
+        window.renderTohPackageEditItemsList = renderTohPackageEditItemsList;
+        function addItemToTohPackageEdit() {
+            const catSlug = document.getElementById('tpe-item-cat').value;
+            const idx = parseInt(document.getElementById('tpe-item-product').value, 10);
+            if (!getProduct(catSlug, idx)) return;
+            tohEditItems.push({ catSlug, idx });
+            renderTohPackageEditItemsList();
+        }
+        window.addItemToTohPackageEdit = addItemToTohPackageEdit;
+        function saveTohPackageEdit(i) {
+            const name = document.getElementById('tpe-name').value.trim();
+            const tagline = document.getElementById('tpe-tagline').value.trim();
+            if (!name) { showToast('Give the package a name.'); return; }
+            if (tohEditItems.length < 1) { showToast('Add at least one item.'); return; }
+            const before = TASTE_OF_HOME_PACKAGES[i];
+            TASTE_OF_HOME_PACKAGES[i] = { id: before.id, name, tagline, items: [...tohEditItems] };
+            tohEditItems = null;
+            document.getElementById('tohPackageEditSlot').innerHTML = '';
+            renderTasteOfHomePackages();
+            savePricingSettings();
+            logAdminAction('taste_of_home_package_updated', 'taste_of_home_package', name, {
+                changes: diffFields({ name: before.name, tagline: before.tagline }, { name, tagline }, [{ key: 'name', label: 'Name' }, { key: 'tagline', label: 'Tagline' }]),
+            });
+            showToast(`Updated "${name}".`, undefined, 'success');
+        }
+        window.saveTohPackageEdit = saveTohPackageEdit;
+
+        let newTohPackageItems = [];
+        function openAddTohPackageForm() {
+            const slot = document.getElementById('addTohPackageSlot');
+            if (slot.querySelector('.add-product-form')) { slot.innerHTML = ''; newTohPackageItems = []; return; }
+            newTohPackageItems = [];
+            const catOptions = orderedCategories().map(c => `<option value="${c.slug}">${c.name.replace(/&amp;/g,'&')}</option>`).join('');
+            slot.innerHTML = `
+        <div class="add-product-form">
+          <h3>Add a new package</h3>
+          <div><label for="tanf-name">Package name</label><input type="text" id="tanf-name" placeholder="e.g. Christmas at Home"></div>
+          <div><label for="tanf-tagline">Tagline</label><textarea id="tanf-tagline" rows="2" placeholder="A one-line description shown on the card"></textarea></div>
+          <div>
+            <label for="tanf-item-cat">Items</label>
+            <div id="tanf-items-list" class="delivery-rule-list"></div>
+            <div class="apf-row">
+              <div><select id="tanf-item-cat"></select></div>
+              <div><select id="tanf-item-product"></select></div>
+            </div>
+            <button type="button" class="ep-save" style="margin:8px 0 4px;" onclick="addItemToNewTohPackage()">Add item</button>
+          </div>
+          <div class="apf-actions">
+            <button class="apf-save" type="button" onclick="saveNewTohPackage()">Add package</button>
+            <button class="apf-cancel" type="button" onclick="document.getElementById('addTohPackageSlot').innerHTML=''; newTohPackageItems=[];">Cancel</button>
+          </div>
+        </div>`;
+            document.getElementById('tanf-item-cat').innerHTML = catOptions;
+            populateTohEditProductSelect('tanf-item-cat', 'tanf-item-product');
+            document.getElementById('tanf-item-cat').addEventListener('change', () => populateTohEditProductSelect('tanf-item-cat', 'tanf-item-product'));
+            renderNewTohPackageItemsList();
+        }
+        window.openAddTohPackageForm = openAddTohPackageForm;
+        function renderNewTohPackageItemsList() {
+            document.getElementById('tanf-items-list').innerHTML = newTohPackageItems.map((ref, i) => {
+                const item = getProduct(ref.catSlug, ref.idx);
+                return `<div class="delivery-rule-row"><span>${escapeHtml(item.name)}</span><button type="button" class="rule-remove-btn" onclick="newTohPackageItems.splice(${i},1); renderNewTohPackageItemsList();">Remove</button></div>`;
+            }).join('') || '<p style="font-size:11.5px; color:var(--text-muted); margin:4px 0;">No items added yet.</p>';
+        }
+        window.renderNewTohPackageItemsList = renderNewTohPackageItemsList;
+        function addItemToNewTohPackage() {
+            const catSlug = document.getElementById('tanf-item-cat').value;
+            const idx = parseInt(document.getElementById('tanf-item-product').value, 10);
+            if (!getProduct(catSlug, idx)) return;
+            newTohPackageItems.push({ catSlug, idx });
+            renderNewTohPackageItemsList();
+        }
+        window.addItemToNewTohPackage = addItemToNewTohPackage;
+        function saveNewTohPackage() {
+            const name = document.getElementById('tanf-name').value.trim();
+            const tagline = document.getElementById('tanf-tagline').value.trim();
+            if (!name) { showToast('Give the package a name.'); return; }
+            if (newTohPackageItems.length < 1) { showToast('Add at least one item.'); return; }
+            const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `package-${Date.now()}`;
+            TASTE_OF_HOME_PACKAGES.push({ id, name, tagline, items: [...newTohPackageItems] });
+            document.getElementById('addTohPackageSlot').innerHTML = '';
+            newTohPackageItems = [];
+            renderTasteOfHomePackages();
+            savePricingSettings();
+            logAdminAction('taste_of_home_package_created', 'taste_of_home_package', name, null);
+            showToast(`Added "${name}".`, undefined, 'success');
+        }
+        window.saveNewTohPackage = saveNewTohPackage;
 
         /* ================= EDIT AN EXISTING DISH (edit mode) =================
            Mirrors openBundleEdit/openComboEdit — a dish previously had no
@@ -32236,6 +32594,15 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         if (dishBuilderAddBtn) dishBuilderAddBtn.addEventListener('click', addDishSelectionToCart);
         const addDishBtn = document.getElementById('addDishBtn');
         if (addDishBtn) addDishBtn.addEventListener('click', openAddDishForm);
+        // Keeps each card design's own live preview (see
+        // renderTohCardDesignPicker) in step with what's actually been
+        // typed, without waiting for a design to be clicked first.
+        const tohRecipientNameInput = document.getElementById('tohRecipientName');
+        if (tohRecipientNameInput) tohRecipientNameInput.addEventListener('input', renderTohCardDesignPicker);
+        const tohNoteInput = document.getElementById('tohNote');
+        if (tohNoteInput) tohNoteInput.addEventListener('input', renderTohCardDesignPicker);
+        const addTohPackageBtn = document.getElementById('addTohPackageBtn');
+        if (addTohPackageBtn) addTohPackageBtn.addEventListener('click', openAddTohPackageForm);
 
         /* ================= SUBSCRIBE & SAVE: wiring ================= */
         const pdOneTimeRadio = document.getElementById('pdOneTimeRadio');
