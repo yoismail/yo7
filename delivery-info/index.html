@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.1e66bd86ea.css">    <script>
+    <link rel="stylesheet" href="/assets/app.b07db3d934.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -1447,6 +1447,17 @@
                                         <span>Mon&ndash;Sat 8am&ndash;9pm, Sun 10am&ndash;5pm</span>
                                     </div>
                                     <p class="pickup-info-note">We'll have your order ready to collect, usually within 2 hours during opening times.</p>
+                                </div>
+                                <div class="field apf-checkbox" id="checkoutGiftToggleField">
+                                    <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;"><input type="checkbox" id="checkoutIsGift" style="margin-top:2px;" onchange="toggleCheckoutGiftOptions(this.checked)"> Send this as a gift</label>
+                                </div>
+                                <div id="checkoutGiftOptions" class="hidden-view">
+                                    <div class="field"><label for="checkoutGiftNote">Gift note (optional)</label><textarea id="checkoutGiftNote"
+                                            rows="3" maxlength="300" placeholder="Enjoy! Love, ..."></textarea></div>
+                                    <div class="field">
+                                        <span class="toh-card-design-label">Pick a card to print and include</span>
+                                        <div class="toh-card-design-picker" id="checkoutCardDesignPicker" role="radiogroup" aria-label="Card design"></div>
+                                    </div>
                                 </div>
                                 <div style="display:flex; gap:12px; margin-top:10px;">
                                     <button class="btn btn-outline-dark" type="button" id="backToCartBtn">Back</button>
@@ -3172,6 +3183,7 @@
                                     <div class="admin-order-detail-row"><dt>Address</dt><dd id="aodAddress"></dd></div>
                                 </dl>
                                 <div class="admin-order-detail-row"><dt>Delivery note</dt><dd id="aodNote"></dd></div>
+                                <button type="button" class="btn btn-outline-dark btn-block" id="aodDownloadGiftCardBtn" style="display:none; margin-top:12px;" onclick="downloadAdminOrderGiftCard()">Download card to print</button>
                             </div>
                             <div class="admin-order-detail-card">
                                 <h3>Payment</h3>
@@ -3557,7 +3569,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.c07edff1ee.js"></script>
+    <script defer src="/assets/app.75b39bcd4c.js"></script>
 
 </body>
 
