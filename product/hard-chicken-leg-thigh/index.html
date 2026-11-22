@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.8aa75d8ee4.css">    <script>
+    <link rel="stylesheet" href="/assets/app.1e66bd86ea.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -2486,6 +2486,22 @@
 
     <div id="view-taste-of-home" class="hidden-view">
         <header class="shop-header">
+            <!-- Same mark/path data as favicon.svg, drawn as outline only
+                 (fill:none at the root, unlike chat-modal-watermark's own
+                 solid-fill-plus-cutout version) - a solid fill here would
+                 need to exactly match whatever colour sits behind it
+                 (.shop-header's own background differs by theme), and
+                 would otherwise hide the inner "Y" stroke entirely since
+                 both would read as the same flat colour at this low an
+                 opacity. Outline-only needs no background colour to match
+                 at all. This page's own brand touch, distinct from the
+                 generic per-page icon every other .shop-header uses (see
+                 .shop-header-watermark elsewhere). aria-hidden since it
+                 carries no information a screen reader needs. -->
+            <svg class="toh-hero-watermark" viewBox="65 25 875 900" fill="none" aria-hidden="true">
+                <path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="currentColor" stroke-width="40" />
+                <path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="currentColor" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
             <div class="wrap">
                 <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Send a Taste of Home</div>
                 <h1>Send a Taste of Home</h1>
@@ -2495,6 +2511,12 @@
         <section class="products-section">
             <div class="wrap">
                 <div class="toh-package-grid" id="tohPackageGrid"></div>
+                <div id="tohPackageEditSlot"></div>
+                <button type="button" class="add-bundle-btn" id="addTohPackageBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Add a package
+                </button>
+                <div id="addTohPackageSlot"></div>
             </div>
         </section>
         <section class="products-section toh-recipient-section" id="tohRecipientSection" style="display:none;">
@@ -2514,6 +2536,10 @@
                             <div class="field"><label for="tohRecipientPostcode">Postcode</label><input type="text" id="tohRecipientPostcode" placeholder="CO1 1AA" required></div>
                         </div>
                         <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
+                        <div class="field">
+                            <span class="toh-card-design-label">Pick a card to print and include</span>
+                            <div class="toh-card-design-picker" id="tohCardDesignPicker" role="radiogroup" aria-label="Card design"></div>
+                        </div>
                         <button type="submit" class="btn btn-primary btn-block">Add to basket</button>
                     </form>
                 </div>
@@ -3533,7 +3559,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.26134dcd4f.js"></script>
+    <script defer src="/assets/app.c07edff1ee.js"></script>
 
 </body>
 
