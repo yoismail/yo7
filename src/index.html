@@ -1129,7 +1129,20 @@
             position: absolute;
             top: calc(100% + 10px);
             left: 0;
-            right: 0;
+            width: 100%;
+            /* .search-wrap itself can shrink down to a bare icon on a
+               cramped desktop width (see the 901-1499px band above) - this
+               dropdown used to match that same width via `right: 0`
+               alongside `left: 0`, so a result row's thumbnail, name and
+               price no longer had room to lay out side by side and spilled
+               over each other instead (reported with a screenshot: a
+               product's price rendered over its own thumbnail). This
+               floats as an overlay already (z-index above everything else
+               in the nav), so there's no reason it has to stay exactly as
+               narrow as the box that triggered it - .search-wrap always
+               has hundreds of pixels of room to its right at every width
+               this site supports, checked down to 901px. */
+            min-width: 280px;
             background: var(--card-bg);
             border-radius: 16px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.25);
@@ -1168,7 +1181,7 @@
         }
         .search-result-info { flex: 1; min-width: 0; }
         .search-result-info .name { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .search-result-info .cat { font-size: 11.5px; color: var(--text-muted); }
+        .search-result-info .cat { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .search-result-price {
             font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink); flex-shrink: 0;
             display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right;
@@ -17856,7 +17869,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-22.1';
+        const BUILD_VERSION = '2026-11-22.2';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
