@@ -4395,6 +4395,66 @@
             .dish-builder-summary { border-left: none; border-top: 1px solid rgba(var(--border-rgb), 0.08); }
         }
 
+        /* ================= SEND A TASTE OF HOME =================
+           A gift flow, not a shopping tool: the account holder picks a
+           package for someone else entirely, and that someone else's name
+           and address become the actual delivery details. #tohRecipientForm
+           deliberately reuses the site's own global .field/.field-row/
+           .btn classes (the same ones the real checkout delivery form
+           uses just below) rather than its own input styling, so it reads
+           as one continuous, trustworthy flow rather than a bolted-on
+           page with its own visual language. */
+        .toh-package-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .toh-package-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 18px 36px rgba(var(--border-rgb), 0.06);
+        }
+        .toh-package-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 6px; }
+        .toh-package-tagline { color: var(--text-muted); font-size: 13.5px; margin-bottom: 16px; }
+        .toh-package-items { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; flex: 1; }
+        .toh-package-items li { font-size: 13.5px; color: var(--text-body); padding-left: 16px; position: relative; }
+        .toh-package-items li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--chartreuse-rich); }
+        .toh-package-items li em { color: #b34a4a; font-style: normal; font-size: 12px; }
+        .toh-package-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .toh-package-price { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); }
+
+        .toh-recipient-section { padding-top: 0; }
+        .toh-recipient-panel {
+            max-width: 560px;
+            background: var(--card-bg);
+            border: 1px solid rgba(var(--border-rgb), 0.08);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 18px 36px rgba(var(--border-rgb), 0.06);
+        }
+        .toh-recipient-header h2 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 10px; }
+        .toh-recipient-items { list-style: none; display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(var(--border-rgb), 0.08); }
+        .toh-recipient-items li { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body); }
+        .toh-recipient-items li span { font-family: var(--display); font-weight: 700; color: var(--heading); flex-shrink: 0; }
+
+        /* Sits inside the real checkout's own delivery panel (not the
+           Taste of Home page), so whoever's paying sees clearly that the
+           form below is about to ship to someone else, not to them. */
+        .toh-checkout-banner {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            background: var(--section-alt-bg); border: 1px solid rgba(var(--border-rgb), 0.1);
+            border-radius: 14px; padding: 14px 18px; margin-bottom: 18px;
+            font-size: 13.5px; color: var(--text-body);
+        }
+        .toh-checkout-banner button {
+            background: none; border: none; padding: 0; color: var(--chartreuse-rich);
+            font-family: var(--body); font-weight: 600; font-size: 13px; text-decoration: underline; cursor: pointer; flex-shrink: 0;
+        }
+
         /* Shop by group (homepage) gets its own warm yellow treatment,
            scoped by ID so the group-detail page's .shop-section (which
            reuses the same class) is unaffected. */
@@ -12191,7 +12251,7 @@
                 <a href="#/" id="navLinkHome">Home</a>
                 <a href="#/shop" id="navLinkShop">Shop</a>
                 <a href="#/blog" id="navLinkJournal">Blog</a>
-                <a href="#/recipes" id="navLinkRecipes">Recipes</a>
+                <a href="#/taste-of-home" id="navLinkTasteOfHome">Taste of Home</a>
                 <a href="#/about" id="navLinkStory">About Us</a>
                 <a href="#/delivery-info" id="navLinkDelivery">Delivery</a>
                 <a href="#/contact" id="navLinkContact">Contact</a>
@@ -12301,7 +12361,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#/">Home</a>
             <a href="#/shop">Shop</a>
-            <a href="#/recipes">Recipes</a>
+            <a href="#/taste-of-home">Taste of Home</a>
             <a href="#/blog">Blog</a>
             <a href="#/favorites" class="mobile-menu-group-start">My Favorites</a>
             <a href="#/orders">My Orders</a>
@@ -13314,6 +13374,10 @@
                     <div class="checkout-grid">
                         <div class="panel">
                             <h2>Delivery details</h2>
+                            <div class="toh-checkout-banner" id="checkoutGiftBanner" style="display:none;">
+                                <span class="toh-banner-text"></span>
+                                <button type="button" onclick="clearPendingGift()">Remove</button>
+                            </div>
                             <div class="fulfil-toggle" role="group" aria-label="Choose delivery or pickup">
                                 <button type="button" class="fulfil-btn active" id="fulfilDeliveryBtn">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg>
@@ -14388,6 +14452,43 @@
         </section>
     </div>
 
+    <div id="view-taste-of-home" class="hidden-view">
+        <header class="shop-header">
+            <div class="wrap">
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Send a Taste of Home</div>
+                <h1>Send a Taste of Home</h1>
+                <p>Someone you know is missing home, a child away at uni, a friend who just moved, a new mum who needs feeding, not advice. Pick a package, write them a few real words, and we'll deliver it to their door, anywhere in the UK.</p>
+            </div>
+        </header>
+        <section class="products-section">
+            <div class="wrap">
+                <div class="toh-package-grid" id="tohPackageGrid"></div>
+            </div>
+        </section>
+        <section class="products-section toh-recipient-section" id="tohRecipientSection" style="display:none;">
+            <div class="wrap">
+                <div class="toh-recipient-panel">
+                    <div class="toh-recipient-header">
+                        <h2 id="tohSelectedPackageName"></h2>
+                        <ul class="toh-recipient-items" id="tohSelectedPackageItems"></ul>
+                    </div>
+                    <form id="tohRecipientForm" onsubmit="submitTasteOfHomeRecipient(event)">
+                        <div class="field"><label for="tohRecipientName">Who's this for?</label><input type="text" id="tohRecipientName" placeholder="Their name" required></div>
+                        <div class="field"><label for="tohRecipientPhone">Their phone (optional, for the courier)</label><input type="tel" id="tohRecipientPhone" placeholder="07000 000000"></div>
+                        <div class="field"><label for="tohRecipientAddress1">Their delivery address</label><input type="text" id="tohRecipientAddress1" placeholder="Address line 1" required></div>
+                        <div class="field"><label for="tohRecipientAddress2">Address line 2 (optional)</label><input type="text" id="tohRecipientAddress2" placeholder="Flat, floor, etc."></div>
+                        <div class="field-row">
+                            <div class="field"><label for="tohRecipientCity">Town / city</label><input type="text" id="tohRecipientCity" placeholder="Town or city" required></div>
+                            <div class="field"><label for="tohRecipientPostcode">Postcode</label><input type="text" id="tohRecipientPostcode" placeholder="CO1 1AA" required></div>
+                        </div>
+                        <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
+                        <button type="submit" class="btn btn-primary btn-block">Add to basket</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <!-- ================= WHOLESALE =================
          Gated to approved trade accounts (profiles.wholesale_status).
          See apply_for_wholesale_account() and wholesale_products in
@@ -15172,7 +15273,7 @@
                         <a href="#/">Home</a>
                         <a href="#/shop">Shop</a>
                         <a href="#/blog">Blog</a>
-                        <a href="#/recipes">Recipes</a>
+                        <a href="#/taste-of-home">Taste of Home</a>
                         <a href="#/checkout">Basket</a>
                         <a href="#/orders">My Orders</a>
                         <a href="#/refer">Refer a Friend</a>
@@ -17639,6 +17740,10 @@
 
         /* ================= STATE ================= */
         let cart = loadCartFromStorage(); // {id, name, unit, price, emoji, qty, catSlug}, restored from localStorage so a refresh doesn't lose it
+        // A Taste of Home gift package picked but not yet checked out -
+        // {packageName, recipientName, recipientPhone, address1, address2,
+        // city, postcode, note} or null. See applyPendingGiftToCheckout().
+        let pendingGiftDetails = loadPendingGiftFromStorage();
         // A genuinely separate basket for wholesale items (see
         // addWholesaleToCart/removeFromWholesaleCart/changeWholesaleQty
         // below), never merged into `cart` - a wholesaler can have
@@ -17869,7 +17974,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-22.2';
+        const BUILD_VERSION = '2026-11-22.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18227,6 +18332,22 @@
                 const saved = JSON.parse(localStorage.getItem('yo7-cart') || '[]');
                 return Array.isArray(saved) ? saved : [];
             } catch (e) { return []; }
+        }
+        // A Taste of Home gift waiting to be checked out carries exactly
+        // the same "survive a refresh, not an account switch" lifetime as
+        // the cart itself (see clearPendingGift()'s own callers for the
+        // account-switch half of that).
+        function savePendingGiftToStorage() {
+            try {
+                if (pendingGiftDetails) localStorage.setItem('yo7-pending-gift', JSON.stringify(pendingGiftDetails));
+                else localStorage.removeItem('yo7-pending-gift');
+            } catch (e) { /* localStorage unavailable, gift details just won't survive a refresh this session */ }
+        }
+        function loadPendingGiftFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('yo7-pending-gift') || 'null');
+                return saved && typeof saved === 'object' ? saved : null;
+            } catch (e) { return null; }
         }
         function saveWholesaleCartToStorage() {
             try { localStorage.setItem('yo7-wholesale-cart', JSON.stringify(wholesaleCart)); }
@@ -19465,6 +19586,176 @@
             if (added === 0) { showToast('Nothing selected to add.'); return; }
             showToast(`Added ${added} item${added > 1 ? 's' : ''} for ${dish.name} to your basket.`);
         }
+
+        /* ================= SEND A TASTE OF HOME =================
+           A gift flow: the account holder isn't the delivery recipient.
+           Picking a package adds its real products to their own basket,
+           same addToCart() every other add-to-basket path on the site
+           uses, then captures someone else's name, address and an
+           optional note as pendingGiftDetails. applyPendingGiftToCheckout()
+           (called from the #/checkout route) is the only place that data
+           is read again - it overwrites the delivery form's own fields
+           before prefillDeliveryFromLastOrder() gets a chance to fill them
+           with the account holder's own last address, so the recipient's
+           details win without that function needing to know gifts exist
+           at all (it already refuses to overwrite a non-empty dName). */
+        const TASTE_OF_HOME_PACKAGES = [
+            {
+                id: 'first-term',
+                name: 'The First Term Box',
+                tagline: 'For whoever just moved out and still hasn’t worked out how to season rice properly.',
+                items: [
+                    { catSlug: 'flour', idx: 1 },
+                    { catSlug: 'oils', idx: 1 },
+                    { catSlug: 'seasoning', idx: 0 },
+                    { catSlug: 'seasoning', idx: 8 },
+                    { catSlug: 'rice', idx: 1 },
+                ],
+            },
+            {
+                id: 'sunday-soup',
+                name: 'Sunday Soup Kit',
+                tagline: 'Everything but the pot, for the Sunday that needs real soup, not a ready meal.',
+                items: [
+                    { catSlug: 'seasoning', idx: 11 },
+                    { catSlug: 'oils', idx: 0 },
+                    { catSlug: 'peppers-chillies', idx: 1 },
+                    { catSlug: 'sea-foods', idx: 1 },
+                    { catSlug: 'meat', idx: 0 },
+                ],
+            },
+            {
+                id: 'sweet-things',
+                name: 'Sweet Things From Home',
+                tagline: 'Not a meal, just the small joys that taste like home.',
+                items: [
+                    { catSlug: 'snacks-confectionary', idx: 0 },
+                    { catSlug: 'snacks-confectionary', idx: 1 },
+                    { catSlug: 'snacks-confectionary', idx: 3 },
+                    { catSlug: 'drinks', idx: 3 },
+                ],
+            },
+            {
+                id: 'new-mum',
+                name: 'For the New Mum',
+                tagline: 'Pepper soup and proper rest, for the family that just got bigger.',
+                items: [
+                    { catSlug: 'seasoning', idx: 11 },
+                    { catSlug: 'sea-foods', idx: 1 },
+                    { catSlug: 'herbal-teas', idx: 3 },
+                    { catSlug: 'dairy', idx: 0 },
+                ],
+            },
+        ];
+        let activeTohPackageId = null;
+        function tohValidItems(pkg) {
+            return pkg.items
+                .map(ref => ({ ref, p: getProduct(ref.catSlug, ref.idx) }))
+                .filter(x => x.p && !x.p.deleted);
+        }
+        function renderTasteOfHomePackages() {
+            const grid = document.getElementById('tohPackageGrid');
+            if (!grid) return;
+            grid.innerHTML = TASTE_OF_HOME_PACKAGES.map(pkg => {
+                const valid = tohValidItems(pkg);
+                const inStockTotal = valid.filter(x => x.p.stock !== 'out').reduce((sum, x) => sum + effectivePrice(x.p), 0);
+                return `
+    <div class="toh-package-card">
+      <h3>${escapeHtml(pkg.name)}</h3>
+      <p class="toh-package-tagline">${escapeHtml(pkg.tagline)}</p>
+      <ul class="toh-package-items">${valid.map(x => `<li>${escapeHtml(x.p.name)}${x.p.stock === 'out' ? ' <em>(out of stock)</em>' : ''}</li>`).join('')}</ul>
+      <div class="toh-package-footer">
+        <span class="toh-package-price">${money(inStockTotal)}</span>
+        <button type="button" class="btn btn-primary" onclick="selectTohPackage('${pkg.id}')">Send this</button>
+      </div>
+    </div>`;
+            }).join('');
+        }
+        function selectTohPackage(id) {
+            activeTohPackageId = id;
+            const pkg = TASTE_OF_HOME_PACKAGES.find(p => p.id === id);
+            if (!pkg) return;
+            const section = document.getElementById('tohRecipientSection');
+            const nameEl = document.getElementById('tohSelectedPackageName');
+            const itemsEl = document.getElementById('tohSelectedPackageItems');
+            if (nameEl) nameEl.textContent = pkg.name;
+            if (itemsEl) {
+                const valid = tohValidItems(pkg).filter(x => x.p.stock !== 'out');
+                itemsEl.innerHTML = valid.map(x => `<li>${escapeHtml(x.p.name)}<span>${money(effectivePrice(x.p))}</span></li>`).join('');
+            }
+            if (section) {
+                section.style.display = '';
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        window.selectTohPackage = selectTohPackage;
+        function submitTasteOfHomeRecipient(e) {
+            e.preventDefault();
+            const pkg = TASTE_OF_HOME_PACKAGES.find(p => p.id === activeTohPackageId);
+            if (!pkg) return;
+            const recipientName = document.getElementById('tohRecipientName').value.trim();
+            const recipientPhone = document.getElementById('tohRecipientPhone').value.trim();
+            const address1 = document.getElementById('tohRecipientAddress1').value.trim();
+            const address2 = document.getElementById('tohRecipientAddress2').value.trim();
+            const city = document.getElementById('tohRecipientCity').value.trim();
+            const postcode = document.getElementById('tohRecipientPostcode').value.trim();
+            const note = document.getElementById('tohNote').value.trim();
+            if (!recipientName || !address1 || !city || !postcode) { showToast('Fill in the recipient\'s name and address first.'); return; }
+
+            const valid = tohValidItems(pkg).filter(x => x.p.stock !== 'out');
+            valid.forEach(x => addToCart(x.p, 1));
+            if (valid.length === 0) { showToast('Everything in this package is currently out of stock.'); return; }
+
+            pendingGiftDetails = { packageName: pkg.name, recipientName, recipientPhone, address1, address2, city, postcode, note };
+            savePendingGiftToStorage();
+            showToast(`Added "${pkg.name}" to your basket for ${recipientName}.`);
+            window.location.hash = '#/checkout';
+        }
+        window.submitTasteOfHomeRecipient = submitTasteOfHomeRecipient;
+        // Reverses a gift in progress: clears the stored details and the
+        // delivery form fields it had filled in, then re-runs the normal
+        // account-holder prefill so the form doesn't just sit blank.
+        function clearPendingGift() {
+            pendingGiftDetails = null;
+            savePendingGiftToStorage();
+            const banner = document.getElementById('checkoutGiftBanner');
+            if (banner) banner.style.display = 'none';
+            ['dName', 'dPhone', 'dAddress', 'dTown', 'dPostcode', 'dNotes'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            prefillDeliveryFromLastOrder();
+        }
+        window.clearPendingGift = clearPendingGift;
+        // Called on entering #/checkout, before prefillDeliveryFromLastOrder
+        // - that function already refuses to overwrite a non-empty dName,
+        // so filling the recipient's details in first is enough to win.
+        function applyPendingGiftToCheckout() {
+            const banner = document.getElementById('checkoutGiftBanner');
+            if (!pendingGiftDetails) { if (banner) banner.style.display = 'none'; return; }
+            const g = pendingGiftDetails;
+            const nameField = document.getElementById('dName');
+            const phoneField = document.getElementById('dPhone');
+            const addressField = document.getElementById('dAddress');
+            const townField = document.getElementById('dTown');
+            const postcodeField = document.getElementById('dPostcode');
+            const notesField = document.getElementById('dNotes');
+            if (nameField) nameField.value = g.recipientName;
+            if (phoneField && g.recipientPhone) phoneField.value = g.recipientPhone;
+            if (addressField) addressField.value = g.address2 ? `${g.address1}, ${g.address2}` : g.address1;
+            if (townField) townField.value = g.city;
+            if (postcodeField) postcodeField.value = g.postcode;
+            if (notesField) {
+                const giftLine = `Gift for ${g.recipientName}${g.note ? `: "${g.note}"` : ''} (please include a note card if possible).`;
+                notesField.value = notesField.value.trim() ? `${notesField.value.trim()}\n${giftLine}` : giftLine;
+            }
+            if (banner) {
+                banner.style.display = '';
+                const textEl = banner.querySelector('.toh-banner-text');
+                if (textEl) textEl.textContent = `You're sending "${g.packageName}" to ${g.recipientName}.`;
+            }
+        }
+        window.applyPendingGiftToCheckout = applyPendingGiftToCheckout;
 
         /* ================= EDIT AN EXISTING DISH (edit mode) =================
            Mirrors openBundleEdit/openComboEdit — a dish previously had no
@@ -24986,6 +25277,11 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else {
                 cart = [];
                 updateCartBadge();
+                // Just the state, not clearPendingGift()'s own form-field
+                // reset - this order's already placed, nobody's looking at
+                // that form anymore.
+                pendingGiftDetails = null;
+                savePendingGiftToStorage();
             }
             appliedDiscount = null;
             justCompletedOrder = true;
@@ -28225,6 +28521,11 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             saveCartToStorage();
             clearCartOwnerTag();
             updateCartBadge();
+            // A gift in progress is tied to the account that was setting
+            // it up, same reasoning as the basket wipe just above - it
+            // must not surface for whoever logs in next on this browser.
+            pendingGiftDetails = null;
+            savePendingGiftToStorage();
             // Same reasoning as the regular basket wipe just above - the
             // wholesale basket is local-only to begin with (see its own
             // declaration comment), so there's no server copy to lose.
@@ -30775,7 +31076,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         window.markApplicationReviewed = markApplicationReviewed;
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-wholesale-apply', 'view-wholesale', 'view-journal', 'view-journal-post', 'view-recipes', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-taste-of-home', 'view-wholesale-apply', 'view-wholesale', 'view-journal', 'view-journal-post', 'view-recipes', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Unlike the other two floats, the currency fab stays up through
@@ -30883,7 +31184,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 navLinkHome: isHome,
                 navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
                 navLinkJournal: hash === '#/blog' || hash.startsWith('#/blog/'),
-                navLinkRecipes: hash === '#/recipes',
+                navLinkTasteOfHome: hash === '#/taste-of-home',
                 navLinkStory: hash === '#/about',
                 navLinkDelivery: hash === '#/delivery-info' || hash === '#/delivery-policy',
                 navLinkContact: hash === '#/contact',
@@ -31118,6 +31419,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 showView('view-checkout');
                 renderCartList();
                 showCheckoutStep('cart');
+                applyPendingGiftToCheckout();
                 prefillDeliveryFromLastOrder();
             } else if (hash === '#/wholesale/checkout') {
                 if (!wholesaleCart.length) { window.location.hash = '#/wholesale'; return; }
@@ -31224,6 +31526,9 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash === '#/build-bundle') {
                 showView('view-build-bundle');
                 renderDishPicker();
+            } else if (hash === '#/taste-of-home') {
+                showView('view-taste-of-home');
+                renderTasteOfHomePackages();
             } else if (hash === '#/wholesale/apply') {
                 showView('view-wholesale-apply');
                 renderWholesaleApplyView();
