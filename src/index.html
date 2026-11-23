@@ -4357,7 +4357,14 @@
         .dish-builder-unit { font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
         .dish-builder-row .price { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); flex-shrink: 0; }
         .dish-sub-suggestion {
-            padding: 0 6px 20px; margin-top: -8px; font-size: 12.5px; color: var(--text-muted);
+            /* This sits directly below the out-of-stock row's own
+               border-bottom (the divider line the checklist uses between
+               every row) - a negative top margin used to pull it up
+               toward that line, which read as the text sitting right on
+               top of it. Padding-top instead of a negative margin gives
+               it clearance from that line without pushing the next row
+               down by much. */
+            padding: 6px 6px 20px; font-size: 12.5px; color: var(--text-muted);
         }
         .dish-sub-suggestion button {
             background: none; border: none; padding: 0; margin-left: 4px;
@@ -4401,14 +4408,30 @@
             position: relative;
             background: var(--card-bg);
             border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-radius: 20px;
-            padding: 24px;
+            border-radius: 22px;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             box-shadow: 0 1px 3px rgba(var(--border-rgb), 0.04), 0 18px 36px rgba(var(--border-rgb), 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .toh-package-card h3 { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 6px; padding-right: 20px; }
-        .toh-package-tagline { color: var(--text-muted); font-size: 13.5px; margin-bottom: 16px; }
+        .toh-package-card:hover { transform: translateY(-3px); box-shadow: 0 2px 6px rgba(var(--border-rgb), 0.06), 0 22px 44px rgba(var(--border-rgb), 0.1); }
+        @media (prefers-reduced-motion: reduce) { .toh-package-card, .toh-package-card:hover { transition: none; transform: none; } }
+        /* Head gets its own tinted panel (same --section-alt-bg split
+           .dish-builder-header already uses against .dish-builder-panel's
+           body) plus a faint corner mark, the exact colour/opacity pairing
+           .shop-header-watermark uses elsewhere so it already flips
+           correctly with the theme - small, quiet brand signature rather
+           than a plain text block, since these are gifts, not just a list. */
+        .toh-package-head { position: relative; background: var(--section-alt-bg); padding: 22px 24px 18px; overflow: hidden; }
+        .toh-package-mark {
+            position: absolute; top: -12%; right: -10%; width: 58%;
+            color: var(--heading); opacity: 0.07; pointer-events: none;
+        }
+        .toh-package-mark svg { width: 100%; height: 100%; display: block; }
+        .toh-package-card h3 { position: relative; font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 6px; padding-right: 20px; }
+        .toh-package-tagline { position: relative; color: var(--text-muted); font-size: 13.5px; margin-bottom: 0; }
+        .toh-package-body { padding: 18px 24px 24px; display: flex; flex-direction: column; flex: 1; }
         .toh-package-items { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; flex: 1; }
         .toh-package-items li, .toh-recipient-items li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-body); }
         .toh-package-items li em, .toh-recipient-items li em { color: #b34a4a; font-style: normal; font-size: 12px; }
@@ -4429,12 +4452,18 @@
         .toh-item-info .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .toh-item-info .unit { font-size: 11.5px; color: var(--text-muted); }
         .toh-package-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .toh-package-price { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--heading); }
+        .toh-package-price {
+            font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--heading);
+            background: rgba(var(--border-rgb), 0.07); border-radius: 999px; padding: 6px 14px;
+        }
         /* Admin-only controls, same gating as .dish-pill-remove/.dish-edit-btn
-           above - a customer never sees these. */
+           above - a customer never sees these. z-index needed now that
+           .toh-package-head paints its own background right over this
+           corner - without it, that later-in-DOM, equally-"positioned"
+           background would otherwise cover this button. */
         .toh-package-remove {
             display: none;
-            position: absolute; top: 14px; right: 14px;
+            position: absolute; top: 14px; right: 14px; z-index: 2;
             width: 22px; height: 22px; border-radius: 50%; border: none;
             background: rgba(179,74,74,0.14); color: #b34a4a; cursor: pointer;
             align-items: center; justify-content: center;
@@ -17909,7 +17938,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.8';
+        const BUILD_VERSION = '2026-11-23.9';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19611,21 +19640,33 @@
                 return `
     <div class="toh-package-card">
       <button type="button" class="toh-package-remove" onclick="removeTohPackage(${i})" aria-label="Remove package"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-      <h3>${escapeHtml(pkg.name)}</h3>
-      <p class="toh-package-tagline">${escapeHtml(pkg.tagline)}</p>
-      <ul class="toh-package-items">${valid.map(x => `
-        <li>
-          <div class="toh-item-thumb">${tohItemThumbHTML(x.p)}</div>
-          <div class="toh-item-info">
-            <span class="name">${escapeHtml(x.p.name)}${x.p.stock === 'out' ? ' <em>(out of stock)</em>' : ''}</span>
-            ${effectiveUnit(x.p) ? `<span class="unit">${escapeHtml(effectiveUnit(x.p))}</span>` : ''}
-          </div>
-        </li>`).join('')}</ul>
-      <div class="toh-package-footer">
-        <span class="toh-package-price">${money(inStockTotal)}</span>
-        <button type="button" class="btn btn-primary" onclick="selectTohPackage('${pkg.id}')">Send this</button>
+      <div class="toh-package-head">
+        <!-- Same mark/opacity pairing as .shop-header-watermark - a quiet
+             brand signature on each package, not just plain text. -->
+        <div class="toh-package-mark" aria-hidden="true">
+          <svg viewBox="65 25 875 900" fill="none">
+            <path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="currentColor" stroke-width="40" />
+            <path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="currentColor" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <h3>${escapeHtml(pkg.name)}</h3>
+        <p class="toh-package-tagline">${escapeHtml(pkg.tagline)}</p>
       </div>
-      <button type="button" class="toh-package-edit-btn" onclick="openTohPackageEdit(${i})">Edit package</button>
+      <div class="toh-package-body">
+        <ul class="toh-package-items">${valid.map(x => `
+          <li>
+            <div class="toh-item-thumb">${tohItemThumbHTML(x.p)}</div>
+            <div class="toh-item-info">
+              <span class="name">${escapeHtml(x.p.name)}${x.p.stock === 'out' ? ' <em>(out of stock)</em>' : ''}</span>
+              ${effectiveUnit(x.p) ? `<span class="unit">${escapeHtml(effectiveUnit(x.p))}</span>` : ''}
+            </div>
+          </li>`).join('')}</ul>
+        <div class="toh-package-footer">
+          <span class="toh-package-price">${money(inStockTotal)}</span>
+          <button type="button" class="btn btn-primary" onclick="selectTohPackage('${pkg.id}')">Send this</button>
+        </div>
+        <button type="button" class="toh-package-edit-btn" onclick="openTohPackageEdit(${i})">Edit package</button>
+      </div>
     </div>`;
             }).join('');
         }
