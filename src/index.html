@@ -9546,6 +9546,15 @@
             color: var(--heading-mid); background: rgba(144,184,0,0.14);
             padding: 3px 8px; border-radius: 999px; margin-top: 4px;
         }
+        /* A moderate fixed radius, not the stadium shape above - an
+           admin-added package name can run longer than "Subscription,
+           every N weeks" ever does, and a stadium pill pinches wrapped
+           text against its curved edges. */
+        .toh-cart-gift-badge {
+            display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em;
+            color: var(--heading-mid); background: rgba(144,184,0,0.14);
+            padding: 3px 8px; border-radius: 8px; margin-top: 4px;
+        }
         .cart-qty-locked {
             font-size: 11.5px; font-weight: 600; color: var(--text-muted);
             padding: 6px 10px; border: 1px solid rgba(var(--border-rgb), 0.14); border-radius: 999px;
@@ -18126,7 +18135,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.1';
+        const BUILD_VERSION = '2026-11-23.2';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18435,7 +18444,7 @@
         function cartWhatsAppMessage() {
             if (cart.length === 0) return `Hi YO7 Foods! I'd like to place an order.`;
             const lines = cart.map(i => {
-                const note = i.isCombo ? ' (combo)' : i.isSubscription ? ` (subscription, every ${i.subscriptionFrequency} weeks)` : '';
+                const note = i.isCombo ? ' (combo)' : i.isSubscription ? ` (subscription, every ${i.subscriptionFrequency} weeks)` : i.giftPackageName ? ` (part of ${i.giftPackageName})` : '';
                 return `${i.qty}x ${i.name}${note} - ${money(i.price * i.qty)}`;
             });
             return `Hi YO7 Foods! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${money(cartSubtotal())}\n\n(Sent from yo7foods.co.uk, delivery/pickup and payment to confirm with you.)`;
@@ -18685,16 +18694,24 @@
         function hapticTap(ms = 16) {
             try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* some embedders (e.g. an in-app browser) throw instead of just returning false */ }
         }
-        function addToCart(product, qty) {
+        function addToCart(product, qty, giftPackageName) {
             const existing = cart.find(i => i.id === product.id);
             const price = effectivePrice(product);
             const wasOnSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
-            if (existing) { existing.qty += qty; }
+            if (existing) {
+                existing.qty += qty;
+                // A regular purchase of the same product already sitting in
+                // the cart, now topped up by a gift package: label the
+                // merged line too, rather than leaving it looking like a
+                // plain unlabeled item once the two quantities combine.
+                if (giftPackageName) existing.giftPackageName = giftPackageName;
+            }
             else {
                 const entry = { id: product.id, code: product.code, name: product.name, unit: effectiveUnit(product), price, originalPrice: product.price, onSale: wasOnSale, emoji: product.emoji, catSlug: product.catSlug, qty };
                 if (product.isCombo) { entry.isCombo = true; entry.comboItems = product.comboItems; }
                 if (typeof product.weight === 'number') { entry.weight = product.weight; }
                 if (product.isSubscription) { entry.isSubscription = true; entry.subscriptionFrequency = product.subscriptionFrequency; }
+                if (giftPackageName) { entry.giftPackageName = giftPackageName; }
                 cart.push(entry);
             }
             hapticTap();
@@ -20137,7 +20154,7 @@
             if (!recipientName || !address1 || !city || !postcode) { showToast('Fill in the recipient\'s name and address first.'); return; }
 
             const valid = tohValidItems(pkg).filter(x => x.p.stock !== 'out');
-            valid.forEach(x => addToCart(x.p, 1));
+            valid.forEach(x => addToCart(x.p, 1, pkg.name));
             if (valid.length === 0) { showToast('Everything in this package is currently out of stock.'); return; }
 
             pendingGiftDetails = { packageName: pkg.name, recipientName, recipientPhone, address1, address2, city, postcode, note, cardDesignLabel: TOH_CARD_DESIGN_LABEL };
@@ -24598,6 +24615,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
           <h4>${escapeHtml(item.name)}</h4>
           <span>${escapeHtml(item.unit || '')}${item.onSale ? ` &middot; was ${money(item.originalPrice)}` : ''}</span>
           ${item.isSubscription ? `<span class="subscription-badge">Subscription, every ${item.subscriptionFrequency} weeks</span>` : ''}
+          ${item.giftPackageName ? `<span class="toh-cart-gift-badge">Part of: ${escapeHtml(item.giftPackageName)}</span>` : ''}
           <div class="cart-rating-badge" data-product-key="${pKey}" data-sales-key="${escapeHtml(salesKey)}" data-product-name="${escapeHtml(item.name)}"></div>
         </div>
         <div class="cart-qty">
@@ -27286,7 +27304,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                     : escapeHtml(i.unit || '');
                 return `
     <tr>
-        <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${unitLine}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}</span></td>
+        <td class="inv-item-name">${escapeHtml(i.name)}${i.code ? ` <span class="inv-item-code">(${escapeHtml(i.code)})</span>` : ''}<span class="inv-item-unit">${unitLine}${i.isSubscription ? `<br><span class="subscription-badge">Subscription, every ${i.subscriptionFrequency} weeks</span>` : ''}${i.giftPackageName ? `<br><span class="toh-cart-gift-badge">Part of: ${escapeHtml(i.giftPackageName)}</span>` : ''}</span></td>
         <td class="qty">&times;${i.qty}</td>
         <td class="line-total">${gbp((i.price || 0) * i.qty)}</td>
     </tr>`;
