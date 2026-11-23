@@ -4274,17 +4274,10 @@
             transform: translateY(-4px);
         }
         /* Picking a dish used to flip the whole tile to a solid dark
-           fill - removed per feedback that it read as an unwanted hover
-           colour. outline (not border/background) so it adds no colour
-           wash and can't shift the tile's own size - just a thin ring in
-           the tile's own accent colour. The ingredient panel the tap opens
-           is scrolled into view (see selectDish()), so that's the primary
-           confirmation; this outline is a secondary, low-key one on the
-           tile itself. */
-        .dish-pill.active {
-            outline: 2px solid var(--dish-accent, var(--chartreuse-rich));
-            outline-offset: 2px;
-        }
+           fill, then to a coloured outline ring - both removed per
+           feedback. The ingredient panel the tap opens is scrolled into
+           view (see selectDish()), so that's the only confirmation now;
+           the tile itself looks the same selected or not. */
         .dish-pill .emoji {
             width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
@@ -17916,7 +17909,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.4';
+        const BUILD_VERSION = '2026-11-23.5';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
