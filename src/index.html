@@ -3271,11 +3271,6 @@
             font-family: var(--display); font-weight: 700; font-size: 15.5px; color: var(--heading); margin-bottom: 8px;
         }
         .about-value-card p { font-size: 13.5px; color: var(--text-body); line-height: 1.55; }
-        /* The homepage "Recipe ideas" card doubles as a real link into
-           #/recipes (the others in this grid stay plain, non-clickable
-           divs), so only the anchor variant needs the block/no-underline
-           reset - this never touches the div-based cards. */
-        a.about-value-card { display: block; text-decoration: none; color: inherit; cursor: pointer; }
 
         .about-cta {
             display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
@@ -3828,9 +3823,9 @@
         .bundle-items {
             display: flex; flex-direction: column; margin-bottom: 10px;
         }
-        /* Combo cards specifically (not the Build-a-bundle page, which
-           only ever shows one bundle at a time and has room to spare) —
-           a combo with 4+ items used to push these cards well past every
+        /* Combo cards specifically (not the Build-a-Dish page, which
+           only ever shows one bundle at a time and has room to spare).
+           A combo with 4+ items used to push these cards well past every
            other card on the page, which an internal scrollbar "fixed" by
            just hiding the overflow, but that hid real ingredients behind a
            scroll gesture shoppers often never discovered and made every
@@ -3841,10 +3836,10 @@
             display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body);
             padding: 6px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
         }
-        /* Smaller row and thumbnail specifically inside combo cards — a
+        /* Smaller row and thumbnail specifically inside combo cards, since a
            combo's item list is a supporting ingredient breakdown, not the
            card's main content the way a single bundle's list is on the
-           Build-a-bundle page, so it can afford to read smaller and denser
+           Build-a-Dish page, so it can afford to read smaller and denser
            now that every row shows uncapped (see .bundle-items above). */
         .combo-card .bundle-item-row {
             font-size: 12px; padding: 4px 0; gap: 8px;
@@ -3943,7 +3938,7 @@
         .build-bundle-promo { position: relative; background: var(--cream); padding: 48px 0; overflow: hidden; }
         /* Same oversized-glyph-behind-the-content language as
            .combo-ticket-watermark and the footer newsletter cards, reusing
-           the checklist icon from the Build a Bundle page's own empty
+           the checklist icon from the Build a Dish page's own empty
            state rather than a one-off decorative mark. */
         .build-bundle-promo-watermark {
             position: absolute; z-index: 0; pointer-events: none;
@@ -4279,17 +4274,10 @@
             transform: translateY(-4px);
         }
         /* Picking a dish used to flip the whole tile to a solid dark
-           fill - removed per feedback that it read as an unwanted hover
-           colour. outline (not border/background) so it adds no colour
-           wash and can't shift the tile's own size - just a thin ring in
-           the tile's own accent colour. The ingredient panel the tap opens
-           is scrolled into view (see selectDish()), so that's the primary
-           confirmation; this outline is a secondary, low-key one on the
-           tile itself. */
-        .dish-pill.active {
-            outline: 2px solid var(--dish-accent, var(--chartreuse-rich));
-            outline-offset: 2px;
-        }
+           fill, then to a coloured outline ring - both removed per
+           feedback. The ingredient panel the tap opens is scrolled into
+           view (see selectDish()), so that's the only confirmation now;
+           the tile itself looks the same selected or not. */
         .dish-pill .emoji {
             width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
@@ -8830,7 +8818,7 @@
 
         /* Now a full-width section after Reviews (see the PD page markup),
            not a sidebar item squeezed under the buy button anymore - same
-           divider treatment as .pd-details/.pd-recipes/.pd-reviews so it
+           divider treatment as .pd-details/.pd-reviews so it
            reads as one more section in that sequence, not an orphaned
            block. Both #fbtStrip and the "More from this aisle" strip
            always get their own divider - #fbtStrip stays in the DOM
@@ -8877,145 +8865,6 @@
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 16px;
         }
-
-        /* ================= RECIPE IDEAS (up to 3 per product, admin-edited, stored as product_overrides.recipes) ================= */
-        .pd-recipes {
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 1px solid rgba(var(--border-rgb), 0.1);
-        }
-        /* Customers never see an empty "no recipes yet" section - only an
-           admin in edit mode does, since that's the one audience who can
-           actually do something about it. Driven purely by this class
-           (set once per render in renderRecipeIdeasSection(), not
-           recomputed on edit-mode toggle) so turning edit mode on/off
-           while already on the page shows/hides this with no extra
-           re-render, same as every other edit-mode-gated control. */
-        body:not(.edit-mode-on) .pd-recipes.is-empty { display: none; }
-        .pd-recipe-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 12px;
-        }
-        .pd-recipe-card {
-            background: var(--section-alt-bg);
-            border: 1px solid rgba(var(--border-rgb), 0.08);
-            border-radius: 14px;
-            padding: 18px 20px;
-        }
-        .pd-recipe-card .eyebrow {
-            display: flex; align-items: center; gap: 6px;
-            font-family: var(--display); font-weight: 700; font-size: 11px;
-            letter-spacing: 0.05em; text-transform: uppercase; color: var(--chartreuse-rich);
-            margin-bottom: 8px;
-        }
-        .pd-recipe-card .eyebrow svg { width: 14px; height: 14px; }
-        .pd-recipe-card h4 {
-            font-family: var(--display); font-weight: 700; font-size: 15px;
-            color: var(--heading); margin-bottom: 6px; line-height: 1.3;
-        }
-        .pd-recipe-card p { font-size: 13.5px; color: var(--text-body); line-height: 1.55; margin: 0; }
-        /* The #/recipes hub reuses .pd-recipe-card (same eyebrow/h4/p
-           styling via the shared class, descendant selectors above still
-           reach them nested a level deeper) but adds a photo strip and
-           drops the padding to the inner body only, so the image can run
-           edge-to-edge to the card's own rounded corners. */
-        .recipe-hub-card {
-            display: block; text-decoration: none; color: inherit; cursor: pointer;
-            padding: 0; overflow: hidden;
-            transition: transform 0.3s cubic-bezier(.16,.84,.44,1), box-shadow 0.3s cubic-bezier(.16,.84,.44,1);
-        }
-        .recipe-hub-card:hover { transform: translateY(-3px); box-shadow: 0 3px 8px rgba(var(--border-rgb), 0.06), 0 18px 34px rgba(var(--border-rgb), 0.1); }
-        /* Same matted/tinted thumb treatment as .best-seller-card .thumb -
-           position:relative + a fixed aspect-ratio is what productPhotoHTML()'s
-           absolutely-positioned <img> needs to actually fill the box (see
-           the comment on .product-photo-img), not just share its look. */
-        .recipe-hub-card-photo {
-            aspect-ratio: 1/1; position: relative; overflow: hidden; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 6px;
-            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(114, 148, 0, 0.16), transparent 68%), linear-gradient(165deg, #f4f7ea, #e8edd6);
-        }
-        [data-theme="dark"] .recipe-hub-card-photo {
-            background: radial-gradient(ellipse 85% 70% at 50% 34%, rgba(166, 204, 46, 0.2), transparent 68%), linear-gradient(165deg, #1c2611, #11150a);
-        }
-        .recipe-hub-card-body { padding: 16px 18px 18px; }
-        .recipe-hub-card-product { margin-top: 12px; font-family: var(--display); font-weight: 600; font-size: 12px; color: var(--heading-mid); }
-        .recipe-hub-category { margin-bottom: 40px; }
-        .recipe-hub-category:last-child { margin-bottom: 0; }
-        .recipe-hub-category-head {
-            font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading);
-            margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
-        }
-        /* Each category is a swipeable row (same scroll-snap mechanic as
-           .best-seller-carousel) rather than a grid that wraps to full
-           height - shorter page, and it reads as browsable content
-           instead of a list to scan top-to-bottom. Reuses .recipe-hub-card
-           wholesale, just gives it a fixed flex-basis instead of the grid
-           sizing .pd-recipe-grid gives it elsewhere (the per-product PD
-           page section, untouched). */
-        .recipe-carousel {
-            display: flex; gap: 14px; overflow-x: auto;
-            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;
-        }
-        .recipe-carousel::-webkit-scrollbar { display: none; }
-        .recipe-carousel .recipe-hub-card { flex: 0 0 210px; scroll-snap-align: start; }
-        @media (max-width: 480px) {
-            .recipe-carousel .recipe-hub-card { flex-basis: 180px; }
-        }
-
-        /* ===== Featured recipe hero (one recipe, rotates daily) ===== */
-        .recipe-hero {
-            position: relative; border-radius: 20px; overflow: hidden;
-            min-height: 280px; display: flex; flex-direction: column; justify-content: flex-end;
-            background: linear-gradient(165deg, #2b3a1a, #16200c);
-        }
-        .recipe-hero-photo-bg { position: absolute; inset: 0; }
-        .recipe-hero-photo-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .recipe-hero-scrim {
-            position: absolute; inset: 0;
-            background: linear-gradient(0deg, rgba(10,16,4,0.92) 8%, rgba(10,16,4,0.4) 52%, rgba(10,16,4,0.08) 100%),
-                        radial-gradient(ellipse 90% 70% at 72% 18%, rgba(144,184,0,0.25), transparent 60%);
-        }
-        /* Fixed light colours, not var(--heading)/var(--chartreuse) - this
-           card is always dark regardless of the site's own light/dark
-           theme, so the theme tokens (tuned for a light or dark page
-           background, not a permanently-dark card) would go invisible or
-           muddy depending on which theme happened to be active. */
-        .recipe-hero-logo-mark { position: absolute; top: 18px; right: 18px; width: 56px; height: 56px; opacity: 0.5; }
-        .recipe-hero-logo-mark svg { width: 100%; height: 100%; }
-        .recipe-hero-body { position: relative; padding: 22px 20px 24px; color: #fff; }
-        .recipe-hero-eyebrow {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-family: var(--display); font-weight: 700; font-size: 11px;
-            letter-spacing: 0.06em; text-transform: uppercase; color: var(--chartreuse);
-            margin-bottom: 10px;
-        }
-        .recipe-hero-body h2 { font-family: var(--display); font-weight: 700; font-size: clamp(21px,4vw,27px); margin: 0 0 8px; line-height: 1.2; }
-        .recipe-hero-body p { font-size: 14px; line-height: 1.55; opacity: 0.88; margin: 0 0 16px; max-width: 42ch; }
-        .recipe-hero-link {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-family: var(--display); font-weight: 700; font-size: 13px;
-            color: var(--aubergine-deep); text-decoration: none;
-            background: var(--chartreuse); padding: 10px 18px; border-radius: 999px;
-            transition: transform 0.2s ease;
-        }
-        .recipe-hero-link:hover { transform: translateY(-2px); }
-        .pd-recipes-empty { display: none; margin-bottom: 12px; }
-        body.edit-mode-on .pd-recipes-empty { display: flex; }
-        .pd-recipes-empty p { color: var(--text-muted); font-size: 13.5px; font-style: italic; margin: 0; }
-        .pd-recipes-edit { display: flex; flex-direction: column; gap: 14px; margin-bottom: 12px; }
-        .pd-recipe-edit-slot label {
-            display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
-            text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
-        }
-        .pd-recipe-edit-slot input, .pd-recipe-edit-slot textarea {
-            width: 100%; font-family: var(--body); font-size: 15px; padding: 8px 10px;
-            border-radius: 8px; border: 1.5px solid rgba(var(--border-rgb), 0.2);
-            background: var(--card-bg); color: var(--text-body); box-sizing: border-box;
-        }
-        .pd-recipe-edit-slot input { margin-bottom: 6px; }
-        .pd-recipe-edit-slot textarea { resize: vertical; }
 
         .pd-reviews {
             margin-top: 40px;
@@ -12785,28 +12634,11 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                     </div>
                     <div>
-                        <div class="section-eyebrow">Build a bundle</div>
+                        <div class="section-eyebrow">Build a Dish</div>
                         <h2>Know the dish? We'll guide the ingredients.</h2>
                         <p>Select a meal and we'll list the ingredients you need. Uncheck what you already have, and add the rest in one tap.</p>
                     </div>
-                    <a class="btn btn-outline-dark" href="#/build-bundle">Build a bundle</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="build-bundle-promo scroll-reveal">
-            <svg class="build-bundle-promo-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>
-            <div class="wrap">
-                <div class="build-bundle-promo-inner reveal">
-                    <div class="build-bundle-promo-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>
-                    </div>
-                    <div>
-                        <div class="section-eyebrow">Recipe ideas</div>
-                        <h2>Know what you bought? We'll show you what to cook.</h2>
-                        <p>Every recipe on the site in one place, real ways to use what's in our aisles, each one linking straight to the product.</p>
-                    </div>
-                    <a class="btn btn-outline-dark" href="#/recipes">Browse recipe ideas</a>
+                    <a class="btn btn-outline-dark" href="#/build-a-dish">Build a Dish</a>
                 </div>
             </div>
         </section>
@@ -12930,11 +12762,6 @@
                         <h3>WhatsApp ordering</h3>
                         <p>Can't find something online? Message us and we'll sort it.</p>
                     </div>
-                    <a class="about-value-card" href="#/recipes">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>
-                        <h3>Recipe ideas</h3>
-                        <p>Most product pages include a few real ways to actually cook what you've bought. Tap to see every recipe on the site.</p>
-                    </a>
                 </div>
                 <div class="about-cta reveal">
                     <a class="btn btn-outline-dark" href="#/about">Read our story</a>
@@ -13152,45 +12979,6 @@
         </section>
     </div>
 
-    <!-- ================= RECIPE IDEAS (aggregated across every product that
-         has any, see getAllRecipeIdeas()) ================= -->
-    <div id="view-recipes" class="hidden-view">
-        <header class="shop-header">
-            <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Recipe Ideas</div>
-                <h1>Recipe Ideas</h1>
-                <p>Real ways to cook what's in our aisles, pulled straight from the product pages. Tap any one to see the product it's made with.</p>
-                <div class="result-count" id="recipesHubCount"></div>
-            </div>
-        </header>
-        <section class="products-section" id="recipeHeroSection" style="display:none; padding-bottom:8px;">
-            <div class="wrap">
-                <div class="recipe-hero" id="recipeHeroCard"></div>
-            </div>
-        </section>
-        <section class="products-section" id="recipesPersonalSection" style="display:none; padding-bottom:16px;">
-            <div class="wrap">
-                <div class="new-section-head reveal">
-                    <div>
-                        <div class="section-eyebrow">Recommended for you</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(22px,3vw,28px); letter-spacing:-0.01em;">Recipes for what you've already bought</h2>
-                    </div>
-                </div>
-                <div class="recipe-carousel" id="recipesPersonalGrid"></div>
-            </div>
-        </section>
-        <section class="products-section">
-            <div class="wrap">
-                <div id="recipesHubGrid"></div>
-                <div class="empty-state" id="recipesHubEmpty" style="display:none;">
-                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg></span>
-                    <h3>More recipe ideas on the way</h3>
-                    <p>We're still adding these across the shop. Check back soon, or browse the shop in the meantime.</p>
-                </div>
-            </div>
-        </section>
-    </div>
-
     <!-- ================= PRODUCT DETAIL ================= -->
     <div id="view-product" class="hidden-view">
         <header class="shop-header" style="padding-bottom:0;">
@@ -13308,14 +13096,6 @@
                             <span class="payment-badge payment-badge-paybybank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6"/></svg>Pay by Bank</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="pd-recipes" id="pdRecipesSection">
-                    <h2 class="pd-details-heading">Recipe ideas</h2>
-                    <div class="pd-recipe-grid" id="pdRecipesGrid"></div>
-                    <div class="pd-recipes-empty" id="pdRecipesEmpty"><p>No recipe ideas added yet for this product.</p></div>
-                    <div id="pdRecipesEditWrap"></div>
-                    <button class="pd-detail-edit-btn" type="button" onclick="openRecipesEdit()">Edit recipe ideas</button>
                 </div>
 
                 <div class="pd-details" id="pdDetailsSection">
@@ -13888,13 +13668,6 @@
                             <p>Whether you grew up with this food or you're trying it for the first time.</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-prose about-block scroll-reveal" style="max-width:56ch;">
-                    <div class="section-eyebrow">Beyond the shop</div>
-                    <h2>Recipe ideas on every product</h2>
-                    <p>Most product pages come with a few real ways to actually cook what you've bought, not just a listing. Look for the Recipe ideas section on any product page.</p>
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
@@ -14528,11 +14301,11 @@
         </section>
     </div>
 
-    <div id="view-build-bundle" class="hidden-view">
+    <div id="view-build-a-dish" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Build a bundle</div>
-                <h1>Build a bundle</h1>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Build a Dish</div>
+                <h1>Build a Dish</h1>
                 <p>Pick a dish, we'll suggest the real ingredients, uncheck anything you already have and add the rest in one go.</p>
             </div>
         </header>
@@ -16440,8 +16213,9 @@
 
         // One-time cleanup for retiring the separate "Bundles" concept in
         // favour of just "Combo deals" (bundles and combos were identical
-        // from a shopper's view, and the word "bundle" already means
-        // something different in the Build a Bundle tool). Deliberately
+        // from a shopper's view, and the word "bundle" already meant
+        // something different in what's now the Build a Dish tool, which
+        // went by "Build a Bundle" at the time). Deliberately
         // additive-only: copies whatever is currently in BUNDLES into
         // COMBOS so the same deals keep selling, then flips a flag so this
         // never runs twice. BUNDLES itself, bundles_data, its `bundle::N`
@@ -18135,7 +17909,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.2';
+        const BUILD_VERSION = '2026-11-23.5';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -18309,12 +18083,6 @@
         // (cart, dish pills, category tiles, admin previews) is unrelated
         // and stays as it was.
         const COMING_SOON_LOGO_SVG = '<svg class="thumb-placeholder-logo" aria-hidden="true" viewBox="65 25 875 900" fill="none"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="var(--chartreuse)" stroke-width="54" stroke-linejoin="round"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="var(--heading)" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        // Same mark as COMING_SOON_LOGO_SVG, fixed light colours instead of
-        // var(--chartreuse)/var(--heading) - used only on .recipe-hero,
-        // which is always a dark card regardless of the site's own light/
-        // dark theme, so the theme tokens would go invisible or muddy
-        // depending on which theme happened to be active.
-        const RECIPE_HERO_LOGO_SVG = '<svg aria-hidden="true" viewBox="65 25 875 900" fill="none"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="#90B800" stroke-width="54" stroke-linejoin="round"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="#ffffff" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         const DEFAULT_DISH_ICON_SVG = '<svg class="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>';
         // A small curated set of on-brand line-art glyphs an admin picks
         // from when adding/editing a dish, instead of typing a raw emoji
@@ -19477,8 +19245,9 @@
         // near-identical sections, then as one merged grid of both — retired
         // down to combos-only per the decision to stop selling two
         // identically-shaped deals under two different names (confusing
-        // next to the separate "Build a bundle" tool, which uses the word
-        // "bundle" for something else entirely). BUNDLES itself, its admin
+        // next to the separate "Build a Dish" tool, which went by "Build a
+        // Bundle" at the time and used the word "bundle" for something else
+        // entirely). BUNDLES itself, its admin
         // CRUD, its `bundle::N` cart id scheme, and its "view all" page are
         // all left completely untouched (see retireBundlesIntoCombos) so a
         // past order or a basket that already has a bundle item keeps
@@ -23568,7 +23337,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             const related = cat.products.map((rp, ri) => ({ ...rp, emoji: cat.emoji, catSlug, idx: ri })).filter(rp => rp.idx !== p.idx && !rp.deleted).slice(0, 4);
             renderGrid(related, 'relatedGrid');
             renderProductDetailsSection(p, catSlug);
-            renderRecipeIdeasSection(p, catSlug);
             renderProductReviews(catSlug, Number(idx));
             loadFrequentlyBoughtTogether(catSlug, idx);
         }
@@ -24166,225 +23934,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         }
         window.openPdDetailEdit = openPdDetailEdit;
         window.savePdDetailEdit = savePdDetailEdit;
-
-        /* ================= RECIPE IDEAS =================
-           Up to 3 per product - a structured {title, description} array,
-           not a plain string like the detail cards above, so it gets its
-           own open/save pair rather than reusing openPdDetailEdit's
-           generic single-textarea form, the same reasoning openAllergenEdit
-           already has its own pair for the same kind of structured field. */
-        const RECIPE_IDEA_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>';
-        function renderRecipeIdeasSection(p, catSlug) {
-            const section = document.getElementById('pdRecipesSection');
-            const grid = document.getElementById('pdRecipesGrid');
-            const empty = document.getElementById('pdRecipesEmpty');
-            const editWrap = document.getElementById('pdRecipesEditWrap');
-            if (!section || !grid || !empty || !editWrap) return;
-            editWrap.innerHTML = '';
-            // Recipe ideas are a food-content feature, same gate as the
-            // Nutrition/Cooking suggestions cards above - a shampoo or
-            // toothpaste product has no business showing one.
-            if (NON_FOOD_CATEGORIES.includes(catSlug)) { section.style.display = 'none'; return; }
-            section.style.display = '';
-            const recipes = (p.recipes || []).filter(r => r && (r.title || r.description)).slice(0, 3);
-            section.classList.toggle('is-empty', recipes.length === 0);
-            grid.style.display = recipes.length ? 'grid' : 'none';
-            empty.style.display = recipes.length ? 'none' : '';
-            grid.innerHTML = recipes.map(r => `
-    <div class="pd-recipe-card">
-      <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
-      <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
-      <p>${escapeHtml(r.description || '')}</p>
-    </div>`).join('');
-        }
-        window.renderRecipeIdeasSection = renderRecipeIdeasSection;
-        function openRecipesEdit() {
-            if (!pdCurrent) return;
-            const recipes = pdCurrent.recipes || [];
-            const slots = [0, 1, 2].map(i => recipes[i] || { title: '', description: '' });
-            document.getElementById('pdRecipesGrid').style.display = 'none';
-            document.getElementById('pdRecipesEmpty').style.display = 'none';
-            document.getElementById('pdRecipesEditWrap').innerHTML = `
-    <div class="pd-recipes-edit">
-      ${slots.map((r, i) => `
-      <div class="pd-recipe-edit-slot">
-        <label>Recipe idea ${i + 1}</label>
-        <input type="text" id="pdRecipeTitle-${i}" placeholder="e.g. Jollof rice" value="${escapeHtml(r.title || '')}">
-        <textarea id="pdRecipeDesc-${i}" rows="2" placeholder="A short note on how this product is used in the dish">${escapeHtml(r.description || '')}</textarea>
-      </div>`).join('')}
-      <div style="display:flex; gap:8px;">
-        <button type="button" class="ep-save" style="flex:0 1 auto; padding:6px 14px;" onclick="saveRecipesEdit()">Save</button>
-        <button type="button" class="ep-cancel" style="padding:6px 14px;" onclick="renderRecipeIdeasSection(pdCurrent, pdCurrent.catSlug)">Cancel</button>
-      </div>
-    </div>`;
-        }
-        window.openRecipesEdit = openRecipesEdit;
-        async function saveRecipesEdit() {
-            if (!pdCurrent) return;
-            const cat = findCategory(pdCurrent.catSlug);
-            const realProduct = cat && cat.products[pdCurrent.idx];
-            if (!realProduct) return;
-            const fmt = (arr) => (arr && arr.length) ? arr.map(r => r.title || '(untitled)').join(', ') : 'none';
-            const before = fmt(realProduct.recipes);
-            const recipes = [0, 1, 2].map(i => ({
-                title: document.getElementById(`pdRecipeTitle-${i}`).value.trim(),
-                description: document.getElementById(`pdRecipeDesc-${i}`).value.trim(),
-            })).filter(r => r.title || r.description);
-            if (recipes.length) { realProduct.recipes = recipes; pdCurrent.recipes = recipes; }
-            else { delete realProduct.recipes; delete pdCurrent.recipes; }
-            renderRecipeIdeasSection(pdCurrent, pdCurrent.catSlug);
-            if (!supabaseClient) return;
-            const { error } = await supabaseClient.from('product_overrides').upsert({
-                product_key: productKey(pdCurrent.catSlug, pdCurrent.idx),
-                recipes: recipes.length ? recipes : null,
-                updated_at: new Date().toISOString(),
-            });
-            if (error) { showToast('Could not save recipe ideas: ' + error.message, undefined, 'error'); return; }
-            const after = fmt(recipes);
-            if (before !== after) {
-                logAdminAction('product_updated', 'product', realProduct.name, {
-                    changes: [{ label: 'Recipe ideas', from: before, to: after }],
-                });
-            }
-        }
-        window.saveRecipesEdit = saveRecipesEdit;
-
-        // ================= RECIPE IDEAS HUB (#/recipes) =================
-        // Nothing of its own to store - just walks the same CATEGORIES
-        // array every product page already reads p.recipes from (see
-        // applyProductOverrides()), so it's automatically in sync with
-        // whatever's been added per-product, no separate data source to
-        // keep consistent.
-        function getAllRecipeIdeas() {
-            const items = [];
-            CATEGORIES.forEach(cat => {
-                if (NON_FOOD_CATEGORIES.includes(cat.slug)) return;
-                cat.products.forEach((p, idx) => {
-                    if (!p || p.deleted || !Array.isArray(p.recipes)) return;
-                    p.recipes.forEach(r => {
-                        if (!r || (!r.title && !r.description)) return;
-                        items.push({ title: r.title, description: r.description, productName: p.name, image: p.image, imageThumb: p.imageThumb, catSlug: cat.slug, catName: cat.name, idx });
-                    });
-                });
-            });
-            return items;
-        }
-        // Shared by the full hub grid (grouped by category) and the
-        // "Recommended for you" strip below - same card, a photo now
-        // pulled in via productPhotoHTML() (the same helper every other
-        // product thumbnail on the site already uses) so this reads as a
-        // real content page rather than a plain text list.
-        function recipeHubCardHTML(r) {
-            return `
-    <a class="pd-recipe-card recipe-hub-card" href="#/product/${r.catSlug}/${r.idx}">
-      <div class="recipe-hub-card-photo">${productPhotoHTML({ image: r.image, imageThumb: r.imageThumb }, r.productName)}</div>
-      <div class="recipe-hub-card-body">
-        <div class="eyebrow">${RECIPE_IDEA_ICON} Recipe idea</div>
-        <h4>${escapeHtml(r.title || 'Recipe idea')}</h4>
-        <p>${escapeHtml(r.description || '')}</p>
-        <div class="recipe-hub-card-product">Made with ${escapeHtml(r.productName)} &rarr;</div>
-      </div>
-    </a>`;
-        }
-        // Picks one recipe to feature at the top of the page. No
-        // "date added" field exists on a recipe (it's just {title,
-        // description} inside a product's jsonb array), so "newest" isn't
-        // something to sort by - instead this rotates to a different
-        // recipe once a day (stable across visitors and page loads on the
-        // same day, no state to store) rather than always landing on
-        // whichever happens to be first in catalogue order.
-        function pickFeaturedRecipe(items) {
-            if (!items.length) return null;
-            const dayIndex = Math.floor(Date.now() / 86400000);
-            return items[dayIndex % items.length];
-        }
-        function renderRecipeHeroSection(items) {
-            const section = document.getElementById('recipeHeroSection');
-            const card = document.getElementById('recipeHeroCard');
-            if (!section || !card) return;
-            const r = pickFeaturedRecipe(items);
-            if (!r) { section.style.display = 'none'; return; }
-            section.style.display = '';
-            const photoSrc = r.imageThumb || r.image;
-            card.innerHTML = `
-    ${photoSrc ? `<div class="recipe-hero-photo-bg"><img src="${escapeHtml(photoSrc)}" alt="" loading="eager"></div>` : `<div class="recipe-hero-logo-mark">${RECIPE_HERO_LOGO_SVG}</div>`}
-    <div class="recipe-hero-scrim"></div>
-    <div class="recipe-hero-body">
-      <div class="recipe-hero-eyebrow">&#9733; Featured today</div>
-      <h2>${escapeHtml(r.title || 'Recipe idea')}</h2>
-      <p>${escapeHtml(r.description || '')}</p>
-      <a class="recipe-hero-link" href="#/product/${r.catSlug}/${r.idx}">See the product &rarr;</a>
-    </div>`;
-        }
-        function renderRecipesHubPage() {
-            const grid = document.getElementById('recipesHubGrid');
-            const empty = document.getElementById('recipesHubEmpty');
-            const count = document.getElementById('recipesHubCount');
-            if (!grid || !empty) return;
-            const items = getAllRecipeIdeas();
-            renderRecipeHeroSection(items);
-            if (count) count.textContent = items.length ? `${items.length} recipe idea${items.length === 1 ? '' : 's'}` : '';
-            if (!items.length) {
-                grid.innerHTML = '';
-                grid.style.display = 'none';
-                empty.style.display = 'block';
-                return;
-            }
-            empty.style.display = 'none';
-            grid.style.display = '';
-            // Grouped by category (in the same order products already
-            // appear in CATEGORIES) rather than one long flat grid - at
-            // even a dozen categories' worth of recipes, an undifferentiated
-            // list stops reading as a curated page and starts reading as a
-            // dump. Each group is a swipeable carousel (see .recipe-carousel)
-            // rather than a wrapping grid, shorter page and reads as
-            // browsable content rather than a list to scan.
-            const byCategory = new Map();
-            items.forEach(r => {
-                if (!byCategory.has(r.catSlug)) byCategory.set(r.catSlug, { catName: r.catName, items: [] });
-                byCategory.get(r.catSlug).items.push(r);
-            });
-            grid.innerHTML = [...byCategory.values()].map(group => {
-                const catLabel = escapeHtml((group.catName || '').replace(/&amp;/g, '&'));
-                return `
-    <div class="recipe-hub-category">
-      <h3 class="recipe-hub-category-head">${catLabel}</h3>
-      <div class="recipe-carousel">${group.items.map(recipeHubCardHTML).join('')}</div>
-    </div>`;
-            }).join('');
-        }
-        window.renderRecipesHubPage = renderRecipesHubPage;
-
-        // ================= PERSONALISED RECIPE RECOMMENDATIONS =================
-        // Reuses buyAgainItems() (the same purchase-history lookup behind the
-        // homepage "Buy it again" carousel) rather than a separate query -
-        // "recipes for what you've actually bought" is just that same list
-        // filtered down to products that have recipes, so there's no new
-        // data source to keep in sync. Signed-out, or no purchase history
-        // with recipe content, both resolve to an empty list - same
-        // "nothing to show" handling buyAgainItems()'s other callers use.
-        async function personalRecipeRecommendations() {
-            const purchased = await buyAgainItems();
-            const items = [];
-            purchased.forEach(p => {
-                if (!Array.isArray(p.recipes)) return;
-                p.recipes.forEach(r => {
-                    if (!r || (!r.title && !r.description)) return;
-                    items.push({ title: r.title, description: r.description, productName: p.name, image: p.image, imageThumb: p.imageThumb, catSlug: p.catSlug, idx: p.idx });
-                });
-            });
-            return items;
-        }
-        async function loadPersonalRecipeSection() {
-            const section = document.getElementById('recipesPersonalSection');
-            const grid = document.getElementById('recipesPersonalGrid');
-            if (!section || !grid) return;
-            const items = (await personalRecipeRecommendations()).slice(0, 6);
-            if (!items.length) { section.style.display = 'none'; return; }
-            section.style.display = '';
-            grid.innerHTML = items.map(recipeHubCardHTML).join('');
-        }
-        window.loadPersonalRecipeSection = loadPersonalRecipeSection;
 
         document.getElementById('pdQtyMinus').addEventListener('click', () => { pdQty = Math.max(1, pdQty - 1); document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
         document.getElementById('pdQtyPlus').addEventListener('click', () => { pdQty += 1; document.getElementById('pdQtyVal').textContent = pdQty; updatePdPrice(); });
@@ -30942,8 +30491,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 if (row.allergy_note) product.allergyNote = row.allergy_note;
                 if (row.nutrition) product.nutrition = row.nutrition;
                 if (row.cooking_tip) product.cookingTip = row.cooking_tip;
-                if (Array.isArray(row.recipes) && row.recipes.length) product.recipes = row.recipes;
-                else if (row.recipes === null) delete product.recipes;
                 product.deleted = row.deleted === true;
             });
             initialOverridesAttempted = true;
@@ -30998,13 +30545,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 const hash = pathToHash(window.location.pathname);
                 if (isCatalogRefreshSafeHash(hash)) {
                     route({ preserveScroll: true });
-                } else if (hash === '#/build-bundle' && activeDishIndex !== null) {
+                } else if (hash === '#/build-a-dish' && activeDishIndex !== null) {
                     // Reported directly: a restocked ingredient still
                     // showed "out of stock" and disabled in an
                     // already-open Build a Dish panel. route()'s own
-                    // #/build-bundle branch only re-renders the dish
+                    // #/build-a-dish branch only re-renders the dish
                     // picker, not whichever dish's builder panel is
-                    // actually open, so #/build-bundle was never in
+                    // actually open, so #/build-a-dish was never in
                     // isCatalogRefreshSafeHash's list above (a full route()
                     // there wouldn't have fixed this anyway). renderDishBuilder()
                     // only reads state that's already committed in memory
@@ -31697,7 +31244,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         window.markApplicationReviewed = markApplicationReviewed;
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-taste-of-home', 'view-wholesale-apply', 'view-wholesale', 'view-journal', 'view-journal-post', 'view-recipes', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-a-dish', 'view-taste-of-home', 'view-wholesale-apply', 'view-wholesale', 'view-journal', 'view-journal-post', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Unlike the other two floats, the currency fab stays up through
@@ -31800,7 +31347,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // on every page, not just home.
         function updateActiveNavLink(hash) {
             const isHome = hash === '' || hash === '#/';
-            const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/shop', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers', '#/build-bundle'];
+            const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/shop', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers', '#/build-a-dish'];
             const links = {
                 navLinkHome: isHome,
                 navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
@@ -32130,10 +31677,6 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash.startsWith('#/blog/')) {
                 showView('view-journal-post');
                 renderJournalPostPage(hash.replace('#/blog/', ''));
-            } else if (hash === '#/recipes') {
-                showView('view-recipes');
-                renderRecipesHubPage();
-                loadPersonalRecipeSection();
             } else if (hash === '#/privacy') {
                 showView('view-privacy');
             } else if (hash === '#/terms') {
@@ -32145,7 +31688,14 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash === '#/delivery-policy') {
                 showView('view-delivery-policy');
             } else if (hash === '#/build-bundle') {
-                showView('view-build-bundle');
+                // Renamed to #/build-a-dish (the feature was always "pick a
+                // dish, we list the ingredients", never a discount bundle) -
+                // redirect so an old bookmark or shared link still lands on
+                // the right page instead of 404ing.
+                window.location.hash = '#/build-a-dish';
+                return;
+            } else if (hash === '#/build-a-dish') {
+                showView('view-build-a-dish');
                 renderDishPicker();
             } else if (hash === '#/taste-of-home') {
                 showView('view-taste-of-home');
@@ -32588,7 +32138,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             renderBundles();
             renderCombos();
             // Same reasoning as renderBundles()/renderCombos() just above —
-            // if a visitor is already sitting on #/build-bundle when this
+            // if a visitor is already sitting on #/build-a-dish when this
             // resolves (most obviously: a hard refresh while already there),
             // route() already fired once before this data existed and won't
             // fire again on its own, since the hash never actually changes.
