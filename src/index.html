@@ -4539,9 +4539,23 @@
             color: #063B00; text-transform: uppercase;
         }
         .toh-gift-card-rule { width: 28px; height: 1px; background: #FAF9F2; opacity: 0.3; margin: 16px 0 14px; flex-shrink: 0; }
+        /* What's inside and what it's worth - a little receipt-style line
+           ahead of the personal message, in the ribbon's own accent
+           colour so it reads as a different kind of information than the
+           "to"/note below it. Empty (display:none) when there's nothing
+           to show (see renderCheckoutGiftCardPreview/
+           renderTohGiftCardPreview). */
+        .toh-gift-card-package { font-weight: 700; font-size: 10.5px; letter-spacing: 0.04em; color: #A6CC2E; margin-bottom: 14px; word-break: break-word; }
         .toh-gift-card-to { font-weight: 600; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; opacity: 0.7; margin-bottom: 9px; word-break: break-word; }
         .toh-gift-card-note { font-size: 12.5px; line-height: 1.6; font-weight: 400; opacity: 0.95; white-space: pre-wrap; word-break: break-word; }
-        .toh-gift-card-brand { margin-top: auto; font-size: 8.5px; font-weight: 600; letter-spacing: 0.17em; text-transform: uppercase; opacity: 0.55; flex-shrink: 0; }
+        .toh-gift-card-footer { margin-top: auto; flex-shrink: 0; }
+        .toh-gift-card-brand { font-size: 8.5px; font-weight: 600; letter-spacing: 0.17em; text-transform: uppercase; opacity: 0.55; }
+        /* Who it's from - deliberately placed after the brand line, not
+           before it, so the card reads "from YO7 Foods, sent by [name]"
+           rather than crowding the sender into the personal note above.
+           Hidden (see updateGiftCardPreview) when no sender name was
+           given, same reasoning as the package line above. */
+        .toh-gift-card-from { font-size: 9.5px; font-weight: 400; opacity: 0.75; margin-top: 4px; word-break: break-word; }
 
         /* Sits inside the real checkout's own delivery panel (not the
            Taste of Home page), so whoever's paying sees clearly that the
@@ -13342,6 +13356,7 @@
                                 <div id="checkoutGiftOptions" class="hidden-view">
                                     <div class="field"><label for="checkoutGiftNote">Gift note (optional)</label><textarea id="checkoutGiftNote"
                                             rows="3" maxlength="300" placeholder="Enjoy! Love, ..."></textarea></div>
+                                    <div class="field"><label for="checkoutGiftFrom">Your name (optional, shown as "From" on the card)</label><input type="text" id="checkoutGiftFrom" placeholder="Your name"></div>
                                     <div class="field">
                                         <span class="toh-card-design-label">The card we'll print and include</span>
                                         <div class="toh-gift-card" aria-hidden="true">
@@ -13356,9 +13371,13 @@
                                                     <div class="toh-gift-card-face-title">Gift<br>Card</div>
                                                 </div>
                                                 <div class="toh-gift-card-rule"></div>
+                                                <div class="toh-gift-card-package" id="checkoutGiftCardPackage"></div>
                                                 <div class="toh-gift-card-to" id="checkoutGiftCardTo">To them</div>
                                                 <div class="toh-gift-card-note" id="checkoutGiftCardNote">A little taste of home, with love.</div>
-                                                <div class="toh-gift-card-brand">YO7 Foods</div>
+                                                <div class="toh-gift-card-footer">
+                                                    <div class="toh-gift-card-brand">YO7 Foods</div>
+                                                    <div class="toh-gift-card-from" id="checkoutGiftCardFrom"></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -14442,6 +14461,7 @@
                             <div class="field"><label for="tohRecipientPostcode">Postcode</label><input type="text" id="tohRecipientPostcode" placeholder="CO1 1AA" required></div>
                         </div>
                         <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
+                        <div class="field"><label for="tohSenderName">Your name (optional, shown as "From" on the card)</label><input type="text" id="tohSenderName" placeholder="Your name"></div>
                         <div class="field">
                             <span class="toh-card-design-label">The card we'll print and include</span>
                             <div class="toh-gift-card" aria-hidden="true">
@@ -14456,9 +14476,13 @@
                                         <div class="toh-gift-card-face-title">Gift<br>Card</div>
                                     </div>
                                     <div class="toh-gift-card-rule"></div>
+                                    <div class="toh-gift-card-package" id="tohGiftCardPackage"></div>
                                     <div class="toh-gift-card-to" id="tohGiftCardTo">To them</div>
                                     <div class="toh-gift-card-note" id="tohGiftCardNote">A little taste of home, with love.</div>
-                                    <div class="toh-gift-card-brand">YO7 Foods</div>
+                                    <div class="toh-gift-card-footer">
+                                        <div class="toh-gift-card-brand">YO7 Foods</div>
+                                        <div class="toh-gift-card-from" id="tohGiftCardFrom"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -17960,7 +17984,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.10';
+        const BUILD_VERSION = '2026-11-23.11';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19642,6 +19666,15 @@
                 .map(ref => ({ ref, p: getProduct(ref.catSlug, ref.idx) }))
                 .filter(x => x.p && !x.p.deleted);
         }
+        // What a package actually costs right now, excluding anything
+        // currently out of stock - the same total shown on its own
+        // package card (renderTasteOfHomePackages) and what actually gets
+        // added to the basket (submitTasteOfHomeRecipient), pulled out
+        // once so the gift card preview can't drift out of step with
+        // either of those.
+        function tohPackageInStockTotal(pkg) {
+            return tohValidItems(pkg).filter(x => x.p.stock !== 'out').reduce((sum, x) => sum + effectivePrice(x.p), 0);
+        }
         // Same small image-or-icon thumbnail renderSearchDropdown already
         // uses for its own result rows - a customer picking a care
         // package for someone else deserves the same "what am I actually
@@ -19658,7 +19691,7 @@
             if (!grid) return;
             grid.innerHTML = TASTE_OF_HOME_PACKAGES.map((pkg, i) => {
                 const valid = tohValidItems(pkg);
-                const inStockTotal = valid.filter(x => x.p.stock !== 'out').reduce((sum, x) => sum + effectivePrice(x.p), 0);
+                const inStockTotal = tohPackageInStockTotal(pkg);
                 return `
     <div class="toh-package-card">
       <button type="button" class="toh-package-remove" onclick="removeTohPackage(${i})" aria-label="Remove package"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -19712,6 +19745,8 @@
           <span class="price">${money(effectivePrice(x.p))}</span>
         </li>`).join('');
             }
+            const senderNameInput = document.getElementById('tohSenderName');
+            if (senderNameInput && !senderNameInput.value && currentUser) senderNameInput.value = currentUser;
             renderTohGiftCardPreview();
             if (section) {
                 section.style.display = '';
@@ -19739,17 +19774,36 @@
         };
         // Shared by the Taste of Home recipient form and the plain
         // checkout's own "send as a gift" option, so both live previews
-        // update the exact same way.
-        function updateGiftCardPreview(toElId, noteElId, name, note) {
-            const toEl = document.getElementById(toElId);
-            const noteEl = document.getElementById(noteElId);
-            if (toEl) toEl.textContent = `To ${name || 'them'}`;
+        // update the exact same way. packageLabel/senderName are blank
+        // whenever there's nothing to show (see the two render functions
+        // below) - both lines then hide themselves rather than render as
+        // an empty line with leftover spacing.
+        function updateGiftCardPreview(ids, { recipientName, note, packageLabel, senderName }) {
+            const toEl = document.getElementById(ids.to);
+            const noteEl = document.getElementById(ids.note);
+            const packageEl = document.getElementById(ids.package);
+            const fromEl = document.getElementById(ids.from);
+            if (toEl) toEl.textContent = `To ${recipientName || 'them'}`;
             if (noteEl) noteEl.textContent = note || 'A little taste of home, with love.';
+            if (packageEl) {
+                packageEl.textContent = packageLabel || '';
+                packageEl.style.display = packageLabel ? '' : 'none';
+            }
+            if (fromEl) {
+                fromEl.textContent = senderName ? `From ${senderName}` : '';
+                fromEl.style.display = senderName ? '' : 'none';
+            }
         }
         function renderTohGiftCardPreview() {
             const name = document.getElementById('tohRecipientName')?.value.trim();
             const note = document.getElementById('tohNote')?.value.trim();
-            updateGiftCardPreview('tohGiftCardTo', 'tohGiftCardNote', name, note);
+            const senderName = document.getElementById('tohSenderName')?.value.trim();
+            const pkg = TASTE_OF_HOME_PACKAGES.find(p => p.id === activeTohPackageId);
+            const packageLabel = pkg ? `${pkg.name} · ${money(tohPackageInStockTotal(pkg))}` : '';
+            updateGiftCardPreview(
+                { to: 'tohGiftCardTo', note: 'tohGiftCardNote', package: 'tohGiftCardPackage', from: 'tohGiftCardFrom' },
+                { recipientName: name, note, packageLabel, senderName }
+            );
         }
 
         // The plain checkout's own, simpler gift option: no separate
@@ -19759,17 +19813,31 @@
         // card. Hidden automatically whenever a Taste of Home gift is
         // already in progress (see applyPendingGiftToCheckout /
         // clearPendingGift) so an order never ends up with two conflicting
-        // "Card design: ..." lines in its notes.
+        // "Card design: ..." lines in its notes. There's no named
+        // "package" here, just whatever's in the cart, so the card's
+        // package line shows the order's value alone, no name prefix.
         function renderCheckoutGiftCardPreview() {
             const name = document.getElementById('dName')?.value.trim();
             const note = document.getElementById('checkoutGiftNote')?.value.trim();
-            updateGiftCardPreview('checkoutGiftCardTo', 'checkoutGiftCardNote', name, note);
+            const senderName = document.getElementById('checkoutGiftFrom')?.value.trim();
+            const packageLabel = cart.length ? money(cartSubtotal()) : '';
+            updateGiftCardPreview(
+                { to: 'checkoutGiftCardTo', note: 'checkoutGiftCardNote', package: 'checkoutGiftCardPackage', from: 'checkoutGiftCardFrom' },
+                { recipientName: name, note, packageLabel, senderName }
+            );
         }
         function toggleCheckoutGiftOptions(isGift) {
             const options = document.getElementById('checkoutGiftOptions');
             if (!options) return;
             options.classList.toggle('hidden-view', !isGift);
-            if (isGift) renderCheckoutGiftCardPreview();
+            if (isGift) {
+                // A nice default, not a guess at who's sending it - still
+                // just a plain text field underneath, so a signed-in
+                // buyer can clear or change it freely.
+                const fromInput = document.getElementById('checkoutGiftFrom');
+                if (fromInput && !fromInput.value && currentUser) fromInput.value = currentUser;
+                renderCheckoutGiftCardPreview();
+            }
         }
         window.toggleCheckoutGiftOptions = toggleCheckoutGiftOptions;
         // Composes the same free-text gift line Taste of Home's own
@@ -19780,7 +19848,9 @@
             const checkbox = document.getElementById('checkoutIsGift');
             if (!checkbox || !checkbox.checked || checkbox.closest('.hidden-view')) return '';
             const note = document.getElementById('checkoutGiftNote')?.value.trim() || '';
-            return `This order is a gift${note ? `: "${note}"` : ''}. Card design: ${TOH_CARD_DESIGN_LABEL} (please print and include that card).`;
+            const senderName = document.getElementById('checkoutGiftFrom')?.value.trim() || '';
+            const value = money(cartSubtotal());
+            return `This order is a gift${note ? `: "${note}"` : ''}. Value: ${value}.${senderName ? ` From: ${senderName}.` : ''} Card design: ${TOH_CARD_DESIGN_LABEL} (please print and include that card).`;
         }
 
         /* ================= PRINT-READY CARD DOWNLOAD (admin order detail) =================
@@ -19792,15 +19862,24 @@
            design the customer picked, already filled in, to print. */
         function parseGiftCardFromOrderNotes(notes) {
             if (!notes) return null;
+            // The "Package: X (£Y)."/"Value: £Y."/"From: Z." segments are
+            // all optional, so a note line written before they existed
+            // still matches here (just without that data) - see this
+            // function's own comment on designLabel for the same
+            // reasoning applied to the design name.
             const patterns = [
-                /^Gift for .+?(?:: "(.*)")?\. Card design: (.+?) \(please print and include that card\)\.$/,
-                /^This order is a gift(?:: "(.*)")?\. Card design: (.+?) \(please print and include that card\)\.$/,
+                /^Gift for .+?(?:: "(?<note>.*)")?\.(?: Package: (?<pkg>.+?) \((?<price>£[\d.,]+)\)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\.$/,
+                /^This order is a gift(?:: "(?<note>.*)")?\.(?: Value: (?<price>£[\d.,]+)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\.$/,
             ];
             for (const line of notes.split('\n')) {
                 const trimmed = line.trim();
                 for (const re of patterns) {
                     const m = trimmed.match(re);
-                    if (m) return { note: m[1] || '', designLabel: m[2] };
+                    if (m) {
+                        const g = m.groups;
+                        const packageLabel = g.pkg ? `${g.pkg} · ${g.price}` : (g.price || '');
+                        return { note: g.note || '', designLabel: g.design, packageLabel, senderName: g.from || '' };
+                    }
                 }
             }
             return null;
@@ -19870,8 +19949,10 @@
         // parseGiftCardFromOrderNotes) and may still say "Classic"/"Bold"/
         // "Minimal" on an order placed before this became the only
         // design - those just download using this design too, which is a
-        // fine outcome for a print aid.
-        function drawGiftCardToCanvas(designLabel, recipientName, note) {
+        // fine outcome for a print aid. packageLabel/senderName come from
+        // that same parse and are blank (so just skipped) on an order
+        // placed before either existed.
+        function drawGiftCardToCanvas(designLabel, recipientName, note, packageLabel, senderName) {
             const scale = 6;
             const w = 500 * scale, h = 700 * scale;
             const canvas = document.createElement('canvas');
@@ -19947,10 +20028,19 @@
             ctx.stroke();
 
             ctx.textBaseline = 'top';
+            let cursorY = ruleY + 14 * scale;
+            if (packageLabel) {
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = '#A6CC2E';
+                ctx.font = `700 ${10.5 * scale}px ${fontStack}`;
+                ctx.fillText(packageLabel, padX, cursorY);
+                cursorY += 28 * scale;
+            }
+
             ctx.globalAlpha = 0.7;
             ctx.fillStyle = '#FAF9F2';
             ctx.font = `600 ${10 * scale}px ${fontStack}`;
-            const toY = ruleY + 14 * scale;
+            const toY = cursorY;
             ctx.fillText(`TO ${(recipientName || 'THEM').toUpperCase()}`, padX, toY);
 
             ctx.globalAlpha = 0.95;
@@ -19961,7 +20051,13 @@
 
             ctx.globalAlpha = 0.55;
             ctx.font = `600 ${8.5 * scale}px ${fontStack}`;
-            ctx.fillText('YO7 FOODS', padX, h - padBottom - 10 * scale);
+            const brandY = h - padBottom - (senderName ? 24 * scale : 10 * scale);
+            ctx.fillText('YO7 FOODS', padX, brandY);
+            if (senderName) {
+                ctx.globalAlpha = 0.75;
+                ctx.font = `400 ${9.5 * scale}px ${fontStack}`;
+                ctx.fillText(`From ${senderName}`, padX, brandY + 13 * scale);
+            }
 
             ctx.globalAlpha = 1;
             ctx.strokeStyle = 'rgba(250,249,242,0.25)';
@@ -19975,7 +20071,7 @@
             if (!order) return;
             const gift = parseGiftCardFromOrderNotes(order.notes);
             if (!gift) return;
-            const canvas = drawGiftCardToCanvas(gift.designLabel, order.delivery_name, gift.note);
+            const canvas = drawGiftCardToCanvas(gift.designLabel, order.delivery_name, gift.note, gift.packageLabel, gift.senderName);
             const orderNumber = order.order_number || ('YO7-' + order.id.slice(0, 8).toUpperCase());
             const link = document.createElement('a');
             link.download = `${orderNumber}-gift-card-${gift.designLabel.toLowerCase()}.png`;
@@ -19995,13 +20091,15 @@
             const city = document.getElementById('tohRecipientCity').value.trim();
             const postcode = document.getElementById('tohRecipientPostcode').value.trim();
             const note = document.getElementById('tohNote').value.trim();
+            const senderName = document.getElementById('tohSenderName').value.trim();
             if (!recipientName || !address1 || !city || !postcode) { showToast('Fill in the recipient\'s name and address first.'); return; }
 
             const valid = tohValidItems(pkg).filter(x => x.p.stock !== 'out');
             valid.forEach(x => addToCart(x.p, 1, pkg.name));
             if (valid.length === 0) { showToast('Everything in this package is currently out of stock.'); return; }
 
-            pendingGiftDetails = { packageName: pkg.name, recipientName, recipientPhone, address1, address2, city, postcode, note, cardDesignLabel: TOH_CARD_DESIGN_LABEL };
+            const packagePrice = money(tohPackageInStockTotal(pkg));
+            pendingGiftDetails = { packageName: pkg.name, packagePrice, recipientName, recipientPhone, address1, address2, city, postcode, note, senderName, cardDesignLabel: TOH_CARD_DESIGN_LABEL };
             savePendingGiftToStorage();
             showToast(`Added "${pkg.name}" to your basket for ${recipientName}.`);
             window.location.hash = '#/checkout';
@@ -20053,7 +20151,7 @@
             if (townField) townField.value = g.city;
             if (postcodeField) postcodeField.value = g.postcode;
             if (notesField) {
-                const giftLine = `Gift for ${g.recipientName}${g.note ? `: "${g.note}"` : ''}. Card design: ${g.cardDesignLabel || TOH_CARD_DESIGN_LABEL} (please print and include that card).`;
+                const giftLine = `Gift for ${g.recipientName}${g.note ? `: "${g.note}"` : ''}. Package: ${g.packageName} (${g.packagePrice}).${g.senderName ? ` From: ${g.senderName}.` : ''} Card design: ${g.cardDesignLabel || TOH_CARD_DESIGN_LABEL} (please print and include that card).`;
                 notesField.value = notesField.value.trim() ? `${notesField.value.trim()}\n${giftLine}` : giftLine;
             }
             if (banner) {
@@ -32549,10 +32647,14 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         if (tohRecipientNameInput) tohRecipientNameInput.addEventListener('input', renderTohGiftCardPreview);
         const tohNoteInput = document.getElementById('tohNote');
         if (tohNoteInput) tohNoteInput.addEventListener('input', renderTohGiftCardPreview);
+        const tohSenderNameInput = document.getElementById('tohSenderName');
+        if (tohSenderNameInput) tohSenderNameInput.addEventListener('input', renderTohGiftCardPreview);
         const addTohPackageBtn = document.getElementById('addTohPackageBtn');
         if (addTohPackageBtn) addTohPackageBtn.addEventListener('click', openAddTohPackageForm);
         const checkoutGiftNoteInput = document.getElementById('checkoutGiftNote');
         if (checkoutGiftNoteInput) checkoutGiftNoteInput.addEventListener('input', renderCheckoutGiftCardPreview);
+        const checkoutGiftFromInput = document.getElementById('checkoutGiftFrom');
+        if (checkoutGiftFromInput) checkoutGiftFromInput.addEventListener('input', renderCheckoutGiftCardPreview);
         const dNameInputForGiftPreview = document.getElementById('dName');
         if (dNameInputForGiftPreview) dNameInputForGiftPreview.addEventListener('input', () => {
             if (document.getElementById('checkoutIsGift')?.checked) renderCheckoutGiftCardPreview();
