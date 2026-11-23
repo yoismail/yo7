@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.b07db3d934.css">    <script>
+    <link rel="stylesheet" href="/assets/app.7b7dab95aa.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -1457,8 +1457,21 @@
                                     <div class="field"><label for="checkoutGiftNote">Gift note (optional)</label><textarea id="checkoutGiftNote"
                                             rows="3" maxlength="300" placeholder="Enjoy! Love, ..."></textarea></div>
                                     <div class="field">
-                                        <span class="toh-card-design-label">Pick a card to print and include</span>
-                                        <div class="toh-card-design-picker" id="checkoutCardDesignPicker" role="radiogroup" aria-label="Card design"></div>
+                                        <span class="toh-card-design-label">The card we'll print and include</span>
+                                        <div class="toh-gift-card" aria-hidden="true">
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-sack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 3h7.4l1 4H7.3l1-4Z"/><path d="M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z"/><path d="M9.3 7v3M14.7 7v3"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z"/><path d="M7 19C10 15 13 11 18 6"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-pepper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3c1.2 1 1.2 2.4 0 3.4"/><path d="M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-fish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z"/><path d="M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z"/><circle cx="7.2" cy="11.3" r=".65" fill="currentColor" stroke="none"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-mark"><svg viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="40"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                            <div class="toh-gift-card-content">
+                                                <svg class="toh-gift-card-mark" viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="46"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="66" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                <div class="toh-gift-card-rule"></div>
+                                                <div class="toh-gift-card-to" id="checkoutGiftCardTo">To them</div>
+                                                <div class="toh-gift-card-note" id="checkoutGiftCardNote">A little taste of home, with love.</div>
+                                                <div class="toh-gift-card-brand">YO7 Foods</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="display:flex; gap:12px; margin-top:10px;">
@@ -2548,8 +2561,21 @@
                         </div>
                         <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
                         <div class="field">
-                            <span class="toh-card-design-label">Pick a card to print and include</span>
-                            <div class="toh-card-design-picker" id="tohCardDesignPicker" role="radiogroup" aria-label="Card design"></div>
+                            <span class="toh-card-design-label">The card we'll print and include</span>
+                            <div class="toh-gift-card" aria-hidden="true">
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-sack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 3h7.4l1 4H7.3l1-4Z"/><path d="M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z"/><path d="M9.3 7v3M14.7 7v3"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z"/><path d="M7 19C10 15 13 11 18 6"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-pepper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3c1.2 1 1.2 2.4 0 3.4"/><path d="M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-fish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z"/><path d="M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z"/><circle cx="7.2" cy="11.3" r=".65" fill="currentColor" stroke="none"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-mark"><svg viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="40"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                <div class="toh-gift-card-content">
+                                    <svg class="toh-gift-card-mark" viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="46"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="66" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    <div class="toh-gift-card-rule"></div>
+                                    <div class="toh-gift-card-to" id="tohGiftCardTo">To them</div>
+                                    <div class="toh-gift-card-note" id="tohGiftCardNote">A little taste of home, with love.</div>
+                                    <div class="toh-gift-card-brand">YO7 Foods</div>
+                                </div>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Add to basket</button>
                     </form>
@@ -3571,7 +3597,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.75b39bcd4c.js"></script>
+    <script defer src="/assets/app.6ae809d051.js"></script>
 
 </body>
 
