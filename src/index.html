@@ -17909,7 +17909,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.7';
+        const BUILD_VERSION = '2026-11-23.8';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -26357,6 +26357,30 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 console.error('claimPushSubscriptionForAccount failed:', err);
             }
         }
+        // Mirror image of claimPushSubscriptionForAccount(), run on sign
+        // out instead of sign in: without this, this device's push
+        // subscription stays linked to the account that just left, so
+        // (a) their order-status pushes keep arriving on a device they're
+        // no longer using, and (b) whoever signs in next on the same
+        // device (same person again, or someone else sharing it) can't
+        // claim it, since update-push-preferences refuses to reassign a
+        // subscription that already has a different owner. Releasing it
+        // back to ownerless on logout fixes both, the next sign-in claims
+        // it cleanly either way. Must run before auth.signOut(), the
+        // edge function checks the caller's own token to confirm this
+        // account actually owns the subscription it's releasing.
+        async function releasePushSubscriptionForAccount() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            try {
+                const sub = await getCurrentPushSubscription();
+                if (!sub) return;
+                await supabaseClient.functions.invoke('update-push-preferences', {
+                    body: { endpoint: sub.endpoint, release: true },
+                });
+            } catch (err) {
+                console.error('releasePushSubscriptionForAccount failed:', err);
+            }
+        }
         // Installing is the clearest signal a visitor can give that they
         // want to keep using this as an app, so default push notifications
         // on right then instead of leaving it as a separate, easy-to-miss
@@ -27800,6 +27824,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         const adminDeniedLogoutBtn = document.getElementById('adminDeniedLogoutBtn');
         if (adminDeniedLogoutBtn) {
             adminDeniedLogoutBtn.addEventListener('click', async () => {
+                await releasePushSubscriptionForAccount();
                 if (supabaseClient) await supabaseClient.auth.signOut();
                 clearUser();
                 renderAdminPage();
@@ -29083,6 +29108,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // if logged out, default link behaviour navigates to #/login
         });
         document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await releasePushSubscriptionForAccount();
             if (supabaseClient) {
                 try { await supabaseClient.auth.signOut(); } catch (e) { /* best-effort, clear local state regardless */ }
             }
