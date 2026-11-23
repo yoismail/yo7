@@ -3828,9 +3828,9 @@
         .bundle-items {
             display: flex; flex-direction: column; margin-bottom: 10px;
         }
-        /* Combo cards specifically (not the Build-a-bundle page, which
-           only ever shows one bundle at a time and has room to spare) —
-           a combo with 4+ items used to push these cards well past every
+        /* Combo cards specifically (not the Build-a-Dish page, which
+           only ever shows one bundle at a time and has room to spare).
+           A combo with 4+ items used to push these cards well past every
            other card on the page, which an internal scrollbar "fixed" by
            just hiding the overflow, but that hid real ingredients behind a
            scroll gesture shoppers often never discovered and made every
@@ -3841,10 +3841,10 @@
             display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--text-body);
             padding: 6px 0; border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
         }
-        /* Smaller row and thumbnail specifically inside combo cards — a
+        /* Smaller row and thumbnail specifically inside combo cards, since a
            combo's item list is a supporting ingredient breakdown, not the
            card's main content the way a single bundle's list is on the
-           Build-a-bundle page, so it can afford to read smaller and denser
+           Build-a-Dish page, so it can afford to read smaller and denser
            now that every row shows uncapped (see .bundle-items above). */
         .combo-card .bundle-item-row {
             font-size: 12px; padding: 4px 0; gap: 8px;
@@ -3943,7 +3943,7 @@
         .build-bundle-promo { position: relative; background: var(--cream); padding: 48px 0; overflow: hidden; }
         /* Same oversized-glyph-behind-the-content language as
            .combo-ticket-watermark and the footer newsletter cards, reusing
-           the checklist icon from the Build a Bundle page's own empty
+           the checklist icon from the Build a Dish page's own empty
            state rather than a one-off decorative mark. */
         .build-bundle-promo-watermark {
             position: absolute; z-index: 0; pointer-events: none;
@@ -12785,11 +12785,11 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                     </div>
                     <div>
-                        <div class="section-eyebrow">Build a bundle</div>
+                        <div class="section-eyebrow">Build a Dish</div>
                         <h2>Know the dish? We'll guide the ingredients.</h2>
                         <p>Select a meal and we'll list the ingredients you need. Uncheck what you already have, and add the rest in one tap.</p>
                     </div>
-                    <a class="btn btn-outline-dark" href="#/build-bundle">Build a bundle</a>
+                    <a class="btn btn-outline-dark" href="#/build-a-dish">Build a Dish</a>
                 </div>
             </div>
         </section>
@@ -14528,11 +14528,11 @@
         </section>
     </div>
 
-    <div id="view-build-bundle" class="hidden-view">
+    <div id="view-build-a-dish" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Build a bundle</div>
-                <h1>Build a bundle</h1>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Build a Dish</div>
+                <h1>Build a Dish</h1>
                 <p>Pick a dish, we'll suggest the real ingredients, uncheck anything you already have and add the rest in one go.</p>
             </div>
         </header>
@@ -16440,8 +16440,9 @@
 
         // One-time cleanup for retiring the separate "Bundles" concept in
         // favour of just "Combo deals" (bundles and combos were identical
-        // from a shopper's view, and the word "bundle" already means
-        // something different in the Build a Bundle tool). Deliberately
+        // from a shopper's view, and the word "bundle" already meant
+        // something different in what's now the Build a Dish tool, which
+        // went by "Build a Bundle" at the time). Deliberately
         // additive-only: copies whatever is currently in BUNDLES into
         // COMBOS so the same deals keep selling, then flips a flag so this
         // never runs twice. BUNDLES itself, bundles_data, its `bundle::N`
@@ -18135,7 +18136,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.2';
+        const BUILD_VERSION = '2026-11-23.3';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19477,8 +19478,9 @@
         // near-identical sections, then as one merged grid of both — retired
         // down to combos-only per the decision to stop selling two
         // identically-shaped deals under two different names (confusing
-        // next to the separate "Build a bundle" tool, which uses the word
-        // "bundle" for something else entirely). BUNDLES itself, its admin
+        // next to the separate "Build a Dish" tool, which went by "Build a
+        // Bundle" at the time and used the word "bundle" for something else
+        // entirely). BUNDLES itself, its admin
         // CRUD, its `bundle::N` cart id scheme, and its "view all" page are
         // all left completely untouched (see retireBundlesIntoCombos) so a
         // past order or a basket that already has a bundle item keeps
@@ -30998,13 +31000,13 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 const hash = pathToHash(window.location.pathname);
                 if (isCatalogRefreshSafeHash(hash)) {
                     route({ preserveScroll: true });
-                } else if (hash === '#/build-bundle' && activeDishIndex !== null) {
+                } else if (hash === '#/build-a-dish' && activeDishIndex !== null) {
                     // Reported directly: a restocked ingredient still
                     // showed "out of stock" and disabled in an
                     // already-open Build a Dish panel. route()'s own
-                    // #/build-bundle branch only re-renders the dish
+                    // #/build-a-dish branch only re-renders the dish
                     // picker, not whichever dish's builder panel is
-                    // actually open, so #/build-bundle was never in
+                    // actually open, so #/build-a-dish was never in
                     // isCatalogRefreshSafeHash's list above (a full route()
                     // there wouldn't have fixed this anyway). renderDishBuilder()
                     // only reads state that's already committed in memory
@@ -31697,7 +31699,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         window.markApplicationReviewed = markApplicationReviewed;
 
         /* ================= ROUTER ================= */
-        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-bundle', 'view-taste-of-home', 'view-wholesale-apply', 'view-wholesale', 'view-journal', 'view-journal-post', 'view-recipes', 'view-not-found'];
+        const VIEWS = ['view-home', 'view-shop', 'view-shop-all', 'view-product', 'view-checkout', 'view-confirm', 'view-login', 'view-signup', 'view-forgot-password', 'view-reset-password', 'view-unsubscribe-reminder', 'view-unsubscribe-newsletter', 'view-orders', 'view-notifications', 'view-refer', 'view-admin', 'view-admin-order-detail', 'view-contact', 'view-delivery-info', 'view-delivery-policy', 'view-guide', 'view-new-arrivals', 'view-best-sellers', 'view-buy-again', 'view-favorites', 'view-special-offers', 'view-group', 'view-about', 'view-work-with-us', 'view-careers', 'view-bundles', 'view-combos', 'view-privacy', 'view-terms', 'view-returns', 'view-cookie-policy', 'view-build-a-dish', 'view-taste-of-home', 'view-wholesale-apply', 'view-wholesale', 'view-journal', 'view-journal-post', 'view-recipes', 'view-not-found'];
         const FLOAT_BUTTON_HIDDEN_VIEWS = ['view-checkout', 'view-confirm', 'view-login', 'view-signup'];
         const FLOAT_CART_HIDDEN_VIEWS = ['view-checkout', 'view-confirm'];
         // Unlike the other two floats, the currency fab stays up through
@@ -31800,7 +31802,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         // on every page, not just home.
         function updateActiveNavLink(hash) {
             const isHome = hash === '' || hash === '#/';
-            const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/shop', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers', '#/build-bundle'];
+            const SHOP_PREFIXES = ['#/category/', '#/group/', '#/search/', '#/shop', '#/bundles', '#/combos', '#/special-offers', '#/new-arrivals', '#/best-sellers', '#/build-a-dish'];
             const links = {
                 navLinkHome: isHome,
                 navLinkShop: SHOP_PREFIXES.some(p => hash.startsWith(p)),
@@ -32145,7 +32147,14 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             } else if (hash === '#/delivery-policy') {
                 showView('view-delivery-policy');
             } else if (hash === '#/build-bundle') {
-                showView('view-build-bundle');
+                // Renamed to #/build-a-dish (the feature was always "pick a
+                // dish, we list the ingredients", never a discount bundle) -
+                // redirect so an old bookmark or shared link still lands on
+                // the right page instead of 404ing.
+                window.location.hash = '#/build-a-dish';
+                return;
+            } else if (hash === '#/build-a-dish') {
+                showView('view-build-a-dish');
                 renderDishPicker();
             } else if (hash === '#/taste-of-home') {
                 showView('view-taste-of-home');
@@ -32588,7 +32597,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             renderBundles();
             renderCombos();
             // Same reasoning as renderBundles()/renderCombos() just above —
-            // if a visitor is already sitting on #/build-bundle when this
+            // if a visitor is already sitting on #/build-a-dish when this
             // resolves (most obviously: a hard refresh while already there),
             // route() already fired once before this data existed and won't
             // fire again on its own, since the hash never actually changes.
