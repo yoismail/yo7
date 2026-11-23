@@ -4476,79 +4476,39 @@
         .toh-recipient-items li .price { font-family: var(--display); font-weight: 700; color: var(--heading); flex-shrink: 0; margin-left: auto; }
 
         /* ================= CARD DESIGNS ================= */
-        .toh-card-design-label { display: block; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-        .toh-card-design-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .toh-card-design-option {
+        .toh-card-design-label { display: block; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+        /* Just one card design now (no more picker/selection - see
+           TOH_CARD_DESIGN), so this is a single live preview, not a
+           grid of clickable options. Fixed cream/aubergine colours
+           regardless of site theme: it's a preview of a printed paper
+           card, which doesn't invert for dark mode any more than a
+           photo would, but still gets its own border so its edges
+           read clearly against a dark-mode page. */
+        .toh-gift-card {
             position: relative;
-            min-height: 190px;
-            border-radius: 12px;
-            /* rgba(var(--border-rgb)) flips cream-on-dark in dark mode
-               (see the chat/scrollbar uses of the same var), so the
-               "Bold" design (a dark fill close to the dark-mode page
-               background) still reads as its own card instead of
-               melting into the page behind it. */
-            border: 2.5px solid rgba(var(--border-rgb), 0.18);
+            width: 100%; max-width: 280px;
+            aspect-ratio: 380 / 532;
+            margin: 0 auto 20px;
+            border-radius: 8px;
+            background: #FAF9F2;
+            color: #042500;
             overflow: hidden;
-            cursor: pointer;
-            padding: 14px 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            box-shadow: inset 0 0 0 1px rgba(4, 37, 0, 0.16), 0 0 0 1px rgba(var(--border-rgb), 0.12);
             font-family: var(--display);
-            transition: transform 0.2s cubic-bezier(.16,.84,.44,1), border-color 0.2s ease;
         }
-        .toh-card-design-option:hover { transform: translateY(-3px); }
-        .toh-card-design-option.active { border-color: var(--chartreuse-rich); }
-        .toh-card-design-watermark {
-            position: absolute; top: -10%; right: -22%;
-            width: 70%; height: auto;
-            opacity: 0.16;
-            pointer-events: none;
-        }
-        .toh-card-design-name { position: relative; font-weight: 700; font-size: 12px; z-index: 1; }
-        .toh-card-design-preview { position: relative; font-size: 10.5px; line-height: 1.35; z-index: 1; }
-        .toh-card-design-preview .toh-card-preview-to { font-weight: 700; margin-bottom: 4px; word-break: break-word; }
-        /* No more line-clamp/ellipsis: the card grows to fit the whole
-           note instead of cutting it off mid-sentence. The picker is a
-           CSS grid with default row stretch, so every card in the same
-           row grows to match its tallest sibling, keeping the row tidy
-           even when only one design's note is long. */
-        .toh-card-design-preview .toh-card-preview-note { opacity: 0.85; white-space: pre-wrap; word-break: break-word; }
-        .toh-card-design-picker.has-long-note .toh-card-design-preview .toh-card-preview-note { font-size: 9px; line-height: 1.3; }
-        .toh-card-design-check {
-            display: none;
-            position: absolute; top: 10px; right: 10px; z-index: 1;
-            width: 20px; height: 20px; border-radius: 50%;
-            background: var(--chartreuse-rich); color: var(--cream);
-            align-items: center; justify-content: center;
-        }
-        .toh-card-design-check svg { width: 11px; height: 11px; }
-        .toh-card-design-option.active .toh-card-design-check { display: flex; }
-        .toh-card-design-option.design-classic {
-            background: radial-gradient(circle at 105% -10%, rgba(4, 37, 0, 0.06) 0%, transparent 55%), var(--cream);
-            color: var(--aubergine-deep);
-        }
-        .toh-card-design-option.design-classic .toh-card-design-watermark { color: var(--aubergine-deep); }
-        .toh-card-design-option.design-bold {
-            background-image: repeating-linear-gradient(135deg, rgba(144, 184, 0, 0.1) 0 3px, transparent 3px 16px);
-            background-color: var(--aubergine-deep);
-            color: var(--cream);
-        }
-        .toh-card-design-option.design-bold .toh-card-design-watermark { color: var(--chartreuse); }
-        .toh-card-design-option.design-sunshine {
-            background-image: radial-gradient(rgba(4, 37, 0, 0.14) 1.5px, transparent 1.5px);
-            background-size: 13px 13px;
-            background-color: var(--orange);
-            color: var(--aubergine-deep);
-        }
-        .toh-card-design-option.design-sunshine .toh-card-design-watermark { color: var(--aubergine-deep); }
-        .toh-card-design-option.design-minimal {
-            background: var(--cream);
-            color: var(--aubergine-deep);
-            box-shadow: inset 0 0 0 4px var(--cream), inset 0 0 0 5px rgba(4, 37, 0, 0.3);
-        }
-        .toh-card-design-option.design-minimal .toh-card-design-watermark { color: var(--aubergine-deep); opacity: 0.5; }
-        .toh-card-design-option.design-minimal.active { border-color: var(--chartreuse-rich); }
+        .toh-gift-card-bg-icon { position: absolute; color: #042500; pointer-events: none; }
+        .toh-gift-card-bg-icon svg { width: 100%; height: 100%; display: block; }
+        .toh-gift-card-bg-mark { right: -15%; bottom: -8%; width: 70%; opacity: 0.055; }
+        .toh-gift-card-bg-sack { top: 9%; left: -6%; width: 14.2%; opacity: 0.07; transform: rotate(10deg); }
+        .toh-gift-card-bg-leaf { top: 7%; right: 7%; width: 24.2%; opacity: 0.07; transform: rotate(14deg); }
+        .toh-gift-card-bg-pepper { top: 40%; left: -8%; width: 19.5%; opacity: 0.065; transform: rotate(-20deg); }
+        .toh-gift-card-bg-fish { top: 34%; right: -6%; width: 16.8%; opacity: 0.06; transform: rotate(8deg); }
+        .toh-gift-card-content { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; padding: 11% 9.5%; }
+        .toh-gift-card-mark { width: 18px; height: 18px; color: #042500; opacity: 0.55; flex-shrink: 0; }
+        .toh-gift-card-rule { width: 28px; height: 1px; background: #042500; opacity: 0.3; margin: 14px 0 18px; flex-shrink: 0; }
+        .toh-gift-card-to { font-weight: 600; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; opacity: 0.6; margin-bottom: 9px; word-break: break-word; }
+        .toh-gift-card-note { font-size: 12.5px; line-height: 1.6; font-weight: 400; opacity: 0.95; white-space: pre-wrap; word-break: break-word; }
+        .toh-gift-card-brand { margin-top: auto; font-size: 8.5px; font-weight: 600; letter-spacing: 0.17em; text-transform: uppercase; opacity: 0.4; flex-shrink: 0; }
 
         /* Sits inside the real checkout's own delivery panel (not the
            Taste of Home page), so whoever's paying sees clearly that the
@@ -13549,8 +13509,21 @@
                                     <div class="field"><label for="checkoutGiftNote">Gift note (optional)</label><textarea id="checkoutGiftNote"
                                             rows="3" maxlength="300" placeholder="Enjoy! Love, ..."></textarea></div>
                                     <div class="field">
-                                        <span class="toh-card-design-label">Pick a card to print and include</span>
-                                        <div class="toh-card-design-picker" id="checkoutCardDesignPicker" role="radiogroup" aria-label="Card design"></div>
+                                        <span class="toh-card-design-label">The card we'll print and include</span>
+                                        <div class="toh-gift-card" aria-hidden="true">
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-sack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 3h7.4l1 4H7.3l1-4Z"/><path d="M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z"/><path d="M9.3 7v3M14.7 7v3"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z"/><path d="M7 19C10 15 13 11 18 6"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-pepper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3c1.2 1 1.2 2.4 0 3.4"/><path d="M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-fish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z"/><path d="M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z"/><circle cx="7.2" cy="11.3" r=".65" fill="currentColor" stroke="none"/></svg></div>
+                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-mark"><svg viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="40"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                            <div class="toh-gift-card-content">
+                                                <svg class="toh-gift-card-mark" viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="46"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="66" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                <div class="toh-gift-card-rule"></div>
+                                                <div class="toh-gift-card-to" id="checkoutGiftCardTo">To them</div>
+                                                <div class="toh-gift-card-note" id="checkoutGiftCardNote">A little taste of home, with love.</div>
+                                                <div class="toh-gift-card-brand">YO7 Foods</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="display:flex; gap:12px; margin-top:10px;">
@@ -14640,8 +14613,21 @@
                         </div>
                         <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
                         <div class="field">
-                            <span class="toh-card-design-label">Pick a card to print and include</span>
-                            <div class="toh-card-design-picker" id="tohCardDesignPicker" role="radiogroup" aria-label="Card design"></div>
+                            <span class="toh-card-design-label">The card we'll print and include</span>
+                            <div class="toh-gift-card" aria-hidden="true">
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-sack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 3h7.4l1 4H7.3l1-4Z"/><path d="M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z"/><path d="M9.3 7v3M14.7 7v3"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z"/><path d="M7 19C10 15 13 11 18 6"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-pepper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3c1.2 1 1.2 2.4 0 3.4"/><path d="M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-fish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z"/><path d="M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z"/><circle cx="7.2" cy="11.3" r=".65" fill="currentColor" stroke="none"/></svg></div>
+                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-mark"><svg viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="40"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                <div class="toh-gift-card-content">
+                                    <svg class="toh-gift-card-mark" viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="46"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="66" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    <div class="toh-gift-card-rule"></div>
+                                    <div class="toh-gift-card-to" id="tohGiftCardTo">To them</div>
+                                    <div class="toh-gift-card-note" id="tohGiftCardNote">A little taste of home, with love.</div>
+                                    <div class="toh-gift-card-brand">YO7 Foods</div>
+                                </div>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Add to basket</button>
                     </form>
@@ -18140,7 +18126,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-22.5';
+        const BUILD_VERSION = '2026-11-23.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19877,101 +19863,77 @@
           <span class="price">${money(effectivePrice(x.p))}</span>
         </li>`).join('');
             }
-            renderTohCardDesignPicker();
+            renderTohGiftCardPreview();
             if (section) {
                 section.style.display = '';
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
         window.selectTohPackage = selectTohPackage;
-        /* ================= CARD DESIGNS =================
-           A small, fixed set of brand-drawn card faces (not uploaded
-           images - the same inline-SVG approach the rest of the site uses
-           for its own mark, see COMING_SOON_LOGO_SVG) a customer picks
-           between, so whoever packs the order knows which physical card
-           to print and include. The preview inside each option updates
-           live as the sender types the recipient's name/note (see the
-           input listeners wired near the bottom of this script), so
-           picking a design means seeing roughly what it'll say. */
-        const TOH_CARD_DESIGNS = [
-            { id: 'classic', label: 'Classic' },
-            { id: 'bold', label: 'Bold' },
-            { id: 'sunshine', label: 'Sunshine' },
-            { id: 'minimal', label: 'Minimal' },
-        ];
+        /* ================= THE GIFT CARD =================
+           One brand-drawn card face (not an uploaded image - the same
+           inline-SVG approach the rest of the site uses for its own mark,
+           see COMING_SOON_LOGO_SVG), so whoever packs the order knows
+           which physical card to print and include. Its markup is static
+           HTML (see the two "toh-gift-card" blocks in the Taste of Home
+           recipient form and the checkout gift option) - only the "to"/
+           note text updates live as the sender types (see the input
+           listeners wired near the bottom of this script). */
+        const TOH_CARD_DESIGN_LABEL = 'Minimal';
         // Same mark/path data as favicon.svg, drawn outline-only (both
         // paths fill:none, stroke:currentColor) rather than a solid fill
-        // - each design's own CSS sets one text colour for the whole
-        // mark, and a solid-filled outer blob would hide the inner "Y"
-        // stroke completely once both read as that same flat colour
-        // (reproduced and fixed directly: the first version of this did
-        // exactly that). Outline-only needs no second "cut out against
-        // this background" colour the way chat-modal-watermark's own
-        // solid-fill version needs.
-        // Kept as plain "d" strings (not just inline in the SVG markup
-        // below) because the admin print-card download reuses these exact
-        // same two paths as canvas Path2D objects - one source of truth
-        // for the mark's geometry either way it gets drawn.
+        // - a solid-filled outer blob would hide the inner "Y" stroke
+        // completely once both read as the same flat colour (reproduced
+        // and fixed directly: an earlier version of this did exactly
+        // that). Kept as plain "d" strings (not just inline in the SVG
+        // markup) because the admin print-card download below reuses
+        // these exact same two paths as canvas Path2D objects - one
+        // source of truth for the mark's geometry either way it's drawn.
         const TOH_CARD_MARK_OUTER_D = 'M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z';
         const TOH_CARD_MARK_INNER_D = 'M 376.50 319.50 L 642.50 319.50 L 462.00 737.50';
-        const TOH_CARD_MARK_SVG = `<path d="${TOH_CARD_MARK_OUTER_D}" fill="none" stroke="currentColor" stroke-width="40"/><path d="${TOH_CARD_MARK_INNER_D}" fill="none" stroke="currentColor" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>`;
-        // Shared by both the Taste of Home recipient form and the plain
-        // checkout's own "send as a gift" option below, so the two gift
-        // flows can never end up with two different sets of card designs.
-        function cardDesignOptionsHTML(selectedId, name, note, onSelectFnName) {
-            return TOH_CARD_DESIGNS.map(d => `
-    <div class="toh-card-design-option design-${d.id}${selectedId === d.id ? ' active' : ''}" onclick="${onSelectFnName}('${d.id}')" role="radio" aria-checked="${selectedId === d.id}" aria-label="${escapeHtml(d.label)} card design">
-      <svg class="toh-card-design-watermark" viewBox="65 25 875 900" aria-hidden="true">${TOH_CARD_MARK_SVG}</svg>
-      <span class="toh-card-design-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-      <span class="toh-card-design-name">${escapeHtml(d.label)}</span>
-      <div class="toh-card-design-preview">
-        <div class="toh-card-preview-to">To ${escapeHtml(name || 'them')},</div>
-        <div class="toh-card-preview-note">${escapeHtml(note || 'A little taste of home, with love.')}</div>
-      </div>
-    </div>`).join('');
+        // The four background food icons scattered behind the card's
+        // content (see the "toh-gift-card-bg-*" CSS classes above) - kept
+        // as plain path data for the same reason as the brand mark, so
+        // the admin print-card canvas download can redraw them exactly.
+        const TOH_FOOD_ICON_PATHS = {
+            sack: { paths: ['M8.3 3h7.4l1 4H7.3l1-4Z', 'M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z', 'M9.3 7v3M14.7 7v3'] },
+            leaf: { paths: ['M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z', 'M7 19C10 15 13 11 18 6'] },
+            pepper: { paths: ['M9 3c1.2 1 1.2 2.4 0 3.4', 'M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2'] },
+            fish: { paths: ['M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z', 'M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z'], eye: { cx: 7.2, cy: 11.3, r: 0.65 } },
+        };
+        // Shared by the Taste of Home recipient form and the plain
+        // checkout's own "send as a gift" option, so both live previews
+        // update the exact same way.
+        function updateGiftCardPreview(toElId, noteElId, name, note) {
+            const toEl = document.getElementById(toElId);
+            const noteEl = document.getElementById(noteElId);
+            if (toEl) toEl.textContent = `To ${name || 'them'}`;
+            if (noteEl) noteEl.textContent = note || 'A little taste of home, with love.';
         }
-        let selectedTohCardDesignId = TOH_CARD_DESIGNS[0].id;
-        function renderTohCardDesignPicker() {
-            const picker = document.getElementById('tohCardDesignPicker');
-            if (!picker) return;
+        function renderTohGiftCardPreview() {
             const name = document.getElementById('tohRecipientName')?.value.trim();
             const note = document.getElementById('tohNote')?.value.trim();
-            picker.classList.toggle('has-long-note', (note || '').length > 140);
-            picker.innerHTML = cardDesignOptionsHTML(selectedTohCardDesignId, name, note, 'selectTohCardDesign');
+            updateGiftCardPreview('tohGiftCardTo', 'tohGiftCardNote', name, note);
         }
-        function selectTohCardDesign(id) {
-            selectedTohCardDesignId = id;
-            renderTohCardDesignPicker();
-        }
-        window.selectTohCardDesign = selectTohCardDesign;
 
         // The plain checkout's own, simpler gift option: no separate
         // recipient/address (the buyer's own delivery fields already cover
         // where it ships, including to someone else if they type a
-        // different name/address in there), just a note plus one of the
-        // same card designs. Hidden automatically whenever a Taste of Home
-        // gift is already in progress (see applyPendingGiftToCheckout /
+        // different name/address in there), just a note plus the same
+        // card. Hidden automatically whenever a Taste of Home gift is
+        // already in progress (see applyPendingGiftToCheckout /
         // clearPendingGift) so an order never ends up with two conflicting
         // "Card design: ..." lines in its notes.
-        let selectedCheckoutCardDesignId = TOH_CARD_DESIGNS[0].id;
-        function renderCheckoutCardDesignPicker() {
-            const picker = document.getElementById('checkoutCardDesignPicker');
-            if (!picker) return;
+        function renderCheckoutGiftCardPreview() {
             const name = document.getElementById('dName')?.value.trim();
             const note = document.getElementById('checkoutGiftNote')?.value.trim();
-            picker.classList.toggle('has-long-note', (note || '').length > 140);
-            picker.innerHTML = cardDesignOptionsHTML(selectedCheckoutCardDesignId, name, note, 'selectCheckoutCardDesign');
+            updateGiftCardPreview('checkoutGiftCardTo', 'checkoutGiftCardNote', name, note);
         }
-        function selectCheckoutCardDesign(id) {
-            selectedCheckoutCardDesignId = id;
-            renderCheckoutCardDesignPicker();
-        }
-        window.selectCheckoutCardDesign = selectCheckoutCardDesign;
         function toggleCheckoutGiftOptions(isGift) {
             const options = document.getElementById('checkoutGiftOptions');
             if (!options) return;
             options.classList.toggle('hidden-view', !isGift);
-            if (isGift) renderCheckoutCardDesignPicker();
+            if (isGift) renderCheckoutGiftCardPreview();
         }
         window.toggleCheckoutGiftOptions = toggleCheckoutGiftOptions;
         // Composes the same free-text gift line Taste of Home's own
@@ -19982,8 +19944,7 @@
             const checkbox = document.getElementById('checkoutIsGift');
             if (!checkbox || !checkbox.checked || checkbox.closest('.hidden-view')) return '';
             const note = document.getElementById('checkoutGiftNote')?.value.trim() || '';
-            const design = TOH_CARD_DESIGNS.find(d => d.id === selectedCheckoutCardDesignId) || TOH_CARD_DESIGNS[0];
-            return `This order is a gift${note ? `: "${note}"` : ''}. Card design: ${design.label} (please print and include that card).`;
+            return `This order is a gift${note ? `: "${note}"` : ''}. Card design: ${TOH_CARD_DESIGN_LABEL} (please print and include that card).`;
         }
 
         /* ================= PRINT-READY CARD DOWNLOAD (admin order detail) =================
@@ -20008,12 +19969,6 @@
             }
             return null;
         }
-        const TOH_CARD_DOWNLOAD_COLORS = {
-            classic: { bg: '#FAF9F2', text: '#042500', mark: '#042500' },
-            bold: { bg: '#042500', text: '#FAF9F2', mark: '#90B800' },
-            sunshine: { bg: '#E1E100', text: '#042500', mark: '#042500' },
-            minimal: { bg: '#FAF9F2', text: '#042500', mark: '#042500' },
-        };
         function wrapCanvasText(ctx, text, maxWidth) {
             const words = text.split(/\s+/).filter(Boolean);
             const lines = [];
@@ -20030,63 +19985,71 @@
             if (current) lines.push(current);
             return lines;
         }
-        // Draws the same card the customer picked from scratch on a canvas
-        // (not a screenshot of the live picker) so it comes out at clean
-        // print resolution regardless of what size the picker renders at
-        // on screen. Reuses the exact same mark path data as the on-page
-        // SVG version via Path2D, so the watermark is pixel-faithful, not
-        // an approximation.
+        // Draws one food icon (see TOH_FOOD_ICON_PATHS) into a boxX/boxY/
+        // boxSize box, rotated around that box's own centre - matching
+        // how the CSS positions and rotates the same icon on the page
+        // (position:absolute with a transform:rotate(), whose default
+        // origin is the element's centre).
+        function drawFoodIconToCanvas(ctx, icon, boxX, boxY, boxSize, rotationDeg, color, alpha) {
+            const s = boxSize / 24;
+            ctx.save();
+            ctx.translate(boxX + boxSize / 2, boxY + boxSize / 2);
+            ctx.rotate(rotationDeg * Math.PI / 180);
+            ctx.translate(-boxSize / 2, -boxSize / 2);
+            ctx.scale(s, s);
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            icon.paths.forEach(d => ctx.stroke(new Path2D(d)));
+            if (icon.eye) {
+                ctx.beginPath();
+                ctx.arc(icon.eye.cx, icon.eye.cy, icon.eye.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+        // Draws the gift card from scratch on a canvas (not a screenshot
+        // of the live preview) so it comes out at clean print resolution
+        // regardless of what size the preview renders at on screen.
+        // Reuses the exact same mark/icon path data as the on-page SVG
+        // version via Path2D, so the watermarks are pixel-faithful, not
+        // an approximation. `designLabel` is read back from an order's
+        // notes (see parseGiftCardFromOrderNotes) and may still say
+        // "Classic"/"Bold"/"Sunshine" on an order placed before this
+        // design became the only one - those just download using this
+        // design too, which is a fine outcome for a print aid.
         function drawGiftCardToCanvas(designLabel, recipientName, note) {
-            const designId = (TOH_CARD_DESIGNS.find(d => d.label.toLowerCase() === (designLabel || '').toLowerCase()) || TOH_CARD_DESIGNS[0]).id;
-            const colors = TOH_CARD_DOWNLOAD_COLORS[designId] || TOH_CARD_DOWNLOAD_COLORS.classic;
+            const ink = '#042500';
             const scale = 6;
             const w = 500 * scale, h = 700 * scale;
             const canvas = document.createElement('canvas');
             canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext('2d');
 
-            ctx.fillStyle = colors.bg;
+            ctx.fillStyle = '#FAF9F2';
             ctx.fillRect(0, 0, w, h);
 
-            if (designId === 'bold') {
-                ctx.strokeStyle = 'rgba(144, 184, 0, 0.22)';
-                ctx.lineWidth = 7 * scale;
-                for (let x = -h; x < w + h; x += 19 * scale) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x + h, h);
-                    ctx.stroke();
-                }
-            } else if (designId === 'sunshine') {
-                ctx.fillStyle = 'rgba(4, 37, 0, 0.18)';
-                for (let y = 12 * scale; y < h; y += 13 * scale) {
-                    for (let x = 12 * scale; x < w; x += 13 * scale) {
-                        ctx.beginPath();
-                        ctx.arc(x, y, 1.6 * scale, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-            } else if (designId === 'classic') {
-                const grad = ctx.createRadialGradient(w * 1.05, -h * 0.1, 0, w * 1.05, -h * 0.1, w * 0.9);
-                grad.addColorStop(0, 'rgba(4, 37, 0, 0.10)');
-                grad.addColorStop(1, 'rgba(4, 37, 0, 0)');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, w, h);
-            } else if (designId === 'minimal') {
-                ctx.strokeStyle = 'rgba(4, 37, 0, 0.3)';
-                ctx.lineWidth = 5 * scale;
-                ctx.strokeRect(2.5 * scale, 2.5 * scale, w - 5 * scale, h - 5 * scale);
-            }
+            // Background food icons, same compass layout/opacities as the
+            // "toh-gift-card-bg-*" CSS classes above.
+            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.sack, -0.06 * w, 0.09 * h, 0.142 * w, 10, ink, 0.07);
+            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.leaf, w - 0.07 * w - 0.242 * w, 0.07 * h, 0.242 * w, 14, ink, 0.07);
+            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.pepper, -0.08 * w, 0.40 * h, 0.195 * w, -20, ink, 0.065);
+            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.fish, w + 0.06 * w - 0.168 * w, 0.34 * h, 0.168 * w, 8, ink, 0.06);
 
-            // Brand mark watermark, positioned the same way the CSS does
-            // (top:-10%, right:-22%, width:70% of the card).
-            ctx.save();
+            // Big brand mark, bottom-right (right:-15%, bottom:-8%,
+            // width:70% of the card, same as .toh-gift-card-bg-mark).
             const markWidth = w * 0.70;
             const markScale = markWidth / 875;
-            ctx.translate(w - markWidth * 0.78 - 65 * markScale, -h * 0.10 - 25 * markScale);
+            const markBoxX = w + 0.15 * w - markWidth;
+            const markBoxY = h + 0.08 * h - 900 * markScale;
+            ctx.save();
+            ctx.translate(markBoxX - 65 * markScale, markBoxY - 25 * markScale);
             ctx.scale(markScale, markScale);
-            ctx.globalAlpha = designId === 'minimal' ? 0.5 : 0.16;
-            ctx.strokeStyle = colors.mark;
+            ctx.globalAlpha = 0.055;
+            ctx.strokeStyle = ink;
             ctx.lineWidth = 40;
             ctx.stroke(new Path2D(TOH_CARD_MARK_OUTER_D));
             ctx.lineWidth = 60;
@@ -20095,17 +20058,52 @@
             ctx.stroke(new Path2D(TOH_CARD_MARK_INNER_D));
             ctx.restore();
 
-            const fontStack = getComputedStyle(document.documentElement).getPropertyValue('--display').trim() || "'Poppins', sans-serif";
-            ctx.fillStyle = colors.text;
-            ctx.textBaseline = 'top';
-            const pad = 34 * scale;
-            ctx.font = `700 ${15 * scale}px ${fontStack}`;
-            ctx.fillText(`To ${recipientName || 'them'},`, pad, h - 190 * scale);
-            ctx.font = `400 ${13.5 * scale}px ${fontStack}`;
-            const noteLines = wrapCanvasText(ctx, note || 'A little taste of home, with love.', w - pad * 2);
-            noteLines.forEach((line, i) => ctx.fillText(line, pad, h - 155 * scale + i * 18 * scale));
+            // Foreground: small mark, rule, "to" label, note, brand line.
+            const padX = w * 0.095, padY = h * 0.11;
+            const smallMarkSize = 18 * scale;
+            const smallMarkScale = smallMarkSize / 875;
+            ctx.save();
+            ctx.translate(padX - 65 * smallMarkScale, padY - 25 * smallMarkScale);
+            ctx.scale(smallMarkScale, smallMarkScale);
+            ctx.globalAlpha = 0.55;
+            ctx.strokeStyle = ink;
+            ctx.lineWidth = 46;
+            ctx.stroke(new Path2D(TOH_CARD_MARK_OUTER_D));
+            ctx.lineWidth = 66;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke(new Path2D(TOH_CARD_MARK_INNER_D));
+            ctx.restore();
 
-            ctx.strokeStyle = 'rgba(0,0,0,0.14)';
+            const ruleY = padY + smallMarkSize + 14 * scale;
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = ink;
+            ctx.lineWidth = 1 * scale;
+            ctx.beginPath();
+            ctx.moveTo(padX, ruleY);
+            ctx.lineTo(padX + 28 * scale, ruleY);
+            ctx.stroke();
+
+            const fontStack = getComputedStyle(document.documentElement).getPropertyValue('--display').trim() || "'Poppins', sans-serif";
+            ctx.textBaseline = 'top';
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = ink;
+            ctx.font = `600 ${10 * scale}px ${fontStack}`;
+            const toY = ruleY + 18 * scale;
+            ctx.fillText(`TO ${(recipientName || 'THEM').toUpperCase()}`, padX, toY);
+
+            ctx.globalAlpha = 0.95;
+            ctx.font = `400 ${12.5 * scale}px ${fontStack}`;
+            const noteLines = wrapCanvasText(ctx, note || 'A little taste of home, with love.', w - padX * 2);
+            const noteY = toY + 20 * scale;
+            noteLines.forEach((line, i) => ctx.fillText(line, padX, noteY + i * 19 * scale));
+
+            ctx.globalAlpha = 0.4;
+            ctx.font = `600 ${8.5 * scale}px ${fontStack}`;
+            ctx.fillText('YO7 FOODS', padX, h - padY - 10 * scale);
+
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = 'rgba(4,37,0,0.16)';
             ctx.lineWidth = 2 * scale;
             ctx.strokeRect(scale, scale, w - 2 * scale, h - 2 * scale);
 
@@ -20142,8 +20140,7 @@
             valid.forEach(x => addToCart(x.p, 1));
             if (valid.length === 0) { showToast('Everything in this package is currently out of stock.'); return; }
 
-            const cardDesign = TOH_CARD_DESIGNS.find(d => d.id === selectedTohCardDesignId) || TOH_CARD_DESIGNS[0];
-            pendingGiftDetails = { packageName: pkg.name, recipientName, recipientPhone, address1, address2, city, postcode, note, cardDesignLabel: cardDesign.label };
+            pendingGiftDetails = { packageName: pkg.name, recipientName, recipientPhone, address1, address2, city, postcode, note, cardDesignLabel: TOH_CARD_DESIGN_LABEL };
             savePendingGiftToStorage();
             showToast(`Added "${pkg.name}" to your basket for ${recipientName}.`);
             window.location.hash = '#/checkout';
@@ -20195,7 +20192,7 @@
             if (townField) townField.value = g.city;
             if (postcodeField) postcodeField.value = g.postcode;
             if (notesField) {
-                const giftLine = `Gift for ${g.recipientName}${g.note ? `: "${g.note}"` : ''}. Card design: ${g.cardDesignLabel || 'Classic'} (please print and include that card).`;
+                const giftLine = `Gift for ${g.recipientName}${g.note ? `: "${g.note}"` : ''}. Card design: ${g.cardDesignLabel || TOH_CARD_DESIGN_LABEL} (please print and include that card).`;
                 notesField.value = notesField.value.trim() ? `${notesField.value.trim()}\n${giftLine}` : giftLine;
             }
             if (banner) {
@@ -32842,20 +32839,20 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         if (dishBuilderAddBtn) dishBuilderAddBtn.addEventListener('click', addDishSelectionToCart);
         const addDishBtn = document.getElementById('addDishBtn');
         if (addDishBtn) addDishBtn.addEventListener('click', openAddDishForm);
-        // Keeps each card design's own live preview (see
-        // renderTohCardDesignPicker) in step with what's actually been
-        // typed, without waiting for a design to be clicked first.
+        // Keeps the gift card's own live preview (see
+        // renderTohGiftCardPreview) in step with what's actually been
+        // typed.
         const tohRecipientNameInput = document.getElementById('tohRecipientName');
-        if (tohRecipientNameInput) tohRecipientNameInput.addEventListener('input', renderTohCardDesignPicker);
+        if (tohRecipientNameInput) tohRecipientNameInput.addEventListener('input', renderTohGiftCardPreview);
         const tohNoteInput = document.getElementById('tohNote');
-        if (tohNoteInput) tohNoteInput.addEventListener('input', renderTohCardDesignPicker);
+        if (tohNoteInput) tohNoteInput.addEventListener('input', renderTohGiftCardPreview);
         const addTohPackageBtn = document.getElementById('addTohPackageBtn');
         if (addTohPackageBtn) addTohPackageBtn.addEventListener('click', openAddTohPackageForm);
         const checkoutGiftNoteInput = document.getElementById('checkoutGiftNote');
-        if (checkoutGiftNoteInput) checkoutGiftNoteInput.addEventListener('input', renderCheckoutCardDesignPicker);
+        if (checkoutGiftNoteInput) checkoutGiftNoteInput.addEventListener('input', renderCheckoutGiftCardPreview);
         const dNameInputForGiftPreview = document.getElementById('dName');
         if (dNameInputForGiftPreview) dNameInputForGiftPreview.addEventListener('input', () => {
-            if (document.getElementById('checkoutIsGift')?.checked) renderCheckoutCardDesignPicker();
+            if (document.getElementById('checkoutIsGift')?.checked) renderCheckoutGiftCardPreview();
         });
 
         /* ================= SUBSCRIBE & SAVE: wiring ================= */
