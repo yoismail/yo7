@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.f2ac5bc177.css">    <script>
+    <link rel="stylesheet" href="/assets/app.d5cbbc9eaa.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -1387,6 +1387,7 @@
                                 <div id="checkoutGiftOptions" class="hidden-view">
                                     <div class="field"><label for="checkoutGiftNote">Gift note (optional)</label><textarea id="checkoutGiftNote"
                                             rows="3" maxlength="300" placeholder="Enjoy! Love, ..."></textarea></div>
+                                    <div class="field"><label for="checkoutGiftFrom">Your name (optional, shown as "From" on the card)</label><input type="text" id="checkoutGiftFrom" placeholder="Your name"></div>
                                     <div class="field">
                                         <span class="toh-card-design-label">The card we'll print and include</span>
                                         <div class="toh-gift-card" aria-hidden="true">
@@ -1396,14 +1397,18 @@
                                                     <div class="toh-gift-card-face-ribbon-v"></div>
                                                     <div class="toh-gift-card-face-ribbon-h"></div>
                                                     <div class="toh-gift-card-face-bow">
-                                                        <svg viewBox="0 0 40 28" fill="none"><path d="M19 14 3 3v22Z" fill="#729400"/><path d="M21 14 37 3v22Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2" fill="#729400"/></svg>
+                                                        <svg viewBox="0 0 40 28" fill="none"><path d="M 17.19 12.75 L 4.81 4.25 Q 3 3 3 5.2 L 3 22.8 Q 3 25 4.81 23.75 L 17.19 15.25 Q 19 14 17.19 12.75 Z" fill="#729400"/><path d="M 22.81 12.75 L 35.19 4.25 Q 37 3 37 5.2 L 37 22.8 Q 37 25 35.19 23.75 L 22.81 15.25 Q 21 14 22.81 12.75 Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2.5" fill="#729400"/></svg>
                                                     </div>
                                                     <div class="toh-gift-card-face-title">Gift<br>Card</div>
                                                 </div>
                                                 <div class="toh-gift-card-rule"></div>
+                                                <div class="toh-gift-card-package" id="checkoutGiftCardPackage"></div>
                                                 <div class="toh-gift-card-to" id="checkoutGiftCardTo">To them</div>
                                                 <div class="toh-gift-card-note" id="checkoutGiftCardNote">A little taste of home, with love.</div>
-                                                <div class="toh-gift-card-brand">YO7 Foods</div>
+                                                <div class="toh-gift-card-footer">
+                                                    <div class="toh-gift-card-brand">YO7 Foods</div>
+                                                    <div class="toh-gift-card-from" id="checkoutGiftCardFrom"></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2487,6 +2492,7 @@
                             <div class="field"><label for="tohRecipientPostcode">Postcode</label><input type="text" id="tohRecipientPostcode" placeholder="CO1 1AA" required></div>
                         </div>
                         <div class="field"><label for="tohNote">A few words from you (optional)</label><textarea id="tohNote" rows="3" maxlength="300" placeholder="Thinking of you. We finally got the pepper soup kit right this time."></textarea></div>
+                        <div class="field"><label for="tohSenderName">Your name (optional, shown as "From" on the card)</label><input type="text" id="tohSenderName" placeholder="Your name"></div>
                         <div class="field">
                             <span class="toh-card-design-label">The card we'll print and include</span>
                             <div class="toh-gift-card" aria-hidden="true">
@@ -2496,14 +2502,18 @@
                                         <div class="toh-gift-card-face-ribbon-v"></div>
                                         <div class="toh-gift-card-face-ribbon-h"></div>
                                         <div class="toh-gift-card-face-bow">
-                                            <svg viewBox="0 0 40 28" fill="none"><path d="M19 14 3 3v22Z" fill="#729400"/><path d="M21 14 37 3v22Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2" fill="#729400"/></svg>
+                                            <svg viewBox="0 0 40 28" fill="none"><path d="M 17.19 12.75 L 4.81 4.25 Q 3 3 3 5.2 L 3 22.8 Q 3 25 4.81 23.75 L 17.19 15.25 Q 19 14 17.19 12.75 Z" fill="#729400"/><path d="M 22.81 12.75 L 35.19 4.25 Q 37 3 37 5.2 L 37 22.8 Q 37 25 35.19 23.75 L 22.81 15.25 Q 21 14 22.81 12.75 Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2.5" fill="#729400"/></svg>
                                         </div>
                                         <div class="toh-gift-card-face-title">Gift<br>Card</div>
                                     </div>
                                     <div class="toh-gift-card-rule"></div>
+                                    <div class="toh-gift-card-package" id="tohGiftCardPackage"></div>
                                     <div class="toh-gift-card-to" id="tohGiftCardTo">To them</div>
                                     <div class="toh-gift-card-note" id="tohGiftCardNote">A little taste of home, with love.</div>
-                                    <div class="toh-gift-card-brand">YO7 Foods</div>
+                                    <div class="toh-gift-card-footer">
+                                        <div class="toh-gift-card-brand">YO7 Foods</div>
+                                        <div class="toh-gift-card-from" id="tohGiftCardFrom"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3527,7 +3537,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.fd98faf2ed.js"></script>
+    <script defer src="/assets/app.9d6f895b8c.js"></script>
 
 </body>
 
