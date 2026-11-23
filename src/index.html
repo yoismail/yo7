@@ -4357,7 +4357,7 @@
         .dish-builder-unit { font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
         .dish-builder-row .price { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--heading); flex-shrink: 0; }
         .dish-sub-suggestion {
-            padding: 0 6px 12px; margin-top: -8px; font-size: 12.5px; color: var(--text-muted);
+            padding: 0 6px 20px; margin-top: -8px; font-size: 12.5px; color: var(--text-muted);
         }
         .dish-sub-suggestion button {
             background: none; border: none; padding: 0; margin-left: 4px;
@@ -7879,7 +7879,7 @@
         /* The admin "Draft" badge only ever shows in edit mode (see
            renderJournalAdminPanel's own list, not this card), a card a
            customer can actually see is never anything but published. */
-        .journal-post-header { padding: 56px 0 28px; }
+        .journal-post-header { padding: 56px 0 40px; }
         .journal-post-meta-top {
             display: flex; align-items: center; gap: 10px; margin-top: 10px;
             font-size: 12.5px; color: var(--text-muted);
@@ -7897,7 +7897,7 @@
             color: var(--heading);
         }
         .journal-post-byline { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
-        .journal-post-section { padding-bottom: 40px; }
+        .journal-post-section { padding-top: 32px; padding-bottom: 40px; }
         .journal-post-cover {
             position: relative;
             width: 100%; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden;
@@ -17909,7 +17909,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.5';
+        const BUILD_VERSION = '2026-11-23.8';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -26324,6 +26324,63 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
                 renderPushToggle();
             }
         }
+        // Reported bug: announcement pushes arrived fine, but a customer's
+        // own order-status pushes never did. Root cause - the common path
+        // to having push on at all is maybeAutoEnablePushOnInstall(),
+        // which fires (and so creates this device's push_subscriptions
+        // row) the moment the PWA is installed, often before that visitor
+        // has ever signed in. That row's user_id then stays NULL forever
+        // unless something else claims it (see update-push-preferences's
+        // own comment on exactly this), and nothing ever did - the only
+        // existing caller of that function was a manual toggle on the
+        // notification-preferences page, something most people never
+        // revisit once push is already on. send-push targets an
+        // order-status notification by user_id (announcements are a
+        // broadcast with no user_id filter at all, which is exactly why
+        // only those got through), so this device's own orders had no
+        // matching subscription to send to. Same "claim this device's
+        // local state for the account that just signed in" reasoning as
+        // mergeGuestCartIntoAccount/mergeGuestFavoritesIntoAccount in
+        // setUser() below, just for push instead of cart/favorites -
+        // runs on every sign-in (fresh or restored), a no-op past the
+        // very first successful call once this device's row is linked.
+        async function claimPushSubscriptionForAccount() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            try {
+                const sub = await getCurrentPushSubscription();
+                if (!sub) return;
+                const prefs = getCachedPushPrefs() || { notify_orders: true, notify_announcements: true, notify_offers: true };
+                await supabaseClient.functions.invoke('update-push-preferences', {
+                    body: { endpoint: sub.endpoint, ...prefs },
+                });
+            } catch (err) {
+                console.error('claimPushSubscriptionForAccount failed:', err);
+            }
+        }
+        // Mirror image of claimPushSubscriptionForAccount(), run on sign
+        // out instead of sign in: without this, this device's push
+        // subscription stays linked to the account that just left, so
+        // (a) their order-status pushes keep arriving on a device they're
+        // no longer using, and (b) whoever signs in next on the same
+        // device (same person again, or someone else sharing it) can't
+        // claim it, since update-push-preferences refuses to reassign a
+        // subscription that already has a different owner. Releasing it
+        // back to ownerless on logout fixes both, the next sign-in claims
+        // it cleanly either way. Must run before auth.signOut(), the
+        // edge function checks the caller's own token to confirm this
+        // account actually owns the subscription it's releasing.
+        async function releasePushSubscriptionForAccount() {
+            if (!supabaseClient || !currentSupabaseUser) return;
+            try {
+                const sub = await getCurrentPushSubscription();
+                if (!sub) return;
+                await supabaseClient.functions.invoke('update-push-preferences', {
+                    body: { endpoint: sub.endpoint, release: true },
+                });
+            } catch (err) {
+                console.error('releasePushSubscriptionForAccount failed:', err);
+            }
+        }
         // Installing is the clearest signal a visitor can give that they
         // want to keep using this as an app, so default push notifications
         // on right then instead of leaving it as a separate, easy-to-miss
@@ -27767,6 +27824,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
         const adminDeniedLogoutBtn = document.getElementById('adminDeniedLogoutBtn');
         if (adminDeniedLogoutBtn) {
             adminDeniedLogoutBtn.addEventListener('click', async () => {
+                await releasePushSubscriptionForAccount();
                 if (supabaseClient) await supabaseClient.auth.signOut();
                 clearUser();
                 renderAdminPage();
@@ -28659,6 +28717,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             if (freshSignIn && !staleOwnCartMirror) mergeGuestCartIntoAccount(); else loadAccountCart();
             const staleOwnFavoritesMirror = freshSignIn && currentSupabaseUser && getFavoritesOwnerTag() === currentSupabaseUser.id;
             if (freshSignIn && !staleOwnFavoritesMirror) mergeGuestFavoritesIntoAccount(); else loadAccountFavorites();
+            claimPushSubscriptionForAccount();
             refreshAdminStatus();
             subscribeMyOrders();
             subscribeNotifications();
@@ -29049,6 +29108,7 @@ Serve the three together, rice in the centre, chicken and plantain alongside, an
             // if logged out, default link behaviour navigates to #/login
         });
         document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await releasePushSubscriptionForAccount();
             if (supabaseClient) {
                 try { await supabaseClient.auth.signOut(); } catch (e) { /* best-effort, clear local state regardless */ }
             }

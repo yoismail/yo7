@@ -98,11 +98,12 @@ Deno.serve(async (req) => {
     });
   }
 
+  const releaseOwnership = body.release === true;
   const update: Record<string, boolean> = {};
   if (typeof body.notify_orders === "boolean") update.notify_orders = body.notify_orders;
   if (typeof body.notify_announcements === "boolean") update.notify_announcements = body.notify_announcements;
   if (typeof body.notify_offers === "boolean") update.notify_offers = body.notify_offers;
-  if (Object.keys(update).length === 0) {
+  if (Object.keys(update).length === 0 && !releaseOwnership) {
     return new Response(JSON.stringify({ error: "Nothing to update." }), {
       status: 400,
       headers: { ...cors, "Content-Type": "application/json" },
@@ -151,6 +152,34 @@ Deno.serve(async (req) => {
       status: 403,
       headers: { ...cors, "Content-Type": "application/json" },
     });
+  }
+
+  // Signing out: let go of this device's account link so push stops
+  // reaching whoever just logged out, and the next sign-in on this
+  // device (same person or someone else sharing it) claims the
+  // subscription cleanly above instead of silently hitting the
+  // cross-account guard a few lines up. Checked against callerId (not
+  // just "row has an owner") so a signed-out caller, or one signed in
+  // as someone else, can't release a subscription that isn't theirs.
+  if (releaseOwnership) {
+    if (row.user_id && row.user_id !== callerId) {
+      return new Response(JSON.stringify({ error: "Not authorized to change this subscription." }), {
+        status: 403,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    if (!row.user_id) {
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
+    }
+    const { error: releaseError } = await db.from("push_subscriptions").update({ user_id: null }).eq("endpoint", endpoint);
+    if (releaseError) {
+      console.error("update-push-preferences: release failed:", releaseError.message);
+      return new Response(JSON.stringify({ error: "Could not update this subscription." }), {
+        status: 500,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
   const updatePayload: Record<string, boolean | string> = { ...update };
