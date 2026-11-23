@@ -149,7 +149,7 @@
     <!-- Cloudflare Web Analytics -->
     <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "76476c24e859490cad4ece73fff182f0"}'></script>
     <!-- End Cloudflare Web Analytics -->
-    <link rel="stylesheet" href="/assets/app.fe83bccf05.css">    <script>
+    <link rel="stylesheet" href="/assets/app.e8a644e52f.css">    <script>
         // Stops the browser from restoring the scroll position it remembers
         // from before a refresh. Without this, reloading partway down any
         // page (or the browser's own back/forward scroll memory) can land
@@ -720,28 +720,11 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                     </div>
                     <div>
-                        <div class="section-eyebrow">Build a bundle</div>
+                        <div class="section-eyebrow">Build a Dish</div>
                         <h2>Know the dish? We'll guide the ingredients.</h2>
                         <p>Select a meal and we'll list the ingredients you need. Uncheck what you already have, and add the rest in one tap.</p>
                     </div>
-                    <a class="btn btn-outline-dark" href="#/build-bundle">Build a bundle</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="build-bundle-promo scroll-reveal">
-            <svg class="build-bundle-promo-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>
-            <div class="wrap">
-                <div class="build-bundle-promo-inner reveal">
-                    <div class="build-bundle-promo-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>
-                    </div>
-                    <div>
-                        <div class="section-eyebrow">Recipe ideas</div>
-                        <h2>Know what you bought? We'll show you what to cook.</h2>
-                        <p>Every recipe on the site in one place, real ways to use what's in our aisles, each one linking straight to the product.</p>
-                    </div>
-                    <a class="btn btn-outline-dark" href="#/recipes">Browse recipe ideas</a>
+                    <a class="btn btn-outline-dark" href="#/build-a-dish">Build a Dish</a>
                 </div>
             </div>
         </section>
@@ -865,11 +848,6 @@
                         <h3>WhatsApp ordering</h3>
                         <p>Can't find something online? Message us and we'll sort it.</p>
                     </div>
-                    <a class="about-value-card" href="#/recipes">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg>
-                        <h3>Recipe ideas</h3>
-                        <p>Most product pages include a few real ways to actually cook what you've bought. Tap to see every recipe on the site.</p>
-                    </a>
                 </div>
                 <div class="about-cta reveal">
                     <a class="btn btn-outline-dark" href="#/about">Read our story</a>
@@ -1087,45 +1065,6 @@
         </section>
     </div>
 
-    <!-- ================= RECIPE IDEAS (aggregated across every product that
-         has any, see getAllRecipeIdeas()) ================= -->
-    <div id="view-recipes" class="hidden-view">
-        <header class="shop-header">
-            <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Recipe Ideas</div>
-                <h1>Recipe Ideas</h1>
-                <p>Real ways to cook what's in our aisles, pulled straight from the product pages. Tap any one to see the product it's made with.</p>
-                <div class="result-count" id="recipesHubCount"></div>
-            </div>
-        </header>
-        <section class="products-section" id="recipeHeroSection" style="display:none; padding-bottom:8px;">
-            <div class="wrap">
-                <div class="recipe-hero" id="recipeHeroCard"></div>
-            </div>
-        </section>
-        <section class="products-section" id="recipesPersonalSection" style="display:none; padding-bottom:16px;">
-            <div class="wrap">
-                <div class="new-section-head reveal">
-                    <div>
-                        <div class="section-eyebrow">Recommended for you</div>
-                        <h2 style="font-family:var(--display); font-weight:700; font-size:clamp(22px,3vw,28px); letter-spacing:-0.01em;">Recipes for what you've already bought</h2>
-                    </div>
-                </div>
-                <div class="recipe-carousel" id="recipesPersonalGrid"></div>
-            </div>
-        </section>
-        <section class="products-section">
-            <div class="wrap">
-                <div id="recipesHubGrid"></div>
-                <div class="empty-state" id="recipesHubEmpty" style="display:none;">
-                    <span class="empty-state-icon-badge"><svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v6a2 2 0 0 0 4 0V2M6 2v9M6 11v11M18 2a4 4 0 0 0-4 4v3a2 2 0 0 0 2 2h0v9"/></svg></span>
-                    <h3>More recipe ideas on the way</h3>
-                    <p>We're still adding these across the shop. Check back soon, or browse the shop in the meantime.</p>
-                </div>
-            </div>
-        </section>
-    </div>
-
     <!-- ================= PRODUCT DETAIL ================= -->
     <div id="view-product" class="hidden-view">
         <header class="shop-header" style="padding-bottom:0;">
@@ -1243,14 +1182,6 @@
                             <span class="payment-badge payment-badge-paybybank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6"/></svg>Pay by Bank</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="pd-recipes" id="pdRecipesSection">
-                    <h2 class="pd-details-heading">Recipe ideas</h2>
-                    <div class="pd-recipe-grid" id="pdRecipesGrid"></div>
-                    <div class="pd-recipes-empty" id="pdRecipesEmpty"><p>No recipe ideas added yet for this product.</p></div>
-                    <div id="pdRecipesEditWrap"></div>
-                    <button class="pd-detail-edit-btn" type="button" onclick="openRecipesEdit()">Edit recipe ideas</button>
                 </div>
 
                 <div class="pd-details" id="pdDetailsSection">
@@ -1823,13 +1754,6 @@
                             <p>Whether you grew up with this food or you're trying it for the first time.</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
-                <div class="about-prose about-block scroll-reveal" style="max-width:56ch;">
-                    <div class="section-eyebrow">Beyond the shop</div>
-                    <h2>Recipe ideas on every product</h2>
-                    <p>Most product pages come with a few real ways to actually cook what you've bought, not just a listing. Look for the Recipe ideas section on any product page.</p>
                 </div>
 
                 <div class="about-divider" aria-hidden="true"><span class="about-divider-mark"></span></div>
@@ -2463,11 +2387,11 @@
         </section>
     </div>
 
-    <div id="view-build-bundle" class="hidden-view">
+    <div id="view-build-a-dish" class="hidden-view">
         <header class="shop-header">
             <div class="wrap">
-                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Build a bundle</div>
-                <h1>Build a bundle</h1>
+                <div class="breadcrumb"><a href="#/">Home</a> &rsaquo; Build a Dish</div>
+                <h1>Build a Dish</h1>
                 <p>Pick a dish, we'll suggest the real ingredients, uncheck anything you already have and add the rest in one go.</p>
             </div>
         </header>
@@ -3593,7 +3517,7 @@
          before. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script defer src="/assets/app.aa302e4975.js"></script>
+    <script defer src="/assets/app.8030448445.js"></script>
 
 </body>
 
