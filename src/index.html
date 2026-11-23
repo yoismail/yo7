@@ -4433,14 +4433,15 @@
         .toh-package-tagline { position: relative; color: var(--text-muted); font-size: 13.5px; margin-bottom: 0; }
         .toh-package-body { position: relative; padding: 18px 24px 24px; display: flex; flex-direction: column; flex: 1; }
         /* Same bow used on the gift card's own face graphic (see
-           .toh-gift-card-face-bow), reused here as a second faint corner
-           watermark - same colour/opacity pairing as .toh-package-mark
-           above, just bottom-left instead of top-right so the two don't
-           crowd the same corner. currentColor (not the gift card's fixed
-           hex) since this card still flips with the theme. */
+           .toh-gift-card-face-bow), reused here as a second watermark -
+           bottom-right behind the "Send this" button, slanted, so the two
+           marks don't crowd the same corner as .toh-package-mark above
+           (top-right, upright). The real two-tone chartreuse, not
+           currentColor, same reasoning as the opacity bump below: a flat
+           grey silhouette at watermark opacity read as too dry. */
         .toh-package-ribbon-mark {
-            position: absolute; left: -34px; bottom: 80px; width: 185px;
-            opacity: 0.18; pointer-events: none;
+            position: absolute; right: -30px; bottom: -26px; width: 185px;
+            transform: rotate(-16deg); opacity: 0.18; pointer-events: none;
         }
         .toh-package-ribbon-mark svg { width: 100%; height: auto; display: block; }
         .toh-package-items { position: relative; list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; flex: 1; }
@@ -17995,7 +17996,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.16';
+        const BUILD_VERSION = '2026-11-23.17';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
