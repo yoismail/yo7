@@ -4494,38 +4494,54 @@
 
         /* ================= CARD DESIGNS ================= */
         .toh-card-design-label { display: block; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
-        /* Just one card design now (no more picker/selection - see
-           TOH_CARD_DESIGN), so this is a single live preview, not a
-           grid of clickable options. Fixed cream/aubergine colours
-           regardless of site theme: it's a preview of a printed paper
-           card, which doesn't invert for dark mode any more than a
-           photo would, but still gets its own border so its edges
-           read clearly against a dark-mode page. */
+        /* Just one card design (no picker/selection - see
+           TOH_CARD_DESIGN_LABEL), so this is a single live preview, not a
+           grid of clickable options. Fixed brand colours regardless of
+           site theme: it's a preview of a printed paper card, which
+           doesn't invert for dark mode any more than a photo would, but
+           still gets its own border so its edges read clearly against a
+           dark-mode page. A deep-green card wrapped in a faint repeating
+           gift-box pattern, with a cream "face" panel (a ribbon, a bow,
+           the card's name) standing in for an actual printed gift card -
+           the admin print-card canvas download below redraws this same
+           design from scratch, so a change here needs the matching
+           change there too. */
         .toh-gift-card {
             position: relative;
             width: 100%; max-width: 280px;
             aspect-ratio: 380 / 532;
             margin: 0 auto 20px;
-            border-radius: 8px;
-            background: #FAF9F2;
-            color: #042500;
+            border-radius: 14px;
+            background: #063B00;
+            color: #FAF9F2;
             overflow: hidden;
-            box-shadow: inset 0 0 0 1px rgba(4, 37, 0, 0.16), 0 0 0 1px rgba(var(--border-rgb), 0.12);
+            box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.12);
             font-family: var(--display);
         }
-        .toh-gift-card-bg-icon { position: absolute; color: #042500; pointer-events: none; }
-        .toh-gift-card-bg-icon svg { width: 100%; height: 100%; display: block; }
-        .toh-gift-card-bg-mark { right: -15%; bottom: -8%; width: 70%; opacity: 0.055; }
-        .toh-gift-card-bg-sack { top: 9%; left: -6%; width: 14.2%; opacity: 0.07; transform: rotate(10deg); }
-        .toh-gift-card-bg-leaf { top: 7%; right: 7%; width: 24.2%; opacity: 0.07; transform: rotate(14deg); }
-        .toh-gift-card-bg-pepper { top: 40%; left: -8%; width: 19.5%; opacity: 0.065; transform: rotate(-20deg); }
-        .toh-gift-card-bg-fish { top: 34%; right: -6%; width: 16.8%; opacity: 0.06; transform: rotate(8deg); }
-        .toh-gift-card-content { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; padding: 11% 9.5%; }
-        .toh-gift-card-mark { width: 18px; height: 18px; color: #042500; opacity: 0.55; flex-shrink: 0; }
-        .toh-gift-card-rule { width: 28px; height: 1px; background: #042500; opacity: 0.3; margin: 14px 0 18px; flex-shrink: 0; }
-        .toh-gift-card-to { font-weight: 600; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; opacity: 0.6; margin-bottom: 9px; word-break: break-word; }
+        .toh-gift-card-pattern {
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='92' height='92' viewBox='0 0 92 92'%3E%3Cg fill='none' stroke='%23FAF9F2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' opacity='0.1'%3E%3Cg transform='translate(24,26) rotate(-12) scale(1.42) translate(-12,-12)'%3E%3Cpath d='M20 12v10H4V12'/%3E%3Cpath d='M2 7h20v5H2z'/%3E%3Cpath d='M12 22V7'/%3E%3Cpath d='M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z'/%3E%3Cpath d='M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z'/%3E%3C/g%3E%3Cg transform='translate(66,63) rotate(16) scale(1.21) translate(-12,-12)'%3E%3Cpath d='M20 12v10H4V12'/%3E%3Cpath d='M2 7h20v5H2z'/%3E%3Cpath d='M12 22V7'/%3E%3Cpath d='M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z'/%3E%3Cpath d='M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-size: 92px 92px;
+        }
+        .toh-gift-card-content { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; padding: 9% 9% 7%; }
+        .toh-gift-card-face {
+            position: relative; width: 100%; aspect-ratio: 5 / 3; flex-shrink: 0;
+            background: #FAF9F2; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 3px 10px rgba(4, 37, 0, 0.3);
+        }
+        .toh-gift-card-face-ribbon-v { position: absolute; top: 0; bottom: 0; left: 61%; width: 15%; background: #A6CC2E; }
+        .toh-gift-card-face-ribbon-h { position: absolute; left: 0; right: 0; top: 40%; height: 20%; background: #A6CC2E; }
+        .toh-gift-card-face-bow { position: absolute; left: 68.5%; top: 50%; width: 32%; transform: translate(-50%, -50%); }
+        .toh-gift-card-face-bow svg { width: 100%; height: auto; display: block; }
+        .toh-gift-card-face-title {
+            position: absolute; left: 8%; right: 42%; bottom: 10%;
+            font-weight: 700; font-size: clamp(13px, 4.6vw, 17px); line-height: 1.08;
+            color: #063B00; text-transform: uppercase;
+        }
+        .toh-gift-card-rule { width: 28px; height: 1px; background: #FAF9F2; opacity: 0.3; margin: 16px 0 14px; flex-shrink: 0; }
+        .toh-gift-card-to { font-weight: 600; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; opacity: 0.7; margin-bottom: 9px; word-break: break-word; }
         .toh-gift-card-note { font-size: 12.5px; line-height: 1.6; font-weight: 400; opacity: 0.95; white-space: pre-wrap; word-break: break-word; }
-        .toh-gift-card-brand { margin-top: auto; font-size: 8.5px; font-weight: 600; letter-spacing: 0.17em; text-transform: uppercase; opacity: 0.4; flex-shrink: 0; }
+        .toh-gift-card-brand { margin-top: auto; font-size: 8.5px; font-weight: 600; letter-spacing: 0.17em; text-transform: uppercase; opacity: 0.55; flex-shrink: 0; }
 
         /* Sits inside the real checkout's own delivery panel (not the
            Taste of Home page), so whoever's paying sees clearly that the
@@ -13329,13 +13345,16 @@
                                     <div class="field">
                                         <span class="toh-card-design-label">The card we'll print and include</span>
                                         <div class="toh-gift-card" aria-hidden="true">
-                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-sack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 3h7.4l1 4H7.3l1-4Z"/><path d="M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z"/><path d="M9.3 7v3M14.7 7v3"/></svg></div>
-                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z"/><path d="M7 19C10 15 13 11 18 6"/></svg></div>
-                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-pepper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3c1.2 1 1.2 2.4 0 3.4"/><path d="M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2"/></svg></div>
-                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-fish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z"/><path d="M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z"/><circle cx="7.2" cy="11.3" r=".65" fill="currentColor" stroke="none"/></svg></div>
-                                            <div class="toh-gift-card-bg-icon toh-gift-card-bg-mark"><svg viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="40"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                            <div class="toh-gift-card-pattern"></div>
                                             <div class="toh-gift-card-content">
-                                                <svg class="toh-gift-card-mark" viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="46"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="66" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                <div class="toh-gift-card-face">
+                                                    <div class="toh-gift-card-face-ribbon-v"></div>
+                                                    <div class="toh-gift-card-face-ribbon-h"></div>
+                                                    <div class="toh-gift-card-face-bow">
+                                                        <svg viewBox="0 0 40 28" fill="none"><path d="M19 14 3 3v22Z" fill="#729400"/><path d="M21 14 37 3v22Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2" fill="#729400"/></svg>
+                                                    </div>
+                                                    <div class="toh-gift-card-face-title">Gift<br>Card</div>
+                                                </div>
                                                 <div class="toh-gift-card-rule"></div>
                                                 <div class="toh-gift-card-to" id="checkoutGiftCardTo">To them</div>
                                                 <div class="toh-gift-card-note" id="checkoutGiftCardNote">A little taste of home, with love.</div>
@@ -14426,13 +14445,16 @@
                         <div class="field">
                             <span class="toh-card-design-label">The card we'll print and include</span>
                             <div class="toh-gift-card" aria-hidden="true">
-                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-sack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 3h7.4l1 4H7.3l1-4Z"/><path d="M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z"/><path d="M9.3 7v3M14.7 7v3"/></svg></div>
-                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-leaf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z"/><path d="M7 19C10 15 13 11 18 6"/></svg></div>
-                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-pepper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3c1.2 1 1.2 2.4 0 3.4"/><path d="M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2"/></svg></div>
-                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-fish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z"/><path d="M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z"/><circle cx="7.2" cy="11.3" r=".65" fill="currentColor" stroke="none"/></svg></div>
-                                <div class="toh-gift-card-bg-icon toh-gift-card-bg-mark"><svg viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="40"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                <div class="toh-gift-card-pattern"></div>
                                 <div class="toh-gift-card-content">
-                                    <svg class="toh-gift-card-mark" viewBox="65 25 875 900" fill="none" stroke="currentColor" stroke-width="46"><path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z"/><path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke-width="66" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    <div class="toh-gift-card-face">
+                                        <div class="toh-gift-card-face-ribbon-v"></div>
+                                        <div class="toh-gift-card-face-ribbon-h"></div>
+                                        <div class="toh-gift-card-face-bow">
+                                            <svg viewBox="0 0 40 28" fill="none"><path d="M19 14 3 3v22Z" fill="#729400"/><path d="M21 14 37 3v22Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2" fill="#729400"/></svg>
+                                        </div>
+                                        <div class="toh-gift-card-face-title">Gift<br>Card</div>
+                                    </div>
                                     <div class="toh-gift-card-rule"></div>
                                     <div class="toh-gift-card-to" id="tohGiftCardTo">To them</div>
                                     <div class="toh-gift-card-note" id="tohGiftCardNote">A little taste of home, with love.</div>
@@ -17938,7 +17960,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.9';
+        const BUILD_VERSION = '2026-11-23.10';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19706,27 +19728,14 @@
            recipient form and the checkout gift option) - only the "to"/
            note text updates live as the sender types (see the input
            listeners wired near the bottom of this script). */
-        const TOH_CARD_DESIGN_LABEL = 'Minimal';
-        // Same mark/path data as favicon.svg, drawn outline-only (both
-        // paths fill:none, stroke:currentColor) rather than a solid fill
-        // - a solid-filled outer blob would hide the inner "Y" stroke
-        // completely once both read as the same flat colour (reproduced
-        // and fixed directly: an earlier version of this did exactly
-        // that). Kept as plain "d" strings (not just inline in the SVG
-        // markup) because the admin print-card download below reuses
-        // these exact same two paths as canvas Path2D objects - one
-        // source of truth for the mark's geometry either way it's drawn.
-        const TOH_CARD_MARK_OUTER_D = 'M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z';
-        const TOH_CARD_MARK_INNER_D = 'M 376.50 319.50 L 642.50 319.50 L 462.00 737.50';
-        // The four background food icons scattered behind the card's
-        // content (see the "toh-gift-card-bg-*" CSS classes above) - kept
-        // as plain path data for the same reason as the brand mark, so
-        // the admin print-card canvas download can redraw them exactly.
+        const TOH_CARD_DESIGN_LABEL = 'Wrapped';
+        // The small gift-box-and-bow icon tiled behind the card's content
+        // (see .toh-gift-card-pattern above) - kept as plain path data for
+        // the same reason the rest of this object's entries are, so the
+        // admin print-card canvas download can redraw it exactly rather
+        // than approximate it.
         const TOH_FOOD_ICON_PATHS = {
-            sack: { paths: ['M8.3 3h7.4l1 4H7.3l1-4Z', 'M7.3 7h9.4l1.1 10.3a3 3 0 0 1-3 3.7H9.2a3 3 0 0 1-3-3.7L7.3 7Z', 'M9.3 7v3M14.7 7v3'] },
-            leaf: { paths: ['M6 20C6 11 11 5 20 4C19 13 13 18 6 20Z', 'M7 19C10 15 13 11 18 6'] },
-            pepper: { paths: ['M9 3c1.2 1 1.2 2.4 0 3.4', 'M9 6.2C5 6.6 3 10 3 14c0 4 3 7 7 7 5 0 9-4 9-9 0-3.2-2-5.2-4.6-5.2-1.6 0-2.9.8-3.4 2'] },
-            fish: { paths: ['M3 12c3-4.2 8.2-6 13-4 2 .8 3.4 2.3 4 4-.6 1.7-2 3.2-4 4-4.8 2-10 .2-13-4Z', 'M17 9.3c1-1.4 2.4-2 4.2-2-.4 1.8-.4 3.6 0 5.4-1.8 0-3.2-.6-4.2-2Z'], eye: { cx: 7.2, cy: 11.3, r: 0.65 } },
+            gift: { paths: ['M20 12v10H4V12', 'M2 7h20v5H2z', 'M12 22V7', 'M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z', 'M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z'] },
         };
         // Shared by the Taste of Home recipient form and the plain
         // checkout's own "send as a gift" option, so both live previews
@@ -19838,85 +19847,110 @@
             }
             ctx.restore();
         }
+        // Draws one tile of the repeating background pattern (two gift
+        // icons, same relative positions/rotations/sizes as the single
+        // tile in .toh-gift-card-pattern's data-URI SVG above) so the
+        // canvas version tiles the same way the CSS background does.
+        function drawGiftPatternTile(ctx, tileX, tileY, tileSize, color, alpha) {
+            const at = (xFrac, yFrac, sizeFrac, rotationDeg) => drawFoodIconToCanvas(
+                ctx, TOH_FOOD_ICON_PATHS.gift,
+                tileX + xFrac * tileSize - (sizeFrac * tileSize) / 2,
+                tileY + yFrac * tileSize - (sizeFrac * tileSize) / 2,
+                sizeFrac * tileSize, rotationDeg, color, alpha
+            );
+            at(24 / 92, 26 / 92, (24 * 1.42) / 92, -12);
+            at(66 / 92, 63 / 92, (24 * 1.21) / 92, 16);
+        }
         // Draws the gift card from scratch on a canvas (not a screenshot
         // of the live preview) so it comes out at clean print resolution
         // regardless of what size the preview renders at on screen.
-        // Reuses the exact same mark/icon path data as the on-page SVG
-        // version via Path2D, so the watermarks are pixel-faithful, not
-        // an approximation. `designLabel` is read back from an order's
-        // notes (see parseGiftCardFromOrderNotes) and may still say
-        // "Classic"/"Bold"/"Sunshine" on an order placed before this
-        // design became the only one - those just download using this
-        // design too, which is a fine outcome for a print aid.
+        // Mirrors .toh-gift-card/.toh-gift-card-face above element for
+        // element, so a change to one needs the matching change here too.
+        // `designLabel` is read back from an order's notes (see
+        // parseGiftCardFromOrderNotes) and may still say "Classic"/"Bold"/
+        // "Minimal" on an order placed before this became the only
+        // design - those just download using this design too, which is a
+        // fine outcome for a print aid.
         function drawGiftCardToCanvas(designLabel, recipientName, note) {
-            const ink = '#042500';
             const scale = 6;
             const w = 500 * scale, h = 700 * scale;
             const canvas = document.createElement('canvas');
             canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext('2d');
 
-            ctx.fillStyle = '#FAF9F2';
+            ctx.fillStyle = '#063B00';
             ctx.fillRect(0, 0, w, h);
 
-            // Background food icons, same compass layout/opacities as the
-            // "toh-gift-card-bg-*" CSS classes above.
-            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.sack, -0.06 * w, 0.09 * h, 0.142 * w, 10, ink, 0.07);
-            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.leaf, w - 0.07 * w - 0.242 * w, 0.07 * h, 0.242 * w, 14, ink, 0.07);
-            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.pepper, -0.08 * w, 0.40 * h, 0.195 * w, -20, ink, 0.065);
-            drawFoodIconToCanvas(ctx, TOH_FOOD_ICON_PATHS.fish, w + 0.06 * w - 0.168 * w, 0.34 * h, 0.168 * w, 8, ink, 0.06);
+            // Repeating gift-box pattern, tiled the same 92-unit square as
+            // the CSS background-image.
+            const tileSize = 92 * scale;
+            for (let ty = -tileSize; ty < h + tileSize; ty += tileSize) {
+                for (let tx = -tileSize; tx < w + tileSize; tx += tileSize) {
+                    drawGiftPatternTile(ctx, tx, ty, tileSize, '#FAF9F2', 0.1);
+                }
+            }
 
-            // Big brand mark, bottom-right (right:-15%, bottom:-8%,
-            // width:70% of the card, same as .toh-gift-card-bg-mark).
-            const markWidth = w * 0.70;
-            const markScale = markWidth / 875;
-            const markBoxX = w + 0.15 * w - markWidth;
-            const markBoxY = h + 0.08 * h - 900 * markScale;
+            // The cream "face" panel - same 9%/9%/7% padding as
+            // .toh-gift-card-content, same 5:3 aspect ratio as
+            // .toh-gift-card-face.
+            const padX = w * 0.09, padTop = h * 0.09, padBottom = h * 0.07;
+            const faceX = padX, faceY = padTop, faceW = w - 2 * padX, faceH = faceW * 3 / 5;
             ctx.save();
-            ctx.translate(markBoxX - 65 * markScale, markBoxY - 25 * markScale);
-            ctx.scale(markScale, markScale);
-            ctx.globalAlpha = 0.055;
-            ctx.strokeStyle = ink;
-            ctx.lineWidth = 40;
-            ctx.stroke(new Path2D(TOH_CARD_MARK_OUTER_D));
-            ctx.lineWidth = 60;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke(new Path2D(TOH_CARD_MARK_INNER_D));
+            ctx.beginPath();
+            ctx.roundRect(faceX, faceY, faceW, faceH, 10 * scale);
+            ctx.clip();
+            ctx.fillStyle = '#FAF9F2';
+            ctx.fillRect(faceX, faceY, faceW, faceH);
+
+            // Ribbon bands (.toh-gift-card-face-ribbon-v/-h).
+            ctx.fillStyle = '#A6CC2E';
+            ctx.fillRect(faceX + faceW * 0.61, faceY, faceW * 0.15, faceH);
+            ctx.fillRect(faceX, faceY + faceH * 0.40, faceW, faceH * 0.20);
+
+            // Bow (.toh-gift-card-face-bow's inline SVG, same 0..40/0..28
+            // coordinate space).
+            const bowW = faceW * 0.32, bowH = bowW * 28 / 40;
+            const bowLeft = faceX + faceW * 0.685 - bowW / 2, bowTop = faceY + faceH * 0.5 - bowH / 2;
+            ctx.save();
+            ctx.translate(bowLeft, bowTop);
+            ctx.scale(bowW / 40, bowH / 28);
+            ctx.fillStyle = '#729400';
+            ctx.beginPath();
+            ctx.moveTo(19, 14); ctx.lineTo(3, 3); ctx.lineTo(3, 25); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(21, 14); ctx.lineTo(37, 3); ctx.lineTo(37, 25); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(15, 9, 10, 10, 2);
+            ctx.fill();
             ctx.restore();
 
-            // Foreground: small mark, rule, "to" label, note, brand line.
-            const padX = w * 0.095, padY = h * 0.11;
-            const smallMarkSize = 18 * scale;
-            const smallMarkScale = smallMarkSize / 875;
-            ctx.save();
-            ctx.translate(padX - 65 * smallMarkScale, padY - 25 * smallMarkScale);
-            ctx.scale(smallMarkScale, smallMarkScale);
-            ctx.globalAlpha = 0.55;
-            ctx.strokeStyle = ink;
-            ctx.lineWidth = 46;
-            ctx.stroke(new Path2D(TOH_CARD_MARK_OUTER_D));
-            ctx.lineWidth = 66;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke(new Path2D(TOH_CARD_MARK_INNER_D));
+            // "Gift" / "Card" title (.toh-gift-card-face-title).
+            const fontStack = getComputedStyle(document.documentElement).getPropertyValue('--display').trim() || "'Poppins', sans-serif";
+            ctx.fillStyle = '#063B00';
+            ctx.font = `700 ${16 * scale}px ${fontStack}`;
+            ctx.textBaseline = 'alphabetic';
+            const titleX = faceX + faceW * 0.08;
+            const titleBottomY = faceY + faceH * 0.88;
+            ctx.fillText('CARD', titleX, titleBottomY);
+            ctx.fillText('GIFT', titleX, titleBottomY - 17 * scale);
             ctx.restore();
 
-            const ruleY = padY + smallMarkSize + 14 * scale;
+            // Rule, "to" label, note, brand line - same classes/colours
+            // (now cream on the dark card) as before this redesign.
+            const ruleY = faceY + faceH + 16 * scale;
             ctx.globalAlpha = 0.3;
-            ctx.strokeStyle = ink;
+            ctx.strokeStyle = '#FAF9F2';
             ctx.lineWidth = 1 * scale;
             ctx.beginPath();
             ctx.moveTo(padX, ruleY);
             ctx.lineTo(padX + 28 * scale, ruleY);
             ctx.stroke();
 
-            const fontStack = getComputedStyle(document.documentElement).getPropertyValue('--display').trim() || "'Poppins', sans-serif";
             ctx.textBaseline = 'top';
-            ctx.globalAlpha = 0.6;
-            ctx.fillStyle = ink;
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = '#FAF9F2';
             ctx.font = `600 ${10 * scale}px ${fontStack}`;
-            const toY = ruleY + 18 * scale;
+            const toY = ruleY + 14 * scale;
             ctx.fillText(`TO ${(recipientName || 'THEM').toUpperCase()}`, padX, toY);
 
             ctx.globalAlpha = 0.95;
@@ -19925,12 +19959,12 @@
             const noteY = toY + 20 * scale;
             noteLines.forEach((line, i) => ctx.fillText(line, padX, noteY + i * 19 * scale));
 
-            ctx.globalAlpha = 0.4;
+            ctx.globalAlpha = 0.55;
             ctx.font = `600 ${8.5 * scale}px ${fontStack}`;
-            ctx.fillText('YO7 FOODS', padX, h - padY - 10 * scale);
+            ctx.fillText('YO7 FOODS', padX, h - padBottom - 10 * scale);
 
             ctx.globalAlpha = 1;
-            ctx.strokeStyle = 'rgba(4,37,0,0.16)';
+            ctx.strokeStyle = 'rgba(250,249,242,0.25)';
             ctx.lineWidth = 2 * scale;
             ctx.strokeRect(scale, scale, w - 2 * scale, h - 2 * scale);
 
