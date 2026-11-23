@@ -4439,7 +4439,7 @@
            crowd the same corner. currentColor (not the gift card's fixed
            hex) since this card still flips with the theme. */
         .toh-package-ribbon-mark {
-            position: absolute; left: -34px; bottom: -28px; width: 185px;
+            position: absolute; left: -34px; bottom: 80px; width: 185px;
             opacity: 0.18; pointer-events: none;
         }
         .toh-package-ribbon-mark svg { width: 100%; height: auto; display: block; }
@@ -13377,7 +13377,7 @@
                                                     <div class="toh-gift-card-face-ribbon-v"></div>
                                                     <div class="toh-gift-card-face-ribbon-h"></div>
                                                     <div class="toh-gift-card-face-bow">
-                                                        <svg viewBox="0 0 40 28" fill="none"><path d="M19 14 3 3v22Z" fill="#729400"/><path d="M21 14 37 3v22Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2" fill="#729400"/></svg>
+                                                        <svg viewBox="0 0 40 28" fill="none"><path d="M 17.19 12.75 L 4.81 4.25 Q 3 3 3 5.2 L 3 22.8 Q 3 25 4.81 23.75 L 17.19 15.25 Q 19 14 17.19 12.75 Z" fill="#729400"/><path d="M 22.81 12.75 L 35.19 4.25 Q 37 3 37 5.2 L 37 22.8 Q 37 25 35.19 23.75 L 22.81 15.25 Q 21 14 22.81 12.75 Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2.5" fill="#729400"/></svg>
                                                     </div>
                                                     <div class="toh-gift-card-face-title">Gift<br>Card</div>
                                                 </div>
@@ -14482,7 +14482,7 @@
                                         <div class="toh-gift-card-face-ribbon-v"></div>
                                         <div class="toh-gift-card-face-ribbon-h"></div>
                                         <div class="toh-gift-card-face-bow">
-                                            <svg viewBox="0 0 40 28" fill="none"><path d="M19 14 3 3v22Z" fill="#729400"/><path d="M21 14 37 3v22Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2" fill="#729400"/></svg>
+                                            <svg viewBox="0 0 40 28" fill="none"><path d="M 17.19 12.75 L 4.81 4.25 Q 3 3 3 5.2 L 3 22.8 Q 3 25 4.81 23.75 L 17.19 15.25 Q 19 14 17.19 12.75 Z" fill="#729400"/><path d="M 22.81 12.75 L 35.19 4.25 Q 37 3 37 5.2 L 37 22.8 Q 37 25 35.19 23.75 L 22.81 15.25 Q 21 14 22.81 12.75 Z" fill="#729400"/><rect x="15" y="9" width="10" height="10" rx="2.5" fill="#729400"/></svg>
                                         </div>
                                         <div class="toh-gift-card-face-title">Gift<br>Card</div>
                                     </div>
@@ -17995,7 +17995,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.15';
+        const BUILD_VERSION = '2026-11-23.16';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19724,7 +19724,7 @@
              two-tone chartreuse instead of a flat currentColor silhouette,
              so it reads as the ribbon's own colour, not just a grey ghost. -->
         <div class="toh-package-ribbon-mark" aria-hidden="true">
-          <svg viewBox="0 0 40 28" fill="none"><path d="M19 14 3 3v22Z" fill="var(--chartreuse-soft)"/><path d="M21 14 37 3v22Z" fill="var(--chartreuse-soft)"/><rect x="15" y="9" width="10" height="10" rx="2" fill="var(--chartreuse-rich)"/></svg>
+          <svg viewBox="0 0 40 28" fill="none"><path d="M 17.19 12.75 L 4.81 4.25 Q 3 3 3 5.2 L 3 22.8 Q 3 25 4.81 23.75 L 17.19 15.25 Q 19 14 17.19 12.75 Z" fill="var(--chartreuse-soft)"/><path d="M 22.81 12.75 L 35.19 4.25 Q 37 3 37 5.2 L 37 22.8 Q 37 25 35.19 23.75 L 22.81 15.25 Q 21 14 22.81 12.75 Z" fill="var(--chartreuse-soft)"/><rect x="15" y="9" width="10" height="10" rx="2.5" fill="var(--chartreuse-rich)"/></svg>
         </div>
         <ul class="toh-package-items">${valid.map(x => `
           <li>
@@ -20015,11 +20015,15 @@
             ctx.scale(bowW / 40, bowH / 28);
             ctx.fillStyle = '#729400';
             ctx.beginPath();
-            ctx.moveTo(19, 14); ctx.lineTo(3, 3); ctx.lineTo(3, 25); ctx.closePath(); ctx.fill();
+            ctx.moveTo(17.19, 12.75); ctx.lineTo(4.81, 4.25); ctx.quadraticCurveTo(3, 3, 3, 5.2);
+            ctx.lineTo(3, 22.8); ctx.quadraticCurveTo(3, 25, 4.81, 23.75);
+            ctx.lineTo(17.19, 15.25); ctx.quadraticCurveTo(19, 14, 17.19, 12.75); ctx.closePath(); ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(21, 14); ctx.lineTo(37, 3); ctx.lineTo(37, 25); ctx.closePath(); ctx.fill();
+            ctx.moveTo(22.81, 12.75); ctx.lineTo(35.19, 4.25); ctx.quadraticCurveTo(37, 3, 37, 5.2);
+            ctx.lineTo(37, 22.8); ctx.quadraticCurveTo(37, 25, 35.19, 23.75);
+            ctx.lineTo(22.81, 15.25); ctx.quadraticCurveTo(21, 14, 22.81, 12.75); ctx.closePath(); ctx.fill();
             ctx.beginPath();
-            ctx.roundRect(15, 9, 10, 10, 2);
+            ctx.roundRect(15, 9, 10, 10, 2.5);
             ctx.fill();
             ctx.restore();
 
