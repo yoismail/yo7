@@ -4417,18 +4417,10 @@
         }
         .toh-package-card:hover { transform: translateY(-3px); box-shadow: 0 2px 6px rgba(var(--border-rgb), 0.06), 0 22px 44px rgba(var(--border-rgb), 0.1); }
         @media (prefers-reduced-motion: reduce) { .toh-package-card, .toh-package-card:hover { transition: none; transform: none; } }
-        /* Head gets its own tinted panel (same --section-alt-bg split
+        /* Head gets its own tinted panel, same --section-alt-bg split
            .dish-builder-header already uses against .dish-builder-panel's
-           body) plus a faint corner mark, the exact colour/opacity pairing
-           .shop-header-watermark uses elsewhere so it already flips
-           correctly with the theme - small, quiet brand signature rather
-           than a plain text block, since these are gifts, not just a list. */
+           body. */
         .toh-package-head { position: relative; background: var(--section-alt-bg); padding: 22px 24px 18px; overflow: hidden; }
-        .toh-package-mark {
-            position: absolute; top: -12%; right: -10%; width: 58%;
-            color: var(--heading); opacity: 0.07; pointer-events: none;
-        }
-        .toh-package-mark svg { width: 100%; height: 100%; display: block; }
         .toh-package-card h3 { position: relative; font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--heading); margin-bottom: 6px; padding-right: 20px; }
         .toh-package-tagline { position: relative; color: var(--text-muted); font-size: 13.5px; margin-bottom: 0; }
         .toh-package-body { position: relative; padding: 18px 24px 24px; display: flex; flex-direction: column; flex: 1; }
@@ -17984,7 +17976,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.18';
+        const BUILD_VERSION = '2026-11-24.2';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19696,14 +19688,6 @@
     <div class="toh-package-card">
       <button type="button" class="toh-package-remove" onclick="removeTohPackage(${i})" aria-label="Remove package"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="toh-package-head">
-        <!-- Same mark/opacity pairing as .shop-header-watermark - a quiet
-             brand signature on each package, not just plain text. -->
-        <div class="toh-package-mark" aria-hidden="true">
-          <svg viewBox="65 25 875 900" fill="none">
-            <path d="M 889.50,500.00 C 889.50,395.83 777.07,242.31 680.50,187.45 C 583.93,132.59 401.82,118.72 310.00,170.83 C 218.18,222.93 129.50,390.28 129.50,500.00 C 129.50,609.73 218.18,777.07 310.00,829.18 C 401.82,881.28 583.93,867.41 680.50,812.55 C 777.07,757.69 889.50,604.17 889.50,500.00 Z" stroke="currentColor" stroke-width="40" />
-            <path d="M 376.50 319.50 L 642.50 319.50 L 462.00 737.50" stroke="currentColor" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
         <h3>${escapeHtml(pkg.name)}</h3>
         <p class="toh-package-tagline">${escapeHtml(pkg.tagline)}</p>
       </div>
@@ -19867,19 +19851,28 @@
             // still matches here (just without that data) - see this
             // function's own comment on designLabel for the same
             // reasoning applied to the design name.
+            //
+            // Matched against the whole notes string, not split by line
+            // and anchored per-line as this used to be - a customer's own
+            // note can itself contain line breaks (pressing enter in the
+            // textarea), which would otherwise split this one logical line
+            // across several, and an anchored ^...$ match would never see
+            // the whole thing at once (reported bug: a real order's note
+            // had several blank lines in it and silently never matched).
+            // The "s" flag lets "." cross those line breaks, and "note"
+            // stays lazy (.*?) so it still stops at the first closing
+            // quote rather than swallowing everything up to the last one
+            // anywhere in the notes field.
             const patterns = [
-                /^Gift for .+?(?:: "(?<note>.*)")?\.(?: Package: (?<pkg>.+?) \((?<price>£[\d.,]+)\)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\.$/,
-                /^This order is a gift(?:: "(?<note>.*)")?\.(?: Value: (?<price>£[\d.,]+)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\.$/,
+                /Gift for .+?(?:: "(?<note>.*?)")?\.(?: Package: (?<pkg>.+?) \((?<price>£[\d.,]+)\)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\./s,
+                /This order is a gift(?:: "(?<note>.*?)")?\.(?: Value: (?<price>£[\d.,]+)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\./s,
             ];
-            for (const line of notes.split('\n')) {
-                const trimmed = line.trim();
-                for (const re of patterns) {
-                    const m = trimmed.match(re);
-                    if (m) {
-                        const g = m.groups;
-                        const packageLabel = g.pkg ? `${g.pkg} · ${g.price}` : (g.price || '');
-                        return { note: g.note || '', designLabel: g.design, packageLabel, senderName: g.from || '' };
-                    }
+            for (const re of patterns) {
+                const m = notes.match(re);
+                if (m) {
+                    const g = m.groups;
+                    const packageLabel = g.pkg ? `${g.pkg} · ${g.price}` : (g.price || '');
+                    return { note: (g.note || '').trim(), designLabel: g.design, packageLabel, senderName: g.from || '' };
                 }
             }
             return null;
