@@ -17984,7 +17984,7 @@
         // now (push to main -> regenerate-pages.yml -> Cloudflare), but
         // this still earns its place: a commit hash alone doesn't tell a
         // non-technical admin anything, where this date-coded string does.
-        const BUILD_VERSION = '2026-11-23.18';
+        const BUILD_VERSION = '2026-11-24.1';
 
         /* ================= HELPERS ================= */
         // Currency selector state. selectedCurrency is the customer's own
@@ -19867,19 +19867,28 @@
             // still matches here (just without that data) - see this
             // function's own comment on designLabel for the same
             // reasoning applied to the design name.
+            //
+            // Matched against the whole notes string, not split by line
+            // and anchored per-line as this used to be - a customer's own
+            // note can itself contain line breaks (pressing enter in the
+            // textarea), which would otherwise split this one logical line
+            // across several, and an anchored ^...$ match would never see
+            // the whole thing at once (reported bug: a real order's note
+            // had several blank lines in it and silently never matched).
+            // The "s" flag lets "." cross those line breaks, and "note"
+            // stays lazy (.*?) so it still stops at the first closing
+            // quote rather than swallowing everything up to the last one
+            // anywhere in the notes field.
             const patterns = [
-                /^Gift for .+?(?:: "(?<note>.*)")?\.(?: Package: (?<pkg>.+?) \((?<price>£[\d.,]+)\)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\.$/,
-                /^This order is a gift(?:: "(?<note>.*)")?\.(?: Value: (?<price>£[\d.,]+)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\.$/,
+                /Gift for .+?(?:: "(?<note>.*?)")?\.(?: Package: (?<pkg>.+?) \((?<price>£[\d.,]+)\)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\./s,
+                /This order is a gift(?:: "(?<note>.*?)")?\.(?: Value: (?<price>£[\d.,]+)\.)?(?: From: (?<from>.+?)\.)? Card design: (?<design>.+?) \(please print and include that card\)\./s,
             ];
-            for (const line of notes.split('\n')) {
-                const trimmed = line.trim();
-                for (const re of patterns) {
-                    const m = trimmed.match(re);
-                    if (m) {
-                        const g = m.groups;
-                        const packageLabel = g.pkg ? `${g.pkg} · ${g.price}` : (g.price || '');
-                        return { note: g.note || '', designLabel: g.design, packageLabel, senderName: g.from || '' };
-                    }
+            for (const re of patterns) {
+                const m = notes.match(re);
+                if (m) {
+                    const g = m.groups;
+                    const packageLabel = g.pkg ? `${g.pkg} · ${g.price}` : (g.price || '');
+                    return { note: (g.note || '').trim(), designLabel: g.design, packageLabel, senderName: g.from || '' };
                 }
             }
             return null;
